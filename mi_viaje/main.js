@@ -363,27 +363,14 @@ async function generateDynamicQuestions(stepObj, context) {
         const historyText = JSON.stringify(context);
         const questionsAsked = context.map(c => c.question).join(" | ");
 
-        const prompt = `
-            [SISTEMA: GENERACIÓN DE PREGUNTAS DE COACHING EMOCIONAL]
-            Contexto del usuario hasta ahora: ${historyText}
-            
-            PREGUNTAS YA REALIZADAS: ${questionsAsked}
-            
-            Tu objetivo: Generar EXACTAMENTE 1 pregunta de coaching emocional profundo para la etapa: "${stepObj.stage}".
-            
-            REGLAS CRÍTICAS:
-            1. Genera SOLO 1 pregunta.
-            2. NUNCA repitas una pregunta o concepto que ya se haya preguntado (ver lista arriba). Se MUY original y creativo.
-            3. PRIORIZA el estado emocional, familia y autoestima.
-            4. NO fuerces la "voz" si el usuario no la ha mencionado.
-            5. Devuelve ÚNICAMENTE un array JSON con esta estructura: 
-               [ { "id": "...", "text": "...", "type": "long_text" } ]
-        `;
-
         const response = await fetch('/api/chat', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ message: prompt, history: [] })
+            body: JSON.stringify({
+                intent: "generate_questions",
+                message: `Etapa: ${stepObj.stage}. Preguntas previas: ${questionsAsked}`,
+                context: historyText
+            })
         });
 
         const data = await response.json();
@@ -495,17 +482,14 @@ async function finishModuleWithAI(supabase, user) {
     try {
         const historia = JSON.stringify(journeyContext);
 
-        const promptAnalysis = `
-            [SISTEMA: ANÁLISIS FINAL]
-            Módulo 1 completado. 
-            Respuestas: ${historia}.
-            Tarea: Genera un análisis muy breve de 3 frases detectando sus bloqueos emocionales y dándole fuerza.
-        `;
-
         const response = await fetch('/api/chat', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ message: promptAnalysis, history: [] })
+            body: JSON.stringify({
+                intent: "alchemy_analysis",
+                message: "Módulo 1 completado.",
+                context: historia
+            })
         });
 
         const data = await response.json();

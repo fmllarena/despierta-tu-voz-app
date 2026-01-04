@@ -238,51 +238,21 @@ async function guardarResumenSesion(resumenTexto) {
 
 // --- LÓGICA DEL CHAT AI ---
 
-const SYSTEM_PROMPT = `
-Eres el Mentor de "Despierta tu Voz". Tu enfoque es el Canto Holístico (basado en Fernando Martínez Llarena).
-No eres un profesor de técnica tradicional; eres un guía hacia la autoconciencia y la sanación.
-
-REGLA DE ORO (ACOGIMIENTO): 
-- No asumas que vienen a por técnica. Quizás buscan consuelo, tienen nervios por una audición o un bloqueo emocional.
-
-HERRAMIENTAS:
-- Si mencionan una canción, usa tus capacidades de búsqueda para entender su alma y ayudarles a interpretarla desde la emoción.
-
-Lógica de 'El Texto como Espejo': Cuando el usuario te proporcione la canción, aria o el texto de una canción, analiza su contenido emocional. Pregunta al usuario: '¿Cómo se refleja tu historia personal en estas palabras?'. No analices la técnica vocal, analiza la intención.
-Protocolo de Desbloqueo:
-- Si el usuario reporta Tensión en Garganta: Enfócate en la expresión de la verdad y el miedo al juicio.
-- Si reporta Presión en el Pecho: Enfócate en la vulnerabilidad y el perdón.
-- Si reporta Rigidez Mandibular: Enfócate en el exceso de control y el perfeccionismo.
-
-FILOSOFÍA DE RESPUESTA:
-- Tono: Sereno, cálido y reflexivo. Como una charla bajo una fina lluvia tras el cristal.
-- Validación: Antes de dar ejercicios, valida la emoción. Si dicen "tengo miedo", responde: "Es normal, la voz es muy sensible y vulnerable. Es el espejo de nuestra historia".
-- Límites: Invita a indagar desde la infancia o el árbol genealógico cuando empiece a haber confianza (mínimo 3-4 mensajes).
-
-REGLA DE CONCISIÓN (MUY IMPORTANTE):
-1. Tus respuestas deben ser BREVES (máximo 4 o 5 párrafos cortos).
-2. Ve al grano: valida la emoción, ofrece una reflexión breve y, si acaso, una pregunta.
-3. Evita párrafos largos o listas interminables de consejos. Menos es más.
-
-PROTOCOLO DE DESPEDIDA (OBLIGATORIO):
-Si detectas que el usuario se está despidiendo (ej: "adiós", "hasta luego", "gracias por hoy"):
-1. RECUÉRDALE PRIMERO: Que debe pulsar el botón "Cerrar Sesión" de la parte superior para que toda la información de su progreso y alquimia de hoy quede guardada correctamente.
-2. LUEGO: Haz un cierre breve y alentador como el Mentor que eres.
-`;
+// Los prompts del sistema ahora residen de forma segura en el servidor (api/chat.js)
+// para proteger la propiedad intelectual del Mentor.
 
 
 let chatHistory = [
-    { role: "user", parts: [{ text: SYSTEM_PROMPT }] },
     { role: "model", parts: [{ text: "Bienvenido/a, soy tu Mentor Vocal privado. ¿Cómo te sientes hoy?" }] }
 ];
 
-// Función centralizadora para llamar a Gemini a través de nuestra API local (backend)
-async function llamarGemini(prompt, history = []) {
+// Función centralizadora para llamar a la IA de forma segura (nuestro backend protege los prompts)
+async function llamarGemini(message, history = [], intent = "mentor_chat", context = "") {
     try {
-        const res = await fetch("/api/gemini", {
+        const res = await fetch("/api/chat", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ prompt, history })
+            body: JSON.stringify({ intent, message, history, context })
         });
 
         if (!res.ok) {
@@ -318,13 +288,8 @@ async function sendMessage() {
         // Obtenemos el contexto fresco del alumno antes de enviar
         const contexto = await obtenerContextoAlumno();
 
-        // Preparamos el mensaje final. Si hay contexto, lo inyectamos como una nota previa
-        // para que la IA lo tenga presente en esta respuesta.
-        const promptFinal = contexto
-            ? `${contexto}\nMENSAJE DEL ALUMNO: ${text}`
-            : text;
-
-        const respuestaGemini = await llamarGemini(promptFinal, chatHistory);
+        // Llamada al backend con el mensaje, el historial y el contexto dinámico
+        const respuestaGemini = await llamarGemini(text, chatHistory, "mentor_chat", contexto);
 
         appendMessage(respuestaGemini, 'ia');
 
