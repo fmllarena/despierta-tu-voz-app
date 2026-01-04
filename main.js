@@ -364,19 +364,6 @@ function appendMessage(text, type, id = null) {
             htmlContent = text;
         }
 
-        // --- DETECCIÓN DE YOUTUBE: Buscamos links o IDs y embebemos ---
-        // Buscamos patrones: https://www.youtube.com/watch?v=ID o https://youtu.be/ID
-        const ytRegex = /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/;
-        const match = text.match(ytRegex);
-        if (match && match[1]) {
-            const videoId = match[1];
-            htmlContent += `
-                <div class="video-container">
-                    <iframe src="https://www.youtube.com/embed/${videoId}" allowfullscreen></iframe>
-                </div>
-            `;
-        }
-
         messageDiv.innerHTML = htmlContent;
     } else {
         // Texto plano para el usuario (seguridad) y mantenemos espacios
@@ -466,8 +453,8 @@ if (botiquinBtn) {
             Basándote en mi perfil vocal y mis creencias limitantes mencionadas arriba, por favor dame:
             1. Un ejercicio de respiración o relajación de 2 minutos específico para mi bloqueo.
             2. Un consejo técnico rápido para mi voz.
-            3. Una recomendación de música o frecuencia específica (proporcióname un link de YouTube o el ID si lo conoces) que me ayude a entrar en mi eje.
-            Sé directo, cálido y efectivo. Si me pasas un link de YouTube, asegúrate de que sea el formato estándar completo.
+            3. Una frase de poder o anclaje emocional que me ayude a entrar en mi eje.
+            Sé directo, cálido y efectivo.
             `;
 
             const responseText = await llamarGemini(promptUrgente, []);

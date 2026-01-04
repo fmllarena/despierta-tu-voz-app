@@ -390,15 +390,6 @@ input {
     transition: width 1s ease-in-out;
 }
 
-.video-container {
-    position: relative;
-    padding-bottom: 56.25%;
-    height: 0;
-    overflow: hidden;
-    margin-top: 15px;
-    border-radius: 10px;
-}
-
 .video-container iframe {
     position: absolute;
     top: 0;
