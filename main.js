@@ -152,6 +152,14 @@ signUpBtn.addEventListener('click', async () => {
     }
 });
 
+// --- LÓGICA DE ENTER EN AUTH ---
+document.getElementById('authEmail')?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') loginBtn.click();
+});
+document.getElementById('authPassword')?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') loginBtn.click();
+});
+
 loginBtn.addEventListener('click', async () => {
     const email = document.getElementById('authEmail').value;
     const password = document.getElementById('authPassword').value;
