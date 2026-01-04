@@ -518,28 +518,41 @@ input {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 40px;
+    gap: 60px;
+    /* More gap for the curve */
     position: relative;
-    padding: 40px 20px;
-    max-width: 500px;
+    padding: 20px 20px;
+    max-width: 600px;
+    /* Slightly wider */
     margin: 0 auto;
 }
 
-/* Curved Path Background Line */
-.roadmap-container::before {
-    content: '';
+/* SVG Container Layer */
+.roadmap-svg-layer {
     position: absolute;
-    top: 50px;
-    bottom: 50px;
-    left: 50%;
-    width: 4px;
-    background: repeating-linear-gradient(to bottom,
-            #ddd 0,
-            #ddd 10px,
-            transparent 10px,
-            transparent 20px);
-    transform: translateX(-50%);
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
     z-index: 1;
+    /* Behind nodes (nodes are z-index 2) */
+    overflow: visible;
+}
+
+.roadmap-path {
+    fill: none;
+    stroke: #d4af37;
+    stroke-width: 3;
+    stroke-dasharray: 10, 10;
+    opacity: 0.5;
+    animation: dash 60s linear infinite;
+}
+
+@keyframes dash {
+    to {
+        stroke-dashoffset: 1000;
+    }
 }
 
 .roadmap-node {
@@ -547,28 +560,33 @@ input {
     align-items: center;
     gap: 15px;
     background: white;
-    padding: 15px 20px;
+    padding: 15px 25px;
     border-radius: 50px;
-    /* Pill shape nodes */
     border: 2px solid #eee;
-    width: 100%;
+    width: 80%;
+    /* Fixed width relative to container */
+    max-width: 350px;
     cursor: pointer;
     transition: all 0.3s ease;
     z-index: 2;
+    /* On top of lines */
     position: relative;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
 }
 
 .roadmap-node:nth-child(odd) {
     align-self: flex-start;
-    margin-right: 20%;
+    /* margin-right defaults to auto/0, flex-start handles alignment.
+       We add margin-left to push it slightly from edge if needed,
+       but usually simply aligning start/end is enough.
+       Let's use a bit of margin to center-ish the content relative to the curve. */
+    margin-left: 5%;
 }
 
 .roadmap-node:nth-child(even) {
     align-self: flex-end;
-    margin-left: 20%;
+    margin-right: 5%;
     flex-direction: row-reverse;
-    /* Flip content for alternating look */
     text-align: right;
 }
 

@@ -35,8 +35,8 @@ export const modules = [
                 stage: "El Presente (La Toma de Conciencia)",
                 instructions: "Hoy, aquí y ahora. La verdad te hará libre.",
                 questions: [
-                    { id: "h1_now_mask", text: "Cuando cantas para otros... ¿A quién intentas impresionar o de quién te escondes?", type: "text" },
-                    { id: "h1_now_heal", text: "Escribe una frase de perdón para ese niño/a que no se atrevió a sonar.", type: "long_text" }
+                    { id: "h1_now_mask", text: "Cuando cantas para otros, qué sientes... ¿ intentas gustar o expresarte a través del canto?", type: "text" },
+                    { id: "h1_now_heal", text: "Ahora que te ves en la distancia, escribe una frase para ese niño/a que no se atrevió a sonar.", type: "long_text" }
                 ],
                 field: "linea_vida_hitos"
             }
@@ -73,9 +73,15 @@ function renderRoadmap() {
     const container = document.getElementById('journeyRoadmap');
     container.innerHTML = '';
 
+    // Create SVG Layer
+    // We add it first so it sits behind nodes naturally (though z-index handles it too)
+    const svgLayer = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svgLayer.setAttribute("class", "roadmap-svg-layer");
+    svgLayer.setAttribute("id", "roadmapSvg");
+    container.appendChild(svgLayer);
+
     modules.forEach((mod, index) => {
         const isUnlocked = index === 0 || localStorage.getItem(`module_${mod.id}_unlocked`);
-
         const node = document.createElement('div');
         node.className = `roadmap-node ${isUnlocked ? 'unlocked' : 'locked'}`;
         node.onclick = () => { if (isUnlocked) openModule(index); };
@@ -89,8 +95,103 @@ function renderRoadmap() {
             <div class="node-status">${isUnlocked ? '▶' : '🔒'}</div>
         `;
         container.appendChild(node);
-        // roadmap-line is now handled by CSS ::before in style.css
     });
+
+    // Draw lines after layout
+    setTimeout(drawRoadmapLines, 100);
+    window.addEventListener('resize', drawRoadmapLines);
+}
+
+function drawRoadmapLines() {
+    const svg = document.getElementById('roadmapSvg');
+    if (!svg) return;
+
+    // Clear existing paths
+    while (svg.firstChild) {
+        svg.removeChild(svg.firstChild);
+    }
+
+    const nodes = document.querySelectorAll('.roadmap-node');
+    const container = document.getElementById('journeyRoadmap');
+
+    if (nodes.length < 2) return;
+
+    // Recalculate SVG size to match scrollHeight if needed
+    // But since it's 100% height of relative container, it should match.
+
+    for (let i = 0; i < nodes.length - 1; i++) {
+        const nodeA = nodes[i];
+        const nodeB = nodes[i + 1];
+
+        // Get coordinates relative to container
+        const posA = {
+            left: nodeA.offsetLeft,
+            top: nodeA.offsetTop,
+            width: nodeA.offsetWidth,
+            height: nodeA.offsetHeight
+        };
+        const posB = {
+            left: nodeB.offsetLeft,
+            top: nodeB.offsetTop,
+            width: nodeB.offsetWidth,
+            height: nodeB.offsetHeight
+        };
+
+        // Determine Start and End points based on alternating layout
+        // Even index (0, 2): Left Side -> Connect from Right edge
+        // Odd index (1, 3): Right Side -> Connect from Left edge
+
+        let startX, startY, endX, endY;
+
+        // Node A
+        if (i % 2 === 0) { // Left Node
+            startX = posA.left + posA.width;
+            startY = posA.top + posA.height / 2;
+        } else { // Right Node
+            startX = posA.left;
+            startY = posA.top + posA.height / 2;
+        }
+
+        // Node B
+        if ((i + 1) % 2 === 0) { // Next is Left Node
+            endX = posB.left + posB.width; // Connect to its Right edge? No, usually snake connects Left-Right-Right-Left
+            // Wait: 
+            // 0(L) -> 1(R).  Start: 0.Right. End: 1.Left.
+            // 1(R) -> 2(L).  Start: 1.Left.  End: 2.Right.
+
+            endX = posB.left + posB.width;
+            endY = posB.top + posB.height / 2;
+        } else { // Next is Right Node
+            endX = posB.left;
+            endY = posB.top + posB.height / 2;
+        }
+
+        // Adjust Control Points for Curve
+        // If going Left->Right: Start Handle +X, End Handle -X
+        // If going Right->Left: Start Handle -X, End Handle +X
+
+        const isGoingRight = endX > startX;
+        const offset = Math.abs(endY - startY) * 0.5; // Curve depth based on vertical distance
+
+        const cp1X = isGoingRight ? startX + 50 : startX - 50;
+        const cp1Y = startY;
+
+        const cp2X = isGoingRight ? endX - 50 : endX + 50;
+        const cp2Y = endY;
+
+        // Create Path
+        const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        const d = `M ${startX} ${startY} C ${cp1X} ${cp1Y}, ${cp2X} ${cp2Y}, ${endX} ${endY}`;
+
+        path.setAttribute("d", d);
+        path.setAttribute("class", "roadmap-path");
+
+        // Unlock status styling for line? 
+        // If nodeA is unlocked, line is unlocked? Or NodeB?
+        // Let's keep it simple gold for now.
+
+        svg.appendChild(path);
+    }
 }
 
 function openModule(index) {
