@@ -69,19 +69,41 @@ app.use(express.json());
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
+app.post("/api/chat", async (req, res) => {
+    try {
+        const { intent, message, history = [], context = "" } = req.body;
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+
+        // Simplificación para el servidor local (en Vercel se usan los prompts de chat.js)
+        const prompt = context ? `${context}\n\n${message}` : message;
+
+        if (history && history.length > 0) {
+            const chat = model.startChat({ history });
+            const result = await chat.sendMessage(prompt);
+            res.json({ text: result.response.text() });
+        } else {
+            const result = await model.generateContent(prompt);
+            res.json({ text: result.response.text() });
+        }
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
 app.post("/api/gemini", async (req, res) => {
-  try {
-    const { prompt } = req.body;
+    try {
+        const { prompt } = req.body;
 
-    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
-    const result = await model.generateContent(prompt);
-    const text = result.response.text();
+        const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+        const result = await model.generateContent(prompt);
+        const text = result.response.text();
 
-    res.json({ text });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: err.message });
-  }
+        res.json({ text });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: err.message });
+    }
 });
 
 app.listen(3001, () => console.log("Servidor listo en http://localhost:3001"));
