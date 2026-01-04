@@ -49,8 +49,8 @@ export default async function handler(req, res) {
     }
 
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-    // Usamos el modelo solicitado: Gemini 2.0 Flash Preview
-    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-exp" });
+    // Usamos el modelo solicitado: Gemini 3 Flash Preview
+    const model = genAI.getGenerativeModel({ model: "gemini-3-flash-preview" });
 
     let textResponse = "";
 
@@ -66,8 +66,8 @@ export default async function handler(req, res) {
     } catch (modelError) {
       console.error("Error del modelo Gemini:", modelError);
       // Si el error detectado por Google es sobre seguridad, damos un mensaje claro
-      if (modelError.message.includes("API_KEY_INVALID") || modelError.message.includes("compromised")) {
-        throw new Error("CLAVE BLOQUEADA POR SEGURIDAD: Google ha detectado que esta llave fue expuesta. Debes crear una nueva en AI Studio y actualizar Vercel.");
+      if (modelError.message.includes("API_KEY_INVALID") || modelError.message.includes("compromised") || modelError.message.includes("403")) {
+        throw new Error("CLAVE BLOQUEADA O SOSPECHOSA: Google ha detectado problemas con tu llave. Debes crear una nueva en AI Studio con una cuenta diferente si es necesario.");
       }
       throw modelError;
     }
@@ -77,7 +77,7 @@ export default async function handler(req, res) {
     console.error("Error crítico en /api/gemini:", error);
     return res.status(500).json({
       error: error.message,
-      details: "Por favor, rota tu clave de API en aistudio.google.com y actualízala en el panel de Vercel."
+      details: "Por favor, crea una API Key nueva en aistudio.google.com (preferiblemente con una cuenta de Gmail distinta) y actualízala en Vercel."
     });
   }
 }
