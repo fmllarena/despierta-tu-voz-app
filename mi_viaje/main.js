@@ -300,18 +300,17 @@ async function nextStep(supabase, user) {
     });
 
     if (currentQuestionSubIndex === step.questions.length - 1) {
-        // End of Step
+        // Preparar hito antes de enviarlo
         const hitoData = {
             etapa: step.stage,
             respuestas: { ...userAnswers },
             fecha: new Date().toISOString()
         };
 
-        console.log(`Paso '${step.stage}' completado. Guardando hito...`);
+        console.log(`💾 Guardando Paso '${step.stage}'...`, hitoData);
         await guardarHitoJSON(supabase, user, step.field, hitoData);
 
-        // Limpiamos respuestas para la siguiente etapa
-        userAnswers = {};
+        userAnswers = {}; // Reset local answers for next step
 
         if (currentStepIndex < module.steps.length - 1) {
             // Check if NEXT step is dynamic and empty
@@ -464,21 +463,26 @@ async function guardarHitoJSON(supabase, user, column, newObject) {
 
 async function finishModuleWithAI(supabase, user) {
     const input = document.getElementById('answerInput');
-    if (input.value.trim()) {
-        const module = modules[currentModuleIndex];
-        const step = module.steps[currentStepIndex];
-        const previousQ = step.questions[currentQuestionSubIndex]; // Get actual question object
+    if (!input.value.trim()) return alert("Por favor, responde antes de finalizar.");
 
-        // Push last answer to context
-        journeyContext.push({ stage: step.stage, question: previousQ.text, answer: input.value });
+    const module = modules[currentModuleIndex];
+    const step = module.steps[currentStepIndex];
+    const question = step.questions[currentQuestionSubIndex];
 
-        const hitoData = {
-            etapa: step.stage,
-            respuestas: { ...userAnswers, [previousQ.id]: input.value },
-            fecha: new Date().toISOString()
-        };
-        await guardarHitoJSON(supabase, user, step.field, hitoData);
-    }
+    // standardizing userAnswers inclusion
+    userAnswers[question.id] = input.value;
+
+    // Guardar contexto para IA
+    journeyContext.push({ stage: step.stage, question: question.text, answer: input.value });
+
+    const hitoData = {
+        etapa: step.stage,
+        respuestas: { ...userAnswers },
+        fecha: new Date().toISOString()
+    };
+
+    console.log("💾 Finalizando módulo, guardando último hito...", hitoData);
+    await guardarHitoJSON(supabase, user, step.field, hitoData);
 
     const container = document.getElementById('questionContainer');
     container.innerHTML = `
