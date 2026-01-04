@@ -242,9 +242,7 @@ async function guardarResumenSesion(resumenTexto) {
 // para proteger la propiedad intelectual del Mentor.
 
 
-let chatHistory = [
-    { role: "model", parts: [{ text: "Bienvenido/a, soy tu Mentor Vocal privado. ¿Cómo te sientes hoy?" }] }
-];
+let chatHistory = []; // El historial comenzará con el primer mensaje del usuario
 
 // Función centralizadora para llamar a la IA de forma segura (nuestro backend protege los prompts)
 async function llamarGemini(message, history = [], intent = "mentor_chat", context = "") {
@@ -299,7 +297,7 @@ async function sendMessage() {
 
     } catch (error) {
         console.error("Error en sendMessage:", error);
-        appendMessage("Lo siento, hubo un problema al conectar con tu voz interior. Por favor, inténtalo de nuevo en un momento.", 'ia');
+        appendMessage(`Lo siento, hubo un problema al conectar: **${error.message}**. Por favor, inténtalo de nuevo.`, 'ia');
     } finally {
         chatMentoriaInput.disabled = false;
         sendBtn.disabled = false;
