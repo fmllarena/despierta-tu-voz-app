@@ -365,20 +365,20 @@ function appendMessage(text, type, id = null) {
         }
         messageDiv.innerHTML = htmlContent;
 
-        // --- BOTÓN DE VOZ (TTS) DEL BOTIQUÍN ---
+        /* --- BOTÓN DE VOZ (TTS) DESACTIVADO TEMPORALMENTE ---
         if (type === 'ia-botiquin') {
             const voiceBtn = document.createElement('button');
             voiceBtn.className = 'tts-btn';
             voiceBtn.innerHTML = '🔊 Oír ejercicio';
 
             // Extraemos solo el ejercicio 1 para leerlo
-            // Buscamos patrones como "1. [texto]" o "1: [texto]"
             const matchEjercicio = text.match(/(?:1\.?|Ejercicio 1)[:.]?\s*([^]*?)(?=\n\s*\d\.?|(?:\n\s*---|\n\s*\d\.?)|$)/i);
             const textoALeer = matchEjercicio ? matchEjercicio[1].trim() : text;
 
             voiceBtn.onclick = () => hablarTexto(textoALeer, voiceBtn);
             messageDiv.appendChild(voiceBtn);
         }
+        */
     } else {
         // Texto plano para el usuario (seguridad) y mantenemos espacios
         messageDiv.innerText = text;
