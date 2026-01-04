@@ -92,6 +92,7 @@ export function initJourney(supabaseClient, user) {
     document.querySelector('.close-modulo').onclick = () => {
         document.getElementById('moduloModal').style.display = 'none';
         document.getElementById('viajeModal').style.display = 'flex';
+        renderRoadmap(); // Refresh to show unlocked modules
     };
 
     document.getElementById('nextQBtn').onclick = () => nextStep(supabaseClient, user);
@@ -446,6 +447,13 @@ async function finishModuleWithAI(supabase, user) {
 
         const data = await response.json();
 
+        // UNLOCK NEXT MODULE LOGIC
+        // We do this immediately upon successful completion logic
+        if (currentModuleIndex < modules.length - 1) {
+            const nextModuleId = modules[currentModuleIndex + 1].id;
+            localStorage.setItem(`module_${nextModuleId}_unlocked`, 'true');
+        }
+
         container.innerHTML = `
             <div class="question-slide">
                 <h3 style="color:var(--color-acento)">✨ Tu Lectura de Alquimia</h3>
@@ -461,8 +469,12 @@ async function finishModuleWithAI(supabase, user) {
         document.getElementById('prevQBtn').style.display = 'none';
 
         document.getElementById('closeModuleBtn').onclick = () => {
-            localStorage.setItem(`module_2_unlocked`, 'true');
-            alert("Módulo 1 completado. Has desbloqueado 'Herencia y Raíces'.");
+            // Alert user about unlock
+            if (currentModuleIndex < modules.length - 1) {
+                const nextModuleTitle = modules[currentModuleIndex + 1].title;
+                alert(`¡Felicidades! Has desbloqueado el siguiente módulo: '${nextModuleTitle}'.`);
+            }
+
             document.getElementById('moduloModal').style.display = 'none';
             document.getElementById('viajeModal').style.display = 'flex';
             renderRoadmap();
