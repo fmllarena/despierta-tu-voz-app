@@ -647,19 +647,37 @@ if (SpeechRecognition && micBtn) {
 const voiceSelect = document.getElementById('voiceSelect');
 let audioActual = null;
 
-// Voces Premium de Google Cloud (Studio y Neural2 son las mejores)
-const VOCES_PREMIUM = [
-    { name: 'Mentor (Premium Studio)', value: 'es-ES-Studio-B' },
-    { name: 'Mentora (Premium Neural)', value: 'es-ES-Neural2-A' },
-    { name: 'Mentor (Premium Neural)', value: 'es-ES-Neural2-B' },
-    { name: 'Vocal Alchemy (Neural)', value: 'es-ES-Neural2-C' }
-];
-
-function cargarVoces() {
+async function cargarVoces() {
     if (!voiceSelect) return;
-    voiceSelect.innerHTML = VOCES_PREMIUM
-        .map(v => `<option value="${v.value}">${v.name}</option>`)
-        .join('');
+
+    try {
+        const response = await fetch('/api/voices');
+        const data = await response.json();
+
+        if (data.error) throw new Error(data.error);
+
+        voiceSelect.innerHTML = data.voices
+            .map(v => {
+                // Formateamos el nombre para que sea más legible
+                // Ej: es-ES-Studio-B -> Studio B (Neutral)
+                const parts = v.name.split('-');
+                const shortName = `${v.type} ${parts[parts.length - 1]} (${v.ssmlGender})`;
+                return `<option value="${v.name}">${shortName}</option>`;
+            })
+            .join('');
+
+        // Seleccionamos Studio-B por defecto si existe
+        const studioB = data.voices.findIndex(v => v.name === 'es-ES-Studio-B');
+        if (studioB !== -1) voiceSelect.selectedIndex = studioB;
+
+    } catch (e) {
+        console.error("Error cargando voces dinámicas:", e);
+        // Fallback a algunas básicas por si falla la API
+        voiceSelect.innerHTML = `
+            <option value="es-ES-Studio-B">Studio B (Masculino)</option>
+            <option value="es-ES-Neural2-A">Neural2 A (Femenino)</option>
+        `;
+    }
 }
 
 // Carga inicial
