@@ -5,6 +5,10 @@ export const modules = [
         description: "Reconoce tu historia para liberar tu voz.",
         icon: "🪞",
         activity: "Línea de Vida Vocal",
+        intro: {
+            text: "Esta actividad es la base de todo el proceso. No es solo recordar fechas, sino detectar qué \"huella\" dejaron en la voz.",
+            buttonText: "¡Estoy preparado/a!"
+        },
         steps: [
             {
                 id: "step1",
@@ -45,6 +49,7 @@ let currentModuleIndex = 0;
 let currentStepIndex = 0;
 let currentQuestionSubIndex = 0;
 let userAnswers = {}; // Cache local temporal para el paso actual
+let isIntroView = true; // State for Intro Screen
 
 export function initJourney(supabaseClient, user) {
     console.log("Iniciando Mi Viaje 2.0...", user);
@@ -84,34 +89,65 @@ function renderRoadmap() {
             <div class="node-status">${isUnlocked ? '▶' : '🔒'}</div>
         `;
         container.appendChild(node);
-
-        if (index < modules.length - 1) {
-            const line = document.createElement('div');
-            line.className = 'roadmap-line';
-            container.appendChild(line);
-        }
+        // roadmap-line is now handled by CSS ::before in style.css
     });
 }
 
 function openModule(index) {
     currentModuleIndex = index;
-    currentStepIndex = 0; // Stage (Infancia, etc)
-    currentQuestionSubIndex = 0; // Pregunta dentro del stage (1 o 2)
+    const module = modules[currentModuleIndex];
+
+    // Check if module has Intro
+    isIntroView = !!module.intro;
+
+    currentStepIndex = 0;
+    currentQuestionSubIndex = 0;
     userAnswers = {};
 
     document.getElementById('viajeModal').style.display = 'none';
     document.getElementById('moduloModal').style.display = 'flex';
-
-    // Resetear container
     document.getElementById('questionContainer').innerHTML = '';
 
-    renderStep();
+    // Si tiene Intro, mostramos Intro. Si no, renderStep directamente.
+    if (isIntroView) {
+        renderIntro();
+    } else {
+        renderStep();
+    }
 }
+
+function renderIntro() {
+    const module = modules[currentModuleIndex];
+    const container = document.getElementById('questionContainer');
+
+    // Ocultar botones de navegación estándar
+    document.getElementById('nextQBtn').style.display = 'none';
+    document.getElementById('prevQBtn').style.display = 'none';
+    document.getElementById('finishModuleBtn').style.display = 'none';
+
+    container.innerHTML = `
+        <div class="question-slide" style="text-align: center; padding: 20px;">
+            <h2 style="color: var(--color-acento); margin-bottom: 20px;">${module.title}</h2>
+            <div style="font-size: 3em; margin-bottom: 20px;">${module.icon}</div>
+            <p style="font-size: 1.2em; line-height: 1.6; color: #555; margin-bottom: 30px;">
+                ${module.intro.text}
+            </p>
+            <button id="startModuleBtn" class="journey-btn" style="font-size: 1.1em; padding: 12px 30px;">
+                ${module.intro.buttonText}
+            </button>
+        </div>
+    `;
+
+    document.getElementById('startModuleBtn').onclick = () => {
+        isIntroView = false;
+        renderStep();
+    };
+}
+
 
 function renderStep() {
     const module = modules[currentModuleIndex];
     if (!module.steps) {
-        // Fallback para otros módulos antiguos si los hubiera
         alert("Módulo en construcción");
         return;
     }
@@ -119,17 +155,16 @@ function renderStep() {
     const step = module.steps[currentStepIndex];
     const question = step.questions[currentQuestionSubIndex];
 
-    // Calcular progreso total en el módulo
-    // (Simplificación: stages * questions per stage)
+    // Calculate progress (Logic remains same)
     const totalQ = module.steps.reduce((acc, s) => acc + s.questions.length, 0);
     const currentAbsoluteQ = module.steps.slice(0, currentStepIndex).reduce((acc, s) => acc + s.questions.length, 0) + currentQuestionSubIndex + 1;
     const progressPercent = (currentAbsoluteQ / totalQ) * 100;
 
-    // Check if Last Question of entire module
     const isLastOfModule = (currentStepIndex === module.steps.length - 1) && (currentQuestionSubIndex === step.questions.length - 1);
 
     document.getElementById('nextQBtn').style.display = isLastOfModule ? 'none' : 'inline-block';
     document.getElementById('finishModuleBtn').style.display = isLastOfModule ? 'inline-block' : 'none';
+    document.getElementById('prevQBtn').style.display = 'inline-block'; // Show Prev button
 
     // Inject Progress Bar HTML if not exists
     let progressBar = document.querySelector('.module-progress-bar');
@@ -155,7 +190,7 @@ function renderStep() {
         </div>
     `;
 
-    // Botón Siguiente texto dinámico
+    // Dynamic Button Text
     const nextBtn = document.getElementById('nextQBtn');
     if (currentQuestionSubIndex === step.questions.length - 1 && currentStepIndex < module.steps.length - 1) {
         nextBtn.innerText = "Guardar Etapa ➤";
@@ -163,7 +198,7 @@ function renderStep() {
         nextBtn.innerText = "Siguiente";
     }
 
-    setTimeout(() => document.getElementById('answerInput').focus(), 100);
+    setTimeout(() => document.getElementById('answerInput')?.focus(), 100);
 }
 
 async function nextStep(supabase, user) {
@@ -174,24 +209,19 @@ async function nextStep(supabase, user) {
     const step = module.steps[currentStepIndex];
     const question = step.questions[currentQuestionSubIndex];
 
-    // Guardar en memoria local
     userAnswers[question.id] = input.value;
-    userAnswers[question.type === 'text' ? 'short' : 'long'] = input.value; // Simplificación
+    userAnswers[question.type === 'text' ? 'short' : 'long'] = input.value;
 
-    // 1. Si es la última pregunta DE LA ETAPA (Step), guardamos en Supabase
     if (currentQuestionSubIndex === step.questions.length - 1) {
-
-        // Construimos el objeto hito
         const hitoData = {
             etapa: step.stage,
-            respuestas: { ...userAnswers }, // Copia de lo acumulado en este step
+            respuestas: { ...userAnswers },
             fecha: new Date().toISOString()
         };
 
         await guardarHitoJSON(supabase, user, step.field, hitoData);
-        userAnswers = {}; // Reset para el siguiente step
+        userAnswers = {};
 
-        // Mover a siguiente step
         if (currentStepIndex < module.steps.length - 1) {
             currentStepIndex++;
             currentQuestionSubIndex = 0;
@@ -199,27 +229,30 @@ async function nextStep(supabase, user) {
             return;
         }
     } else {
-        // Si no es la última del step, solo avanzamos pregunta
         currentQuestionSubIndex++;
         renderStep();
     }
 }
 
-function prevQuestion() {
-    // Simplificado: por ahora no implementamos "atrás" complejo entre steps ya guardados
+function prevStep() {
     if (currentQuestionSubIndex > 0) {
         currentQuestionSubIndex--;
         renderStep();
+    } else if (currentStepIndex > 0) {
+        // Allow going back to previous step? 
+        // Logic gets complex if data was already saved.
+        // For simplicity, we restart specific navigation or show alert.
+        alert("Ya has completado la etapa anterior. Continúa tu viaje hacia adelante.");
     } else {
-        alert("No se puede retroceder a una etapa ya guardada.");
+        // Go back to Intro?
+        isIntroView = true;
+        renderIntro();
     }
 }
 
 async function guardarHitoJSON(supabase, user, column, newObject) {
     console.log(`Guardando Hito en ${column}:`, newObject);
-
     try {
-        // 1. Leer array actual
         let { data: currentData } = await supabase
             .from('user_coaching_data')
             .select(column)
@@ -231,10 +264,8 @@ async function guardarHitoJSON(supabase, user, column, newObject) {
             currentArray = currentData[column];
         }
 
-        // 2. Push nuevo objeto
         currentArray.push(newObject);
 
-        // 3. Upsert array actualizado
         const { error } = await supabase
             .from('user_coaching_data')
             .upsert({
@@ -253,7 +284,6 @@ async function guardarHitoJSON(supabase, user, column, newObject) {
 async function finishModuleWithAI(supabase, user) {
     const input = document.getElementById('answerInput');
     if (input.value.trim()) {
-        // Guardar el último pedacito
         const module = modules[currentModuleIndex];
         const step = module.steps[currentStepIndex];
         const hitoData = {
@@ -264,7 +294,6 @@ async function finishModuleWithAI(supabase, user) {
         await guardarHitoJSON(supabase, user, step.field, hitoData);
     }
 
-    // Feedback UI
     const container = document.getElementById('questionContainer');
     container.innerHTML = `
         <div class="question-slide" style="text-align:center;">
@@ -273,13 +302,7 @@ async function finishModuleWithAI(supabase, user) {
         </div>
     `;
 
-    // LLAMADA A LA IA (Simulada usando fetch al endpoint api/chat o inyectando en chat principal)
-    // Para no complicar importando cosas privadas de main.js, usaremos un truco:
-    // Inyectaremos un mensaje especial en el chat principal oculto y dispararemos el evento.
-    // O mejor: Reusamos fetch a /api/chat directamente si podemos.
-
     try {
-        // Recuperamos toda la data para el contexto
         let { data: fullData } = await supabase
             .from('user_coaching_data')
             .select('linea_vida_hitos')
@@ -294,10 +317,10 @@ async function finishModuleWithAI(supabase, user) {
             Aquí están sus respuestas en formato JSON: ${historia}.
             
             Tu tarea:
-            1. Analiza emocionalmente sus respuestas (infancia, adolescencia, presente).
-            2. Detecta el patrón repetitivo (ej: "el nudo en la garganta").
-            3. Responde como el Mentor Alquimista: "Gracias por tu honestidad... veo que [patrón] de los [edad] años sigue presente...".
-            4. Sé breve, empático y profundo. Máximo 3 frases potentes.
+            1. Analiza emocionalmente sus respuestas.
+            2. Detecta el patrón repetitivo.
+            3. Responde como el Mentor Alquimista.
+            4. Sé breve, empático y profundo.
         `;
 
         const response = await fetch('/api/chat', {
@@ -305,14 +328,13 @@ async function finishModuleWithAI(supabase, user) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 message: promptAnalysis,
-                history: [] // Stateless para análisis puro
+                history: []
             })
         });
 
         const data = await response.json();
         const aiText = data.text;
 
-        // Mostrar resultado final en el modal
         container.innerHTML = `
             <div class="question-slide">
                 <h3 style="color:var(--color-acento)">✨ Tu Lectura de Alquimia</h3>
@@ -325,9 +347,10 @@ async function finishModuleWithAI(supabase, user) {
 
         document.getElementById('nextQBtn').style.display = 'none';
         document.getElementById('finishModuleBtn').style.display = 'none';
+        document.getElementById('prevQBtn').style.display = 'none'; // Hide prev button too
 
         document.getElementById('closeModuleBtn').onclick = () => {
-            // Desbloquear módulo 2
+            // Unlock next module
             localStorage.setItem(`module_2_unlocked`, 'true');
             alert("Módulo 1 completado. Has desbloqueado 'Herencia y Raíces'.");
             document.getElementById('moduloModal').style.display = 'none';
