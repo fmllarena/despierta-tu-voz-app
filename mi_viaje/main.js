@@ -265,11 +265,15 @@ function renderStep() {
 
 function renderLoading(msg) {
     const container = document.getElementById('questionContainer');
+    // We use a more elegant transition style
     container.innerHTML = `
-        <div class="question-slide" style="text-align:center; padding:40px;">
-            <div style="font-size:3em; animation:pulse 1s infinite;">🧠</div>
-            <h3>${msg}</h3>
-            <p>El Mentor está analizando tus respuestas previas...</p>
+        <div class="question-slide transition-screen" style="text-align:center; padding:60px 20px;">
+            <div class="loading-alchemy">
+                <div class="alchemy-circle"></div>
+                <div class="alchemy-icon">🔮</div>
+            </div>
+            <h3 style="margin-top:25px; color:var(--color-acento);">${msg}</h3>
+            <p style="opacity:0.7; font-style:italic;">Analizando tu historia para personalizar el siguiente paso...</p>
         </div>
     `;
     document.getElementById('nextQBtn').style.display = 'none';
@@ -311,8 +315,12 @@ async function nextStep(supabase, user) {
             // Check if NEXT step is dynamic and empty
             const nextStepObj = module.steps[currentStepIndex + 1];
             if (nextStepObj.dynamic && nextStepObj.questions.length === 0) {
-                renderLoading(`Preparando etapa: ${nextStepObj.stage}`);
-                await generateDynamicQuestions(nextStepObj, journeyContext);
+                renderLoading(`${nextStepObj.stage}`);
+                // Ensure at least 1.2 seconds to avoid "flash" and feel intentional
+                await Promise.all([
+                    generateDynamicQuestions(nextStepObj, journeyContext),
+                    new Promise(resolve => setTimeout(resolve, 1200))
+                ]);
             }
 
             currentStepIndex++;
