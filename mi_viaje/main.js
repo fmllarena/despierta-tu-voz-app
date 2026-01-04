@@ -323,12 +323,21 @@ async function nextStep(supabase, user) {
 }
 
 function prevStep() {
+    const module = modules[currentModuleIndex];
+
     if (currentQuestionSubIndex > 0) {
+        // Simple: go back one question within current step
         currentQuestionSubIndex--;
         renderStep();
     } else if (currentStepIndex > 0) {
-        alert("Ya has completado la etapa anterior. Continúa hacia adelante.");
+        // Go back to previous step's last question
+        currentStepIndex--;
+        const prevStep = module.steps[currentStepIndex];
+        currentQuestionSubIndex = prevStep.questions.length - 1;
+        renderStep();
     } else {
+        // We're at the very first question of the module
+        // Go back to intro
         isIntroView = true;
         renderIntro();
     }
