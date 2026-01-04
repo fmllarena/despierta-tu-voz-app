@@ -15,8 +15,8 @@ export const modules = [
                 stage: "La Infancia (La Semilla)",
                 instructions: "Viaja a tus primeros recuerdos. Cierra los ojos y busca ese momento.",
                 questions: [
-                    { id: "h1_child_mem", text: "¿Cómo te recuerdas de niño/a?", type: "long_text" },
-                    { id: "h1_child_emo", text: "¿Te gustaba estar con tus padres y familia o sentías que te debías esconder?", type: "text" }
+                    { id: "h1_child_mem", text: "¿Cómo te recuerdas de niño/a?¿Quién era la voz de autoridad?", type: "long_text" },
+                    { id: "h1_child_emo", text: "¿Te gustaba estar con tu familia o sentías que te debías esconder?", type: "text" }
                 ],
                 field: "linea_vida_hitos"
             },
@@ -24,16 +24,18 @@ export const modules = [
                 id: "step2",
                 stage: "La Adolescencia (El Cierre o la Apertura)",
                 instructions: "La época del cambio. Observa si hubo un juicio externo o interno.",
-                dynamic: true, // Indicates questions are AI-generated
-                questions: [], // Placeholder
+                questions: [
+                    { id: "h1_adol_voice", text: "Durante tu adolescencia, cuando el cuerpo cambia... ¿Hubo algún momento donde sentiste que 'perdiste' tu voz o dejaste de cantar por miedo al juicio?", type: "long_text" }
+                ],
                 field: "linea_vida_hitos"
             },
             {
                 id: "step3",
                 stage: "El Presente (La Toma de Conciencia)",
                 instructions: "Hoy, aquí y ahora. La verdad te hará libre.",
-                dynamic: true,
-                questions: [], // Placeholder
+                questions: [
+                    { id: "h1_pres_voice", text: "Hoy, cuando cantas para otros... ¿cómo te sientes? Seguro que disfrutas haciéndolo, pero...¿cantas para expresar o cantas para intentar agradar al que te oye?", type: "long_text" }
+                ],
                 field: "linea_vida_hitos"
             }
         ]
@@ -405,48 +407,58 @@ async function generateDynamicQuestions(stepObj, context) {
 async function guardarHitoJSON(supabase, user, column, newObject) {
     try {
         if (!user || !user.id) {
-            console.error("No hay usuario autenticado para guardar.");
+            console.error("❌ SUPABASE: No hay usuario autenticado.");
             return;
         }
 
-        console.log(`Supabase: Intentando guardar en columna '${column}' para usuario ${user.id}`);
+        console.log(`📡 SUPABASE: Intentando guardar en '${column}' para usuario ${user.id}...`, newObject);
 
-        // 1. Obtener datos actuales de forma segura
-        let { data: currentRecord, error: fetchError } = await supabase
+        // 1. Obtener registro actual
+        const { data: currentRecord, error: fetchError } = await supabase
             .from('user_coaching_data')
             .select(column)
             .eq('user_id', user.id)
             .maybeSingle();
 
         if (fetchError) {
-            console.warn("Aviso al recuperar datos previos:", fetchError.message);
+            console.error("❌ SUPABASE Error Fetch:", fetchError.message);
         }
 
-        // 2. Preparar el nuevo array
+        // 2. Preparar datos
         let currentArray = [];
         if (currentRecord && currentRecord[column] && Array.isArray(currentRecord[column])) {
             currentArray = currentRecord[column];
         }
-        currentArray.push(newObject);
 
-        // 3. Upsert (Inserta si no existe, actualiza si existe por user_id)
-        const { error: upsertError } = await supabase
+        // Evitar duplicados exactos si se lanza dos veces (pequeña validación)
+        const isDuplicate = currentArray.some(item =>
+            item.etapa === newObject.etapa &&
+            JSON.stringify(item.respuestas) === JSON.stringify(newObject.respuestas)
+        );
+
+        if (!isDuplicate) {
+            currentArray.push(newObject);
+        }
+
+        // 3. Upsert crítico
+        const { data: upsertData, error: upsertError } = await supabase
             .from('user_coaching_data')
             .upsert({
                 user_id: user.id,
                 [column]: currentArray,
                 updated_at: new Date().toISOString()
-            }, { onConflict: 'user_id' });
+            }, { onConflict: 'user_id' })
+            .select();
 
         if (upsertError) {
-            console.error("Error en upsert:", upsertError);
+            console.error("❌ SUPABASE Error Upsert:", upsertError);
             alert("Error al guardar en base de datos: " + upsertError.message);
             throw upsertError;
         }
 
-        console.log("✅ Éxito: Hito guardado en Supabase.");
+        console.log("✅ SUPABASE: Guardado exitoso.", upsertData);
     } catch (e) {
-        console.error("❌ Error guardarHitoJSON:", e);
+        console.error("❌ ERROR CRÍTICO GUARDADO:", e);
     }
 }
 
