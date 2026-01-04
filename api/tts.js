@@ -3,7 +3,7 @@ export default async function handler(req, res) {
         return res.status(405).json({ error: 'Method not allowed' });
     }
 
-    const { text, voiceName = 'es-ES-Studio-B' } = req.body;
+    const { text, voiceName = 'es-ES-Chirp3-HD-Aoede' } = req.body;
     const apiKey = process.env.GOOGLE_TTS_API_KEY;
 
     if (!apiKey) {

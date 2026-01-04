@@ -267,7 +267,7 @@ REGLA DE CONCISIÓN (MUY IMPORTANTE):
 PROTOCOLO DE DESPEDIDA (OBLIGATORIO):
 Si detectas que el usuario se está despidiendo (ej: "adiós", "hasta luego", "gracias por hoy"):
 1. RECUÉRDALE PRIMERO: Que debe pulsar el botón "Cerrar Sesión" de la parte superior para que toda la información de su progreso y alquimia de hoy quede guardada correctamente.
-2. LUEGO: Haz un cierre breve, cálido y alentador como el Mentor que eres.
+2. LUEGO: Haz un cierre breve y alentador como el Mentor que eres.
 `;
 
 
@@ -644,44 +644,7 @@ if (SpeechRecognition && micBtn) {
 }
 
 // --- LÓGICA DE TEXT TO SPEECH (TTS) PREMIUM ---
-const voiceSelect = document.getElementById('voiceSelect');
 let audioActual = null;
-
-async function cargarVoces() {
-    if (!voiceSelect) return;
-
-    try {
-        const response = await fetch('/api/voices');
-        const data = await response.json();
-
-        if (data.error) throw new Error(data.error);
-
-        voiceSelect.innerHTML = data.voices
-            .map(v => {
-                // Formateamos el nombre para que sea más legible
-                // Ej: es-ES-Studio-B -> Studio B (Neutral)
-                const parts = v.name.split('-');
-                const shortName = `${v.type} ${parts[parts.length - 1]} (${v.ssmlGender})`;
-                return `<option value="${v.name}">${shortName}</option>`;
-            })
-            .join('');
-
-        // Seleccionamos Studio-B por defecto si existe
-        const studioB = data.voices.findIndex(v => v.name === 'es-ES-Studio-B');
-        if (studioB !== -1) voiceSelect.selectedIndex = studioB;
-
-    } catch (e) {
-        console.error("Error cargando voces dinámicas:", e);
-        // Fallback a algunas básicas por si falla la API
-        voiceSelect.innerHTML = `
-            <option value="es-ES-Studio-B">Studio B (Masculino)</option>
-            <option value="es-ES-Neural2-A">Neural2 A (Femenino)</option>
-        `;
-    }
-}
-
-// Carga inicial
-cargarVoces();
 
 async function hablarTexto(texto, btn) {
     // Si ya está sonando, lo paramos
@@ -697,7 +660,7 @@ async function hablarTexto(texto, btn) {
 
     // Limpiamos el texto de markdown
     const textoLimpio = texto.replace(/#|\*|_|\[|\]|\(|\)/g, "").trim();
-    const voiceName = voiceSelect ? voiceSelect.value : 'es-ES-Studio-B';
+    const voiceName = 'es-ES-Chirp3-HD-Aoede'; // Identidad fija del Mentor
 
     try {
         const response = await fetch('/api/tts', {
