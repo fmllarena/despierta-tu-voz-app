@@ -1,7 +1,7 @@
 const ROLES_ALQUIMIA = {
     perfeccionista: {
         titulo: "El Perfeccionista",
-        lema: "Mi voz debe ser impecable. Si no es perfecta, mejor no sonar.",
+        lema: "Debo ser impecable. Si no es perfecto, mejor no hacerlo.",
         icon: "💎"
     },
     mediador: {
@@ -11,12 +11,12 @@ const ROLES_ALQUIMIA = {
     },
     invisible: {
         titulo: "El Invisible",
-        lema: "Prefiero no destacar. Si mi voz es pequeña, estoy a salvo.",
+        lema: "Prefiero no destacar. Si no me ven, estoy a salvo.",
         icon: "👻"
     },
     fuerte: {
         titulo: "El Fuerte",
-        lema: "Mi voz es mi escudo. Siempre suena potente pero rígida.",
+        lema: "Mi voz es mi escudo. Siempre sueno potente y algo rígido.",
         icon: "🛡️"
     }
 };
@@ -696,7 +696,7 @@ async function finishModuleWithAI(supabase, user) {
                 <p style="font-size:1.1em; line-height:1.6; padding:15px; background:#f9f9f9; border-radius:10px;">
                     ${data.text}
                 </p>
-                <button id="closeModuleBtn" class="nav-btn journey-btn" style="width:100%; margin-top:20px;">Finalizar Viaje</button>
+                <button id="closeModuleBtn" class="nav-btn journey-btn" style="width:100%; margin-top:20px;">Finalizar Módulo</button>
             </div>
         `;
 
