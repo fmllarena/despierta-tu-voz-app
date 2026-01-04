@@ -6,14 +6,14 @@ export const modules = [
         icon: "🪞",
         activity: "Línea de Vida Vocal",
         intro: {
-            text: "Esta actividad es la base de todo el proceso. No es solo recordar fechas, sino detectar qué \"huella\" dejaron en la voz.",
+            text: "Esta actividad es la base de todo el proceso. No es solo recordar fechas, sino detectar qué 'huella emocional' dejaron en ti.",
             buttonText: "¡Estoy preparado/a!"
         },
         steps: [
             {
                 id: "step1",
                 stage: "La Infancia (La Semilla)",
-                instructions: "Viaja a tu primer recuerdo vocal. Cierra los ojos y busca ese momento.",
+                instructions: "Viaja a tus primeros recuerdos. Cierra los ojos y busca ese momento.",
                 questions: [
                     { id: "h1_child_mem", text: "¿Cómo te recuerdas de niño/a?", type: "long_text" },
                     { id: "h1_child_emo", text: "¿Te gustaba estar con tus padres y familia o sentías que te debías esconder?", type: "text" }
@@ -340,16 +340,19 @@ async function generateDynamicQuestions(stepObj, context) {
     try {
         const historyText = JSON.stringify(context);
         const prompt = `
-            [SISTEMA: GENERACIÓN DE PREGUNTAS DE COACHING]
+            [SISTEMA: GENERACIÓN DE PREGUNTAS DE COACHING EMOCIONAL]
             Contexto del usuario hasta ahora: ${historyText}
             
-            Tu objetivo: Generar 2 preguntas de coaching vocal profundo para la siguiente etapa: "${stepObj.stage}".
+            Tu objetivo: Generar 2 preguntas de coaching emocional profundo para la siguiente etapa: "${stepObj.stage}".
             
-            Reglas:
+            REGLAS CRÍTICAS:
             1. Las preguntas deben estar personalizadas basándose en las respuestas anteriores del usuario.
-            2. Etapa Adolescencia: Enfócate en cambios, juicios y bloqueos.
-            3. Etapa Presente: Enfócate en la consciencia actual y la sanación.
-            4. Devuelve ÚNICAMENTE un array JSON con este formato:
+            2. PRIORIZA el estado emocional general, la infancia, las relaciones familiares y la autoestima.
+            3. NO fuerces preguntas sobre "voz" o "canto" a menos que el usuario haya mencionado específicamente estos temas.
+            4. Si el usuario mencionó algo sobre voz/expresión/canto, ENTONCES sí profundiza, pero desde lo emocional.
+            5. Etapa Adolescencia: Cambios emocionales, juicios sociales, identidad, bloqueos de expresión.
+            6. Etapa Presente: Consciencia actual, patrones emocionales repetitivos, sanación.
+            7. Devuelve ÚNICAMENTE un arraJSON:
             [
                 { "id": "dyn_1", "text": "¿Pregunta 1?", "type": "long_text" },
                 { "id": "dyn_2", "text": "¿Pregunta 2?", "type": "text" }
