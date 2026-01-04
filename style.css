@@ -687,6 +687,28 @@ input {
     resize: vertical;
 }
 
+/* Journey button styling (for intro/module screens) */
+.journey-btn {
+    background: var(--color-acento);
+    color: white;
+    border: none;
+    border-radius: 25px;
+    /* Pill shape */
+    padding: 12px 30px;
+    font-size: 1.1em;
+    font-weight: bold;
+    font-family: var(--fuente-principal);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(142, 125, 109, 0.3);
+}
+
+.journey-btn:hover {
+    background: #b8935f;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(142, 125, 109, 0.4);
+}
+
 .question-slide input:focus,
 .question-slide textarea:focus {
     border-color: var(--color-acento);
