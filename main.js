@@ -643,57 +643,93 @@ if (SpeechRecognition && micBtn) {
     console.log("Tu navegador no soporta reconocimiento de voz o falta el botón.");
 }
 
-// --- LÓGICA DE TEXT TO SPEECH (TTS) ---
-let voices = [];
+// --- LÓGICA DE TEXT TO SPEECH (TTS) PREMIUM ---
 const voiceSelect = document.getElementById('voiceSelect');
+let audioActual = null;
+
+// Voces Premium de Google Cloud (Studio y Neural2 son las mejores)
+const VOCES_PREMIUM = [
+    { name: 'Mentor (Premium Studio)', value: 'es-ES-Studio-B' },
+    { name: 'Mentora (Premium Neural)', value: 'es-ES-Neural2-A' },
+    { name: 'Mentor (Premium Neural)', value: 'es-ES-Neural2-B' },
+    { name: 'Vocal Alchemy (Neural)', value: 'es-ES-Neural2-C' }
+];
 
 function cargarVoces() {
-    voices = window.speechSynthesis.getVoices();
     if (!voiceSelect) return;
-
-    // Filtramos por voces en español y las añadimos al select
-    const vocesEsp = voices.filter(v => v.lang.includes('es'));
-    voiceSelect.innerHTML = vocesEsp
-        .map((v, i) => `<option value="${v.name}">${v.name} (${v.lang})</option>`)
+    voiceSelect.innerHTML = VOCES_PREMIUM
+        .map(v => `<option value="${v.value}">${v.name}</option>`)
         .join('');
 }
 
-// Chrome y otros necesitan este evento para cargar las voces
-if (window.speechSynthesis.onvoiceschanged !== undefined) {
-    window.speechSynthesis.onvoiceschanged = cargarVoces;
-}
-// Forzamos carga inicial (para Safari/Firefox)
+// Carga inicial
 cargarVoces();
 
-function hablarTexto(texto, btn) {
-    if (window.speechSynthesis.speaking) {
-        window.speechSynthesis.cancel();
+async function hablarTexto(texto, btn) {
+    // Si ya está sonando, lo paramos
+    if (audioActual && !audioActual.paused) {
+        audioActual.pause();
+        audioActual = null;
         btn.innerHTML = '🔊 Oír ejercicio';
         return;
     }
 
-    // Limpiamos el texto de markdown y símbolos raros
+    btn.innerHTML = '⏳ Generando...';
+    btn.disabled = true;
+
+    // Limpiamos el texto de markdown
     const textoLimpio = texto.replace(/#|\*|_|\[|\]|\(|\)/g, "").trim();
+    const voiceName = voiceSelect ? voiceSelect.value : 'es-ES-Studio-B';
 
-    const utterance = new SpeechSynthesisUtterance(textoLimpio);
+    try {
+        const response = await fetch('/api/tts', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text: textoLimpio, voiceName })
+        });
 
-    // Aplicamos la voz seleccionada
-    if (voiceSelect) {
-        const selectedVoiceName = voiceSelect.value;
-        const selectedVoice = voices.find(v => v.name === selectedVoiceName);
-        if (selectedVoice) utterance.voice = selectedVoice;
-    }
+        const data = await response.json();
+        if (data.error) throw new Error(data.error);
 
-    utterance.lang = 'es-ES';
-    utterance.rate = 0.85; // Calma
+        // El audio viene en base64
+        const audioBlob = b64toBlob(data.audioContent, 'audio/mp3');
+        const audioUrl = URL.createObjectURL(audioBlob);
 
-    utterance.onstart = () => {
-        btn.innerHTML = '⏸ Detener';
-    };
+        audioActual = new Audio(audioUrl);
 
-    utterance.onend = () => {
+        audioActual.onplay = () => {
+            btn.innerHTML = '⏸ Detener';
+            btn.disabled = false;
+        };
+
+        audioActual.onended = () => {
+            btn.innerHTML = '🔊 Oír ejercicio';
+            URL.revokeObjectURL(audioUrl);
+            audioActual = null;
+        };
+
+        audioActual.play();
+
+    } catch (error) {
+        console.error("Error TTS Premium:", error);
         btn.innerHTML = '🔊 Oír ejercicio';
-    };
+        btn.disabled = false;
+        alert("No he podido generar la voz premium. Verifica que la API Key esté configurada.");
+    }
+}
 
-    window.speechSynthesis.speak(utterance);
+// Utilidad para convertir base64 a Blob
+function b64toBlob(b64Data, contentType = '', sliceSize = 512) {
+    const byteCharacters = atob(b64Data);
+    const byteArrays = [];
+    for (let offset = 0; offset < byteCharacters.length; offset += sliceSize) {
+        const slice = byteCharacters.slice(offset, offset + sliceSize);
+        const byteNumbers = new Array(slice.length);
+        for (let i = 0; i < slice.length; i++) {
+            byteNumbers[i] = slice.charCodeAt(i);
+        }
+        const byteArray = new Uint8Array(byteNumbers);
+        byteArrays.push(byteArray);
+    }
+    return new Blob(byteArrays, { type: contentType });
 }
