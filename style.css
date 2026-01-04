@@ -674,6 +674,8 @@ input {
 .question-slide input,
 .question-slide textarea {
     width: 100%;
+    box-sizing: border-box;
+    /* Fixes width calculation including padding */
     padding: 15px;
     font-size: 1.1em;
     border: 2px solid #eee;
