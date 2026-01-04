@@ -45,27 +45,39 @@ export default async function handler(req, res) {
 
     if (!process.env.GEMINI_API_KEY) {
       console.error("CRÍTICO: GEMINI_API_KEY no configurada en Vercel.");
-      return res.status(500).json({ error: "La API Key no está configurada en el servidor." });
+      return res.status(500).json({ error: "La API Key no está configurada en el servidor de Vercel (Environment Variables)." });
     }
 
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-    // Cambiamos a gemini-pro para máxima compatibilidad con llaves de API antiguas o restricciones regionales
-    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+
+    // Probamos con gemini-1.5-flash-latest que suele ser más resiliente en despliegues serverless
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" });
 
     let textResponse = "";
 
-    if (history && history.length > 0) {
-      const chat = model.startChat({ history });
-      const result = await chat.sendMessage(prompt);
-      textResponse = result.response.text();
-    } else {
-      const result = await model.generateContent(prompt);
+    try {
+      if (history && history.length > 0) {
+        const chat = model.startChat({ history });
+        const result = await chat.sendMessage(prompt);
+        textResponse = result.response.text();
+      } else {
+        const result = await model.generateContent(prompt);
+        textResponse = result.response.text();
+      }
+    } catch (modelError) {
+      console.error("Error específico del modelo:", modelError);
+      // Si falla, intentamos con gemini-1.5-flash (sin -latest) como fallback inmediato
+      const backupModel = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+      const result = await backupModel.generateContent(prompt);
       textResponse = result.response.text();
     }
 
     return res.status(200).json({ text: textResponse });
   } catch (error) {
     console.error("Error detallado en /api/gemini:", error);
-    return res.status(500).json({ error: `Error interno: ${error.message}` });
+    return res.status(500).json({
+      error: `Error interno de servidor: ${error.message}`,
+      details: error.stack
+    });
   }
 }
