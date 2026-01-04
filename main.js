@@ -363,8 +363,17 @@ function appendMessage(text, type, id = null) {
             console.error("Error al parear Markdown:", e);
             htmlContent = text;
         }
-
         messageDiv.innerHTML = htmlContent;
+
+        // --- BOTÓN DE VOZ (TTS) ---
+        // El usuario puede elegir escuchar el texto del botiquín
+        if (type === 'ia-botiquin') {
+            const voiceBtn = document.createElement('button');
+            voiceBtn.className = 'tts-btn';
+            voiceBtn.innerHTML = '🔊 Oír Guía';
+            voiceBtn.onclick = () => hablarTexto(text, voiceBtn);
+            messageDiv.appendChild(voiceBtn);
+        }
     } else {
         // Texto plano para el usuario (seguridad) y mantenemos espacios
         messageDiv.innerText = text;
@@ -454,6 +463,7 @@ if (botiquinBtn) {
             1. Un ejercicio de respiración o relajación de 2 minutos específico para mi bloqueo.
             2. Un consejo técnico rápido para mi voz.
             3. Una frase de poder o anclaje emocional que me ayude a entrar en mi eje.
+            4. Una recomendación de música o frecuencia específica (proporcióname un LINK de YouTube completo) que me ayude a entrar en mi eje.
             Sé directo, cálido y efectivo.
             `;
 
@@ -628,4 +638,28 @@ if (SpeechRecognition && micBtn) {
     console.log("Tu navegador no soporta reconocimiento de voz o falta el botón.");
 }
 
+// --- LÓGICA DE TEXT TO SPEECH (TTS) ---
+function hablarTexto(texto, btn) {
+    if (window.speechSynthesis.speaking) {
+        window.speechSynthesis.cancel();
+        btn.innerHTML = '🔊 Oír Guía';
+        return;
+    }
 
+    // Limpiamos el texto de markdown para que la voz no lea símbolos
+    const textoLimpio = texto.replace(/#|\*|_|\[|\]|\(|\)/g, "");
+
+    const utterance = new SpeechSynthesisUtterance(textoLimpio);
+    utterance.lang = 'es-ES';
+    utterance.rate = 0.9; // Un poco más lento para calma
+
+    utterance.onstart = () => {
+        btn.innerHTML = '⏹ Detener';
+    };
+
+    utterance.onend = () => {
+        btn.innerHTML = '🔊 Oír Guía';
+    };
+
+    window.speechSynthesis.speak(utterance);
+}
