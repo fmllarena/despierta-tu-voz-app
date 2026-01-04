@@ -4,80 +4,64 @@ export const modules = [
         title: "El Espejo del Pasado",
         description: "Reconoce tu historia para liberar tu voz.",
         icon: "🪞",
-        activity: "Línea de Tiempo de Vida",
-        questions: [
-            { id: "h1_q1", text: "¿Qué evento de tu infancia sientes que marcó tu confianza al cantar hoy?", type: "text", field: "linea_vida_hitos" },
-            { id: "h1_q2", text: "¿Qué emociones asocias a ese recuerdo?", type: "text", field: "linea_vida_hitos" }
-        ]
-    },
-    {
-        id: 2,
-        title: "Herencia y Raíces",
-        description: "Sana los patrones familiares heredados.",
-        icon: "🌳",
-        activity: "Árbol Genealógico Emocional",
-        questions: [
-            { id: "h2_q1", text: "¿Había patrones de silencio o crítica en tu hogar?", type: "text", field: "arbol_genealogico" },
-            { id: "h2_q2", text: "¿Qué emociones eran consideradas 'inaceptables' en tu familia?", type: "text", field: "arbol_genealogico" }
-        ]
-    },
-    {
-        id: 3,
-        title: "El Personaje",
-        description: "Desmonta los roles que limitan tu expresión.",
-        icon: "🎭",
-        activity: "Identificación de Roles",
-        questions: [
-            { id: "h3_q1", text: "¿Eras el 'perfeccionista' o el 'mediador'?", type: "text", field: "roles_familiares" },
-            { id: "h3_q2", text: "¿Cómo influye ese rol en tu búsqueda de aprobación al cantar?", type: "text", field: "roles_familiares" }
-        ]
-    },
-    {
-        id: 4,
-        title: "Sanación de la Voz",
-        description: "Libera las emociones reprimidas con amor.",
-        icon: "💌",
-        activity: "Cartas de Alquimia",
-        questions: [
-            { id: "h4_q1", text: "¿Qué consejo le darías a tu yo adolescente basándote en lo que sabes hoy?", type: "long_text", field: "carta_yo_pasado" },
-            { id: "h4_q2", text: "¿Qué necesitas de tus padres en el presente para sentirte validado?", type: "long_text", field: "carta_padres" }
-        ]
-    },
-    {
-        id: 5,
-        title: "Tu Nueva Identidad",
-        description: "Transforma tu narrativa y alza el vuelo.",
-        icon: "🦅",
-        activity: "Alquimia y Propósito",
-        questions: [
-            { id: "h5_q1", text: "Cambia 'Mi voz suena fea' por una creencia potenciadora:", type: "text", field: "inventario_creencias" },
-            { id: "h5_q2", text: "Define tu visión ideal del mundo en 25 palabras:", type: "text", field: "proposito_vida" },
-            { id: "h5_q3", text: "Visión a 10 años: ¿Cómo suena tu voz libre?", type: "text", field: "proposito_vida" }
+        activity: "Línea de Vida Vocal",
+        steps: [
+            {
+                id: "step1",
+                stage: "La Infancia (La Semilla)",
+                instructions: "Viaja a tu primer recuerdo vocal. Cierra los ojos y busca ese momento.",
+                questions: [
+                    { id: "h1_child_mem", text: "¿Qué es lo primero que recuerdas que te dijeran sobre tu voz cuando eras niño/a?", type: "long_text" },
+                    { id: "h1_child_emo", text: "¿Sentiste que tu voz era un lugar seguro o algo que debías esconder?", type: "text" }
+                ],
+                field: "linea_vida_hitos"
+            },
+            {
+                id: "step2",
+                stage: "La Adolescencia (El Cierre o la Apertura)",
+                instructions: "La época del cambio. Observa si hubo un juicio externo o interno.",
+                questions: [
+                    { id: "h1_teen_mem", text: "¿Hubo algún momento donde sentiste que 'perdiste' tu voz o dejaste de cantar por miedo?", type: "long_text" },
+                    { id: "h1_teen_body", text: "¿En qué parte del cuerpo sientes hoy la tensión de ese recuerdo? (Garganta, pecho, estómago...)", type: "text" }
+                ],
+                field: "linea_vida_hitos"
+            },
+            {
+                id: "step3",
+                stage: "El Presente (La Toma de Conciencia)",
+                instructions: "Hoy, aquí y ahora. La verdad te hará libre.",
+                questions: [
+                    { id: "h1_now_mask", text: "Cuando cantas para otros... ¿A quién intentas impresionar o de quién te escondes?", type: "text" },
+                    { id: "h1_now_heal", text: "Escribe una frase de perdón para ese niño/a que no se atrevió a sonar.", type: "long_text" }
+                ],
+                field: "linea_vida_hitos"
+            }
         ]
     }
+    // Otros módulos se irán implementando...
 ];
 
 let currentModuleIndex = 0;
-let currentQuestionIndex = 0;
-let userAnswers = {}; // Cache local temporal
+let currentStepIndex = 0;
+let currentQuestionSubIndex = 0;
+let userAnswers = {}; // Cache local temporal para el paso actual
 
 export function initJourney(supabaseClient, user) {
-    console.log("Iniciando Mi Viaje...", user);
+    console.log("Iniciando Mi Viaje 2.0...", user);
     renderRoadmap();
 
-    // Event Listeners
+    // UI Events
     document.querySelector('.close-viaje').onclick = () => {
         document.getElementById('viajeModal').style.display = 'none';
     };
     document.querySelector('.close-modulo').onclick = () => {
         document.getElementById('moduloModal').style.display = 'none';
-        document.getElementById('viajeModal').style.display = 'flex'; // Volver al mapa
+        document.getElementById('viajeModal').style.display = 'flex';
     };
 
-    // Navegación de preguntas
-    document.getElementById('nextQBtn').onclick = () => nextQuestion(supabaseClient, user);
-    document.getElementById('prevQBtn').onclick = prevQuestion;
-    document.getElementById('finishModuleBtn').onclick = () => finishModule(supabaseClient, user);
+    document.getElementById('nextQBtn').onclick = () => nextStep(supabaseClient, user);
+    document.getElementById('prevQBtn').onclick = prevStep;
+    document.getElementById('finishModuleBtn').onclick = () => finishModuleWithAI(supabaseClient, user);
 }
 
 function renderRoadmap() {
@@ -85,13 +69,11 @@ function renderRoadmap() {
     container.innerHTML = '';
 
     modules.forEach((mod, index) => {
-        const isUnlocked = index === 0 || localStorage.getItem(`module_${index}_unlocked`); // Lógica simple por ahora
+        const isUnlocked = index === 0 || localStorage.getItem(`module_${mod.id}_unlocked`);
 
         const node = document.createElement('div');
         node.className = `roadmap-node ${isUnlocked ? 'unlocked' : 'locked'}`;
-        node.onclick = () => {
-            if (isUnlocked) openModule(index);
-        };
+        node.onclick = () => { if (isUnlocked) openModule(index); };
 
         node.innerHTML = `
             <div class="node-icon">${mod.icon}</div>
@@ -103,7 +85,6 @@ function renderRoadmap() {
         `;
         container.appendChild(node);
 
-        // Línea conectora
         if (index < modules.length - 1) {
             const line = document.createElement('div');
             line.className = 'roadmap-line';
@@ -114,104 +95,250 @@ function renderRoadmap() {
 
 function openModule(index) {
     currentModuleIndex = index;
-    currentQuestionIndex = 0;
-    userAnswers = {}; // Resetear respuestas temporales para este módulo
+    currentStepIndex = 0; // Stage (Infancia, etc)
+    currentQuestionSubIndex = 0; // Pregunta dentro del stage (1 o 2)
+    userAnswers = {};
 
     document.getElementById('viajeModal').style.display = 'none';
     document.getElementById('moduloModal').style.display = 'flex';
 
-    renderQuestion();
+    // Resetear container
+    document.getElementById('questionContainer').innerHTML = '';
+
+    renderStep();
 }
 
-function renderQuestion() {
+function renderStep() {
     const module = modules[currentModuleIndex];
-    const question = module.questions[currentQuestionIndex];
+    if (!module.steps) {
+        // Fallback para otros módulos antiguos si los hubiera
+        alert("Módulo en construcción");
+        return;
+    }
+
+    const step = module.steps[currentStepIndex];
+    const question = step.questions[currentQuestionSubIndex];
+
+    // Calcular progreso total en el módulo
+    // (Simplificación: stages * questions per stage)
+    const totalQ = module.steps.reduce((acc, s) => acc + s.questions.length, 0);
+    const currentAbsoluteQ = module.steps.slice(0, currentStepIndex).reduce((acc, s) => acc + s.questions.length, 0) + currentQuestionSubIndex + 1;
+    const progressPercent = (currentAbsoluteQ / totalQ) * 100;
+
+    // Check if Last Question of entire module
+    const isLastOfModule = (currentStepIndex === module.steps.length - 1) && (currentQuestionSubIndex === step.questions.length - 1);
+
+    document.getElementById('nextQBtn').style.display = isLastOfModule ? 'none' : 'inline-block';
+    document.getElementById('finishModuleBtn').style.display = isLastOfModule ? 'inline-block' : 'none';
+
+    // Inject Progress Bar HTML if not exists
+    let progressBar = document.querySelector('.module-progress-bar');
+    if (!progressBar) {
+        const pContainer = document.createElement('div');
+        pContainer.className = 'module-progress';
+        pContainer.innerHTML = '<div class="module-progress-bar"></div>';
+        document.getElementById('questionContainer').before(pContainer);
+        progressBar = pContainer.querySelector('.module-progress-bar');
+    }
+    progressBar.style.width = `${progressPercent}%`;
+
     const container = document.getElementById('questionContainer');
-
-    const isLast = currentQuestionIndex === module.questions.length - 1;
-
-    document.getElementById('nextQBtn').style.display = isLast ? 'none' : 'inline-block';
-    document.getElementById('finishModuleBtn').style.display = isLast ? 'inline-block' : 'none';
-    document.getElementById('prevQBtn').disabled = currentQuestionIndex === 0;
-
     container.innerHTML = `
         <div class="question-slide">
-            <h4>${module.activity} (${currentQuestionIndex + 1}/${module.questions.length})</h4>
+            <h4>${step.stage}</h4>
+            <p style="color:#666; font-style:italic; margin-bottom:15px;">${step.instructions}</p>
             <h3 class="question-text">${question.text}</h3>
             ${question.type === 'long_text'
-            ? `<textarea id="answerInput" placeholder="Escribe tu reflexión aquí..."></textarea>`
+            ? `<textarea id="answerInput" placeholder="Escribe aquí tu sentir..."></textarea>`
             : `<input type="text" id="answerInput" placeholder="Tu respuesta...">`
         }
         </div>
     `;
 
-    // Auto-focus
+    // Botón Siguiente texto dinámico
+    const nextBtn = document.getElementById('nextQBtn');
+    if (currentQuestionSubIndex === step.questions.length - 1 && currentStepIndex < module.steps.length - 1) {
+        nextBtn.innerText = "Guardar Etapa ➤";
+    } else {
+        nextBtn.innerText = "Siguiente";
+    }
+
     setTimeout(() => document.getElementById('answerInput').focus(), 100);
 }
 
-async function nextQuestion(supabase, user) {
+async function nextStep(supabase, user) {
     const input = document.getElementById('answerInput');
-    if (!input.value.trim()) return alert("Por favor, escribe una respuesta para avanzar.");
+    if (!input.value.trim()) return alert("Por favor, escribe algo para continuar. Tu voz importa.");
 
-    // Guardar temporalmente
-    const currentQ = modules[currentModuleIndex].questions[currentQuestionIndex];
-    userAnswers[currentQ.id] = input.value;
+    const module = modules[currentModuleIndex];
+    const step = module.steps[currentStepIndex];
+    const question = step.questions[currentQuestionSubIndex];
 
-    // Guardar en Supabase (cada paso cuenta)
-    await saveProgress(supabase, user, currentQ.field, input.value);
+    // Guardar en memoria local
+    userAnswers[question.id] = input.value;
+    userAnswers[question.type === 'text' ? 'short' : 'long'] = input.value; // Simplificación
 
-    currentQuestionIndex++;
-    renderQuestion();
+    // 1. Si es la última pregunta DE LA ETAPA (Step), guardamos en Supabase
+    if (currentQuestionSubIndex === step.questions.length - 1) {
+
+        // Construimos el objeto hito
+        const hitoData = {
+            etapa: step.stage,
+            respuestas: { ...userAnswers }, // Copia de lo acumulado en este step
+            fecha: new Date().toISOString()
+        };
+
+        await guardarHitoJSON(supabase, user, step.field, hitoData);
+        userAnswers = {}; // Reset para el siguiente step
+
+        // Mover a siguiente step
+        if (currentStepIndex < module.steps.length - 1) {
+            currentStepIndex++;
+            currentQuestionSubIndex = 0;
+            renderStep();
+            return;
+        }
+    } else {
+        // Si no es la última del step, solo avanzamos pregunta
+        currentQuestionSubIndex++;
+        renderStep();
+    }
 }
 
 function prevQuestion() {
-    if (currentQuestionIndex > 0) {
-        currentQuestionIndex--;
-        renderQuestion();
+    // Simplificado: por ahora no implementamos "atrás" complejo entre steps ya guardados
+    if (currentQuestionSubIndex > 0) {
+        currentQuestionSubIndex--;
+        renderStep();
+    } else {
+        alert("No se puede retroceder a una etapa ya guardada.");
     }
 }
 
-async function finishModule(supabase, user) {
-    const input = document.getElementById('answerInput');
-    if (input && input.value.trim()) {
-        const currentQ = modules[currentModuleIndex].questions[currentQuestionIndex];
-        await saveProgress(supabase, user, currentQ.field, input.value);
-    }
-
-    // Desbloquear siguiente módulo
-    if (currentModuleIndex < modules.length - 1) {
-        localStorage.setItem(`module_${currentModuleIndex + 1}_unlocked`, 'true');
-    }
-
-    alert("¡Módulo completado! Tus respuestas han sido guardadas en tu viaje.");
-    document.getElementById('moduloModal').style.display = 'none';
-    document.getElementById('viajeModal').style.display = 'flex';
-    renderRoadmap();
-}
-
-async function saveProgress(supabase, user, field, value) {
-    console.log(`Guardando ${field}:`, value);
-
-    // Para simplificar, estamos guardando el último valor.
-    // En una implementación real más compleja, podríamos querer hacer append.
-    // Como Supabase upsert reemplaza, si es JSONB podríamos hacer merge, 
-    // pero aquí asumiremos que el campo es texto o JSON simple y guardamos el objeto completo si es complejo.
-
-    // Nota: La estructura solicitada tenía campos específicos. 
-    // Para roles_familiares, etc., si queremos guardar histórico, necesitaríamos lógica extra.
-    // Por ahora, upsert básico.
+async function guardarHitoJSON(supabase, user, column, newObject) {
+    console.log(`Guardando Hito en ${column}:`, newObject);
 
     try {
+        // 1. Leer array actual
+        let { data: currentData } = await supabase
+            .from('user_coaching_data')
+            .select(column)
+            .eq('user_id', user.id)
+            .single();
+
+        let currentArray = [];
+        if (currentData && currentData[column] && Array.isArray(currentData[column])) {
+            currentArray = currentData[column];
+        }
+
+        // 2. Push nuevo objeto
+        currentArray.push(newObject);
+
+        // 3. Upsert array actualizado
         const { error } = await supabase
             .from('user_coaching_data')
             .upsert({
                 user_id: user.id,
-                [field]: value,
+                [column]: currentArray,
                 updated_at: new Date()
-            }, { onConflict: 'user_id' }); // Asegura que actualice la fila del usuario
+            }, { onConflict: 'user_id' });
 
         if (error) throw error;
-    } catch (err) {
-        console.error("Error guardando progreso:", err);
+
+    } catch (e) {
+        console.error("Error guardando hito:", e);
+    }
+}
+
+async function finishModuleWithAI(supabase, user) {
+    const input = document.getElementById('answerInput');
+    if (input.value.trim()) {
+        // Guardar el último pedacito
+        const module = modules[currentModuleIndex];
+        const step = module.steps[currentStepIndex];
+        const hitoData = {
+            etapa: step.stage,
+            respuestas: { ...userAnswers, ultimo: input.value },
+            fecha: new Date().toISOString()
+        };
+        await guardarHitoJSON(supabase, user, step.field, hitoData);
+    }
+
+    // Feedback UI
+    const container = document.getElementById('questionContainer');
+    container.innerHTML = `
+        <div class="question-slide" style="text-align:center;">
+            <h3>🔮 Conectando con el Mentor...</h3>
+            <p>Analizando tu historia vocal...</p>
+        </div>
+    `;
+
+    // LLAMADA A LA IA (Simulada usando fetch al endpoint api/chat o inyectando en chat principal)
+    // Para no complicar importando cosas privadas de main.js, usaremos un truco:
+    // Inyectaremos un mensaje especial en el chat principal oculto y dispararemos el evento.
+    // O mejor: Reusamos fetch a /api/chat directamente si podemos.
+
+    try {
+        // Recuperamos toda la data para el contexto
+        let { data: fullData } = await supabase
+            .from('user_coaching_data')
+            .select('linea_vida_hitos')
+            .eq('user_id', user.id)
+            .single();
+
+        const historia = JSON.stringify(fullData?.linea_vida_hitos || []);
+
+        const promptAnalysis = `
+            [SISTEMA: ANÁLISIS DE HITO FINALIZADO]
+            El usuario ha completado el Módulo 1: "Línea de Vida".
+            Aquí están sus respuestas en formato JSON: ${historia}.
+            
+            Tu tarea:
+            1. Analiza emocionalmente sus respuestas (infancia, adolescencia, presente).
+            2. Detecta el patrón repetitivo (ej: "el nudo en la garganta").
+            3. Responde como el Mentor Alquimista: "Gracias por tu honestidad... veo que [patrón] de los [edad] años sigue presente...".
+            4. Sé breve, empático y profundo. Máximo 3 frases potentes.
+        `;
+
+        const response = await fetch('/api/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                message: promptAnalysis,
+                history: [] // Stateless para análisis puro
+            })
+        });
+
+        const data = await response.json();
+        const aiText = data.text;
+
+        // Mostrar resultado final en el modal
+        container.innerHTML = `
+            <div class="question-slide">
+                <h3 style="color:var(--color-acento)">✨ Tu Lectura de Alquimia</h3>
+                <p style="font-size:1.1em; line-height:1.6; padding:15px; background:#f9f9f9; border-radius:10px;">
+                    ${aiText}
+                </p>
+                <button id="closeModuleBtn" class="nav-btn journey-btn" style="width:100%; margin-top:20px;">Guardar y Volver al Mapa</button>
+            </div>
+        `;
+
+        document.getElementById('nextQBtn').style.display = 'none';
+        document.getElementById('finishModuleBtn').style.display = 'none';
+
+        document.getElementById('closeModuleBtn').onclick = () => {
+            // Desbloquear módulo 2
+            localStorage.setItem(`module_2_unlocked`, 'true');
+            alert("Módulo 1 completado. Has desbloqueado 'Herencia y Raíces'.");
+            document.getElementById('moduloModal').style.display = 'none';
+            document.getElementById('viajeModal').style.display = 'flex';
+            renderRoadmap();
+        };
+
+    } catch (e) {
+        console.error("Error AI analysis:", e);
+        alert("Módulo guardado, pero el Mentor está meditando (Error de conexión).");
+        document.getElementById('moduloModal').style.display = 'none';
+        renderRoadmap();
     }
 }

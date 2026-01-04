@@ -458,11 +458,36 @@ input {
     border: 1px solid #d4af37;
     color: #bfa05f;
     font-weight: bold;
+    border-radius: 20px;
+    /* Pill shape */
+    padding: 8px 15px;
+    /* Match other buttons */
+    background: transparent;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-family: var(--fuente-principal);
 }
 
 .journey-btn:hover {
     background: #d4af37;
     color: white;
+}
+
+/* Modulo Progress Bar */
+.module-progress {
+    width: 100%;
+    background: #f0f0f0;
+    height: 6px;
+    border-radius: 3px;
+    margin-bottom: 20px;
+    overflow: hidden;
+}
+
+.module-progress-bar {
+    height: 100%;
+    background: var(--color-acento);
+    width: 0%;
+    transition: width 0.5s ease;
 }
 
 .journey-modal {
