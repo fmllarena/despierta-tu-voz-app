@@ -1,3 +1,30 @@
+const ROLES_ALQUIMIA = {
+    perfeccionista: {
+        titulo: "El Perfeccionista",
+        lema: "Mi voz debe ser impecable. Si no es perfecta, mejor no sonar.",
+        impacto: "Tensión y control excesivo",
+        icon: "💎"
+    },
+    mediador: {
+        titulo: "El Mediador",
+        lema: "Canto para agradar y suavizar tensiones. Mi voz es complaciente.",
+        impacto: "Voz aireada y falta de límites",
+        icon: "🕊️"
+    },
+    invisible: {
+        titulo: "El Invisible",
+        lema: "Prefiero no destacar. Si mi voz es pequeña, estoy a salvo.",
+        impacto: "Volumen bajo y retraimiento",
+        icon: "👻"
+    },
+    fuerte: {
+        titulo: "El Fuerte",
+        lema: "Mi voz es mi escudo. Siempre suena potente pero rígida.",
+        impacto: "Rigidez y falta de matices",
+        icon: "🛡️"
+    }
+};
+
 export const modules = [
     {
         id: 1,
@@ -86,7 +113,31 @@ export const modules = [
         description: "¿Quién crees que eres cuando cantas?",
         icon: "🎭",
         activity: "Máscaras Sonoras",
-        steps: []
+        intro: {
+            text: "Aquí identificarás el 'rol' que has adoptado para sobrevivir. Ese papel que hoy está limitando tu voz natural.",
+            buttonText: "Descubrir mi máscara"
+        },
+        steps: [
+            {
+                id: "h3_step1",
+                stage: "La Pantalla de Selección",
+                instructions: "Elige la tarjeta con la que más te identifiques hoy.",
+                questions: [
+                    { id: "h3_role_select", text: "¿Cuál es tu personaje dominante?", type: "roles_selection" }
+                ],
+                field: "roles_familiares"
+            },
+            {
+                id: "h3_step2",
+                stage: "Dinámica de Profundización",
+                instructions: "Observa las sombras detrás de tu máscara.",
+                questions: [
+                    { id: "h3_secondary_gain", text: "¿Qué crees que ganas (o de qué te proteges) cuando actúas desde este personaje?", type: "long_text" },
+                    { id: "h3_vocal_cost", text: "Cuando este personaje toma el control al cantar, ¿qué es lo primero que sacrificas: tu brillo, tu potencia, tu emoción o tu libertad?", type: "long_text" }
+                ],
+                field: "roles_familiares"
+            }
+        ]
     },
     {
         id: 4,
@@ -275,17 +326,76 @@ function renderStep() {
     progressBar.style.width = `${progressPercent}%`;
 
     const container = document.getElementById('questionContainer');
-    container.innerHTML = `
-        <div class="question-slide">
-            <h4>${step.stage}</h4>
-            <p style="color:#666; font-style:italic; margin-bottom:15px;">${step.instructions}</p>
-            <h3 class="question-text">${question.text}</h3>
-            ${question.type === 'long_text'
-            ? `<textarea id="answerInput" placeholder="Escribe aquí tu sentir..."></textarea>`
-            : `<input type="text" id="answerInput" placeholder="Tu respuesta...">`
+
+    if (question.type === 'roles_selection') {
+        // --- INTERFAZ ESPECIAL DE TARJETAS DE ROLES ---
+        document.getElementById('nextQBtn').style.display = 'none';
+
+        let cardsHtml = '<div class="role-cards-container">';
+        for (const [key, rol] of Object.entries(ROLES_ALQUIMIA)) {
+            cardsHtml += `
+                <div class="role-card" onclick="window.seleccionarRol('${key}')">
+                    <div class="role-card-icon">${rol.icon}</div>
+                    <h3>${rol.titulo}</h3>
+                    <p class="role-card-lema">"${rol.lema}"</p>
+                    <div class="role-card-impacto">Impacto: ${rol.impacto}</div>
+                </div>
+            `;
         }
-        </div>
-    `;
+        cardsHtml += '</div>';
+
+        container.innerHTML = `
+            <div class="question-slide">
+                <h4>${step.stage}</h4>
+                <p style="color:#666; font-style:italic; margin-bottom:20px;">${step.instructions}</p>
+                ${cardsHtml}
+            </div>
+        `;
+
+        // Exponemos la función globalmente para los clics
+        window.seleccionarRol = async (idRol) => {
+            const rolElegido = ROLES_ALQUIMIA[idRol];
+            const dataParaGuardar = {
+                rol_nombre: rolElegido.titulo,
+                impacto_detectado: rolElegido.impacto,
+                fecha_identificacion: new Date().toISOString()
+            };
+
+            // Guardamos selección en respuestas para el flujo local
+            userAnswers[question.id] = rolElegido.titulo;
+
+            // Guardar en Supabase (usamos la misma lógica que nextStep)
+            const hitoData = {
+                etapa: "Selección de Rol",
+                respuestas: { ...userAnswers },
+                fecha: new Date().toISOString()
+            };
+
+            const supabase = window.supabase;
+            const { data: { user } } = await supabase.auth.getUser();
+
+            await guardarHitoJSON(supabase, user, step.field, hitoData);
+
+            // Avanzamos automáticamente
+            currentQuestionSubIndex++;
+            renderStep();
+        };
+
+    } else {
+        // --- RENDER ESTÁNDAR (TEXTO) ---
+        container.innerHTML = `
+            <div class="question-slide">
+                <h4>${step.stage}</h4>
+                <p style="color:#666; font-style:italic; margin-bottom:15px;">${step.instructions}</p>
+                <h3 class="question-text">${question.text}</h3>
+                ${question.type === 'long_text'
+                ? `<textarea id="answerInput" placeholder="Escribe aquí tu sentir..."></textarea>`
+                : `<input type="text" id="answerInput" placeholder="Tu respuesta...">`
+            }
+            </div>
+        `;
+        setTimeout(() => document.getElementById('answerInput')?.focus(), 100);
+    }
 
     const nextBtn = document.getElementById('nextQBtn');
     if (currentQuestionSubIndex === step.questions.length - 1 && currentStepIndex < module.steps.length - 1) {

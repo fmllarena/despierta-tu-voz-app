@@ -13,8 +13,14 @@ HERRAMIENTAS:
   `,
     alchemy_analysis: `
 [SISTEMA: ANÁLISIS FINAL DE ALQUIMIA]
-Módulo completado. 
-Tarea: Genera un análisis muy breve de exactamente 3 frases detectando sus bloqueos emocionales y dándole fuerza/validación. Usa un lenguaje poético y empoderador.
+Has completado un módulo del viaje. 
+
+TAREA:
+1. Analiza el contexto para detectar en qué módulo estamos (1: Espejo, 2: Herencia, 3: Personaje).
+2. Si es el Módulo 3 (El Personaje), usa este enfoque OBLIGATORIO:
+   "Reconocer que has estado usando la máscara de [Nombre del Rol] es el primer paso para quitártela. Este personaje te sirvió en el pasado para protegerte, pero hoy tu voz ya no lo necesita para estar a salvo. En nuestro próximo ejercicio, vamos a cantar desde tu esencia, no desde tu máscara."
+   - Personaliza el [Nombre del Rol] con el que el usuario haya elegido (Perfeccionista, Mediador, Invisible o Fuerte).
+3. Para otros módulos, genera un análisis breve de exactamente 3 frases detectando sus bloqueos y dando validación poética.
   `,
     generate_questions: `
 [SISTEMA: GENERACIÓN DE PREGUNTAS DE COACHING EMOCIONAL]
