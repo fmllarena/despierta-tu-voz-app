@@ -456,23 +456,16 @@ input {
 
 
 /* --- MI VIAJE (ROADMAP) STYLES --- */
-.journey-btn {
-    border: 1px solid #d4af37;
-    color: #bfa05f;
-    font-weight: bold;
-    border-radius: 20px;
-    /* Pill shape */
-    padding: 8px 15px;
-    /* Match other buttons */
+#viajeBtn {
+    border: 1px solid var(--color-acento);
+    color: var(--color-acento);
     background: transparent;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    font-family: var(--fuente-principal);
 }
 
-.journey-btn:hover {
-    background: #d4af37;
-    color: white;
+#viajeBtn:hover {
+    background: var(--color-acento);
+    color: white !important;
+    box-shadow: 0 0 10px var(--color-acento);
 }
 
 /* Modulo Progress Bar */

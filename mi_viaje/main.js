@@ -15,8 +15,8 @@ export const modules = [
                 stage: "La Infancia (La Semilla)",
                 instructions: "Viaja a tu primer recuerdo vocal. Cierra los ojos y busca ese momento.",
                 questions: [
-                    { id: "h1_child_mem", text: "¿Qué es lo primero que recuerdas que te dijeran sobre tu voz cuando eras niño/a?", type: "long_text" },
-                    { id: "h1_child_emo", text: "¿Sentiste que tu voz era un lugar seguro o algo que debías esconder?", type: "text" }
+                    { id: "h1_child_mem", text: "¿Cómo te recuerdas de niño/a?", type: "long_text" },
+                    { id: "h1_child_emo", text: "¿Te gustaba estar con tus padres y familia o sentías que te debías esconder?", type: "text" }
                 ],
                 field: "linea_vida_hitos"
             },
@@ -96,7 +96,10 @@ function renderRoadmap() {
     });
 
     // Draw lines after layout
+    // Retry drawing a few times to ensure modal transition is done
     setTimeout(drawRoadmapLines, 100);
+    setTimeout(drawRoadmapLines, 500);
+    setTimeout(drawRoadmapLines, 1000); // Fail-safe
     window.addEventListener('resize', drawRoadmapLines);
 }
 
