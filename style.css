@@ -451,3 +451,207 @@ input {
     height: 100%;
     border: 0;
 }
+
+
+/* --- MI VIAJE (ROADMAP) STYLES --- */
+.journey-btn {
+    border: 1px solid #d4af37;
+    color: #bfa05f;
+    font-weight: bold;
+}
+
+.journey-btn:hover {
+    background: #d4af37;
+    color: white;
+}
+
+.journey-modal {
+    display: none;
+    /* Controlado por JS */
+}
+
+.journey-content {
+    background: #fdfaf7;
+    max-width: 800px;
+    padding: 40px;
+}
+
+.journey-header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.journey-header h2 {
+    color: var(--color-acento);
+    font-size: 2em;
+    margin-bottom: 10px;
+}
+
+.roadmap-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+    position: relative;
+    padding: 20px 0;
+}
+
+.roadmap-node {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    background: white;
+    padding: 20px;
+    border-radius: 15px;
+    border: 2px solid #eee;
+    width: 100%;
+    max-width: 600px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    z-index: 2;
+    position: relative;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+}
+
+.roadmap-node.locked {
+    opacity: 0.6;
+    filter: grayscale(1);
+    cursor: not-allowed;
+    background: #f9f9f9;
+}
+
+.roadmap-node.unlocked:hover {
+    transform: translateY(-2px);
+    border-color: var(--color-acento);
+    box-shadow: 0 8px 20px rgba(142, 125, 109, 0.2);
+}
+
+.roadmap-node .node-icon {
+    font-size: 2.5em;
+    background: #f4ece6;
+    width: 60px;
+    height: 60px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 50%;
+}
+
+.roadmap-node .node-info h3 {
+    margin: 0 0 5px 0;
+    color: #4a3b32;
+    font-size: 1.1em;
+}
+
+.roadmap-node .node-info p {
+    margin: 0;
+    font-size: 0.9em;
+    color: #777;
+}
+
+.roadmap-line {
+    width: 2px;
+    height: 40px;
+    background: #ddd;
+    margin: -5px 0;
+    /* Solapar un poco */
+    z-index: 1;
+}
+
+/* Modulo de Coaching (Preguntas) */
+.module-modal {
+    display: none;
+    z-index: 3050;
+    /* Por encima del mapa */
+}
+
+.module-content {
+    max-width: 600px;
+    background: white;
+    text-align: center;
+}
+
+.question-slide {
+    animation: fadeIn 0.5s ease;
+}
+
+.question-slide h4 {
+    color: var(--color-acento);
+    text-transform: uppercase;
+    font-size: 0.85em;
+    letter-spacing: 1px;
+    margin-bottom: 20px;
+}
+
+.question-slide h3 {
+    font-size: 1.4em;
+    color: #333;
+    margin-bottom: 30px;
+    line-height: 1.4;
+}
+
+.question-slide input,
+.question-slide textarea {
+    width: 100%;
+    padding: 15px;
+    font-size: 1.1em;
+    border: 2px solid #eee;
+    border-radius: 10px;
+    font-family: var(--fuente-principal);
+    transition: border-color 0.3s;
+}
+
+.question-slide textarea {
+    height: 150px;
+    resize: vertical;
+}
+
+.question-slide input:focus,
+.question-slide textarea:focus {
+    border-color: var(--color-acento);
+    outline: none;
+}
+
+.module-navigation {
+    margin-top: 30px;
+    display: flex;
+    justify-content: space-between;
+    gap: 15px;
+}
+
+.nav-btn {
+    padding: 10px 25px;
+    border-radius: 25px;
+    border: none;
+    cursor: pointer;
+    font-weight: bold;
+    font-family: var(--fuente-principal);
+    transition: all 0.3s;
+}
+
+#prevQBtn {
+    background: #f0f0f0;
+    color: #555;
+}
+
+#nextQBtn {
+    background: var(--color-acento);
+    color: white;
+}
+
+.finish-btn {
+    background: #27ae60 !important;
+    color: white !important;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

@@ -720,3 +720,26 @@ function b64toBlob(b64Data, contentType = '', sliceSize = 512) {
     }
     return new Blob(byteArrays, { type: contentType });
 }
+// --- MI VIAJE INTEGRATION ---
+document.getElementById('viajeBtn').addEventListener('click', async () => {
+    if (!supabase) return;
+
+    // Verificar usuario
+    const { data } = await supabase.auth.getUser();
+    if (!data.user) {
+        alert("Por favor, inicia sesión para acceder a tu viaje.");
+        document.getElementById('authOverlay').style.display = 'flex';
+        return;
+    }
+
+    // Abrir modal
+    document.getElementById('viajeModal').style.display = 'flex';
+
+    // Cargar módulo dinámicamente si no está cargado
+    try {
+        const { initJourney } = await import('./mi_viaje/main.js');
+        initJourney(supabase, data.user);
+    } catch (e) {
+        console.error("Error cargando Mi Viaje:", e);
+    }
+});

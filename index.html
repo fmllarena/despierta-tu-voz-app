@@ -39,6 +39,7 @@
         <div class="chat-header">
             <span>Sesión con el Mentor</span>
             <div class="header-buttons">
+                <button id="viajeBtn" class="journey-btn">Mi Viaje</button>
                 <button id="progresoBtn">Mi Progreso</button>
                 <button id="bienvenidaBtn">Bienvenida</button>
                 <button id="botiquinBtn" title="Botiquín">Emergencia</button>
@@ -53,10 +54,41 @@
             <button id="micBtn">🎤</button>
         </div>
     </div>
+    </div>
     <div id="diarioModal" class="modal">
         <div class="modal-content">
             <span class="close-modal">&times;</span>
             <div id="diarioContent"></div>
+        </div>
+    </div>
+
+    <!-- Modal de Mi Viaje (Roadmap) -->
+    <div id="viajeModal" class="modal journey-modal">
+        <div class="modal-content journey-content">
+            <span class="close-modal close-viaje">&times;</span>
+            <div class="journey-header">
+                <h2>El viaje de mi vida</h2>
+                <p>Tu camino hacia la Alquimia Vocal</p>
+            </div>
+            <div id="journeyRoadmap" class="roadmap-container">
+                <!-- Se poblará dinámicamente desde mi_viaje/main.js -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Módulo de Coaching -->
+    <div id="moduloModal" class="modal module-modal">
+        <div class="modal-content module-content">
+            <span class="close-modal close-modulo">&times;</span>
+            <div id="moduloContainer">
+                <div id="questionContainer"></div>
+                <div class="module-navigation">
+                    <button id="prevQBtn" class="nav-btn" disabled>Anterior</button>
+                    <button id="nextQBtn" class="nav-btn">Siguiente</button>
+                    <button id="finishModuleBtn" class="nav-btn finish-btn" style="display:none;">Finalizar
+                        Módulo</button>
+                </div>
+            </div>
         </div>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
