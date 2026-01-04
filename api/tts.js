@@ -37,9 +37,16 @@ export default async function handler(req, res) {
         if (!response.ok) {
             console.error("Error G-TTS Detail:", JSON.stringify(data, null, 2));
             let errorMsg = data.error?.message || 'Error en Google TTS';
-            if (response.status === 403) errorMsg = "API Key no válida o permiso denegado. Revisa tus restricciones en Google Cloud.";
-            if (response.status === 404) errorMsg = "Modelo de voz no encontrado o API no habilitada.";
-            if (response.status === 429) errorMsg = "Se ha excedido la cuota de la API.";
+
+            // Añadimos más contexto al error para el usuario
+            const diagnostic = `(Status: ${response.status}, Reason: ${data.error?.status || 'Unknown'})`;
+
+            if (response.status === 403) {
+                errorMsg = `Permiso Denegado por Google: ${errorMsg}. ${diagnostic}. Revisa si la Cloud Text-to-Speech API tiene la facturación (Billing) activa y si el modelo Aoede está habilitado para tu región.`;
+            } else {
+                errorMsg = `${errorMsg} ${diagnostic}`;
+            }
+
             return res.status(response.status).json({ error: errorMsg });
         }
 
