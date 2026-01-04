@@ -1,8 +1,29 @@
 // main.js - Lógica del cliente
 
-// --- CONFIGURACIÓN DE LLAVES ---
-const SUPABASE_URL = 'https://axwwjtjcawuabzyojabu.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_IAammdMwRIEs6ZzXHA_57A_bVCKAzPX';
+// --- CONFIGURACIÓN DINÁMICA ---
+let supabase;
+
+async function inicializarSupabase() {
+    try {
+        // Obtenemos la configuración desde el servidor (para no tener llaves en el código)
+        const response = await fetch('/api/config');
+        const config = await response.json();
+
+        if (window.supabase) {
+            supabase = window.supabase.createClient(config.url, config.key);
+            console.log("Supabase inicializado correctamente.");
+            // Una vez inicializado, podemos saludar al usuario
+            saludarUsuario();
+        } else {
+            console.error("Librería Supabase no encontrada en window.");
+        }
+    } catch (e) {
+        console.error("Error cargando configuración de Supabase:", e);
+    }
+}
+
+// Inicializamos al cargar el script
+inicializarSupabase();
 
 // --- ELEMENTOS DEL DOM ---
 const chatBox = document.getElementById('chatBox');
@@ -13,18 +34,6 @@ const loginBtn = document.getElementById('loginBtn');
 const signUpBtn = document.getElementById('signUpBtn');
 const authOverlay = document.getElementById('authOverlay');
 const authError = document.getElementById('authError');
-
-// Supabase (usando window.supabase cargado desde el CDN en index.html)
-let supabase;
-try {
-    if (window.supabase) {
-        supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-    } else {
-        console.error("Librería Supabase no encontrada.");
-    }
-} catch (e) {
-    console.error("Error inicializando Supabase:", e);
-}
 
 // Ya no inicializamos Gemini aquí (se hace en el servidor)
 
