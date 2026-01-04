@@ -49,25 +49,35 @@ export default async function handler(req, res) {
     }
 
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    // Usamos el modelo solicitado: Gemini 2.0 Flash Preview
+    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-exp" });
 
     let textResponse = "";
 
-    if (history && history.length > 0) {
-      const chat = model.startChat({ history });
-      const result = await chat.sendMessage(prompt);
-      textResponse = result.response.text();
-    } else {
-      const result = await model.generateContent(prompt);
-      textResponse = result.response.text();
+    try {
+      if (history && history.length > 0) {
+        const chat = model.startChat({ history });
+        const result = await chat.sendMessage(prompt);
+        textResponse = result.response.text();
+      } else {
+        const result = await model.generateContent(prompt);
+        textResponse = result.response.text();
+      }
+    } catch (modelError) {
+      console.error("Error del modelo Gemini:", modelError);
+      // Si el error detectado por Google es sobre seguridad, damos un mensaje claro
+      if (modelError.message.includes("API_KEY_INVALID") || modelError.message.includes("compromised")) {
+        throw new Error("CLAVE BLOQUEADA POR SEGURIDAD: Google ha detectado que esta llave fue expuesta. Debes crear una nueva en AI Studio y actualizar Vercel.");
+      }
+      throw modelError;
     }
 
     return res.status(200).json({ text: textResponse });
   } catch (error) {
-    console.error("Error detallado en /api/gemini:", error);
+    console.error("Error crítico en /api/gemini:", error);
     return res.status(500).json({
-      error: `Error de Gemini: ${error.message}`,
-      details: "404 suele indicar que la API Key no es válida para el modelo. Prueba a generar una nueva en aistudio.google.com"
+      error: error.message,
+      details: "Por favor, rota tu clave de API en aistudio.google.com y actualízala en el panel de Vercel."
     });
   }
 }
