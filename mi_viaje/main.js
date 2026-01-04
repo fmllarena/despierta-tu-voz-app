@@ -301,9 +301,11 @@ async function nextStep(supabase, user) {
             fecha: new Date().toISOString()
         };
 
+        console.log(`Paso '${step.stage}' completado. Guardando hito...`);
         await guardarHitoJSON(supabase, user, step.field, hitoData);
-        // We don't clear userAnswers here anymore to avoid losing them for finishing logic
-        // userAnswers = {}; 
+
+        // Limpiamos respuestas para la siguiente etapa
+        userAnswers = {};
 
         if (currentStepIndex < module.steps.length - 1) {
             // Check if NEXT step is dynamic and empty
@@ -394,33 +396,49 @@ async function generateDynamicQuestions(stepObj, context) {
 
 async function guardarHitoJSON(supabase, user, column, newObject) {
     try {
-        console.log("Guardando hito en Supabase:", column, newObject);
-        // Usamos maybeSingle para evitar errores si no hay fila previa
-        let { data: currentData, error: fetchError } = await supabase
+        if (!user || !user.id) {
+            console.error("No hay usuario autenticado para guardar.");
+            return;
+        }
+
+        console.log(`Supabase: Intentando guardar en columna '${column}' para usuario ${user.id}`);
+
+        // 1. Obtener datos actuales de forma segura
+        let { data: currentRecord, error: fetchError } = await supabase
             .from('user_coaching_data')
             .select(column)
             .eq('user_id', user.id)
             .maybeSingle();
 
         if (fetchError) {
-            console.warn("Aviso al buscar datos previos (puede ser la primera vez):", fetchError);
+            console.warn("Aviso al recuperar datos previos:", fetchError.message);
         }
 
-        let currentArray = (currentData && currentData[column] && Array.isArray(currentData[column])) ? currentData[column] : [];
+        // 2. Preparar el nuevo array
+        let currentArray = [];
+        if (currentRecord && currentRecord[column] && Array.isArray(currentRecord[column])) {
+            currentArray = currentRecord[column];
+        }
         currentArray.push(newObject);
 
+        // 3. Upsert (Inserta si no existe, actualiza si existe por user_id)
         const { error: upsertError } = await supabase
             .from('user_coaching_data')
             .upsert({
                 user_id: user.id,
                 [column]: currentArray,
-                updated_at: new Date()
+                updated_at: new Date().toISOString()
             }, { onConflict: 'user_id' });
 
-        if (upsertError) throw upsertError;
-        console.log("Hito guardado con éxito.");
+        if (upsertError) {
+            console.error("Error en upsert:", upsertError);
+            alert("Error al guardar en base de datos: " + upsertError.message);
+            throw upsertError;
+        }
+
+        console.log("✅ Éxito: Hito guardado en Supabase.");
     } catch (e) {
-        console.error("Error crítico guardando hito:", e);
+        console.error("❌ Error guardarHitoJSON:", e);
     }
 }
 
@@ -451,14 +469,13 @@ async function finishModuleWithAI(supabase, user) {
     `;
 
     try {
-        const historia = JSON.stringify(journeyContext); // Use local memory context for speed/accuracy
+        const historia = JSON.stringify(journeyContext);
 
         const promptAnalysis = `
-            [SISTEMA: ANÁLISIS DE HITO FINALIZADO]
-            El usuario ha completado el Módulo 1.
+            [SISTEMA: ANÁLISIS FINAL]
+            Módulo 1 completado. 
             Respuestas: ${historia}.
-            
-            Tarea: Breve análisis alquímico (3 frases) detectando el patrón emocional repetitivo y validando al usuario.
+            Tarea: Genera un análisis muy breve de 3 frases detectando sus bloqueos emocionales y dándole fuerza.
         `;
 
         const response = await fetch('/api/chat', {
@@ -469,12 +486,11 @@ async function finishModuleWithAI(supabase, user) {
 
         const data = await response.json();
 
-        // UNLOCK NEXT MODULE LOGIC
+        // RESILIENT UNLOCK: Unlock before rendering the UI
         if (currentModuleIndex < modules.length - 1) {
-            const nextModuleId = modules[currentModuleIndex + 1].id;
-            const unlockKey = `module_${nextModuleId}_unlocked`;
-            localStorage.setItem(unlockKey, 'true');
-            console.log("Módulo desbloqueado con éxito en localStorage:", unlockKey);
+            const nextId = modules[currentModuleIndex + 1].id;
+            localStorage.setItem(`module_${nextId}_unlocked`, 'true');
+            console.log("Módulo desbloqueado proactivamente:", nextId);
         }
 
         container.innerHTML = `
@@ -483,7 +499,7 @@ async function finishModuleWithAI(supabase, user) {
                 <p style="font-size:1.1em; line-height:1.6; padding:15px; background:#f9f9f9; border-radius:10px;">
                     ${data.text}
                 </p>
-                <button id="closeModuleBtn" class="nav-btn journey-btn" style="width:100%; margin-top:20px;">Finalizar y Continuar</button>
+                <button id="closeModuleBtn" class="nav-btn journey-btn" style="width:100%; margin-top:20px;">Finalizar Viaje</button>
             </div>
         `;
 
@@ -492,21 +508,19 @@ async function finishModuleWithAI(supabase, user) {
         document.getElementById('prevQBtn').style.display = 'none';
 
         document.getElementById('closeModuleBtn').onclick = () => {
-            // Alert user about unlock
-            if (currentModuleIndex < modules.length - 1) {
-                const nextModuleTitle = modules[currentModuleIndex + 1].title;
-                alert(`¡Felicidades! Has desbloqueado el siguiente módulo: '${nextModuleTitle}'.`);
-            }
-
+            alert(`¡Felicidades! Módulo completado. El mapa se actualizará.`);
             document.getElementById('moduloModal').style.display = 'none';
             document.getElementById('viajeModal').style.display = 'flex';
             renderRoadmap();
         };
 
     } catch (e) {
-        console.error("Error AI analysis:", e);
-        alert("Módulo guardado, pero el Mentor está meditando (Error de conexión).");
-        // Return to roadmap instead of closing
+        console.error("Error en finalización AI:", e);
+        // UNLOCK EVEN ON ERROR
+        if (currentModuleIndex < modules.length - 1) {
+            localStorage.setItem(`module_${modules[currentModuleIndex + 1].id}_unlocked`, 'true');
+        }
+        alert("¡Módulo finalizado correctamente!");
         document.getElementById('moduloModal').style.display = 'none';
         document.getElementById('viajeModal').style.display = 'flex';
         renderRoadmap();
