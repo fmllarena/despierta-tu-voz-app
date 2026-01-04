@@ -1,86 +1,65 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Despierta tu Voz - Mentor Vocal</title>
-    <style>
-        :root {
-            --color-fondo: #fcfaf7;
-            --color-texto: #333333;
-            --color-acento: #8e7d6d; /* Tono tierra suave/elegante */
-            --fuente-principal: 'Georgia', serif;
-        }
-        body {
-            background-color: var(--color-fondo);
-            color: var(--color-texto);
-            font-family: var(--fuente-principal);
-            margin: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-        header {
-            padding: 40px;
-            text-align: center;
-        }
-        .chat-container {
-            width: 90%;
-            max-width: 600px;
-            height: 500px;
-            background: white;
-            border-radius: 15px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
-        .messages {
-            flex: 1;
-            padding: 20px;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
-        .message {
-            max-width: 80%;
-            padding: 12px 18px;
-            border-radius: 20px;
-            font-size: 0.95em;
-            line-height: 1.4;
-        }
-        .ia { align-self: flex-start; background: #f0ede9; color: #555; }
-        .user { align-self: flex-end; background: var(--color-acento); color: white; }
-        .input-area {
-            padding: 20px;
-            border-top: 1px solid #eee;
-            display: flex;
-            gap: 10px;
-        }
-        input {
-            flex: 1;
-            border: 1px solid #ddd;
-            padding: 10px;
-            border-radius: 25px;
-            outline: none;
-        }
-    </style>
+    <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
+    <div id="authOverlay" class="overlay">
+        <div class="auth-card">
+            <h2>Despierta tu Voz</h2>
+            <p>Introduce tus datos para hablar con el Mentor</p>
+
+            <input type="email" id="authEmail" placeholder="Tu correo electrónico">
+            <input type="password" id="authPassword" placeholder="Tu contraseña">
+
+            <div class="auth-buttons">
+                <button id="loginBtn">Entrar</button>
+                <button id="signUpBtn" class="secondary">Registrarme</button>
+            </div>
+            <p id="authError" class="error-msg"></p>
+        </div>
+    </div>
+
     <header>
-        <h1>Despierta tu Voz</h1>
-        <p>Tu Mentor Vocal Holístico</p>
+        <div class="header-main">
+            <img src="logo-appDTV2.png" alt="Despierta tu Voz Logo" class="app-logo">
+            <h1>Despierta tu Voz</h1>
+        </div>
+        <p>Conexión emocional y técnica 24/7</p>
     </header>
 
     <div class="chat-container">
-        <div class="messages" id="chatBox">
-            <div class="message ia">Bienvenido. ¿Qué pieza o partitura te gustaría que exploráramos juntos hoy?</div>
+        <div class="chat-header">
+            <span>Sesión con el Mentor</span>
+            <div class="header-buttons">
+                <button id="progresoBtn">Mi Progreso</button>
+                <button id="bienvenidaBtn">Bienvenida</button>
+                <button id="botiquinBtn" title="Botiquín">Emergencia</button>
+                <button id="logoutBtn">Cerrar Sesión</button>
+            </div>
         </div>
+        <div class="messages" id="chatBox"></div>
         <div class="input-area">
-            <input type="text" placeholder="Escribe aquí tu intención o canción...">
-            <button style="border:none; background:none; cursor:pointer; color:var(--color-acento);">▶</button>
+            <input type="text" id="chatMentoriaInput" placeholder="Escribe aquí tu sentir o tu canción..."
+                autocomplete="off" spellcheck="false">
+            <button id="sendBtn">▶</button>
+            <button id="micBtn">🎤</button>
         </div>
     </div>
+    <div id="diarioModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <div id="diarioContent"></div>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script type="module" src="main.js?v=4.4"></script>
 </body>
+
 </html>

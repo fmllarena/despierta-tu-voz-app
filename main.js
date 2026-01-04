@@ -1,0 +1,601 @@
+import { GoogleGenerativeAI } from "https://esm.run/@google/generative-ai";
+
+// --- CONFIGURACIÓN DE LLAVES ---
+const API_KEY = "AIzaSyAYeDuFDeyUBLvFrsMNpcq38ZXRCM_JIPc"; // Gemini API Key
+const SUPABASE_URL = 'https://axwwjtjcawuabzyojabu.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_IAammdMwRIEs6ZzXHA_57A_bVCKAzPX';
+
+// --- ELEMENTOS DEL DOM ---
+const chatBox = document.getElementById('chatBox');
+const chatMentoriaInput = document.getElementById('chatMentoriaInput');
+const sendBtn = document.getElementById('sendBtn');
+const micBtn = document.getElementById('micBtn');
+const loginBtn = document.getElementById('loginBtn');
+const signUpBtn = document.getElementById('signUpBtn');
+const authOverlay = document.getElementById('authOverlay');
+const authError = document.getElementById('authError');
+
+// --- INICIALIZACIÓN DE SERVICIOS ---
+// Supabase (usando window.supabase cargado desde el CDN en index.html)
+let supabase;
+try {
+    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+} catch (e) {
+    console.error("Error inicializando Supabase:", e);
+}
+
+// Gemini
+const genAI = new GoogleGenerativeAI(API_KEY);
+const model = genAI.getGenerativeModel({ model: "gemini-3-flash-preview" });
+
+// --- LÓGICA DE AUTENTICACIÓN Y SALUDO ---
+
+const MENSAJE_BIENVENIDA = `
+## Bienvenido/a a Despierta tu Voz
+
+Hola, soy tu guía en **Despierta tu voz**.
+
+Antes de que me cuentes cómo te encuentras, quiero invitarte a que hagas una pausa. Inhala profundamente y siente el aire en tu cuerpo.
+
+Aquí no estamos buscando la nota perfecta, ni el aplauso de un jurado externo. Estamos aquí para transmutar tu esencia pura. Tu voz no es solo sonido; es un espejo de tu historia, de tus emociones y de los roles que has desempeñado en tu vida.
+
+### ¿Qué puedes esperar de este viaje?
+
+*   **Alquimia Vocal**: Aprenderás a ver tus bloqueos no como fallos, sino como mensajes de tu subconsciente que están listos para ser sanados.
+*   **El Texto como Espejo**: Cada canción que elijas será una oportunidad para revisar tu trayectoria de vida y encontrar tu verdad en cada palabra.
+*   **Un Espacio Seguro**: Aquí la vulnerabilidad no es debilidad, es tu mayor fuente de poder y autenticidad.
+
+¿Estás listo para dejar de 'hacer' canto y empezar a 'ser' tu voz?
+
+Cuéntame, para empezar nuestro camino... **¿Qué sientes que te impide hoy cantar con total libertad?**
+`;
+
+async function saludarUsuario() {
+    if (!chatBox || !supabase) return;
+
+    try {
+        const { data, error } = await supabase.auth.getUser();
+        const user = data?.user;
+
+        // Limpiamos el chat para el mensaje de bienvenida
+        chatBox.innerHTML = "";
+
+        if (user) {
+            // Verificamos si es la primera vez (si tiene perfil guardado)
+            const { data: perfil } = await supabase
+                .from('user_profiles')
+                .select('ultimo_resumen')
+                .eq('user_id', user.id)
+                .single();
+
+            const bienvenidaBtn = document.getElementById('bienvenidaBtn');
+            const botiquinBtn = document.getElementById('botiquinBtn');
+            if (bienvenidaBtn) bienvenidaBtn.style.display = 'block';
+            if (botiquinBtn) botiquinBtn.style.display = 'block';
+
+            if (!perfil || !perfil.ultimo_resumen) {
+                // ES LA PRIMERA VEZ
+                appendMessage(MENSAJE_BIENVENIDA, 'ia', 'msg-bienvenida');
+            } else {
+                // YA HA ENTRADO ANTES
+                const nombre = user.email.split('@')[0];
+                const nombreCap = nombre.charAt(0).toUpperCase() + nombre.slice(1);
+                appendMessage(`¡Hola, <strong>${nombreCap}</strong>! Qué alegría encontrarte de nuevo. Soy tu Mentor de voz, ¿cómo te sientes hoy?`, 'ia');
+            }
+        } else {
+            const bienvenidaBtn = document.getElementById('bienvenidaBtn');
+            const botiquinBtn = document.getElementById('botiquinBtn');
+            if (bienvenidaBtn) bienvenidaBtn.style.display = 'none';
+            if (botiquinBtn) botiquinBtn.style.display = 'none';
+            appendMessage("<b>Bienvenido/a, soy tu Mentor Vocal privado. En este espacio sagrado, transformaremos tus inquietudes en el oro de tu auténtica voz. ¿Cómo te sientes hoy?</b>", 'ia');
+        }
+    } catch (e) {
+        console.error("Error en saludarUsuario:", e);
+    }
+}
+
+async function checkUser() {
+    if (!supabase || !authOverlay) return;
+
+    try {
+        const { data, error } = await supabase.auth.getUser();
+        const user = data?.user;
+
+        if (user) {
+            authOverlay.remove();
+            saludarUsuario();
+            console.log("Sesión activa de:", user.email);
+        } else {
+            authOverlay.style.display = 'flex';
+        }
+    } catch (e) {
+        console.error("Error en checkUser:", e);
+        authOverlay.style.display = 'flex';
+    }
+}
+
+// Ejecutar comprobación al cargar
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', checkUser);
+} else {
+    checkUser();
+}
+
+signUpBtn.addEventListener('click', async () => {
+    const email = document.getElementById('authEmail').value;
+    const password = document.getElementById('authPassword').value;
+
+    if (!email || !password) {
+        authError.innerText = "Por favor, completa todos los campos.";
+        return;
+    }
+
+    try {
+        const { data, error } = await supabase.auth.signUp({ email, password });
+        if (error) {
+            authError.innerText = "Error al registrar: " + error.message;
+        } else {
+            alert("¡Registro casi listo! Revisa tu email para confirmar tu cuenta.");
+        }
+    } catch (e) {
+        authError.innerText = "Error inesperado: " + e.message;
+    }
+});
+
+loginBtn.addEventListener('click', async () => {
+    const email = document.getElementById('authEmail').value;
+    const password = document.getElementById('authPassword').value;
+
+    if (!email || !password) {
+        authError.innerText = "Por favor, completa todos los campos.";
+        return;
+    }
+
+    try {
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) {
+            authError.innerText = "Error: " + error.message;
+        } else {
+            authOverlay.style.display = 'none';
+            saludarUsuario();
+            console.log("Bienvenido:", data.user?.email);
+        }
+    } catch (e) {
+        authError.innerText = "Error inesperado al entrar: " + e.message;
+    }
+});
+
+// --- LÓGICA DE CONTEXTO DEL ALUMNO (SUPABASE) ---
+
+async function obtenerContextoAlumno() {
+    if (!supabase) return "";
+    try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return "";
+
+        const { data: perfil, error } = await supabase
+            .from('user_profiles')
+            .select('historia_vocal, creencias, ultimo_resumen')
+            .eq('user_id', user.id)
+            .single();
+
+        if (error && error.code !== 'PGRST116') {
+            console.error("Error al obtener perfil:", error);
+            return "";
+        }
+
+        if (!perfil) return "";
+
+        return `
+[CONTEXTO PRIVADO DEL ALUMNO - PARA TU CONOCIMIENTO]
+- Historia Vocal: ${perfil.historia_vocal || 'Aún no compartida'}
+- Creencias/Bloqueos: ${perfil.creencias || 'Aún no definidos'}
+- Resumen sesión anterior: ${perfil.ultimo_resumen || 'Primera sesión'}
+------------------------
+`;
+    } catch (e) {
+        console.error("Error en obtenerContextoAlumno:", e);
+        return "";
+    }
+}
+
+async function guardarResumenSesion(resumenTexto) {
+    if (!supabase) return;
+    try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+            await supabase
+                .from('user_profiles')
+                .upsert({
+                    user_id: user.id,
+                    ultimo_resumen: resumenTexto
+                });
+            console.log("Resumen de sesión guardado.");
+        }
+    } catch (e) {
+        console.error("Error al guardar resumen:", e);
+    }
+}
+
+
+// --- LÓGICA DEL CHAT AI ---
+
+const SYSTEM_PROMPT = `
+Eres el Mentor de "Despierta tu Voz". Tu enfoque es el Canto Holístico (basado en Fernando Martínez Llarena).
+No eres un profesor de técnica tradicional; eres un guía hacia la autoconciencia y la sanación.
+
+REGLA DE ORO (ACOGIMIENTO): 
+- No asumas que vienen a por técnica. Quizás buscan consuelo, tienen nervios por una audición o un bloqueo emocional.
+
+HERRAMIENTAS:
+- Si mencionan una canción, usa tus capacidades de búsqueda para entender su alma y ayudarles a interpretarla desde la emoción.
+
+Lógica de 'El Texto como Espejo': Cuando el usuario te proporcione la canción, aria o el texto de una canción, analiza su contenido emocional. Pregunta al usuario: '¿Cómo se refleja tu historia personal en estas palabras?'. No analices la técnica vocal, analiza la intención.
+Protocolo de Desbloqueo:
+- Si el usuario reporta Tensión en Garganta: Enfócate en la expresión de la verdad y el miedo al juicio.
+- Si reporta Presión en el Pecho: Enfócate en la vulnerabilidad y el perdón.
+- Si reporta Rigidez Mandibular: Enfócate en el exceso de control y el perfeccionismo.
+
+FILOSOFÍA DE RESPUESTA:
+- Tono: Sereno, cálido y reflexivo. Como una charla bajo una fina lluvia tras el cristal.
+- Validación: Antes de dar ejercicios, valida la emoción. Si dicen "tengo miedo", responde: "Es normal, la voz es muy sensible y vulnerable. Es el espejo de nuestra historia".
+- Límites: Invita a indagar desde la infancia o el árbol genealógico cuando empiece a haber confianza (mínimo 3-4 mensajes).
+
+REGLA DE CONCISIÓN (MUY IMPORTANTE):
+1. Tus respuestas deben ser BREVES (máximo 4 o 5 párrafos cortos).
+2. Ve al grano: valida la emoción, ofrece una reflexión breve y, si acaso, una pregunta.
+3. Evita párrafos largos o listas interminables de consejos. Menos es más.
+
+PROTOCOLO DE DESPEDIDA (OBLIGATORIO):
+Si detectas que el usuario se está despidiendo (ej: "adiós", "hasta luego", "gracias por hoy"):
+1. RECUÉRDALE PRIMERO: Que debe pulsar el botón "Cerrar Sesión" de la parte superior para que toda la información de su progreso y alquimia de hoy quede guardada correctamente.
+2. LUEGO: Haz un cierre breve, cálido y alentador como el Mentor que eres.
+`;
+
+
+let chatHistory = [
+    { role: "user", parts: [{ text: SYSTEM_PROMPT }] },
+    { role: "model", parts: [{ text: "Bienvenido/a, soy tu Mentor Vocal privado. ¿Cómo te sientes hoy?" }] }
+];
+
+const chat = model.startChat({ history: chatHistory });
+
+async function sendMessage() {
+    const text = chatMentoriaInput.value.trim();
+    if (!text) return;
+
+    appendMessage(text, 'user');
+    chatMentoriaInput.value = '';
+    chatMentoriaInput.disabled = true;
+    sendBtn.disabled = true;
+
+    try {
+        // --- LIMPIEZA: Si hay mensajes especiales abiertos, los quitamos al enviar un mensaje normal ---
+        const idsALimpiar = ['msg-botiquin', 'msg-bienvenida'];
+        idsALimpiar.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.remove();
+        });
+
+        // Obtenemos el contexto fresco del alumno antes de enviar
+        const contexto = await obtenerContextoAlumno();
+
+        // Preparamos el mensaje final. Si hay contexto, lo inyectamos como una nota previa
+        // para que la IA lo tenga presente en esta respuesta.
+        const promptFinal = contexto
+            ? `${contexto}\nMENSAJE DEL ALUMNO: ${text}`
+            : text;
+
+        const result = await chat.sendMessage(promptFinal);
+        const response = await result.response;
+        const textResponse = response.text();
+        appendMessage(textResponse, 'ia');
+
+        // --- FIX: Añadir ambos mensajes al historial para que el resumen sea completo ---
+        chatHistory.push({ role: "user", parts: [{ text: text }] });
+        chatHistory.push({ role: "model", parts: [{ text: textResponse }] });
+
+        // Opcional: Podríamos pedirle a la IA un mini-resumen interno 
+        // para guardarlo en Supabase, pero por ahora lo dejamos manual o automático por sesión.
+
+
+    } catch (error) {
+        console.error("Error:", error);
+        appendMessage("Lo siento, hubo un problema al conectar con tu voz interior. Por favor, inténtalo de nuevo en un momento.", 'ia');
+    } finally {
+        chatMentoriaInput.disabled = false;
+        sendBtn.disabled = false;
+        chatMentoriaInput.focus();
+    }
+}
+
+function appendMessage(text, type, id = null) {
+    if (!chatBox) return;
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `message ${type}`;
+    if (id) messageDiv.id = id;
+
+    if (type === 'ia' || type === 'ia-botiquin') {
+        // Renderizamos Markdown para el Mentor
+        let htmlContent = marked.parse(text);
+
+        // --- DETECCIÓN DE YOUTUBE: Buscamos links o IDs y embebemos ---
+        // Buscamos patrones: https://www.youtube.com/watch?v=ID o https://youtu.be/ID
+        const ytRegex = /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/;
+        const match = text.match(ytRegex);
+        if (match && match[1]) {
+            const videoId = match[1];
+            htmlContent += `
+                <div class="video-container">
+                    <iframe src="https://www.youtube.com/embed/${videoId}" allowfullscreen></iframe>
+                </div>
+            `;
+        }
+
+        messageDiv.innerHTML = htmlContent;
+    } else {
+        // Texto plano para el usuario (seguridad) y mantenemos espacios
+        messageDiv.innerText = text;
+        messageDiv.style.whiteSpace = "pre-wrap";
+    }
+
+    chatBox.appendChild(messageDiv);
+    chatBox.scrollTop = chatBox.scrollHeight;
+}
+async function generarYGuardarResumen() {
+    if (!supabase) return;
+
+    const { data: { user: currentUser } } = await supabase.auth.getUser();
+    if (!currentUser || chatHistory.length < 2) return;
+
+    try {
+        // Pedimos a la IA que extraiga toda la información relevante en formato JSON
+        const result = await model.generateContent({
+            contents: [
+                ...chatHistory,
+                {
+                    role: "user",
+                    parts: [{
+                        text: `Basado en esta conversación, genera un objeto JSON con esta estructura exacta:
+                        {
+                          "resumen": "una frase técnica de la sesión",
+                          "creencias": "bloqueos o creencias limitantes identificadas (máximo 30 palabras)",
+                          "historia_vocal": "datos relevantes de su pasado vocal (máximo 30 palabras)",
+                          "nivel_alquimia": (un número del 1 al 10 que refleje su progreso hoy),
+                          "creencias_transmutadas": "ideas o miedos que el alumno ha superado o transformado hoy"
+                        }
+                        Responde ÚNICAMENTE el JSON puro.`
+                    }]
+                }
+            ]
+        });
+
+        const response = await result.response;
+        const rawText = response.text();
+
+        // Limpiamos la respuesta por si la IA añade markdown code blocks
+        const jsonText = rawText.replace(/```json|```/g, "").trim();
+        const data = JSON.parse(jsonText);
+
+        await supabase
+            .from('user_profiles')
+            .upsert({
+                user_id: currentUser.id,
+                ultimo_resumen: data.resumen,
+                creencias: data.creencias,
+                historia_vocal: data.historia_vocal,
+                nivel_alquimia: data.nivel_alquimia || 1,
+                creencias_transmutadas: data.creencias_transmutadas || ""
+            });
+
+        console.log("Perfil actualizado en Supabase:", data);
+    } catch (e) {
+        console.error("Error al actualizar perfil:", e);
+    }
+}
+// Event Listeners para el chat
+const logoutBtn = document.getElementById('logoutBtn');
+if (logoutBtn) {
+    logoutBtn.addEventListener('click', async () => {
+        logoutBtn.innerText = "Guardando..."; // Feedback visual
+        await generarYGuardarResumen();
+        await supabase.auth.signOut();
+        location.reload();
+    });
+}
+if (sendBtn) sendBtn.addEventListener('click', sendMessage);
+
+// Lógica de Botiquín
+const botiquinBtn = document.getElementById('botiquinBtn');
+if (botiquinBtn) {
+    botiquinBtn.addEventListener('click', async () => {
+        // --- MUTUAL EXCLUSIVITY: Si está abierta la bienvenida, la quitamos ---
+        const oldBienvenida = document.getElementById('msg-bienvenida');
+        if (oldBienvenida) oldBienvenida.remove();
+
+        // --- TOGGLE: Si ya existe el mensaje del botiquín, lo cerramos y salimos ---
+        const existingMsg = document.getElementById('msg-botiquin');
+        if (existingMsg) {
+            existingMsg.remove();
+            return;
+        }
+
+        botiquinBtn.disabled = true;
+        botiquinBtn.innerText = "⏳"; // Icono de carga breve
+
+        try {
+            const contexto = await obtenerContextoAlumno();
+            const promptUrgente = `
+            ${contexto}
+            [MODO DE EMERGENCIA ACTIVADO]
+            Tengo una audición/presentación inminente y necesito ayuda. 
+            Basándote en mi perfil vocal y mis creencias limitantes mencionadas arriba, por favor dame:
+            1. Un ejercicio de respiración o relajación de 2 minutos específico para mi bloqueo.
+            2. Un consejo técnico rápido para mi voz.
+            3. Una recomendación de música o frecuencia específica (proporcióname un link de YouTube o el ID si lo conoces) que me ayude a entrar en mi eje.
+            Sé directo, cálido y efectivo. Si me pasas un link de YouTube, asegúrate de que sea el formato estándar completo.
+            `;
+
+            const result = await chat.sendMessage(promptUrgente);
+            const response = await result.response;
+            // Usamos la clase 'ia-botiquin' para el estilo rojizo y un ID para el toggle/limpieza
+            appendMessage(response.text(), 'ia-botiquin', 'msg-botiquin');
+
+        } catch (e) {
+            console.error("Error botiquín:", e);
+            appendMessage("No he podido abrir el botiquín, pero respira profundo... estoy contigo.", 'ia-botiquin', 'msg-botiquin');
+        } finally {
+            botiquinBtn.disabled = false;
+            botiquinBtn.innerText = "Emergencia";
+        }
+    });
+}
+
+const bienvenidaBtn = document.getElementById('bienvenidaBtn');
+if (bienvenidaBtn) {
+    bienvenidaBtn.addEventListener('click', () => {
+        // --- MUTUAL EXCLUSIVITY ---
+        const idsCerrar = ['msg-botiquin', 'diarioModal'];
+        idsCerrar.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) {
+                if (id === 'diarioModal') el.style.display = 'none';
+                else el.remove();
+            }
+        });
+
+        const msg = document.getElementById('msg-bienvenida');
+        if (msg) {
+            msg.remove(); // Si ya existe, lo quitamos (toggle off)
+        } else {
+            appendMessage(MENSAJE_BIENVENIDA, 'ia', 'msg-bienvenida'); // Si no existe, lo ponemos (toggle on)
+        }
+    });
+}
+
+// Lógica de Diario de Alquimia (Progreso)
+const progresoBtn = document.getElementById('progresoBtn');
+const diarioModal = document.getElementById('diarioModal');
+const closeDiario = document.querySelector('.close-modal');
+
+if (progresoBtn) {
+    progresoBtn.addEventListener('click', async () => {
+        // --- MUTUAL EXCLUSIVITY: Cerramos Bienvenida y Emergencia ---
+        ['msg-botiquin', 'msg-bienvenida'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.remove();
+        });
+
+        if (diarioModal.style.display === 'flex') {
+            diarioModal.style.display = 'none';
+        } else {
+            mostrarDiario();
+        }
+    });
+}
+
+if (closeDiario) {
+    closeDiario.addEventListener('click', () => {
+        diarioModal.style.display = 'none';
+    });
+}
+
+window.addEventListener('click', (event) => {
+    if (event.target == diarioModal) {
+        diarioModal.style.display = 'none';
+    }
+});
+
+async function mostrarDiario() {
+    if (!diarioModal || !supabase) return;
+    const { data: { user: currentUser } } = await supabase.auth.getUser();
+    if (!currentUser) return;
+
+    try {
+        const { data: perfil, error } = await supabase
+            .from('user_profiles')
+            .select('*')
+            .eq('user_id', currentUser.id)
+            .single();
+
+        const content = document.getElementById('diarioContent');
+        if (!perfil) {
+            content.innerHTML = "<p>Aún no he recopilado suficiente información. Sigue charlando conmigo para que podamos registrar tu camino.</p>";
+        } else {
+            const nivel = perfil.nivel_alquimia || 1;
+            const porcentaje = nivel * 10;
+
+            content.innerHTML = `
+                <div class="diario-seccion">
+                    <h4>Nivel de Alquimia Vocal</h4>
+                    <div class="progress-bar-container">
+                        <div class="progress-fill" style="width: ${porcentaje}%"></div>
+                    </div>
+                    <p style="text-align: right; font-size: 0.8em; margin-top: 5px;">Grado ${nivel} de 10</p>
+                </div>
+                <div class="diario-seccion">
+                    <h4>Última Alquimia</h4>
+                    <p>${perfil.ultimo_resumen || "Iniciando camino..."}</p>
+                </div>
+                <div class="diario-seccion">
+                    <h4>Creencias Transmutadas (Logros) ✨</h4>
+                    <p>${perfil.creencias_transmutadas || "Tus victorias aparecerán aquí pronto."}</p>
+                </div>
+                <div class="diario-seccion">
+                    <h4>Creencias Activas</h4>
+                    <p>${perfil.creencias || "Aún no hemos explorado suficientes miedos para transmutar."}</p>
+                </div>
+                <div class="diario-seccion">
+                    <h4>Tu Historia Vocal</h4>
+                    <p>${perfil.historia_vocal || "Tu voz está lista para ser escrita."}</p>
+                </div>
+            `;
+        }
+        diarioModal.style.display = 'flex';
+    } catch (e) {
+        console.error("Error al cargar el diario:", e);
+    }
+}
+if (chatMentoriaInput) {
+    chatMentoriaInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') sendMessage();
+    });
+}
+
+// --- LÓGICA DE RECONOCIMIENTO DE VOZ ---
+
+const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+if (SpeechRecognition && micBtn) {
+    const recognition = new SpeechRecognition();
+    recognition.lang = 'es-ES';
+    recognition.interimResults = false;
+
+    micBtn.addEventListener('click', () => {
+        try {
+            recognition.start();
+            micBtn.style.backgroundColor = "#ffcccc";
+        } catch (e) {
+            console.error("Error iniciando reconocimiento:", e);
+        }
+    });
+
+    recognition.onresult = (event) => {
+        const transcript = event.results[0][0].transcript;
+        userInput.value = transcript;
+        micBtn.style.backgroundColor = "";
+        sendMessage();
+    };
+
+    recognition.onerror = () => {
+        micBtn.style.backgroundColor = "";
+        alert("No he podido escucharte, ¿me das permiso para usar el micro?");
+    };
+
+    recognition.onend = () => {
+        micBtn.style.backgroundColor = "";
+    };
+} else {
+    if (micBtn) micBtn.style.display = 'none';
+    console.log("Tu navegador no soporta reconocimiento de voz o falta el botón.");
+}

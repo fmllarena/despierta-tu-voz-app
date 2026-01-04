@@ -1,0 +1,408 @@
+:root {
+    --color-fondo: #fcfaf7;
+    --color-texto: #333333;
+    --color-acento: #8e7d6d;
+    /* Tono tierra suave/elegante */
+    --fuente-principal: 'Georgia', serif;
+}
+
+.overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.95);
+    /* Fondo casi blanco para calma */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.auth-card {
+    background: white;
+    padding: 40px;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    max-width: 350px;
+    width: 90%;
+}
+
+.auth-card h2 {
+    color: #2c3e50;
+    margin-bottom: 10px;
+}
+
+.auth-card input {
+    width: 100%;
+    padding: 12px;
+    margin: 10px 0;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    box-sizing: border-box;
+}
+
+.auth-buttons {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+button#loginBtn,
+button#signUpBtn {
+    flex: 1;
+    padding: 12px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+#loginBtn {
+    background: #2c3e50;
+    color: white;
+}
+
+.secondary {
+    background: #eee;
+    color: #666;
+}
+
+.error-msg {
+    color: #e74c3c;
+    font-size: 0.8em;
+    margin-top: 10px;
+}
+
+body {
+    background-color: var(--color-fondo);
+    color: var(--color-texto);
+    font-family: var(--fuente-principal);
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+header {
+    padding: 20px 40px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.header-main {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+    margin-bottom: 5px;
+}
+
+.app-logo {
+    height: 60px;
+    width: auto;
+    object-fit: contain;
+}
+
+header h1 {
+    margin: 0;
+}
+
+header p {
+    margin: 5px 0 0 0;
+}
+
+.chat-container {
+    width: 90%;
+    max-width: 600px;
+    height: 520px;
+    /* Altura acortada para evitar scroll */
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    margin-bottom: 20px;
+}
+
+.chat-header {
+    padding: 15px 20px;
+    background: #fff;
+    border-bottom: 1px solid #f0f0f0;
+    display: flex;
+    flex-direction: column;
+    /* Dos líneas */
+    gap: 12px;
+    align-items: center;
+    font-size: 0.85em;
+    color: var(--color-acento);
+    font-weight: bold;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
+.messages {
+    flex: 1;
+    padding: 20px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.message {
+    max-width: 80%;
+    padding: 12px 18px;
+    border-radius: 20px;
+    font-size: 0.95em;
+    line-height: 1.4;
+}
+
+.ia {
+    align-self: flex-start;
+    background: #fdfaf5;
+    color: #555;
+    border: 1px solid #f0f0f0;
+}
+
+#msg-bienvenida {
+    background: #3E3E3E;
+    color: white;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+#msg-bienvenida h1,
+#msg-bienvenida h2,
+#msg-bienvenida h3 {
+    font-size: 1em;
+    font-weight: bold;
+    margin: 0 0 0.5em 0;
+}
+
+#msg-bienvenida strong {
+    color: #fff;
+    font-weight: bold;
+}
+
+.ia-botiquin {
+    background: #fdf2f2 !important;
+    border: 1px solid #f9dcdc !important;
+}
+
+.ia p {
+    margin: 0 0 0.5em 0;
+}
+
+.ia p:last-child {
+    margin-bottom: 0;
+}
+
+.user {
+    align-self: flex-end;
+    background: var(--color-acento);
+    color: white;
+}
+
+.input-area {
+    padding: 15px 20px;
+    border-top: 1px solid #eee;
+    display: flex;
+    gap: 10px;
+}
+
+input {
+    flex: 1;
+    border: 1px solid #ddd;
+    padding: 10px;
+    border-radius: 25px;
+    outline: none;
+}
+
+#sendBtn {
+    border: none;
+    background: none;
+    cursor: pointer;
+    color: var(--color-acento);
+    font-size: 1.2em;
+}
+
+#micBtn {
+    background: #f0f0f0;
+    border: 1px solid #ccc;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+#micBtn:hover {
+    background: #e0e0e0;
+}
+
+.header-buttons {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+#logoutBtn,
+#bienvenidaBtn,
+#botiquinBtn,
+#progresoBtn {
+    background: transparent;
+    padding: 8px 15px;
+    border-radius: 20px;
+    /* Todos redondos */
+    font-size: 0.8em;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-family: var(--fuente-principal);
+}
+
+#logoutBtn {
+    border: 1px solid var(--color-acento);
+    color: var(--color-acento);
+}
+
+#logoutBtn:hover {
+    background: var(--color-acento);
+    color: white;
+}
+
+#bienvenidaBtn {
+    border: 1px solid #2c3e50;
+    color: #2c3e50;
+}
+
+#bienvenidaBtn:hover {
+    background: #2c3e50;
+    color: white;
+}
+
+#botiquinBtn {
+    border: 1px solid #c0392b;
+    color: #c0392b;
+    font-weight: bold;
+}
+
+#botiquinBtn:hover {
+    background: #c0392b;
+    color: white;
+}
+
+#progresoBtn {
+    border: 1px solid #2e86de;
+    color: #2e86de;
+}
+
+#progresoBtn:hover {
+    background: #2e86de;
+    color: white;
+}
+
+/* Modal Flotante */
+.modal {
+    position: fixed;
+    z-index: 3000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+    display: none;
+    /* Controlado por JS */
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-content {
+    background: #fff;
+    padding: 35px;
+    border-radius: 20px;
+    width: 90%;
+    max-width: 550px;
+    max-height: 85vh;
+    overflow-y: auto;
+    position: relative;
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
+    font-family: var(--fuente-principal);
+    /* Fuente del Mentor */
+}
+
+.close-modal {
+    position: absolute;
+    right: 20px;
+    top: 15px;
+    font-size: 24px;
+    cursor: pointer;
+    color: #999;
+}
+
+.diario-seccion {
+    margin-bottom: 25px;
+    border-bottom: 1px dotted #ccc;
+    padding-bottom: 15px;
+}
+
+.diario-seccion:last-child {
+    border-bottom: none;
+}
+
+.diario-seccion h4 {
+    color: var(--color-acento);
+    margin: 0 0 10px 0;
+    font-size: 1em;
+    text-transform: uppercase;
+}
+
+.diario-seccion p {
+    font-size: 0.95em;
+    line-height: 1.5;
+    color: #555;
+    margin: 0;
+}
+
+/* Barra de Progreso Alquimia */
+.progress-bar-container {
+    width: 100%;
+    height: 12px;
+    background: #eee;
+    border-radius: 10px;
+    overflow: hidden;
+    margin-top: 10px;
+    border: 1px solid #ddd;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #d4af37, #f1c40f);
+    /* Gradiente Dorado */
+    border-radius: 10px;
+    transition: width 1s ease-in-out;
+}
+
+.video-container {
+    position: relative;
+    padding-bottom: 56.25%;
+    height: 0;
+    overflow: hidden;
+    margin-top: 15px;
+    border-radius: 10px;
+}
+
+.video-container iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border: 0;
+}
