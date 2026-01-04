@@ -255,7 +255,8 @@ async function llamarGemini(message, history = [], intent = "mentor_chat", conte
 
         if (!res.ok) {
             const errorData = await res.json();
-            throw new Error(errorData.error || "Error en la llamada a la API");
+            const fullError = errorData.details ? `${errorData.error} (${errorData.details})` : (errorData.error || "Error en la llamada a la API");
+            throw new Error(fullError);
         }
 
         const data = await res.json();

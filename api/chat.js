@@ -30,59 +30,20 @@ REGLAS CRÍTICAS:
   `
 };
 
-/**
- * Función para llamar a Gemini con reintentos/fallbacks de modelos
- */
-async function callGemini(genAI, modelName, prompt, history) {
-    try {
-        console.log(`Intentando con modelo: ${modelName}`);
-        const model = genAI.getGenerativeModel({ model: modelName });
-
-        if (history && history.length > 0) {
-            // Validar que el historial empiece por 'user'
-            let validHistory = [...history];
-            if (validHistory[0].role === 'model') {
-                validHistory.shift(); // Quitamos el primer mensaje si es del modelo
-            }
-
-            const chat = model.startChat({ history: validHistory });
-            const result = await chat.sendMessage(prompt);
-            return result.response.text();
-        } else {
-            const result = await model.generateContent(prompt);
-            return result.response.text();
-        }
-    } catch (e) {
-        console.error(`Error con modelo ${modelName}:`, e.message);
-        throw e;
-    }
-}
-
 export default async function handler(req, res) {
-    if (req.method === "OPTIONS") return res.status(200).end();
     if (req.method !== "POST") return res.status(405).json({ error: "Método no permitido" });
 
     try {
-        // Lectura robusta del body
-        let body = req.body;
-        if (!body || Object.keys(body).length === 0) {
-            body = await new Promise((resolve) => {
-                let chunkStr = "";
-                req.on("data", (chunk) => (chunkStr += chunk));
-                req.on("end", () => {
-                    try { resolve(chunkStr ? JSON.parse(chunkStr) : {}); } catch { resolve({}); }
-                });
-            });
-        }
-
+        // Vercel parsea el body automáticamente si es JSON
+        const body = req.body;
         const { intent, message, history = [], context = "" } = body;
 
         if (!intent || !SYSTEM_PROMPTS[intent]) {
-            return res.status(400).json({ error: "Intento no válido: " + intent });
+            return res.status(400).json({ error: "Intento no válido o no proporcionado" });
         }
 
         if (!process.env.GEMINI_API_KEY) {
-            return res.status(500).json({ error: "Falta GEMINI_API_KEY en variables de entorno." });
+            return res.status(500).json({ error: "Falta GEMINI_API_KEY en el servidor." });
         }
 
         const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
@@ -92,32 +53,38 @@ export default async function handler(req, res) {
         if (context) fullPrompt += `CONTEXTO EXTRA:\n${context}\n\n`;
         fullPrompt += `MENSAJE DEL USUARIO / DATOS:\n${message}`;
 
-        let textResponse = "";
+        // Lista de modelos a probar
+        const models = ["gemini-3-flash-preview", "gemini-3-flash", "gemini-1.5-flash", "gemini-2.0-flash-exp"];
+        let lastError = "";
 
-        // Lista de modelos a probar en orden de preferencia
-        const modelsToTry = ["gemini-3-flash", "gemini-1.5-flash", "gemini-pro"];
-        let lastError = null;
-
-        for (const modelName of modelsToTry) {
+        for (const modelName of models) {
             try {
-                textResponse = await callGemini(genAI, modelName, fullPrompt, history);
-                lastError = null; // Éxito
-                break;
+                console.log(`Probando modelo: ${modelName}`);
+                const model = genAI.getGenerativeModel({ model: modelName });
+
+                let result;
+                if (history && history.length > 0) {
+                    const chat = model.startChat({ history });
+                    result = await chat.sendMessage(fullPrompt);
+                } else {
+                    result = await model.generateContent(fullPrompt);
+                }
+
+                const responseText = result.response.text();
+                return res.status(200).json({ text: responseText });
             } catch (e) {
-                lastError = e;
+                lastError = `${modelName}: ${e.message}`;
+                console.warn(`Fallo con ${modelName}:`, e.message);
             }
         }
 
-        if (lastError) {
-            return res.status(500).json({
-                error: "No se pudo conectar con ningún modelo de Gemini.",
-                details: lastError.message
-            });
-        }
+        return res.status(500).json({
+            error: "No se pudo conectar con ningún modelo de Gemini.",
+            details: lastError
+        });
 
-        return res.status(200).json({ text: textResponse });
     } catch (error) {
-        console.error("Error crítico:", error);
-        return res.status(500).json({ error: error.message });
+        console.error("Error crítico en api/chat:", error);
+        return res.status(500).json({ error: "Error en el servidor", details: error.message });
     }
 }
