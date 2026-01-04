@@ -6,7 +6,14 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { prompt } = req.body;
+    // Parsear el JSON manualmente (Vercel no lo hace solo)
+    const body = await new Promise((resolve) => {
+      let data = "";
+      req.on("data", (chunk) => (data += chunk));
+      req.on("end", () => resolve(JSON.parse(data)));
+    });
+
+    const { prompt } = body;
 
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
     const model = genAI.getGenerativeModel({ model: "gemini-pro" });
@@ -14,10 +21,9 @@ export default async function handler(req, res) {
     const result = await model.generateContent(prompt);
     const text = result.response.text();
 
-    res.status(200).json({ text });
+    return res.status(200).json({ text });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: error.message });
+    console.error("Error en /api/gemini:", error);
+    return res.status(500).json({ error: error.message });
   }
 }
-
