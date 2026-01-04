@@ -956,10 +956,28 @@ input {
 }
 
 .transmuting {
-    filter: blur(20px) brightness(4) contrast(0.5);
+    filter: blur(30px) brightness(5) saturate(0);
     opacity: 0;
-    transform: scale(1.1);
+    transform: scale(1.2);
     pointer-events: none;
+    transition: all 2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.ritual-flash {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(circle, #fff 0%, rgba(255, 255, 255, 0) 80%);
+    opacity: 0;
+    pointer-events: none;
+    z-index: 100;
+    transition: opacity 0.5s ease-in;
+}
+
+.ritual-flash.active {
+    opacity: 1;
 }
 
 @keyframes pulse-vibration {
@@ -978,4 +996,8 @@ input {
         transform: scale(1);
         opacity: 0.8;
     }
+}
+
+.question-slide {
+    transition: all 0.5s ease-out;
 }

@@ -429,8 +429,9 @@ function renderStep() {
 
             try {
                 console.log(`📡 Guardando... Stage: ${step.stage}, SubQ: ${currentQuestionSubIndex}`);
-                await guardarHitoJSON(cachedSupabase, cachedUser, step.field, hito);
-                console.log("✅ OK Supabase");
+                // Sincronizamos también con la columna individual 'personaje'
+                await guardarHitoJSON(cachedSupabase, cachedUser, step.field, hito, { personaje: role.titulo });
+                console.log("✅ OK Supabase (History + ColumnSync)");
 
                 journeyContext.push({ stage: step.stage, question: question.text, answer: role.titulo });
 
@@ -486,9 +487,19 @@ function renderStep() {
             btn.disabled = true;
             btn.innerText = "TRANSMUTANDO...";
 
-            // Efecto visual: difuminar el contenedor entero
+            // Efecto visual: FLASH + Transmutación
             const slide = container.querySelector('.question-slide');
-            slide.classList.add('transmuting');
+
+            // Creamos dinámicamente el overlay de flash
+            const flash = document.createElement('div');
+            flash.className = 'ritual-flash';
+            container.appendChild(flash);
+
+            // Activamos efectos con pequeño delay para sincronismo
+            setTimeout(() => {
+                flash.classList.add('active');
+                slide.classList.add('transmuting');
+            }, 50);
 
             // Guardamos hito simbólico
             userAnswers[question.id] = "Sello de Alquimia emitido";
@@ -649,7 +660,7 @@ async function generateDynamicQuestions(stepObj, context) {
     }
 }
 
-async function guardarHitoJSON(supabase, user, column, newObject) {
+async function guardarHitoJSON(supabase, user, column, newObject, extraPayload = {}) {
     try {
         if (!user || !user.id) {
             console.error("❌ SUPABASE: No hay usuario autenticado en el objeto 'user'.", user);
@@ -699,7 +710,8 @@ async function guardarHitoJSON(supabase, user, column, newObject) {
         const payload = {
             user_id: user.id,
             [column]: currentArray,
-            updated_at: new Date().toISOString()
+            updated_at: new Date().toISOString(),
+            ...extraPayload
         };
         console.log("🚀 Enviando Payload Upsert:", payload);
 
