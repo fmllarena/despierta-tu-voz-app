@@ -891,3 +891,91 @@ input {
     padding-top: 10px;
     width: 100%;
 }
+
+/* --- MODULO 4: EL ALTAR DE LAS PALABRAS --- */
+.pergamino-container {
+    background: #fdf5e6;
+    border: 2px solid #d2b48c;
+    border-radius: 8px;
+    padding: 25px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05), inset 0 0 40px rgba(139, 69, 19, 0.08);
+    position: relative;
+    overflow: hidden;
+    margin-top: 10px;
+}
+
+.pergamino-input {
+    width: 100%;
+    min-height: 250px;
+    background: transparent;
+    border: none;
+    font-family: 'Cambria', 'Georgia', serif;
+    font-size: 1.15em;
+    line-height: 1.8;
+    color: #4a3728;
+    resize: none;
+    outline: none;
+    transition: all 1.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.ritual-closure-ui {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 30px 10px;
+    text-align: center;
+}
+
+.ritual-vibration {
+    font-size: 5em;
+    margin: 20px 0;
+    filter: drop-shadow(0 0 5px var(--color-acento));
+    animation: pulse-vibration 2s infinite ease-in-out;
+}
+
+.sellar-btn {
+    background: linear-gradient(135deg, #be9c7d, #8b4513);
+    color: white;
+    border: none;
+    padding: 16px 45px;
+    font-size: 1.1em;
+    font-weight: 600;
+    border-radius: 50px;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(139, 69, 19, 0.3);
+    transition: all 0.4s;
+    letter-spacing: 1px;
+    margin-top: 20px;
+}
+
+.sellar-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(139, 69, 19, 0.5);
+    background: linear-gradient(135deg, #d2b48c, #a0522d);
+}
+
+.transmuting {
+    filter: blur(20px) brightness(4) contrast(0.5);
+    opacity: 0;
+    transform: scale(1.1);
+    pointer-events: none;
+}
+
+@keyframes pulse-vibration {
+    0% {
+        transform: scale(1);
+        opacity: 0.8;
+    }
+
+    50% {
+        transform: scale(1.1);
+        opacity: 1;
+        filter: drop-shadow(0 0 25px var(--color-acento));
+    }
+
+    100% {
+        transform: scale(1);
+        opacity: 0.8;
+    }
+}

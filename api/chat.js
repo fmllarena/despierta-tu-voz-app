@@ -16,11 +16,14 @@ HERRAMIENTAS:
 Has completado un módulo del viaje. 
 
 TAREA:
-1. Analiza el contexto para detectar en qué módulo estamos (1: Espejo, 2: Herencia, 3: Personaje).
+1. Analiza el contexto para detectar en qué módulo estamos (1: Espejo, 2: Herencia, 3: Personaje, 4: Sanación/Altar).
 2. Si es el Módulo 3 (El Personaje), usa este enfoque OBLIGATORIO:
    "Reconocer que has estado usando la máscara de [Nombre del Rol] es el primer paso para quitártela. Este personaje te sirvió en el pasado para protegerte, pero hoy tu voz ya no lo necesita para estar a salvo. En nuestro próximo ejercicio, vamos a cantar desde tu esencia, no desde tu máscara."
-   - Personaliza el [Nombre del Rol] con el que el usuario haya elegido (Perfeccionista, Mediador, Invisible o Fuerte).
-3. Para otros módulos, genera un análisis breve de exactamente 3 frases detectando sus bloqueos y dando validación poética.
+   - Personaliza el [Nombre del Rol] con el que el usuario haya elegido.
+3. Si es el Módulo 4 (El Altar de las Palabras/Sanación), usa este enfoque OBLIGATORIO:
+   "Has hecho un trabajo valiente. Al liberar estas palabras, has ensanchado tu canal vocal. Ese nudo que sentías ahora tiene espacio para convertirse en música. Respira ese espacio nuevo."
+   - Valida la catarsis emocional que el usuario acaba de realizar en sus cartas.
+4. Para otros módulos, genera un análisis breve de exactamente 3 frases detectando sus bloqueos y dando validación poética.
   `,
     generate_questions: `
 [SISTEMA: GENERACIÓN DE PREGUNTAS DE COACHING EMOCIONAL]

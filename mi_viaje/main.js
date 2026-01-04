@@ -137,11 +137,55 @@ export const modules = [
     },
     {
         id: 4,
-        title: "Sanación de la Voz",
-        description: "Rehabilitando el instrumento desde la emoción.",
-        icon: "❤️‍🩹",
-        activity: "Frecuencias Curativas",
-        steps: []
+        title: "El Altar de las Palabras",
+        description: "Catarsis emocional y liberación de antiguos silencios.",
+        icon: "🖋️",
+        activity: "Escritura Sagrada",
+        intro: {
+            text: "Este es el corazón emocional de tu viaje. Pasamos de analizar el pasado a liberarlo activamente en un espacio sagrado e íntimo.",
+            buttonText: "Entrar al Altar"
+        },
+        steps: [
+            {
+                id: "h4_step1",
+                stage: "Carta a mi Yo del Pasado",
+                instructions: "Imagina a ese niño o joven que un día decidió callar. Tienes la oportunidad de decirle lo que necesitaba escuchar.",
+                questions: [
+                    {
+                        id: "carta_yo_pasado",
+                        text: "¿Qué palabras de aliento necesitaba ese niño/a? Dale permiso para fallar, para gritar y para ser escuchado.",
+                        type: "pergamino"
+                    }
+                ],
+                field: "carta_yo_pasado"
+            },
+            {
+                id: "h4_step2",
+                stage: "Carta a los Padres",
+                instructions: "Nuestros padres nos dieron la vida y también los silencios. Vamos a devolverles lo que es suyo.",
+                questions: [
+                    {
+                        id: "carta_padres",
+                        text: "Expresa lo que no pudiste decirles. Diles qué necesitabas para sentir que tu voz era libre.",
+                        type: "pergamino"
+                    }
+                ],
+                field: "carta_padres"
+            },
+            {
+                id: "h4_step3",
+                stage: "El Ritual de la Alquimia",
+                instructions: "Lo que has escrito se ha transformado. Asienta esta nueva libertad en tu cuerpo.",
+                questions: [
+                    {
+                        id: "h4_ritual",
+                        text: "Emite un sonido largo y sostenido (una vocal) mientras pulsas 'Sellar' para transmutar estas palabras.",
+                        type: "ritual_closure"
+                    }
+                ],
+                field: "ritual_sanacion"
+            }
+        ]
     },
     {
         id: 5,
@@ -409,6 +453,51 @@ function renderStep() {
             }
         };
 
+    } else if (question.type === 'pergamino') {
+        // --- INTERFAZ DE PERGAMINO (MÓDULO 4) ---
+        container.innerHTML = `
+            <div class="question-slide">
+                <h4>${step.stage}</h4>
+                <p style="color:#666; font-style:italic; margin-bottom:15px;">${step.instructions}</p>
+                <div class="pergamino-container">
+                    <textarea id="answerInput" class="pergamino-input" placeholder="Escribe aquí tu carta desde el alma..."></textarea>
+                </div>
+            </div>
+        `;
+        setTimeout(() => document.getElementById('answerInput')?.focus(), 100);
+
+    } else if (question.type === 'ritual_closure') {
+        // --- RITUAL DE CIERRE ALQUÍMICO ---
+        document.getElementById('nextQBtn').style.display = 'none';
+        document.getElementById('prevQBtn').style.display = 'none';
+        document.getElementById('finishModuleBtn').style.display = 'none';
+
+        container.innerHTML = `
+            <div class="question-slide ritual-closure-ui">
+                <h4>${step.stage}</h4>
+                <div class="ritual-vibration">🌌</div>
+                <h3 class="question-text">${question.text}</h3>
+                <button id="sellarBtn" class="sellar-btn">✦ SELLAR Y TRANSMUTAR ✦</button>
+            </div>
+        `;
+
+        document.getElementById('sellarBtn').onclick = async () => {
+            const btn = document.getElementById('sellarBtn');
+            btn.disabled = true;
+            btn.innerText = "TRANSMUTANDO...";
+
+            // Efecto visual: difuminar el contenedor entero
+            const slide = container.querySelector('.question-slide');
+            slide.classList.add('transmuting');
+
+            // Guardamos hito simbólico
+            userAnswers[question.id] = "Sello de Alquimia emitido";
+            // Bypassing input check y pasando a la IA
+            setTimeout(() => {
+                finishModuleWithAI(cachedSupabase, cachedUser, true);
+            }, 1800);
+        };
+
     } else {
         // --- RENDER ESTÁNDAR (TEXTO) ---
         container.innerHTML = `
@@ -637,19 +726,17 @@ async function guardarHitoJSON(supabase, user, column, newObject) {
     }
 }
 
-async function finishModuleWithAI(supabase, user) {
+async function finishModuleWithAI(supabase, user, skipInputCheck = false) {
     const input = document.getElementById('answerInput');
-    if (!input.value.trim()) return alert("Por favor, responde antes de finalizar.");
-
     const module = modules[currentModuleIndex];
     const step = module.steps[currentStepIndex];
     const question = step.questions[currentQuestionSubIndex];
 
-    // standardizing userAnswers inclusion
-    userAnswers[question.id] = input.value;
-
-    // Guardar contexto para IA
-    journeyContext.push({ stage: step.stage, question: question.text, answer: input.value });
+    if (!skipInputCheck) {
+        if (!input || !input.value.trim()) return alert("Por favor, responde antes de finalizar.");
+        userAnswers[question.id] = input.value;
+        journeyContext.push({ stage: step.stage, question: question.text, answer: input.value });
+    }
 
     const hitoData = {
         etapa: step.stage,
