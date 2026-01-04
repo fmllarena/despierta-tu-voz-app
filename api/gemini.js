@@ -66,10 +66,24 @@ export default async function handler(req, res) {
       }
     } catch (modelError) {
       console.error("Error específico del modelo:", modelError);
+
+      // DIAGNÓSTICO: Listar modelos disponibles si fallan los principales
+      let availableModels = [];
+      try {
+        const listResult = await genAI.listModels();
+        availableModels = listResult.models.map(m => m.name);
+      } catch (listErr) {
+        availableModels = [`No se pudieron listar: ${listErr.message}`];
+      }
+
       // Si falla, intentamos con gemini-1.5-flash (sin -latest) como fallback inmediato
-      const backupModel = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-      const result = await backupModel.generateContent(prompt);
-      textResponse = result.response.text();
+      try {
+        const backupModel = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+        const result = await backupModel.generateContent(prompt);
+        textResponse = result.response.text();
+      } catch (backupErr) {
+        throw new Error(`Error en cascada. Modelos intentados fallaron. Modelos disponibles en tu API Key: ${availableModels.join(", ")}. Error original: ${modelError.message}`);
+      }
     }
 
     return res.status(200).json({ text: textResponse });
