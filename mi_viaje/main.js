@@ -72,17 +72,23 @@ function renderRoadmap() {
     const container = document.getElementById('journeyRoadmap');
     container.innerHTML = '';
 
-    // Create SVG Layer
-    const svgLayer = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-    svgLayer.setAttribute("class", "roadmap-svg-layer");
-    svgLayer.setAttribute("id", "roadmapSvg");
-    container.appendChild(svgLayer);
+    // No JS SVG layer anymore. We use intermediate connector divs.
 
     modules.forEach((mod, index) => {
         const isUnlocked = index === 0 || localStorage.getItem(`module_${mod.id}_unlocked`);
+
+        // 1. Render Node
         const node = document.createElement('div');
         node.className = `roadmap-node ${isUnlocked ? 'unlocked' : 'locked'}`;
-        node.onclick = () => { if (isUnlocked) openModule(index); };
+        node.onclick = () => {
+            if (isUnlocked) {
+                if (mod.steps && mod.steps.length > 0) {
+                    openModule(index);
+                } else {
+                    alert("Este módulo aún no está disponible (Próximamente).");
+                }
+            }
+        };
 
         node.innerHTML = `
             <div class="node-icon">${mod.icon}</div>
@@ -93,65 +99,29 @@ function renderRoadmap() {
             <div class="node-status">${isUnlocked ? '▶' : '🔒'}</div>
         `;
         container.appendChild(node);
+
+        // 2. Render Connector to the NEXT node (if exists)
+        if (index < modules.length - 1) {
+            const connector = document.createElement('div');
+            connector.className = 'roadmap-connector';
+
+            let pathD = "";
+
+            // Logic for Alternating Curve
+            if (index % 2 === 0) {
+                // Even Index (0): Starts Left. Next (1) is Right.
+                // Connector goes Left -> Right.
+                pathD = "M 30% 0 C 30% 55, 70% 25, 70% 100%";
+            } else {
+                // Odd Index (1): Starts Right. Next (2) is Left.
+                // Connector goes Right -> Left.
+                pathD = "M 70% 0 C 70% 55, 30% 25, 30% 100%";
+            }
+
+            connector.innerHTML = `<svg><path class="connector-path" d="${pathD}" vector-effect="non-scaling-stroke"></path></svg>`;
+            container.appendChild(connector);
+        }
     });
-
-    // Draw lines after layout
-    // Retry drawing a few times to ensure modal transition is done
-    setTimeout(drawRoadmapLines, 100);
-    setTimeout(drawRoadmapLines, 500);
-    setTimeout(drawRoadmapLines, 1000); // Fail-safe
-    window.addEventListener('resize', drawRoadmapLines);
-}
-
-function drawRoadmapLines() {
-    const svg = document.getElementById('roadmapSvg');
-    if (!svg) return;
-
-    while (svg.firstChild) {
-        svg.removeChild(svg.firstChild);
-    }
-
-    const nodes = document.querySelectorAll('.roadmap-node');
-    if (nodes.length < 2) return;
-
-    for (let i = 0; i < nodes.length - 1; i++) {
-        const nodeA = nodes[i];
-        const nodeB = nodes[i + 1];
-
-        const posA = { left: nodeA.offsetLeft, top: nodeA.offsetTop, width: nodeA.offsetWidth, height: nodeA.offsetHeight };
-        const posB = { left: nodeB.offsetLeft, top: nodeB.offsetTop, width: nodeB.offsetWidth, height: nodeB.offsetHeight };
-
-        let startX, startY, endX, endY;
-
-        if (i % 2 === 0) { // Left Node
-            startX = posA.left + posA.width;
-            startY = posA.top + posA.height / 2;
-        } else { // Right Node
-            startX = posA.left;
-            startY = posA.top + posA.height / 2;
-        }
-
-        if ((i + 1) % 2 === 0) { // Next is Left Node
-            endX = posB.left + posB.width;
-            endY = posB.top + posB.height / 2;
-        } else { // Next is Right Node
-            endX = posB.left;
-            endY = posB.top + posB.height / 2;
-        }
-
-        const isGoingRight = endX > startX;
-        const cp1X = isGoingRight ? startX + 50 : startX - 50;
-        const cp1Y = startY;
-        const cp2X = isGoingRight ? endX - 50 : endX + 50;
-        const cp2Y = endY;
-
-        const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
-        const d = `M ${startX} ${startY} C ${cp1X} ${cp1Y}, ${cp2X} ${cp2Y}, ${endX} ${endY}`;
-
-        path.setAttribute("d", d);
-        path.setAttribute("class", "roadmap-path");
-        svg.appendChild(path);
-    }
 }
 
 function openModule(index) {
