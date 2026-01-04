@@ -386,7 +386,13 @@ function appendMessage(text, type, id = null) {
     }
 
     chatBox.appendChild(messageDiv);
-    chatBox.scrollTop = chatBox.scrollHeight;
+
+    // Si es botiquín, hacemos scroll hacia arriba para empezar a leer desde el inicio del mensaje
+    if (type === 'ia-botiquin') {
+        messageDiv.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } else {
+        chatBox.scrollTop = chatBox.scrollHeight;
+    }
 }
 async function generarYGuardarResumen() {
     if (!supabase) return;

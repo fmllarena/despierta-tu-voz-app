@@ -35,8 +35,12 @@ export default async function handler(req, res) {
         const data = await response.json();
 
         if (!response.ok) {
-            console.error("Error G-TTS:", data);
-            return res.status(response.status).json({ error: data.error?.message || 'Error en Google TTS' });
+            console.error("Error G-TTS Detail:", JSON.stringify(data, null, 2));
+            let errorMsg = data.error?.message || 'Error en Google TTS';
+            if (response.status === 403) errorMsg = "API Key no válida o permiso denegado. Revisa tus restricciones en Google Cloud.";
+            if (response.status === 404) errorMsg = "Modelo de voz no encontrado o API no habilitada.";
+            if (response.status === 429) errorMsg = "Se ha excedido la cuota de la API.";
+            return res.status(response.status).json({ error: errorMsg });
         }
 
         // Devolvemos el base64 del audio
