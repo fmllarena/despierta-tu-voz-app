@@ -49,49 +49,25 @@ export default async function handler(req, res) {
     }
 
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-
-    // Probamos con gemini-1.5-flash-latest que suele ser más resiliente en despliegues serverless
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" });
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
     let textResponse = "";
 
-    try {
-      if (history && history.length > 0) {
-        const chat = model.startChat({ history });
-        const result = await chat.sendMessage(prompt);
-        textResponse = result.response.text();
-      } else {
-        const result = await model.generateContent(prompt);
-        textResponse = result.response.text();
-      }
-    } catch (modelError) {
-      console.error("Error específico del modelo:", modelError);
-
-      // DIAGNÓSTICO: Listar modelos disponibles si fallan los principales
-      let availableModels = [];
-      try {
-        const listResult = await genAI.listModels();
-        availableModels = listResult.models.map(m => m.name);
-      } catch (listErr) {
-        availableModels = [`No se pudieron listar: ${listErr.message}`];
-      }
-
-      // Si falla, intentamos con gemini-1.5-flash (sin -latest) como fallback inmediato
-      try {
-        const backupModel = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-        const result = await backupModel.generateContent(prompt);
-        textResponse = result.response.text();
-      } catch (backupErr) {
-        throw new Error(`Error en cascada. Modelos intentados fallaron. Modelos disponibles en tu API Key: ${availableModels.join(", ")}. Error original: ${modelError.message}`);
-      }
+    if (history && history.length > 0) {
+      const chat = model.startChat({ history });
+      const result = await chat.sendMessage(prompt);
+      textResponse = result.response.text();
+    } else {
+      const result = await model.generateContent(prompt);
+      textResponse = result.response.text();
     }
 
     return res.status(200).json({ text: textResponse });
   } catch (error) {
     console.error("Error detallado en /api/gemini:", error);
     return res.status(500).json({
-      error: `Error interno de servidor: ${error.message}`,
-      details: error.stack
+      error: `Error de Gemini: ${error.message}`,
+      details: "404 suele indicar que la API Key no es válida para el modelo. Prueba a generar una nueva en aistudio.google.com"
     });
   }
 }
