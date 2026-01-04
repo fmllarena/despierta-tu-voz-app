@@ -297,12 +297,12 @@ async function llamarGemini(prompt) {
             ? `${contexto}\nMENSAJE DEL ALUMNO: ${text}`
             : text;
 
-        const text = await llamarGemini(prompt);
+        const respuestaGemini = await llamarGemini(prompt);
 
         appendMessage(textResponse, 'ia');
 
         // --- FIX: Añadir ambos mensajes al historial para que el resumen sea completo ---
-        chatHistory.push({ role: "user", parts: [{ text: text }] });
+        chatHistory.push({ role: "user", parts: [{ text: respuestaGemini  }] });
         chatHistory.push({ role: "model", parts: [{ text: textResponse }] });
 
         // Opcional: Podríamos pedirle a la IA un mini-resumen interno 
@@ -609,4 +609,5 @@ if (SpeechRecognition && micBtn) {
     if (micBtn) micBtn.style.display = 'none';
     console.log("Tu navegador no soporta reconocimiento de voz o falta el botón.");
 }
+
 
