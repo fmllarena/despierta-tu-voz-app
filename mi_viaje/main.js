@@ -217,8 +217,8 @@ function renderStep() {
 
     const question = step.questions[currentQuestionSubIndex];
 
-    const totalQ = module.steps.reduce((acc, s) => acc + (s.questions ? s.questions.length : 2), 0);
-    // Estimated 2 for dynamic steps if empty
+    const totalQ = module.steps.reduce((acc, s) => acc + (s.questions ? s.questions.length : 1), 0);
+    // Estimated 1 for dynamic steps if empty
 
     const previousStepsCount = module.steps.slice(0, currentStepIndex).reduce((acc, s) => acc + s.questions.length, 0);
     const currentAbsoluteQ = previousStepsCount + currentQuestionSubIndex + 1;
@@ -302,7 +302,8 @@ async function nextStep(supabase, user) {
         };
 
         await guardarHitoJSON(supabase, user, step.field, hitoData);
-        userAnswers = {};
+        // We don't clear userAnswers here anymore to avoid losing them for finishing logic
+        // userAnswers = {}; 
 
         if (currentStepIndex < module.steps.length - 1) {
             // Check if NEXT step is dynamic and empty
@@ -349,24 +350,23 @@ async function generateDynamicQuestions(stepObj, context) {
 
     try {
         const historyText = JSON.stringify(context);
+        const questionsAsked = context.map(c => c.question).join(" | ");
+
         const prompt = `
             [SISTEMA: GENERACIÓN DE PREGUNTAS DE COACHING EMOCIONAL]
             Contexto del usuario hasta ahora: ${historyText}
             
-            Tu objetivo: Generar 2 preguntas de coaching emocional profundo para la siguiente etapa: "${stepObj.stage}".
+            PREGUNTAS YA REALIZADAS: ${questionsAsked}
+            
+            Tu objetivo: Generar EXACTAMENTE 1 pregunta de coaching emocional profundo para la etapa: "${stepObj.stage}".
             
             REGLAS CRÍTICAS:
-            1. Las preguntas deben estar personalizadas basándose en las respuestas anteriores del usuario.
-            2. PRIORIZA el estado emocional general, la infancia, las relaciones familiares y la autoestima.
-            3. NO fuerces preguntas sobre "voz" o "canto" a menos que el usuario haya mencionado específicamente estos temas.
-            4. Si el usuario mencionó algo sobre voz/expresión/canto, ENTONCES sí profundiza, pero desde lo emocional.
-            5. Etapa Adolescencia: Cambios emocionales, juicios sociales, identidad, bloqueos de expresión.
-            6. Etapa Presente: Consciencia actual, patrones emocionales repetitivos, sanación.
-            7. Devuelve ÚNICAMENTE un arraJSON:
-            [
-                { "id": "dyn_1", "text": "¿Pregunta 1?", "type": "long_text" },
-                { "id": "dyn_2", "text": "¿Pregunta 2?", "type": "text" }
-            ]
+            1. Genera SOLO 1 pregunta.
+            2. NUNCA repitas una pregunta o concepto que ya se haya preguntado (ver lista arriba). Se MUY original y creativo.
+            3. PRIORIZA el estado emocional, familia y autoestima.
+            4. NO fuerces la "voz" si el usuario no la ha mencionado.
+            5. Devuelve ÚNICAMENTE un array JSON con esta estructura: 
+               [ { "id": "...", "text": "...", "type": "long_text" } ]
         `;
 
         const response = await fetch('/api/chat', {
@@ -379,27 +379,49 @@ async function generateDynamicQuestions(stepObj, context) {
         const jsonStr = data.text.replace(/```json|```/g, '').trim();
         const newQuestions = JSON.parse(jsonStr);
 
-        // Assign to step object
-        stepObj.questions = newQuestions;
+        // Ensure we only keep 1 question
+        stepObj.questions = newQuestions.slice(0, 1);
+        console.log("Pregunta de etapa generada:", stepObj.questions[0].text);
 
     } catch (e) {
         console.error("Error generating questions:", e);
-        // Fallback questions if AI fails
+        // Fallback question if AI fails
         stepObj.questions = [
-            { id: "fallback_1", text: "Si pudieras decirle algo a tu voz en esta etapa, ¿qué sería?", type: "long_text" },
-            { id: "fallback_2", text: "¿Qué sientes en tu cuerpo al recordar esto?", type: "text" }
+            { id: "fallback_1", text: "¿Qué sientes en tu cuerpo al recordar esta etapa de tu vida?", type: "long_text" }
         ];
     }
 }
 
 async function guardarHitoJSON(supabase, user, column, newObject) {
-    // ... (Misma lógica de guardado) ...
     try {
-        let { data: currentData } = await supabase.from('user_coaching_data').select(column).eq('user_id', user.id).single();
+        console.log("Guardando hito en Supabase:", column, newObject);
+        // Usamos maybeSingle para evitar errores si no hay fila previa
+        let { data: currentData, error: fetchError } = await supabase
+            .from('user_coaching_data')
+            .select(column)
+            .eq('user_id', user.id)
+            .maybeSingle();
+
+        if (fetchError) {
+            console.warn("Aviso al buscar datos previos (puede ser la primera vez):", fetchError);
+        }
+
         let currentArray = (currentData && currentData[column] && Array.isArray(currentData[column])) ? currentData[column] : [];
         currentArray.push(newObject);
-        await supabase.from('user_coaching_data').upsert({ user_id: user.id, [column]: currentArray, updated_at: new Date() }, { onConflict: 'user_id' });
-    } catch (e) { console.error(e); }
+
+        const { error: upsertError } = await supabase
+            .from('user_coaching_data')
+            .upsert({
+                user_id: user.id,
+                [column]: currentArray,
+                updated_at: new Date()
+            }, { onConflict: 'user_id' });
+
+        if (upsertError) throw upsertError;
+        console.log("Hito guardado con éxito.");
+    } catch (e) {
+        console.error("Error crítico guardando hito:", e);
+    }
 }
 
 async function finishModuleWithAI(supabase, user) {
@@ -414,7 +436,7 @@ async function finishModuleWithAI(supabase, user) {
 
         const hitoData = {
             etapa: step.stage,
-            respuestas: { ...userAnswers, ultimo: input.value },
+            respuestas: { ...userAnswers, [previousQ.id]: input.value },
             fecha: new Date().toISOString()
         };
         await guardarHitoJSON(supabase, user, step.field, hitoData);
@@ -448,10 +470,11 @@ async function finishModuleWithAI(supabase, user) {
         const data = await response.json();
 
         // UNLOCK NEXT MODULE LOGIC
-        // We do this immediately upon successful completion logic
         if (currentModuleIndex < modules.length - 1) {
             const nextModuleId = modules[currentModuleIndex + 1].id;
-            localStorage.setItem(`module_${nextModuleId}_unlocked`, 'true');
+            const unlockKey = `module_${nextModuleId}_unlocked`;
+            localStorage.setItem(unlockKey, 'true');
+            console.log("Módulo desbloqueado con éxito en localStorage:", unlockKey);
         }
 
         container.innerHTML = `
@@ -460,7 +483,7 @@ async function finishModuleWithAI(supabase, user) {
                 <p style="font-size:1.1em; line-height:1.6; padding:15px; background:#f9f9f9; border-radius:10px;">
                     ${data.text}
                 </p>
-                <button id="closeModuleBtn" class="nav-btn journey-btn" style="width:100%; margin-top:20px;">Guardar y Volver al Mapa</button>
+                <button id="closeModuleBtn" class="nav-btn journey-btn" style="width:100%; margin-top:20px;">Finalizar y Continuar</button>
             </div>
         `;
 
