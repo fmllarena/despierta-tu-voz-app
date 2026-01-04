@@ -1,7 +1,6 @@
-import { GoogleGenerativeAI } from "https://esm.run/@google/generative-ai";
+// main.js - Lógica del cliente
 
 // --- CONFIGURACIÓN DE LLAVES ---
-const API_KEY = "AIzaSyAYeDuFDeyUBLvFrsMNpcq38ZXRCM_JIPc"; // Gemini API Key
 const SUPABASE_URL = 'https://axwwjtjcawuabzyojabu.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_IAammdMwRIEs6ZzXHA_57A_bVCKAzPX';
 
@@ -15,18 +14,19 @@ const signUpBtn = document.getElementById('signUpBtn');
 const authOverlay = document.getElementById('authOverlay');
 const authError = document.getElementById('authError');
 
-// --- INICIALIZACIÓN DE SERVICIOS ---
 // Supabase (usando window.supabase cargado desde el CDN en index.html)
 let supabase;
 try {
-    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    if (window.supabase) {
+        supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    } else {
+        console.error("Librería Supabase no encontrada.");
+    }
 } catch (e) {
     console.error("Error inicializando Supabase:", e);
 }
 
-// Gemini
-const genAI = new GoogleGenerativeAI(API_KEY);
-const model = genAI.getGenerativeModel({ model: "gemini-3-flash-preview" });
+// Ya no inicializamos Gemini aquí (se hace en el servidor)
 
 // --- LÓGICA DE AUTENTICACIÓN Y SALUDO ---
 
@@ -78,7 +78,8 @@ async function saludarUsuario() {
                 appendMessage(MENSAJE_BIENVENIDA, 'ia', 'msg-bienvenida');
             } else {
                 // YA HA ENTRADO ANTES
-                const nombre = user.email.split('@')[0];
+                const email = user.email || "";
+                const nombre = email.split('@')[0] || "viajero/a";
                 const nombreCap = nombre.charAt(0).toUpperCase() + nombre.slice(1);
                 appendMessage(`¡Hola, <strong>${nombreCap}</strong>! Qué alegría encontrarte de nuevo. Soy tu Mentor de voz, ¿cómo te sientes hoy?`, 'ia');
             }
@@ -102,7 +103,7 @@ async function checkUser() {
         const user = data?.user;
 
         if (user) {
-            authOverlay.remove();
+            authOverlay.style.display = 'none';
             saludarUsuario();
             console.log("Sesión activa de:", user.email);
         } else {
@@ -258,7 +259,27 @@ let chatHistory = [
     { role: "model", parts: [{ text: "Bienvenido/a, soy tu Mentor Vocal privado. ¿Cómo te sientes hoy?" }] }
 ];
 
-const chat = model.startChat({ history: chatHistory });
+// Función centralizadora para llamar a Gemini a través de nuestra API local (backend)
+async function llamarGemini(prompt, history = []) {
+    try {
+        const res = await fetch("/api/gemini", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ prompt, history })
+        });
+
+        if (!res.ok) {
+            const errorData = await res.json();
+            throw new Error(errorData.error || "Error en la llamada a la API");
+        }
+
+        const data = await res.json();
+        return data.text;
+    } catch (e) {
+        console.error("Error al llamar a Gemini:", e);
+        throw e;
+    }
+}
 
 async function sendMessage() {
     const text = chatMentoriaInput.value.trim();
@@ -268,17 +289,6 @@ async function sendMessage() {
     chatMentoriaInput.value = '';
     chatMentoriaInput.disabled = true;
     sendBtn.disabled = true;
-    
-async function llamarGemini(prompt) {
-  const res = await fetch("/api/gemini", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ prompt })
-  });
-
-  const data = await res.json();
-  return data.text;
-}
 
     try {
         // --- LIMPIEZA: Si hay mensajes especiales abiertos, los quitamos al enviar un mensaje normal ---
@@ -297,20 +307,16 @@ async function llamarGemini(prompt) {
             ? `${contexto}\nMENSAJE DEL ALUMNO: ${text}`
             : text;
 
-        const respuestaGemini = await llamarGemini(prompt);
+        const respuestaGemini = await llamarGemini(promptFinal, chatHistory);
 
-        appendMessage(textResponse, 'ia');
+        appendMessage(respuestaGemini, 'ia');
 
-        // --- FIX: Añadir ambos mensajes al historial para que el resumen sea completo ---
-        chatHistory.push({ role: "user", parts: [{ text: respuestaGemini  }] });
-        chatHistory.push({ role: "model", parts: [{ text: textResponse }] });
-
-        // Opcional: Podríamos pedirle a la IA un mini-resumen interno 
-        // para guardarlo en Supabase, pero por ahora lo dejamos manual o automático por sesión.
-
+        // Actualizamos el historial de la sesión
+        chatHistory.push({ role: "user", parts: [{ text: text }] });
+        chatHistory.push({ role: "model", parts: [{ text: respuestaGemini }] });
 
     } catch (error) {
-        console.error("Error:", error);
+        console.error("Error en sendMessage:", error);
         appendMessage("Lo siento, hubo un problema al conectar con tu voz interior. Por favor, inténtalo de nuevo en un momento.", 'ia');
     } finally {
         chatMentoriaInput.disabled = false;
@@ -327,7 +333,19 @@ function appendMessage(text, type, id = null) {
 
     if (type === 'ia' || type === 'ia-botiquin') {
         // Renderizamos Markdown para el Mentor
-        let htmlContent = marked.parse(text);
+        let htmlContent = "";
+        try {
+            if (window.marked && typeof window.marked.parse === 'function') {
+                htmlContent = window.marked.parse(text);
+            } else if (typeof window.marked === 'function') {
+                htmlContent = window.marked(text);
+            } else {
+                htmlContent = text; // Fallback a texto plano
+            }
+        } catch (e) {
+            console.error("Error al parear Markdown:", e);
+            htmlContent = text;
+        }
 
         // --- DETECCIÓN DE YOUTUBE: Buscamos links o IDs y embebemos ---
         // Buscamos patrones: https://www.youtube.com/watch?v=ID o https://youtu.be/ID
@@ -360,13 +378,7 @@ async function generarYGuardarResumen() {
 
     try {
         // Pedimos a la IA que extraiga toda la información relevante en formato JSON
-        const result = await model.generateContent({
-            contents: [
-                ...chatHistory,
-                {
-                    role: "user",
-                    parts: [{
-                        text: `Basado en esta conversación, genera un objeto JSON con esta estructura exacta:
+        const promptCierre = `Basado en esta conversación, genera un objeto JSON con esta estructura exacta:
                         {
                           "resumen": "una frase técnica de la sesión",
                           "creencias": "bloqueos o creencias limitantes identificadas (máximo 30 palabras)",
@@ -374,14 +386,9 @@ async function generarYGuardarResumen() {
                           "nivel_alquimia": (un número del 1 al 10 que refleje su progreso hoy),
                           "creencias_transmutadas": "ideas o miedos que el alumno ha superado o transformado hoy"
                         }
-                        Responde ÚNICAMENTE el JSON puro.`
-                    }]
-                }
-            ]
-        });
+                        Responde ÚNICAMENTE el JSON puro.`;
 
-        const response = await result.response;
-        const rawText = response.text();
+        const rawText = await llamarGemini(promptCierre, chatHistory);
 
         // Limpiamos la respuesta por si la IA añade markdown code blocks
         const jsonText = rawText.replace(/```json|```/g, "").trim();
@@ -446,10 +453,14 @@ if (botiquinBtn) {
             Sé directo, cálido y efectivo. Si me pasas un link de YouTube, asegúrate de que sea el formato estándar completo.
             `;
 
-            const result = await chat.sendMessage(promptUrgente);
-            const response = await result.response;
-            // Usamos la clase 'ia-botiquin' para el estilo rojizo y un ID para el toggle/limpieza
-            appendMessage(response.text(), 'ia-botiquin', 'msg-botiquin');
+            const responseText = await llamarGemini(promptUrgente, []);
+
+            // Si la respuesta es exitosa, la mostramos
+            if (responseText) {
+                appendMessage(responseText, 'ia-botiquin', 'msg-botiquin');
+            } else {
+                throw new Error("No se recibió respuesta de la IA");
+            }
 
         } catch (e) {
             console.error("Error botiquín:", e);
@@ -592,7 +603,7 @@ if (SpeechRecognition && micBtn) {
 
     recognition.onresult = (event) => {
         const transcript = event.results[0][0].transcript;
-        userInput.value = transcript;
+        chatMentoriaInput.value = transcript;
         micBtn.style.backgroundColor = "";
         sendMessage();
     };
