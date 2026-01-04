@@ -458,8 +458,10 @@ async function finishModuleWithAI(supabase, user) {
 
     } catch (e) {
         console.error("Error AI analysis:", e);
-        alert("Error de conexión con el Mentor.");
+        alert("Módulo guardado, pero el Mentor está meditando (Error de conexión).");
+        // Return to roadmap instead of closing
         document.getElementById('moduloModal').style.display = 'none';
+        document.getElementById('viajeModal').style.display = 'flex';
         renderRoadmap();
     }
 }

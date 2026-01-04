@@ -457,8 +457,9 @@ input {
 
 /* --- MI VIAJE (ROADMAP) STYLES --- */
 #viajeBtn {
-    border: 1px solid var(--color-acento);
-    color: var(--color-acento);
+    border: 1px solid #D8C608;
+    /* Match hover color */
+    color: #D8C608;
     background: transparent;
 }
 
@@ -532,13 +533,16 @@ input {
 .roadmap-node {
     display: flex;
     align-items: center;
-    gap: 15px;
+    gap: 12px;
     background: white;
-    padding: 15px 25px;
+    padding: 12px 20px;
+    /* Smaller */
     border-radius: 50px;
     border: 2px solid #eee;
-    width: 80%;
-    max-width: 350px;
+    width: 70%;
+    /* Narrower */
+    max-width: 300px;
+    /* Smaller max */
     cursor: pointer;
     transition: all 0.3s ease;
     z-index: 2;
@@ -605,10 +609,11 @@ input {
 }
 
 .roadmap-node .node-icon {
-    font-size: 2em;
+    font-size: 1.8em;
+    /* Slightly smaller */
     background: #f4ece6;
-    width: 50px;
-    height: 50px;
+    width: 45px;
+    height: 45px;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -619,7 +624,8 @@ input {
 .roadmap-node .node-info h3 {
     margin: 0;
     color: #4a3b32;
-    font-size: 1em;
+    font-size: 0.95em;
+    /* Slightly smaller */
 }
 
 .roadmap-node .node-info p {
