@@ -699,9 +699,9 @@ document.getElementById('viajeBtn').addEventListener('click', async () => {
     // Abrir modal
     document.getElementById('viajeModal').style.display = 'flex';
 
-    // Cargar módulo dinámicamente si no está cargado
+    // Cargar módulo dinámicamente con cache-bust para evitar versiones antiguas
     try {
-        const { initJourney } = await import('./mi_viaje/main.js');
+        const { initJourney } = await import(`./mi_viaje/main.js?v=${Date.now()}`);
         initJourney(supabase, data.user);
     } catch (e) {
         console.error("Error cargando Mi Viaje:", e);

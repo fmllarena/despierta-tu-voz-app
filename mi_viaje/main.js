@@ -2,25 +2,21 @@ const ROLES_ALQUIMIA = {
     perfeccionista: {
         titulo: "El Perfeccionista",
         lema: "Mi voz debe ser impecable. Si no es perfecta, mejor no sonar.",
-        impacto: "Tensión y control excesivo",
         icon: "💎"
     },
     mediador: {
         titulo: "El Mediador",
         lema: "Canto para agradar y suavizar tensiones. Mi voz es complaciente.",
-        impacto: "Voz aireada y falta de límites",
         icon: "🕊️"
     },
     invisible: {
         titulo: "El Invisible",
         lema: "Prefiero no destacar. Si mi voz es pequeña, estoy a salvo.",
-        impacto: "Volumen bajo y retraimiento",
         icon: "👻"
     },
     fuerte: {
         titulo: "El Fuerte",
         lema: "Mi voz es mi escudo. Siempre suena potente pero rígida.",
-        impacto: "Rigidez y falta de matices",
         icon: "🛡️"
     }
 };
@@ -166,7 +162,12 @@ let isIntroView = true;
 // GLOBAL STORAGE for cumulative answers to feed the AI
 let journeyContext = [];
 
+let cachedSupabase = null;
+let cachedUser = null;
+
 export function initJourney(supabaseClient, user) {
+    cachedSupabase = supabaseClient;
+    cachedUser = user;
     console.log("Iniciando Mi Viaje 2.0 (Dynamic)...", user);
     renderRoadmap();
 
@@ -180,9 +181,9 @@ export function initJourney(supabaseClient, user) {
         renderRoadmap(); // Refresh to show unlocked modules
     };
 
-    document.getElementById('nextQBtn').onclick = () => nextStep(supabaseClient, user);
+    document.getElementById('nextQBtn').onclick = () => nextStep(cachedSupabase, cachedUser);
     document.getElementById('prevQBtn').onclick = prevStep;
-    document.getElementById('finishModuleBtn').onclick = () => finishModuleWithAI(supabaseClient, user);
+    document.getElementById('finishModuleBtn').onclick = () => finishModuleWithAI(cachedSupabase, cachedUser);
 }
 
 function renderRoadmap() {
@@ -291,7 +292,11 @@ function renderIntro() {
 
 function renderStep() {
     const module = modules[currentModuleIndex];
+    if (!module) return console.error("❌ Módulo no encontrado");
     const step = module.steps[currentStepIndex];
+    if (!step) return console.error("❌ Paso no encontrado", currentStepIndex);
+
+    console.log(`[Viaje] Renderizando Módulo ${currentModuleIndex}, Paso ${currentStepIndex}, SubIndex ${currentQuestionSubIndex}`);
 
     // Safety check if dynamic questions aren't loaded yet
     if (step.dynamic && (step.questions.length === 0)) {
@@ -338,7 +343,6 @@ function renderStep() {
                     <div class="role-card-icon">${rol.icon}</div>
                     <h3>${rol.titulo}</h3>
                     <p class="role-card-lema">"${rol.lema}"</p>
-                    <div class="role-card-impacto">Impacto: ${rol.impacto}</div>
                 </div>
             `;
         }
@@ -353,32 +357,56 @@ function renderStep() {
         `;
 
         // Exponemos la función globalmente para los clics
-        window.seleccionarRol = async (idRol) => {
-            const rolElegido = ROLES_ALQUIMIA[idRol];
-            const dataParaGuardar = {
-                rol_nombre: rolElegido.titulo,
-                impacto_detectado: rolElegido.impacto,
-                fecha_identificacion: new Date().toISOString()
-            };
+        window.seleccionarRol = async (idOfRol) => {
+            console.log(`💎 [${new Date().toLocaleTimeString()}] SELECCIÓN ROL (CLIC):`, idOfRol);
 
-            // Guardamos selección en respuestas para el flujo local
-            userAnswers[question.id] = rolElegido.titulo;
+            if (!cachedSupabase || !cachedUser) {
+                console.error("❌ ERROR: No hay sesión (cachedSupabase/cachedUser vacíos)");
+                alert("Error de sesión. Recarga la página.");
+                return;
+            }
 
-            // Guardar en Supabase (usamos la misma lógica que nextStep)
-            const hitoData = {
+            const role = ROLES_ALQUIMIA[idOfRol];
+            if (!role) return;
+
+            // Bloqueamos clics repetidos
+            const originalFunc = window.seleccionarRol;
+            window.seleccionarRol = () => { console.warn("⏳ Seleccionando, espera..."); };
+
+            // Guardamos selección localmente
+            userAnswers[question.id] = role.titulo;
+
+            // hitoData para guardar
+            const hito = {
                 etapa: "Selección de Rol",
                 respuestas: { ...userAnswers },
                 fecha: new Date().toISOString()
             };
 
-            const supabase = window.supabase;
-            const { data: { user } } = await supabase.auth.getUser();
+            try {
+                console.log(`📡 Guardando... Stage: ${step.stage}, SubQ: ${currentQuestionSubIndex}`);
+                await guardarHitoJSON(cachedSupabase, cachedUser, step.field, hito);
+                console.log("✅ OK Supabase");
 
-            await guardarHitoJSON(supabase, user, step.field, hitoData);
+                journeyContext.push({ stage: step.stage, question: question.text, answer: role.titulo });
 
-            // Avanzamos automáticamente
-            currentQuestionSubIndex++;
-            renderStep();
+                if (currentQuestionSubIndex === step.questions.length - 1) {
+                    if (currentStepIndex < module.steps.length - 1) {
+                        currentStepIndex++;
+                        currentQuestionSubIndex = 0;
+                        userAnswers = {};
+                        console.log("🚀 AVANCE A NEXT STEP:", currentStepIndex);
+                    }
+                } else {
+                    currentQuestionSubIndex++;
+                }
+                renderStep();
+            } catch (err) {
+                console.error("Error al seleccionar rol:", err);
+                alert("Hubo un error al guardar tu elección. Inténtalo de nuevo.");
+                // Restaurar la función si falla
+                renderStep();
+            }
         };
 
     } else {
