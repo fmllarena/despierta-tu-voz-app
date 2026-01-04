@@ -1,0 +1,16 @@
+{
+  "name": "despierta-tu-voz-app",
+  "version": "1.0.0",
+  "description": "App para despertar tu voz con IA",
+  "main": "main.js",
+  "scripts": {
+    "start": "node simple_server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "@google/generative-ai": "^0.21.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
