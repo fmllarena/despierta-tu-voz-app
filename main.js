@@ -268,6 +268,17 @@ async function sendMessage() {
     chatMentoriaInput.value = '';
     chatMentoriaInput.disabled = true;
     sendBtn.disabled = true;
+    
+async function llamarGemini(prompt) {
+  const res = await fetch("/api/gemini", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ prompt })
+  });
+
+  const data = await res.json();
+  return data.text;
+}
 
     try {
         // --- LIMPIEZA: Si hay mensajes especiales abiertos, los quitamos al enviar un mensaje normal ---
@@ -286,9 +297,8 @@ async function sendMessage() {
             ? `${contexto}\nMENSAJE DEL ALUMNO: ${text}`
             : text;
 
-        const result = await chat.sendMessage(promptFinal);
-        const response = await result.response;
-        const textResponse = response.text();
+        const text = await llamarGemini(prompt);
+
         appendMessage(textResponse, 'ia');
 
         // --- FIX: Añadir ambos mensajes al historial para que el resumen sea completo ---
@@ -599,3 +609,4 @@ if (SpeechRecognition && micBtn) {
     if (micBtn) micBtn.style.display = 'none';
     console.log("Tu navegador no soporta reconocimiento de voz o falta el botón.");
 }
+
