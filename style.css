@@ -192,6 +192,9 @@ header p {
 .ia-botiquin {
     background: #fdf2f2 !important;
     border: 1px solid #f9dcdc !important;
+    position: relative;
+    padding-top: 35px !important;
+    /* Espacio para el botón 'Oír ejercicio' */
 }
 
 .ia p {
@@ -388,6 +391,56 @@ input {
     /* Gradiente Dorado */
     border-radius: 10px;
     transition: width 1s ease-in-out;
+}
+
+
+/* Selector de Voz */
+.voice-selector-container {
+    margin-top: 15px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.8em;
+    color: #666;
+}
+
+#voiceSelect {
+    padding: 4px 8px;
+    border-radius: 12px;
+    border: 1px solid #ddd;
+    background: white;
+    font-family: var(--fuente-principal);
+    outline: none;
+    cursor: pointer;
+    font-size: 0.9em;
+}
+
+/* Botiquín Refactor */
+.tts-btn {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    padding: 5px 12px;
+    background-color: var(--color-acento);
+    color: white;
+    border: none;
+    border-radius: 20px;
+    font-size: 0.75em;
+    cursor: pointer;
+    font-family: var(--fuente-principal);
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    z-index: 5;
+}
+
+.tts-btn:hover {
+    transform: scale(1.05);
+    background-color: #726255;
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
+}
+
+.hidden-video-block {
+    display: none;
 }
 
 .video-container iframe {

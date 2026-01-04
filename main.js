@@ -365,13 +365,18 @@ function appendMessage(text, type, id = null) {
         }
         messageDiv.innerHTML = htmlContent;
 
-        // --- BOTÓN DE VOZ (TTS) ---
-        // El usuario puede elegir escuchar el texto del botiquín
+        // --- BOTÓN DE VOZ (TTS) DEL BOTIQUÍN ---
         if (type === 'ia-botiquin') {
             const voiceBtn = document.createElement('button');
             voiceBtn.className = 'tts-btn';
-            voiceBtn.innerHTML = '🔊 Oír Guía';
-            voiceBtn.onclick = () => hablarTexto(text, voiceBtn);
+            voiceBtn.innerHTML = '🔊 Oír ejercicio';
+
+            // Extraemos solo el ejercicio 1 para leerlo
+            // Buscamos patrones como "1. [texto]" o "1: [texto]"
+            const matchEjercicio = text.match(/(?:1\.?|Ejercicio 1)[:.]?\s*([^]*?)(?=\n\s*\d\.?|(?:\n\s*---|\n\s*\d\.?)|$)/i);
+            const textoALeer = matchEjercicio ? matchEjercicio[1].trim() : text;
+
+            voiceBtn.onclick = () => hablarTexto(textoALeer, voiceBtn);
             messageDiv.appendChild(voiceBtn);
         }
     } else {
@@ -639,26 +644,55 @@ if (SpeechRecognition && micBtn) {
 }
 
 // --- LÓGICA DE TEXT TO SPEECH (TTS) ---
+let voices = [];
+const voiceSelect = document.getElementById('voiceSelect');
+
+function cargarVoces() {
+    voices = window.speechSynthesis.getVoices();
+    if (!voiceSelect) return;
+
+    // Filtramos por voces en español y las añadimos al select
+    const vocesEsp = voices.filter(v => v.lang.includes('es'));
+    voiceSelect.innerHTML = vocesEsp
+        .map((v, i) => `<option value="${v.name}">${v.name} (${v.lang})</option>`)
+        .join('');
+}
+
+// Chrome y otros necesitan este evento para cargar las voces
+if (window.speechSynthesis.onvoiceschanged !== undefined) {
+    window.speechSynthesis.onvoiceschanged = cargarVoces;
+}
+// Forzamos carga inicial (para Safari/Firefox)
+cargarVoces();
+
 function hablarTexto(texto, btn) {
     if (window.speechSynthesis.speaking) {
         window.speechSynthesis.cancel();
-        btn.innerHTML = '🔊 Oír Guía';
+        btn.innerHTML = '🔊 Oír ejercicio';
         return;
     }
 
-    // Limpiamos el texto de markdown para que la voz no lea símbolos
-    const textoLimpio = texto.replace(/#|\*|_|\[|\]|\(|\)/g, "");
+    // Limpiamos el texto de markdown y símbolos raros
+    const textoLimpio = texto.replace(/#|\*|_|\[|\]|\(|\)/g, "").trim();
 
     const utterance = new SpeechSynthesisUtterance(textoLimpio);
+
+    // Aplicamos la voz seleccionada
+    if (voiceSelect) {
+        const selectedVoiceName = voiceSelect.value;
+        const selectedVoice = voices.find(v => v.name === selectedVoiceName);
+        if (selectedVoice) utterance.voice = selectedVoice;
+    }
+
     utterance.lang = 'es-ES';
-    utterance.rate = 0.9; // Un poco más lento para calma
+    utterance.rate = 0.85; // Calma
 
     utterance.onstart = () => {
-        btn.innerHTML = '⏹ Detener';
+        btn.innerHTML = '⏸ Detener';
     };
 
     utterance.onend = () => {
-        btn.innerHTML = '🔊 Oír Guía';
+        btn.innerHTML = '🔊 Oír ejercicio';
     };
 
     window.speechSynthesis.speak(utterance);
