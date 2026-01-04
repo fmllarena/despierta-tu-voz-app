@@ -72,7 +72,7 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 app.post("/api/chat", async (req, res) => {
     try {
         const { intent, message, history = [], context = "" } = req.body;
-        const model = genAI.getGenerativeModel({ model: "gemini-3-flash-preview" });
+        const model = genAI.getGenerativeModel({ model: "gemini-3-flash" });
 
         // Simplificación para el servidor local (en Vercel se usan los prompts de chat.js)
         const prompt = context ? `${context}\n\n${message}` : message;
