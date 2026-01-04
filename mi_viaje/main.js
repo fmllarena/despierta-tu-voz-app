@@ -37,8 +37,39 @@ export const modules = [
                 field: "linea_vida_hitos"
             }
         ]
+    },
+    {
+        id: 2,
+        title: "Herencia y Raíces",
+        description: "Desbloquea los patrones familiares heredados.",
+        icon: "🌳",
+        activity: "Constelación Vocal",
+        steps: [] // To be implemented
+    },
+    {
+        id: 3,
+        title: "El Personaje",
+        description: "¿Quién crees que eres cuando cantas?",
+        icon: "🎭",
+        activity: "Máscaras Sonoras",
+        steps: []
+    },
+    {
+        id: 4,
+        title: "Sanación de la Voz",
+        description: "Rehabilitando el instrumento desde la emoción.",
+        icon: "❤️‍🩹",
+        activity: "Frecuencias Curativas",
+        steps: []
+    },
+    {
+        id: 5,
+        title: "Voz Real y Expansión",
+        description: "Tu sonido auténtico, libre y potente.",
+        icon: "🦅",
+        activity: "Vuelo Vocal",
+        steps: []
     }
-    // Otros módulos se irán implementando...
 ];
 
 let currentModuleIndex = 0;

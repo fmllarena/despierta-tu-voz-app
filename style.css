@@ -463,9 +463,10 @@ input {
 }
 
 #viajeBtn:hover {
-    background: var(--color-acento);
+    background: #D8C608;
+    /* User requested gold */
     color: white !important;
-    box-shadow: 0 0 10px var(--color-acento);
+    box-shadow: 0 0 10px #D8C608;
 }
 
 /* Modulo Progress Bar */
