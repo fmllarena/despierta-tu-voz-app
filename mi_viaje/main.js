@@ -393,11 +393,16 @@ async function generateDynamicQuestions(stepObj, context) {
 async function guardarHitoJSON(supabase, user, column, newObject) {
     try {
         if (!user || !user.id) {
-            console.error("❌ SUPABASE: No hay usuario autenticado.");
+            console.error("❌ SUPABASE: No hay usuario autenticado en el objeto 'user'.", user);
+            alert("Error: No se detectó sesión de usuario. Por favor, cierra sesión y vuelve a entrar.");
             return;
         }
 
-        console.log(`📡 SUPABASE: Intentando guardar en '${column}' para usuario ${user.id}...`, newObject);
+        console.log(`[DEBUG SUPABASE] Iniciando guardado...`);
+        console.log(`- URL: ${supabase?.supabaseUrl}`);
+        console.log(`- User ID: ${user.id}`);
+        console.log(`- Columna: ${column}`);
+        console.log(`- Datos a añadir:`, newObject);
 
         // 1. Obtener registro actual
         const { data: currentRecord, error: fetchError } = await supabase
@@ -407,7 +412,9 @@ async function guardarHitoJSON(supabase, user, column, newObject) {
             .maybeSingle();
 
         if (fetchError) {
-            console.error("❌ SUPABASE Error Fetch:", fetchError.message);
+            console.error("❌ SUPABASE Error Fetch Detallado:", fetchError);
+        } else {
+            console.log("📡 Datos actuales recuperados:", currentRecord);
         }
 
         // 2. Preparar datos
@@ -416,7 +423,7 @@ async function guardarHitoJSON(supabase, user, column, newObject) {
             currentArray = currentRecord[column];
         }
 
-        // Evitar duplicados exactos si se lanza dos veces (pequeña validación)
+        // Evitar duplicados exactos
         const isDuplicate = currentArray.some(item =>
             item.etapa === newObject.etapa &&
             JSON.stringify(item.respuestas) === JSON.stringify(newObject.respuestas)
@@ -424,27 +431,39 @@ async function guardarHitoJSON(supabase, user, column, newObject) {
 
         if (!isDuplicate) {
             currentArray.push(newObject);
+            console.log(`- Nuevo array preparado (${currentArray.length} hitos)`);
+        } else {
+            console.warn("⚠️ Hito duplicado detectado, omitiendo push.");
         }
 
         // 3. Upsert crítico
+        const payload = {
+            user_id: user.id,
+            [column]: currentArray,
+            updated_at: new Date().toISOString()
+        };
+        console.log("🚀 Enviando Payload Upsert:", payload);
+
         const { data: upsertData, error: upsertError } = await supabase
             .from('user_coaching_data')
-            .upsert({
-                user_id: user.id,
-                [column]: currentArray,
-                updated_at: new Date().toISOString()
-            }, { onConflict: 'user_id' })
+            .upsert(payload, { onConflict: 'user_id' })
             .select();
 
         if (upsertError) {
-            console.error("❌ SUPABASE Error Upsert:", upsertError);
-            alert("Error al guardar en base de datos: " + upsertError.message);
+            console.error("❌ SUPABASE Error Upsert Detallado:", {
+                message: upsertError.message,
+                details: upsertError.details,
+                hint: upsertError.hint,
+                code: upsertError.code
+            });
+            alert("⚠️ Error de Base de Datos (Upsert):\nMensaje: " + upsertError.message + "\nCódigo: " + upsertError.code + "\nDetalle: " + (upsertError.details || "Ninguno"));
             throw upsertError;
         }
 
-        console.log("✅ SUPABASE: Guardado exitoso.", upsertData);
+        console.log("✅ SUPABASE: ¡Guardado exitoso confirmado!", upsertData);
     } catch (e) {
-        console.error("❌ ERROR CRÍTICO GUARDADO:", e);
+        console.error("❌ ERROR CRÍTICO EN LA FUNCIÓN DE GUARDADO:", e);
+        alert("Error crítico al guardar. Revisa la consola (F12) para detalles técnicos.");
     }
 }
 
