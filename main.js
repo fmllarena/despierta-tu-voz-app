@@ -578,8 +578,11 @@ async function mostrarDiario() {
     }
 }
 if (chatMentoriaInput) {
-    chatMentoriaInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') sendMessage();
+    chatMentoriaInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault(); // Evita comportamientos por defecto del navegador
+            sendMessage();
+        }
     });
 }
 
