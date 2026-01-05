@@ -106,6 +106,12 @@ function renderIntro() {
     document.getElementById('prevQBtn').style.display = 'none';
     document.getElementById('finishModuleBtn').style.display = 'none';
 
+    // Ocultar botón de ayuda en la intro
+    const helpBtn = document.getElementById('helpModuleBtn');
+    const helpTooltip = document.getElementById('helpModuleTooltip');
+    if (helpBtn) helpBtn.style.display = 'none';
+    if (helpTooltip) helpTooltip.classList.remove('active');
+
     container.innerHTML = `
         <div class="question-slide" style="text-align: center; padding: 20px;">
             <h2 style="color: var(--color-acento); margin-bottom: 20px;">${module.title}</h2>
