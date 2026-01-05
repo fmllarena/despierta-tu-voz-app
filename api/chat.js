@@ -70,6 +70,16 @@ export default async function handler(req, res) {
             return res.status(400).json({ error: "Intento no válido o no proporcionado" });
         }
 
+        // --- LÓGICA DE MEMBRESÍA ---
+        const subscriptionTier = body.subscription_tier || 'free';
+        let adjustedHistory = history;
+
+        // Si el usuario es 'free', limitamos el historial para que no tenga "memoria relacional"
+        // Solo dejamos el mensaje actual o un historial mínimo para que el chat Fluya pero no "recuerde" sesiones pasadas.
+        if (subscriptionTier === 'free' && intent === 'mentor_chat') {
+            adjustedHistory = []; // Limpiamos historial para versión gratuita (sin repositorio)
+        }
+
         if (!process.env.GEMINI_API_KEY) {
             return res.status(500).json({ error: "Falta GEMINI_API_KEY en el servidor." });
         }

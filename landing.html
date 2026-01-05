@@ -113,7 +113,8 @@
                         <li>Acceso al Módulo inicial de Tu Viaje Personal</li>
                         <li>Botón de Emergencias ante situaciones de estrés</li>
                     </ul>
-                    <a href="index.html" class="btn btn-outline" style="width: 100%;">Comenzar Gratis</a>
+                    <button onclick="iniciarPago('free')" class="btn btn-outline" style="width: 100%;">Comenzar
+                        Gratis</button>
                 </div>
                 <!-- PROFUNDIZA -->
                 <div class="pricing-card featured">
@@ -122,12 +123,13 @@
                     <div class="price">9,90€<span>/mes</span></div>
                     <ul>
                         <li>Chat 24/7 ilimitado con el Mentor IA</li>
-                        <li>Repositorio de tus conversaciones para guiarte mejor en tu día a día</li>
+                        <li>Memoria relacional de tus conversaciones para guiarte mejor en tu día a día</li>
                         <li>Acceso completo a los módulos que configuran Tu Viaje Personal de autoconocimiento</li>
                         <li>Botón de Emergencias ante situaciones de estrés adaptado a tu historial emocional</li>
                         <li>Seguimiento de tu progreso emocional y vocal</li>
                     </ul>
-                    <a href="index.html" class="btn btn-primary" style="width: 100%;">Elegir Plan Pro</a>
+                    <button onclick="iniciarPago('pro')" class="btn btn-primary" style="width: 100%;">Elegir Plan
+                        Pro</button>
                 </div>
                 <!-- TRANSFORMA -->
                 <div class="pricing-card">
@@ -139,7 +141,8 @@
                         <li>Plan de Alquimia a medida</li>
                         <li>Acceso preferente a talleres</li>
                     </ul>
-                    <a href="#" class="btn btn-outline" style="width: 100%;">Contactar</a>
+                    <button onclick="iniciarPago('premium')" class="btn btn-outline"
+                        style="width: 100%;">Contactar</button>
                 </div>
             </div>
         </div>
@@ -163,6 +166,9 @@
             </div>
         </div>
     </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/stripe-checkout.js"></script>
 
 </body>
 

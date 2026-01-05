@@ -25,6 +25,15 @@ async function inicializarSupabase() {
 // Inicializamos al cargar el script
 inicializarSupabase();
 
+// --- DETECTAR REDIRECCIÓN DESDE LANDING ---
+function revisarRedireccion() {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('auth') === 'required' && authOverlay) {
+        authOverlay.style.display = 'flex';
+    }
+}
+window.addEventListener('load', revisarRedireccion);
+
 // --- ELEMENTOS DEL DOM ---
 const chatBox = document.getElementById('chatBox');
 const chatMentoriaInput = document.getElementById('chatMentoriaInput');
