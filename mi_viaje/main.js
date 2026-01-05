@@ -994,7 +994,9 @@ async function finishModuleWithAI(supabase, user, skipInputCheck = false) {
                 <p style="font-size:1.1em; line-height:1.6; padding:15px; background:#f9f9f9; border-radius:10px;">
                     ${data.text}
                 </p>
-                <button id="closeModuleBtn" class="nav-btn journey-btn" style="width:100%; margin-top:20px;">Finalizar Módulo</button>
+                <button id="closeModuleBtn" class="nav-btn journey-btn" style="width:100%; margin-top:20px;">
+                    ${currentModuleIndex === modules.length - 1 ? 'Continuar a mi Graduación' : 'Finalizar Módulo'}
+                </button>
             </div>
         `;
 
@@ -1003,10 +1005,40 @@ async function finishModuleWithAI(supabase, user, skipInputCheck = false) {
         document.getElementById('prevQBtn').style.display = 'none';
 
         document.getElementById('closeModuleBtn').onclick = () => {
-            alert(`¡Felicidades! Módulo completado. El mapa se actualizará.`);
-            document.getElementById('moduloModal').style.display = 'none';
-            document.getElementById('viajeModal').style.display = 'flex';
-            renderRoadmap();
+            if (currentModuleIndex === modules.length - 1) {
+                // --- CEREMONIA DE GRADUACIÓN ---
+                const vision = userAnswers["proposito_actos"] || "Mi voz es mi canal de luz.";
+                // Limpiamos la visión si viene con prefijos de los actos
+                const cleanVision = vision.split('|')[0].replace('Visión:', '').trim();
+
+                container.innerHTML = `
+                    <div class="diploma-container">
+                        <div class="diploma-shine"></div>
+                        <div class="diploma-header">Orden de la Alquimia Vocal</div>
+                        <h1 class="diploma-title">Diploma de Alquimista</h1>
+                        <p class="diploma-text">Se certifica que has completado la Gran Obra de transmutar tu silencio en sonido auténtico.</p>
+                        <div class="diploma-vision">
+                            "${cleanVision}"
+                        </div>
+                        <div class="diploma-footer">
+                            <span>Sello de la Voz Libre</span>
+                            <span>${new Date().toLocaleDateString()}</span>
+                        </div>
+                    </div>
+                    <button id="finalCloseBtn" class="journey-btn" style="width:100%; margin-top:20px;">Cerrar Viaje</button>
+                `;
+
+                document.getElementById('finalCloseBtn').onclick = () => {
+                    document.getElementById('moduloModal').style.display = 'none';
+                    document.getElementById('viajeModal').style.display = 'flex';
+                    renderRoadmap();
+                };
+            } else {
+                alert(`¡Felicidades! Módulo completado. El mapa se actualizará.`);
+                document.getElementById('moduloModal').style.display = 'none';
+                document.getElementById('viajeModal').style.display = 'flex';
+                renderRoadmap();
+            }
         };
 
     } catch (e) {
