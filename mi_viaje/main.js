@@ -1,235 +1,7 @@
-const ROLES_ALQUIMIA = {
-    perfeccionista: {
-        titulo: "El Perfeccionista",
-        lema: "Debo ser impecable. Si no es perfecto, mejor no hacerlo.",
-        icon: "💎"
-    },
-    mediador: {
-        titulo: "El Mediador",
-        lema: "Canto para agradar y suavizar tensiones. Mi voz es complaciente.",
-        icon: "🕊️"
-    },
-    invisible: {
-        titulo: "El Invisible",
-        lema: "Prefiero no destacar. Si no me ven, estoy a salvo.",
-        icon: "👻"
-    },
-    fuerte: {
-        titulo: "El Fuerte",
-        lema: "Mi voz es mi escudo. Siempre sueno potente y algo rígido.",
-        icon: "🛡️"
-    }
-};
-
-export const modules = [
-    {
-        id: 1,
-        title: "El Espejo del Pasado",
-        description: "Reconoce tu historia para liberar tu voz.",
-        icon: "🪞",
-        activity: "Línea de Vida Vocal",
-        intro: {
-            text: "Esta actividad es la base de todo el proceso. No es solo recordar fechas, sino detectar qué 'huella emocional' dejaron en ti.",
-            buttonText: "¡Estoy preparado/a!"
-        },
-        steps: [
-            {
-                id: "step1",
-                stage: "La Infancia (La Semilla)",
-                instructions: "Viaja a tus primeros recuerdos. Cierra los ojos y busca ese momento.",
-                questions: [
-                    { id: "h1_child_mem", text: "¿Cómo te recuerdas de niño/a?¿Quién era la voz de autoridad?", type: "long_text" },
-                    { id: "h1_child_emo", text: "¿Te gustaba estar con tu familia o sentías que te debías esconder?", type: "text" }
-                ],
-                field: "linea_vida_hitos"
-            },
-            {
-                id: "step2",
-                stage: "La Adolescencia (El Cierre o la Apertura)",
-                instructions: "La época del cambio. Observa si hubo un juicio externo o interno.",
-                questions: [
-                    { id: "h1_adol_voice", text: "Durante tu adolescencia, cuando el cuerpo cambia... ¿Hubo algún momento donde sentiste que 'perdiste' tu voz o dejaste de cantar por miedo al juicio?", type: "long_text" }
-                ],
-                field: "linea_vida_hitos"
-            },
-            {
-                id: "step3",
-                stage: "El Presente (La Toma de Conciencia)",
-                instructions: "Hoy, aquí y ahora. La verdad te hará libre.",
-                questions: [
-                    { id: "h1_pres_voice", text: "Hoy, cuando cantas para otros... ¿cómo te sientes? Seguro que disfrutas haciéndolo, pero...¿cantas para expresar o cantas para intentar agradar al que te oye?", type: "long_text" }
-                ],
-                field: "linea_vida_hitos"
-            }
-        ]
-    },
-    {
-        id: 2,
-        title: "Herencia y Raíces",
-        description: "Desbloquea los patrones familiares heredados.",
-        icon: "🌳",
-        activity: "Constelación Vocal",
-        intro: {
-            text: "En este módulo, buscaremos identificar tus 'lealtades invisibles'. Descubriremos cómo el entorno en el que creciste moldeó la voz que tienes hoy.",
-            buttonText: "Explorar mis raíces"
-        },
-        steps: [
-            {
-                id: "h2_step1",
-                stage: "El Clima Vocal en Casa",
-                instructions: "Recuerda los sonidos de tu hogar. No solo las palabras, sino el volumen y la libertad sonora.",
-                questions: [
-                    { id: "h2_home_climate", text: "¿En tu hogar de la infancia, ¿se permitía expresar el enfado o la tristeza a través del sonido (gritos, llanto, risa fuerte)?", type: "long_text" }
-                ],
-                field: "herencia_raices"
-            },
-            {
-                id: "h2_step2",
-                stage: "La Voz de los Ancestros",
-                instructions: "Busca en tu memoria auditiva el eco de tus padres.",
-                questions: [
-                    { id: "h2_ancestors_voice", text: "Si cierras los ojos y escuchas la voz de tu madre o de tu padre... ¿qué adjetivo le darías? (¿Apretada, ausente, cálida, autoritaria?)", type: "long_text" }
-                ],
-                field: "herencia_raices"
-            },
-            {
-                id: "h2_step3",
-                stage: "El Patrón Heredado",
-                instructions: "Observa tu propia voz hoy cuando estás ante otros.",
-                questions: [
-                    { id: "h2_inherited_pattern", text: "¿Sientes que al cantar o hablar en público 'heredas' esa misma cualidad que acabas de describir?", type: "long_text" }
-                ],
-                field: "herencia_raices"
-            }
-        ]
-    },
-    {
-        id: 3,
-        title: "El Personaje",
-        description: "¿Quién crees que eres cuando cantas?",
-        icon: "🎭",
-        activity: "Máscaras Sonoras",
-        intro: {
-            text: "Aquí identificarás el 'rol' que has adoptado para sobrevivir. Ese papel que hoy está limitando tu voz natural.",
-            buttonText: "Descubrir mi máscara"
-        },
-        steps: [
-            {
-                id: "h3_step1",
-                stage: "La Pantalla de Selección",
-                instructions: "Elige la tarjeta con la que más te identifiques hoy.",
-                questions: [
-                    { id: "h3_role_select", text: "¿Cuál es tu personaje dominante?", type: "roles_selection" }
-                ],
-                field: "roles_familiares"
-            },
-            {
-                id: "h3_step2",
-                stage: "Dinámica de Profundización",
-                instructions: "Observa las sombras detrás de tu máscara.",
-                questions: [
-                    { id: "h3_secondary_gain", text: "¿Qué crees que ganas (o de qué te proteges) cuando actúas desde este personaje?", type: "long_text" },
-                    { id: "h3_vocal_cost", text: "Cuando este personaje toma el control al cantar, ¿qué es lo primero que sacrificas: tu brillo, tu potencia, tu emoción o tu libertad?", type: "long_text" }
-                ],
-                field: "roles_familiares"
-            }
-        ]
-    },
-    {
-        id: 4,
-        title: "El Altar de las Palabras",
-        description: "Catarsis emocional y liberación de antiguos silencios.",
-        icon: "🖋️",
-        activity: "Escritura Sagrada",
-        intro: {
-            text: "Este es el corazón emocional de tu viaje. Pasamos de analizar el pasado a liberarlo activamente en un espacio sagrado e íntimo.",
-            buttonText: "Entrar al Altar"
-        },
-        steps: [
-            {
-                id: "h4_step1",
-                stage: "Carta a mi Yo del Pasado",
-                instructions: "Imagina a ese niño o joven que un día decidió callar. Tienes la oportunidad de decirle lo que necesitaba escuchar.",
-                questions: [
-                    {
-                        id: "carta_yo_pasado",
-                        text: "¿Qué palabras de aliento necesitaba ese niño/a? Dale permiso para fallar, para gritar y para ser escuchado.",
-                        type: "pergamino"
-                    }
-                ],
-                field: "carta_yo_pasado"
-            },
-            {
-                id: "h4_step2",
-                stage: "Carta a los Padres",
-                instructions: "Nuestros padres nos dieron la vida y también los silencios. Vamos a devolverles lo que es suyo.",
-                questions: [
-                    {
-                        id: "carta_padres",
-                        text: "Expresa lo que no pudiste decirles. Diles qué necesitabas para sentir que tu voz era libre.",
-                        type: "pergamino"
-                    }
-                ],
-                field: "carta_padres"
-            },
-            {
-                id: "h4_step3",
-                stage: "El Ritual de la Alquimia",
-                instructions: "Lo que has escrito se ha transformado. Asienta esta nueva libertad en tu cuerpo.",
-                questions: [
-                    {
-                        id: "h4_ritual",
-                        text: "Emite un sonido largo y sostenido (una vocal) mientras pulsas 'Sellar' para transmutar estas palabras.",
-                        type: "ritual_closure"
-                    }
-                ],
-                field: "ritual_sanacion"
-            }
-        ]
-    },
-    {
-        id: 5,
-        title: "Alquimia Final y Propósito",
-        description: "Transforma tu autoconocimiento en un Plan de Acción empoderador.",
-        icon: "🦅",
-        activity: "Vuelo Vocal",
-        intro: {
-            text: "Has llegado al punto de expansión. Es momento de dejar de mirar atrás para construir tu nueva identidad y alinear tu voz con tu misión en el mundo.",
-            buttonText: "Despertar mi voz"
-        },
-        steps: [
-            {
-                id: "h5_step1",
-                stage: "El Inventario de Creencias",
-                instructions: "Revisa los miedos que identificamos y dales la vuelta. Transmuta cada 'impureza' en una verdad brillante.",
-                questions: [
-                    { id: "creencia_transmutada", text: "Escribe una creencia que te limitaba y cómo la transformas hoy en una verdad potenciadora.", type: "belief_transmuter" }
-                ],
-                field: "inventario_creencias"
-            },
-            {
-                id: "h5_step2",
-                stage: "Guía de Propósito",
-                instructions: "Clarifica tu visión y el impacto que deseas generar con tu sonido único.",
-                questions: [
-                    { id: "proposito_actos", text: "Completa los 3 actos de tu propósito vocal.", type: "purpose_guide" }
-                ],
-                field: "proposito_vida"
-            },
-            {
-                id: "h5_step3",
-                stage: "Plan de Acción y Cierre",
-                instructions: "Definamos tus metas reales y una rutina que mantenga viva tu nueva libertad.",
-                questions: [
-                    { id: "final_plan", text: "¿Cuáles son tus próximos pasos?", type: "action_plan" }
-                ],
-                field: "plan_accion"
-            }
-        ]
-    }
-];
+import { ROLES_ALQUIMIA, MODULES_METADATA } from './config.js';
 
 let currentModuleIndex = 0;
+let currentModuleData = null; // Carga dinámica
 let currentStepIndex = 0;
 let currentQuestionSubIndex = 0;
 let userAnswers = {};
@@ -266,9 +38,7 @@ function renderRoadmap() {
     const container = document.getElementById('journeyRoadmap');
     container.innerHTML = '';
 
-    // No JS SVG layer anymore. We use intermediate connector divs.
-
-    modules.forEach((mod, index) => {
+    MODULES_METADATA.forEach((mod, index) => {
         const isUnlocked = index === 0 || localStorage.getItem(`module_${mod.id}_unlocked`);
 
         // Render Node
@@ -276,11 +46,7 @@ function renderRoadmap() {
         node.className = `roadmap-node ${isUnlocked ? 'unlocked' : 'locked'}`;
         node.onclick = () => {
             if (isUnlocked) {
-                if (mod.steps && mod.steps.length > 0) {
-                    openModule(index);
-                } else {
-                    alert("Este módulo aún no está disponible (Próximamente).");
-                }
+                openModule(index);
             }
         };
 
@@ -296,28 +62,44 @@ function renderRoadmap() {
     });
 }
 
-function openModule(index) {
+async function openModule(index) {
     currentModuleIndex = index;
-    const module = modules[currentModuleIndex];
-    isIntroView = !!module.intro;
-    currentStepIndex = 0;
-    currentQuestionSubIndex = 0;
-    userAnswers = {};
-    journeyContext = []; // Reset context for new module run
+    const meta = MODULES_METADATA[currentModuleIndex];
 
     document.getElementById('viajeModal').style.display = 'none';
     document.getElementById('moduloModal').style.display = 'flex';
-    document.getElementById('questionContainer').innerHTML = '';
 
-    if (isIntroView) {
-        renderIntro();
-    } else {
-        renderStep();
+    renderLoading(`Cargando Módulo ${meta.id}...`);
+
+    try {
+        // Carga dinámica del contenido del módulo
+        const moduleFile = `./modules/module${meta.id}.js?v=${Date.now()}`;
+        const moduleModule = await import(moduleFile);
+        currentModuleData = moduleModule.default;
+
+        isIntroView = !!currentModuleData.intro;
+        currentStepIndex = 0;
+        currentQuestionSubIndex = 0;
+        userAnswers = {};
+        journeyContext = [];
+
+        document.getElementById('questionContainer').innerHTML = '';
+
+        if (isIntroView) {
+            renderIntro();
+        } else {
+            renderStep();
+        }
+    } catch (err) {
+        console.error("Error cargando módulo dinámico:", err);
+        alert("No se pudo cargar el contenido del módulo. Por favor, intenta de nuevo.");
+        document.getElementById('moduloModal').style.display = 'none';
+        document.getElementById('viajeModal').style.display = 'flex';
     }
 }
 
 function renderIntro() {
-    const module = modules[currentModuleIndex];
+    const module = currentModuleData;
     const container = document.getElementById('questionContainer');
 
     document.getElementById('nextQBtn').style.display = 'none';
@@ -345,8 +127,8 @@ function renderIntro() {
 
 
 function renderStep() {
-    const module = modules[currentModuleIndex];
-    if (!module) return console.error("❌ Módulo no encontrado");
+    const module = currentModuleData;
+    if (!module) return console.error("❌ Módulo no cargado");
     const step = module.steps[currentStepIndex];
     if (!step) return console.error("❌ Paso no encontrado", currentStepIndex);
 
@@ -727,7 +509,7 @@ async function nextStep(supabase, user) {
     const input = document.getElementById('answerInput');
     if (!input.value.trim()) return alert("Por favor, responde para continuar.");
 
-    const module = modules[currentModuleIndex];
+    const module = currentModuleData;
     const step = module.steps[currentStepIndex];
     const question = step.questions[currentQuestionSubIndex];
 
@@ -777,7 +559,7 @@ async function nextStep(supabase, user) {
 }
 
 function prevStep() {
-    const module = modules[currentModuleIndex];
+    const module = currentModuleData;
 
     if (currentQuestionSubIndex > 0) {
         // Simple: go back one question within current step
@@ -917,7 +699,7 @@ async function guardarHitoJSON(supabase, user, column, newObject, extraPayload =
 
 async function finishModuleWithAI(supabase, user, skipInputCheck = false) {
     const input = document.getElementById('answerInput');
-    const module = modules[currentModuleIndex];
+    const module = currentModuleData;
     const step = module.steps[currentStepIndex];
     const question = step.questions[currentQuestionSubIndex];
 
@@ -960,8 +742,8 @@ async function finishModuleWithAI(supabase, user, skipInputCheck = false) {
         const data = await response.json();
 
         // RESILIENT UNLOCK: Unlock before rendering the UI
-        if (currentModuleIndex < modules.length - 1) {
-            const nextId = modules[currentModuleIndex + 1].id;
+        if (currentModuleIndex < MODULES_METADATA.length - 1) {
+            const nextId = MODULES_METADATA[currentModuleIndex + 1].id;
             localStorage.setItem(`module_${nextId}_unlocked`, 'true');
             console.log("Módulo desbloqueado proactivamente:", nextId);
         }
@@ -972,8 +754,8 @@ async function finishModuleWithAI(supabase, user, skipInputCheck = false) {
                 <p style="font-size:1.1em; line-height:1.6; padding:15px; background:#f9f9f9; border-radius:10px;">
                     ${data.text}
                 </p>
-                <button id="closeModuleBtn" class="nav-btn journey-btn" style="width:100%; margin-top:20px;">
-                    ${currentModuleIndex === modules.length - 1 ? 'Continuar a mi Graduación' : 'Finalizar Módulo'}
+                <button id="closeModuleBtn" class="journey-btn" style="width:100%; margin-top:20px;">
+                    ${currentModuleIndex === MODULES_METADATA.length - 1 ? 'Continuar a mi Graduación' : 'Finalizar Módulo'}
                 </button>
             </div>
         `;
@@ -983,7 +765,7 @@ async function finishModuleWithAI(supabase, user, skipInputCheck = false) {
         document.getElementById('prevQBtn').style.display = 'none';
 
         document.getElementById('closeModuleBtn').onclick = () => {
-            if (currentModuleIndex === modules.length - 1) {
+            if (currentModuleIndex === MODULES_METADATA.length - 1) {
                 // --- CEREMONIA DE GRADUACIÓN ---
                 const vision = userAnswers["proposito_actos"] || "Mi voz es mi canal de luz.";
                 // Limpiamos la visión si viene con prefijos de los actos
@@ -1022,8 +804,8 @@ async function finishModuleWithAI(supabase, user, skipInputCheck = false) {
     } catch (e) {
         console.error("Error en finalización AI:", e);
         // UNLOCK EVEN ON ERROR
-        if (currentModuleIndex < modules.length - 1) {
-            localStorage.setItem(`module_${modules[currentModuleIndex + 1].id}_unlocked`, 'true');
+        if (currentModuleIndex < MODULES_METADATA.length - 1) {
+            localStorage.setItem(`module_${MODULES_METADATA[currentModuleIndex + 1].id}_unlocked`, 'true');
         }
         alert("¡Módulo finalizado correctamente!");
         document.getElementById('moduloModal').style.display = 'none';
