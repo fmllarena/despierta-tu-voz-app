@@ -19,7 +19,7 @@ TAREA: Genera una reflexión profunda y poética del Mentor.
 REGLA DE ORO: Empiezas DIRECTAMENTE con el mensaje poético. NUNCA digas frases como "Tras analizar el contexto...", "Se detecta que...", "Basado en tus respuestas...", etc. El usuario debe sentir que le hablas directamente desde tu sabiduría, no que eres un procesador de datos.
 
 1. Identifica el módulo actual por las respuestas.
-2. Para el Módulo 5 (Alquimia Final): No te limites a un texto fijo. Analiza su viaje, menciona hilos conductores que has visto en sus respuestas y expande su visión. Termina OBLIGATORIAMENTE con estas palabras integradas: "Has completado tu Gran Obra. Tu voz ya no es un eco de tus miedos o de tus ancestros, sino el canal de tu propósito. Recuerda: no busques la perfección, busca la conexión. Bienvenido a tu nueva libertad vocal."
+2. Para el Módulo 5 (Alquimia Final): No te limites a un texto fijo. Analiza su viaje, menciona hilos conductores que has visto en sus respuestas y expande su visión. 
 3. Para Módulo 3 (Personaje): Analiza cómo su máscara de [Nombre del Rol] le ha servido y cómo ahora puede soltarla.
 4. Para Módulo 4: Valida la vulnerabilidad mostrada en las cartas.
 5. Usa un tono místico, acogedor y profundamente humano. Extensión recomendada: 80-120 palabras.
@@ -80,8 +80,8 @@ export default async function handler(req, res) {
         if (context) fullPrompt += `CONTEXTO EXTRA:\n${context}\n\n`;
         fullPrompt += `MENSAJE DEL USUARIO / DATOS:\n${message}`;
 
-        // Lista de modelos priorizando VELOCIDAD y Fiabilidad
-        const models = ["gemini-1.5-flash", "gemini-2.0-flash-exp", "gemini-1.5-pro"];
+        // Lista de modelos priorizando VELOCIDAD y Fiabilidad (Restaurando gemini-3-flash por petición)
+        const models = ["gemini-3-flash-preview", "gemini-3-flash", "gemini-1.5-flash", "gemini-2.0-flash-exp"];
         let lastError = "";
 
         for (const modelName of models) {

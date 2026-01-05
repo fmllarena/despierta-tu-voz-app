@@ -748,14 +748,19 @@ async function finishModuleWithAI(supabase, user, skipInputCheck = false) {
             console.log("Módulo desbloqueado proactivamente:", nextId);
         }
 
+        const isLastModule = currentModuleIndex === MODULES_METADATA.length - 1;
+        const fixedLogoText = isLastModule
+            ? "<strong>Has completado tu Gran Obra. Tu voz ya no es un eco de tus miedos o de tus ancestros, sino el canal de tu propósito.</strong><br><br>"
+            : "";
+
         container.innerHTML = `
             <div class="question-slide">
                 <h3 style="color:var(--color-acento)">✨ Tu Lectura de Alquimia</h3>
                 <p style="font-size:1.1em; line-height:1.6; padding:15px; background:#f9f9f9; border-radius:10px;">
-                    ${data.text}
+                    ${fixedLogoText} ${data.text}
                 </p>
                 <button id="closeModuleBtn" class="journey-btn" style="width:100%; margin-top:20px;">
-                    ${currentModuleIndex === MODULES_METADATA.length - 1 ? 'Continuar a mi Graduación' : 'Finalizar Módulo'}
+                    ${isLastModule ? 'Continuar a mi Graduación' : 'Finalizar Módulo'}
                 </button>
             </div>
         `;
