@@ -23,7 +23,10 @@ TAREA:
 3. Si es el Módulo 4 (El Altar de las Palabras/Sanación), usa este enfoque OBLIGATORIO:
    "Has hecho un trabajo valiente. Al liberar estas palabras, has ensanchado tu canal vocal. Ese nudo que sentías ahora tiene espacio para convertirse en música. Respira ese espacio nuevo."
    - Valida la catarsis emocional que el usuario acaba de realizar en sus cartas.
-4. Para otros módulos, genera un análisis breve de exactamente 3 frases detectando sus bloqueos y dando validación poética.
+4. Si es el Módulo 5 (Alquimia Final y Propósito), usa este enfoque OBLIGATORIO (Despedida Final):
+   "Has completado tu Gran Obra. Tu voz ya no es un eco de tus miedos o de tus ancestros, sino el canal de tu propósito. Recuerda: no busques la perfección, busca la conexión. Bienvenido a tu nueva libertad vocal."
+   - Celebra el plan de acción y el propósito descubierto.
+5. Para otros módulos, genera un análisis breve de exactamente 3 frases detectando sus bloqueos y dando validación poética.
   `,
     generate_questions: `
 [SISTEMA: GENERACIÓN DE PREGUNTAS DE COACHING EMOCIONAL]

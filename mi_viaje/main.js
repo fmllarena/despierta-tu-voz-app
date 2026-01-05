@@ -189,11 +189,43 @@ export const modules = [
     },
     {
         id: 5,
-        title: "Voz Real y Expansión",
-        description: "Tu sonido auténtico, libre y potente.",
+        title: "Alquimia Final y Propósito",
+        description: "Transforma tu autoconocimiento en un Plan de Acción empoderador.",
         icon: "🦅",
         activity: "Vuelo Vocal",
-        steps: []
+        intro: {
+            text: "Has llegado al punto de expansión. Es momento de dejar de mirar atrás para construir tu nueva identidad y alinear tu voz con tu misión en el mundo.",
+            buttonText: "Despertar mi voz"
+        },
+        steps: [
+            {
+                id: "h5_step1",
+                stage: "El Inventario de Creencias",
+                instructions: "Revisa los miedos que identificamos y dales la vuelta. Transmuta cada 'impureza' en una verdad brillante.",
+                questions: [
+                    { id: "creencia_transmutada", text: "Escribe una creencia que te limitaba y cómo la transformas hoy en una verdad potenciadora.", type: "belief_transmuter" }
+                ],
+                field: "inventario_creencias"
+            },
+            {
+                id: "h5_step2",
+                stage: "Guía de Propósito",
+                instructions: "Clarifica tu visión y el impacto que deseas generar con tu sonido único.",
+                questions: [
+                    { id: "proposito_actos", text: "Completa los 3 actos de tu propósito vocal.", type: "purpose_guide" }
+                ],
+                field: "proposito_vida"
+            },
+            {
+                id: "h5_step3",
+                stage: "Plan de Acción y Cierre",
+                instructions: "Define metas reales y una rutina que mantenga viva tu nueva libertad.",
+                questions: [
+                    { id: "final_plan", text: "¿Cuáles son tus próximos pasos?", type: "action_plan" }
+                ],
+                field: "plan_accion"
+            }
+        ]
     }
 ];
 
@@ -449,8 +481,6 @@ function renderStep() {
             } catch (err) {
                 console.error("Error al seleccionar rol:", err);
                 alert("Hubo un error al guardar tu elección. Inténtalo de nuevo.");
-                // Restaurar la función si falla
-                renderStep();
             }
         };
 
@@ -508,6 +538,102 @@ function renderStep() {
                 finishModuleWithAI(cachedSupabase, cachedUser, true);
             }, 1800);
         };
+
+    } else if (question.type === 'belief_transmuter') {
+        // --- TRANSMUTADOR DE CREENCIAS (MÓDULO 5) ---
+        container.innerHTML = `
+            <div class="question-slide">
+                <h4>${step.stage}</h4>
+                <div class="transmuter-grid">
+                    <div class="belief-box limiting">
+                        <label>Sombra (Creencia Limitante)</label>
+                        <textarea id="limitingInput" placeholder="Ej: No tengo talento, mi voz es fea..."></textarea>
+                    </div>
+                    <div class="transmuter-arrow">→</div>
+                    <div class="belief-box empowering">
+                        <label>Luz (Verdad Potenciadora)</label>
+                        <textarea id="empoweringInput" placeholder="Ej: Mi voz es mi canal de expresión único y valioso..."></textarea>
+                    </div>
+                </div>
+                <input type="hidden" id="answerInput"> <!-- Dummy for compatibility -->
+            </div>
+        `;
+
+        // Lógica especial para capturar ambos campos
+        const limitInput = document.getElementById('limitingInput');
+        const empowerInput = document.getElementById('empoweringInput');
+        const dummy = document.getElementById('answerInput');
+
+        const updateDummy = () => {
+            dummy.value = `Sombra: ${limitInput.value} | Luz: ${empowerInput.value}`;
+        };
+        limitInput.oninput = updateDummy;
+        empowerInput.oninput = updateDummy;
+
+    } else if (question.type === 'purpose_guide') {
+        // --- GUÍA DE PROPÓSITO (3 ACTOS) ---
+        container.innerHTML = `
+            <div class="question-slide">
+                <h4>${step.stage}</h4>
+                <div class="purpose-acts">
+                    <div class="purpose-act">
+                        <h5>Acto 1: La Visión (El Mundo Ideal)</h5>
+                        <p class="guide-note">Máximo 25 palabras.</p>
+                        <textarea id="visionInput" placeholder="¿Cómo es el mundo que sueñas?"></textarea>
+                    </div>
+                    <div class="purpose-act">
+                        <h5>Acto 2: La Misión (Tu Canto Hoy)</h5>
+                        <textarea id="missionInput" placeholder="¿Cómo ayuda tu voz a esa visión hoy?"></textarea>
+                    </div>
+                    <div class="purpose-act">
+                        <h5>Acto 3: El Futuro (10 años)</h5>
+                        <textarea id="futureInput" placeholder="¿Dónde está tu voz en una década?"></textarea>
+                    </div>
+                </div>
+                <input type="hidden" id="answerInput">
+            </div>
+        `;
+
+        const v = document.getElementById('visionInput');
+        const m = document.getElementById('missionInput');
+        const f = document.getElementById('futureInput');
+        const dummy = document.getElementById('answerInput');
+
+        const updateDummy = () => {
+            dummy.value = `Visión: ${v.value} | Misión: ${m.value} | Futuro: ${f.value}`;
+        };
+        v.oninput = updateDummy;
+        m.oninput = updateDummy;
+        f.oninput = updateDummy;
+
+    } else if (question.type === 'action_plan') {
+        // --- PLAN DE ACCIÓN SMART ---
+        container.innerHTML = `
+            <div class="question-slide">
+                <h4>${step.stage}</h4>
+                <div class="action-plan-grid">
+                    <div class="plan-section">
+                        <h5>🎯 Mis Objetivos SMART</h5>
+                        <textarea id="smartInput" placeholder="Específicos, medibles, alcanzables..."></textarea>
+                    </div>
+                    <div class="plan-section">
+                        <h5>🌿 Mi Rutina de Autocuidado</h5>
+                        <textarea id="routineInput" placeholder="Canto intuitivo, meditación vocal..."></textarea>
+                    </div>
+                </div>
+                <input type="hidden" id="answerInput">
+            </div>
+        `;
+
+        const s = document.getElementById('smartInput');
+        const r = document.getElementById('routineInput');
+        const dummy = document.getElementById('answerInput');
+
+        const updateDummy = () => {
+            dummy.value = `Objetivos: ${s.value} | Rutina: ${r.value}`;
+        };
+        s.oninput = updateDummy;
+        r.oninput = updateDummy;
 
     } else {
         // --- RENDER ESTÁNDAR (TEXTO) ---
