@@ -3,7 +3,7 @@ export default {
     title: "El Personaje",
     icon: "🎭",
     intro: {
-        text: "Aquí identificarás el 'rol' que has adoptado para sobrevivir. Ese papel que hoy está limitando tu voz natural.",
+        text: "Aquí identificarás el 'rol' que has adoptado para sobrevivir. Ese papel que hoy puede estar limitando tu voz natural.",
         buttonText: "Descubrir mi máscara"
     },
     steps: [
@@ -53,7 +53,7 @@ export default {
                     id: "h3_social_influences",
                     text: "¿Cómo han moldeado las figuras influyentes de tu vida las decisiones y roles que asumes hoy?",
                     type: "long_text",
-                    help: "A menudo buscamos pareceros a figuras exitosas o figuras de autoridad para sentirnos valorados.\n\n**Punto clave:** Considera si tus aspiraciones actuales son realmente tuyas o si son un intento de cumplir con lo que la sociedad o personas influyentes esperaban de ti."
+                    help: "A menudo buscamos parecernos a figuras exitosas o figuras de autoridad para sentirnos valorados.\n\n**Punto clave:** Considera si tus aspiraciones actuales son realmente tuyas o si son un intento de cumplir con lo que la sociedad o personas influyentes esperaban de ti."
                 }
             ],
             field: "roles_familiares"
