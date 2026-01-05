@@ -265,7 +265,7 @@ h3 {
 .pricing-card ul li {
     margin-bottom: 15px;
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     gap: 10px;
 }
 
