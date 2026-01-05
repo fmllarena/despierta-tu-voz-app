@@ -631,8 +631,8 @@ input {
 .help-modulo-btn {
     position: absolute;
     top: 15px;
-    right: 55px;
-    /* Al lado de la X (que está a ~15px) */
+    left: 15px;
+    /* Movido a la izquierda para evitar choques con la X */
     width: 30px;
     height: 30px;
     border-radius: 50%;
@@ -709,7 +709,7 @@ input {
 
 @media (max-width: 600px) {
     .help-modulo-btn {
-        right: 45px;
+        left: 12px;
         top: 12px;
         width: 26px;
         height: 26px;
