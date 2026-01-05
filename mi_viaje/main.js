@@ -38,16 +38,17 @@ function renderRoadmap() {
     const container = document.getElementById('journeyRoadmap');
     container.innerHTML = '';
 
+    const subscriptionTier = window.userProfile?.subscription_tier || 'free';
+
     MODULES_METADATA.forEach((mod, index) => {
-        const isUnlocked = index === 0 || localStorage.getItem(`module_${mod.id}_unlocked`);
+        // MODO BETA: Desbloqueamos todos los módulos para pruebas
+        const isUnlocked = true;
 
         // Render Node
         const node = document.createElement('div');
-        node.className = `roadmap-node ${isUnlocked ? 'unlocked' : 'locked'}`;
+        node.className = `roadmap-node unlocked`;
         node.onclick = () => {
-            if (isUnlocked) {
-                openModule(index);
-            }
+            openModule(index);
         };
 
         node.innerHTML = `

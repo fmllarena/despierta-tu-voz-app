@@ -70,14 +70,14 @@ export default async function handler(req, res) {
             return res.status(400).json({ error: "Intento no válido o no proporcionado" });
         }
 
-        // --- LÓGICA DE MEMBRESÍA ---
-        const subscriptionTier = body.subscription_tier || 'free';
+        // --- LÓGICA DE MEMBRESÍA (Habilitada para pruebas: Todo es PRO) ---
+        const subscriptionTier = 'pro'; // Forzamos Pro para los beta-testers
         let adjustedHistory = history;
 
-        // Si el usuario es 'free', limitamos el historial para que no tenga "memoria relacional"
-        // Solo dejamos el mensaje actual o un historial mínimo para que el chat Fluya pero no "recuerde" sesiones pasadas.
+        // Si el usuario fuera 'free', limitaríamos el historial...
+        // Pero para el testeo, dejamos el historial intacto para todos.
         if (subscriptionTier === 'free' && intent === 'mentor_chat') {
-            adjustedHistory = []; // Limpiamos historial para versión gratuita (sin repositorio)
+            adjustedHistory = [];
         }
 
         if (!process.env.GEMINI_API_KEY) {

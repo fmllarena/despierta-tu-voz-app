@@ -82,9 +82,12 @@ async function saludarUsuario() {
             // Verificamos si es la primera vez (si tiene perfil guardado)
             const { data: perfil } = await supabase
                 .from('user_profiles')
-                .select('ultimo_resumen')
+                .select('*') // Obtenemos todo el perfil, incluyendo subscription_tier
                 .eq('user_id', user.id)
                 .single();
+
+            // Guardamos el perfil globalmente para que otros módulos lo usen
+            window.userProfile = perfil;
 
             const bienvenidaBtn = document.getElementById('bienvenidaBtn');
             const botiquinBtn = document.getElementById('botiquinBtn');
@@ -271,10 +274,12 @@ let chatHistory = []; // El historial comenzará con el primer mensaje del usuar
 // Función centralizadora para llamar a la IA de forma segura (nuestro backend protege los prompts)
 async function llamarGemini(message, history = [], intent = "mentor_chat", context = "") {
     try {
+        const subscription_tier = window.userProfile?.subscription_tier || 'free';
+
         const res = await fetch("/api/chat", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ intent, message, history, context })
+            body: JSON.stringify({ intent, message, history, context, subscription_tier })
         });
 
         if (!res.ok) {
