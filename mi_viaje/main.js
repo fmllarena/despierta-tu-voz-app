@@ -271,7 +271,7 @@ function renderRoadmap() {
     modules.forEach((mod, index) => {
         const isUnlocked = index === 0 || localStorage.getItem(`module_${mod.id}_unlocked`);
 
-        // 1. Render Node
+        // Render Node
         const node = document.createElement('div');
         node.className = `roadmap-node ${isUnlocked ? 'unlocked' : 'locked'}`;
         node.onclick = () => {
@@ -293,28 +293,6 @@ function renderRoadmap() {
             <div class="node-status">${isUnlocked ? '▶' : '🔒'}</div>
         `;
         container.appendChild(node);
-
-        // 2. Render Connector to the NEXT node (if exists)
-        if (index < modules.length - 1) {
-            const connector = document.createElement('div');
-            connector.className = 'roadmap-connector';
-
-            let pathD = "";
-
-            // Logic for Alternating Curve
-            if (index % 2 === 0) {
-                // Even Index (0): Starts Left. Next (1) is Right.
-                // Connector goes Left -> Right.
-                pathD = "M 30% 0 C 30% 55, 70% 25, 70% 100%";
-            } else {
-                // Odd Index (1): Starts Right. Next (2) is Left.
-                // Connector goes Right -> Left.
-                pathD = "M 70% 0 C 70% 55, 30% 25, 30% 100%";
-            }
-
-            connector.innerHTML = `<svg><path class="connector-path" d="${pathD}" vector-effect="non-scaling-stroke"></path></svg>`;
-            container.appendChild(connector);
-        }
     });
 }
 

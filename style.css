@@ -511,16 +511,12 @@ input {
 
 /* Roadmap Container */
 .roadmap-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    /* Center everything */
-    gap: 0;
-    /* Gap handled by connectors */
-    position: relative;
-    padding: 20px 0;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+    padding: 20px;
     width: 100%;
-    max-width: 600px;
+    max-width: 900px;
     margin: 0 auto;
 }
 
@@ -535,65 +531,35 @@ input {
     align-items: center;
     gap: 12px;
     background: white;
-    padding: 12px 20px;
-    /* Smaller */
-    border-radius: 50px;
+    padding: 15px 20px;
+    border-radius: 12px;
+    /* Square cards feel better in grid */
     border: 2px solid #eee;
-    width: 70%;
-    /* Narrower */
-    max-width: 300px;
-    /* Smaller max */
+    width: 100%;
     cursor: pointer;
     transition: all 0.3s ease;
-    z-index: 2;
     position: relative;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
 }
 
-.roadmap-node:nth-child(odd) {
-    /* Previously handled by flex-start alignment, but now we stack column center.
-       Wait, if we use connectors, we need strict alignment.
-       Let's keep the flex-start/end alignment for zig-zag.
-    */
-    align-self: flex-start;
-    margin-left: 5%;
+/* Module 5 special: last node spans 2 columns on desktop */
+.roadmap-node:nth-child(5) {
+    grid-column: span 2;
+    max-width: 440px;
+    justify-self: center;
 }
 
-.roadmap-node:nth-child(even) {
-    align-self: flex-end;
-    margin-right: 5%;
-    flex-direction: row-reverse;
-    text-align: right;
+@media (max-width: 600px) {
+    .roadmap-container {
+        grid-template-columns: 1fr;
+    }
+
+    .roadmap-node:nth-child(5) {
+        grid-column: span 1;
+    }
 }
 
-/* Roadmap Connectors */
-.roadmap-connector {
-    width: 100%;
-    height: 80px;
-    /* Vertical spacing/curve height */
-    position: relative;
-    /* border: 1px solid red; debug */
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 1;
-    margin: -10px 0;
-    /* Overlap slightly with nodes */
-}
 
-.roadmap-connector svg {
-    width: 100%;
-    height: 100%;
-    overflow: visible;
-}
-
-.connector-path {
-    fill: none;
-    stroke: #D8C608;
-    stroke-width: 3;
-    stroke-dasharray: 8, 8;
-    opacity: 0.6;
-}
 
 .roadmap-node.locked {
     opacity: 0.6;
