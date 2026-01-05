@@ -219,7 +219,7 @@ export const modules = [
             {
                 id: "h5_step3",
                 stage: "Plan de Acción y Cierre",
-                instructions: "Define metas reales y una rutina que mantenga viva tu nueva libertad.",
+                instructions: "Definamos tus metas reales y una rutina que mantenga viva tu nueva libertad.",
                 questions: [
                     { id: "final_plan", text: "¿Cuáles son tus próximos pasos?", type: "action_plan" }
                 ],
