@@ -191,26 +191,41 @@ async function obtenerContextoAlumno() {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return "";
 
-        const { data: perfil, error } = await supabase
+        // 1. Obtener Perfil (Datos estáticos de sesión anterior)
+        const { data: perfil } = await supabase
             .from('user_profiles')
-            .select('historia_vocal, creencias, ultimo_resumen')
+            .select('*')
             .eq('user_id', user.id)
             .single();
 
-        if (error && error.code !== 'PGRST116') {
-            console.error("Error al obtener perfil:", error);
-            return "";
+        // 2. Obtener Viaje (Datos de los 5 módulos)
+        const { data: viaje } = await supabase
+            .from('user_coaching_data')
+            .select('*')
+            .eq('user_id', user.id)
+            .single();
+
+        let contexto = `\n[CONTEXTO PRIVADO DEL ALUMNO]\n`;
+
+        if (perfil) {
+            contexto += `- Historia Vocal Previa: ${perfil.historia_vocal || 'N/A'}\n`;
+            contexto += `- Creencias Identificadas en Chat: ${perfil.creencias || 'N/A'}\n`;
+            contexto += `- Nivel de Alquimia: ${perfil.nivel_alquimia || 1}/10\n`;
         }
 
-        if (!perfil) return "";
+        if (viaje) {
+            contexto += `\n[DATOS DEL VIAJE "MI VIAJE"]\n`;
+            if (viaje.linea_vida_hitos) contexto += `- Módulo 1 (Pasado): ${JSON.stringify(viaje.linea_vida_hitos.respuestas)}\n`;
+            if (viaje.herencia_raices) contexto += `- Módulo 2 (Herencia): ${JSON.stringify(viaje.herencia_raices.respuestas)}\n`;
+            if (viaje.roles_familiares) contexto += `- Módulo 3 (Personaje): ${JSON.stringify(viaje.roles_familiares.respuestas)}\n`;
+            if (viaje.carta_yo_pasado) contexto += `- Módulo 4 (Sanación - Yo Pasado): ${JSON.stringify(viaje.carta_yo_pasado.respuestas)}\n`;
+            if (viaje.carta_padres) contexto += `- Módulo 4 (Sanación - Padres): ${JSON.stringify(viaje.carta_padres.respuestas)}\n`;
+            if (viaje.proposito_vida) contexto += `- Módulo 5 (Propósito): ${JSON.stringify(viaje.proposito_vida.respuestas)}\n`;
+            if (viaje.plan_accion) contexto += `- Módulo 5 (Plan de Acción): ${JSON.stringify(viaje.plan_accion.respuestas)}\n`;
+        }
 
-        return `
-[CONTEXTO PRIVADO DEL ALUMNO - PARA TU CONOCIMIENTO]
-- Historia Vocal: ${perfil.historia_vocal || 'Aún no compartida'}
-- Creencias/Bloqueos: ${perfil.creencias || 'Aún no definidos'}
-- Resumen sesión anterior: ${perfil.ultimo_resumen || 'Primera sesión'}
-------------------------
-`;
+        contexto += `\n------------------------\n`;
+        return contexto;
     } catch (e) {
         console.error("Error en obtenerContextoAlumno:", e);
         return "";

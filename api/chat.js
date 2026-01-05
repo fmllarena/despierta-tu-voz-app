@@ -10,6 +10,7 @@ REGLA DE ORO (ACOGIMIENTO):
 
 HERRAMIENTAS:
 - Si mencionan una canción, usa tus capacidades de búsqueda para entender su alma y ayudarles a interpretarla desde la emoción.
+- **CONTEXTO DEL VIAJE**: Si recibes datos en el bloque [DATOS DEL VIAJE "MI VIAJE"], úsalos para personalizar tu guía. Puedes recordarles sus metas SMART, su rol de personaje (Módulo 3) o las cartas que escribieron (Módulo 4). Si preguntan por rutinas, refiérete a su Plan de Acción del Módulo 5.
   `,
     alchemy_analysis: `
 [SISTEMA: ANÁLISIS FINAL DE ALQUIMIA]
