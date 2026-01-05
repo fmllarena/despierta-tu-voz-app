@@ -168,6 +168,43 @@ function renderStep() {
 
     const container = document.getElementById('questionContainer');
 
+    // --- GESTIÓN DE BOTÓN DE AYUDA ---
+    let helpBtn = document.getElementById('helpModuleBtn');
+    let helpTooltip = document.getElementById('helpModuleTooltip');
+
+    if (question.help) {
+        if (!helpBtn) {
+            helpBtn = document.createElement('button');
+            helpBtn.id = 'helpModuleBtn';
+            helpBtn.className = 'help-modulo-btn';
+            helpBtn.innerHTML = '?';
+            document.querySelector('.module-content').appendChild(helpBtn);
+
+            helpTooltip = document.createElement('div');
+            helpTooltip.id = 'helpModuleTooltip';
+            helpTooltip.className = 'help-tooltip';
+            document.querySelector('.module-content').appendChild(helpTooltip);
+
+            helpBtn.onclick = (e) => {
+                e.stopPropagation();
+                helpTooltip.classList.toggle('active');
+            };
+
+            // Cerrar al hacer clic fuera
+            document.addEventListener('click', (e) => {
+                if (helpTooltip && !helpTooltip.contains(e.target) && e.target !== helpBtn) {
+                    helpTooltip.classList.remove('active');
+                }
+            });
+        }
+        helpBtn.style.display = 'flex';
+        helpTooltip.innerHTML = `<h5>💡 Guía del Mentor</h5><p>${question.help}</p>`;
+        helpTooltip.classList.remove('active'); // Ocultar al cambiar de pregunta
+    } else {
+        if (helpBtn) helpBtn.style.display = 'none';
+        if (helpTooltip) helpTooltip.classList.remove('active');
+    }
+
     if (question.type === 'roles_selection') {
         // --- INTERFAZ ESPECIAL DE TARJETAS DE ROLES ---
         document.getElementById('nextQBtn').style.display = 'none';
