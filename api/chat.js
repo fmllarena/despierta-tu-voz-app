@@ -15,20 +15,14 @@ HERRAMIENTAS:
 [SISTEMA: ANÁLISIS FINAL DE ALQUIMIA]
 Has completado un módulo del viaje. 
 
-TAREA: Genera la reflexión final del Mentor.
-REGLA DE ORO: Devuelve ÚNICAMENTE el texto de la reflexión. NO añadas preámbulos, análisis técnicos ni explicaciones de lo que has detectado. Empieza directamente con el mensaje.
+TAREA: Genera una reflexión profunda y poética del Mentor.
+REGLA DE ORO: Empiezas DIRECTAMENTE con el mensaje poético. NUNCA digas frases como "Tras analizar el contexto...", "Se detecta que...", "Basado en tus respuestas...", etc. El usuario debe sentir que le hablas directamente desde tu sabiduría, no que eres un procesador de datos.
 
-1. Analiza el contexto para detectar en qué módulo estamos (1: Espejo, 2: Herencia, 3: Personaje, 4: Sanación/Altar).
-2. Si es el Módulo 3 (El Personaje), usa este enfoque OBLIGATORIO:
-   "Reconocer que has estado usando la máscara de [Nombre del Rol] es el primer paso para quitártela. Este personaje te sirvió en el pasado para protegerte, pero hoy tu voz ya no lo necesita para estar a salvo. En nuestro próximo ejercicio, vamos a cantar desde tu esencia, no desde tu máscara."
-   - Personaliza el [Nombre del Rol] con el que el usuario haya elegido.
-3. Si es el Módulo 4 (El Altar de las Palabras/Sanación), usa este enfoque OBLIGATORIO:
-   "Has hecho un trabajo valiente. Al liberar estas palabras, has ensanchado tu canal vocal. Ese nudo que sentías ahora tiene espacio para convertirse en música. Respira ese espacio nuevo."
-   - Valida la catarsis emocional que el usuario acaba de realizar en sus cartas.
-4. Si es el Módulo 5 (Alquimia Final y Propósito), usa este enfoque OBLIGATORIO (Despedida Final):
-   "Has completado tu Gran Obra. Tu voz ya no es un eco de tus miedos o de tus ancestros, sino el canal de tu propósito. Recuerda: no busques la perfección, busca la conexión. Bienvenido a tu nueva libertad vocal."
-   - Celebra el plan de acción y el propósito descubierto.
-5. Para otros módulos, genera un análisis breve de exactamente 3 frases detectando sus bloqueos y dando validación poética.
+1. Identifica el módulo actual por las respuestas.
+2. Para el Módulo 5 (Alquimia Final): No te limites a un texto fijo. Analiza su viaje, menciona hilos conductores que has visto en sus respuestas y expande su visión. Termina OBLIGATORIAMENTE con estas palabras integradas: "Has completado tu Gran Obra. Tu voz ya no es un eco de tus miedos o de tus ancestros, sino el canal de tu propósito. Recuerda: no busques la perfección, busca la conexión. Bienvenido a tu nueva libertad vocal."
+3. Para Módulo 3 (Personaje): Analiza cómo su máscara de [Nombre del Rol] le ha servido y cómo ahora puede soltarla.
+4. Para Módulo 4: Valida la vulnerabilidad mostrada en las cartas.
+5. Usa un tono místico, acogedor y profundamente humano. Extensión recomendada: 80-120 palabras.
    `,
     generate_questions: `
 [SISTEMA: GENERACIÓN DE PREGUNTAS DE COACHING EMOCIONAL]
@@ -86,8 +80,8 @@ export default async function handler(req, res) {
         if (context) fullPrompt += `CONTEXTO EXTRA:\n${context}\n\n`;
         fullPrompt += `MENSAJE DEL USUARIO / DATOS:\n${message}`;
 
-        // Lista de modelos a probar
-        const models = ["gemini-3-flash-preview", "gemini-3-flash", "gemini-1.5-flash", "gemini-2.0-flash-exp"];
+        // Lista de modelos priorizando VELOCIDAD y Fiabilidad
+        const models = ["gemini-1.5-flash", "gemini-2.0-flash-exp", "gemini-1.5-pro"];
         let lastError = "";
 
         for (const modelName of models) {
