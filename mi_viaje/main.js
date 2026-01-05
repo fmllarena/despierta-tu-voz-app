@@ -506,6 +506,7 @@ function renderStep() {
         container.innerHTML = `
             <div class="question-slide ritual-closure-ui">
                 <h4>${step.stage}</h4>
+                <p style="color:#666; font-style:italic; margin-bottom:15px;">${step.instructions}</p>
                 <div class="ritual-vibration">🌌</div>
                 <h3 class="question-text">${question.text}</h3>
                 <button id="sellarBtn" class="sellar-btn">✦ SELLAR Y TRANSMUTAR ✦</button>
@@ -544,6 +545,7 @@ function renderStep() {
         container.innerHTML = `
             <div class="question-slide">
                 <h4>${step.stage}</h4>
+                <p style="color:#666; font-style:italic; margin-bottom:15px;">${step.instructions}</p>
                 <div class="transmuter-grid">
                     <div class="belief-box limiting">
                         <label>Sombra (Creencia Limitante)</label>
@@ -575,6 +577,7 @@ function renderStep() {
         container.innerHTML = `
             <div class="question-slide">
                 <h4>${step.stage}</h4>
+                <p style="color:#666; font-style:italic; margin-bottom:15px;">${step.instructions}</p>
                 <div class="purpose-acts">
                     <div class="purpose-act">
                         <h5>Acto 1: La Visión (El Mundo Ideal)</h5>
@@ -611,6 +614,7 @@ function renderStep() {
         container.innerHTML = `
             <div class="question-slide">
                 <h4>${step.stage}</h4>
+                <p style="color:#666; font-style:italic; margin-bottom:15px;">${step.instructions}</p>
                 <div class="action-plan-grid">
                     <div class="plan-section">
                         <h5>🎯 Mis Objetivos SMART</h5>
