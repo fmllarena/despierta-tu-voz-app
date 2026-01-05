@@ -636,34 +636,71 @@ function renderStep() {
         f.oninput = updateDummy;
 
     } else if (question.type === 'action_plan') {
-        // --- PLAN DE ACCIÓN SMART ---
+        // --- PLAN DE ACCIÓN SMART (AUTOGENERADO POR IA) ---
         container.innerHTML = `
-            <div class="question-slide">
-                <h4>${step.stage}</h4>
-                <p style="color:#666; font-style:italic; margin-bottom:15px;">${step.instructions}</p>
-                <div class="action-plan-grid">
-                    <div class="plan-section">
-                        <h5>🎯 Mis Objetivos SMART</h5>
-                        <textarea id="smartInput" placeholder="Específicos, medibles, alcanzables..."></textarea>
-                    </div>
-                    <div class="plan-section">
-                        <h5>🌿 Mi Rutina de Autocuidado</h5>
-                        <textarea id="routineInput" placeholder="Canto intuitivo, meditación vocal..."></textarea>
-                    </div>
+        <div class="question-slide">
+            <h4>${step.stage}</h4>
+            <p style="color:#666; font-style:italic; margin-bottom:15px;">${step.instructions}</p>
+            <div class="action-plan-grid">
+                <div class="plan-section">
+                    <h5>🎯 Consejos del Mentor (Objetivos SMART)</h5>
+                    <textarea id="smartInput" readonly placeholder="El Mentor está diseñando tus metas..."></textarea>
                 </div>
-                <input type="hidden" id="answerInput">
+                <div class="plan-section">
+                    <h5>🌿 Tu Rutina de Autocuidado</h5>
+                    <textarea id="routineInput" readonly placeholder="El Mentor está preparando tu rutina diaria..."></textarea>
+                </div>
             </div>
-        `;
+            <input type="hidden" id="answerInput">
+        </div>
+    `;
 
         const s = document.getElementById('smartInput');
         const r = document.getElementById('routineInput');
         const dummy = document.getElementById('answerInput');
 
         const updateDummy = () => {
-            dummy.value = `Objetivos: ${s.value} | Rutina: ${r.value}`;
+            dummy.value = `Objetivos SMART: ${s.value} | Rutina Autocuidado: ${r.value}`;
         };
+
+        const autofillActionPlan = async () => {
+            try {
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        intent: "generate_action_plan",
+                        message: "Genera el plan de cierre basado en el historial.",
+                        context: JSON.stringify(journeyContext)
+                    })
+                });
+                const data = await response.json();
+
+                // Limpieza básica de posible markdown
+                const cleanJson = data.text.replace(/```json|```/g, '').trim();
+                const plan = JSON.parse(cleanJson);
+
+                if (plan.smart_goals && plan.self_care_routine) {
+                    s.value = plan.smart_goals;
+                    r.value = plan.self_care_routine;
+                    s.readOnly = false; // Permitimos editar por si quiere ajustar algo
+                    r.readOnly = false;
+                    updateDummy();
+                }
+            } catch (err) {
+                console.error("Error generando plan de acción:", err);
+                s.value = "Objetivo: Cantar 10 minutos al día con presencia. Medir: Cada noche. Alcanzable: Sí. Relevante: Sí. Tiempo: 1 mes.";
+                r.value = "1. Respiración consciente (3 min).\n2. Sirenas vocales suaves (5 min).\n3. Canto intuitivo libre (2 min).";
+                s.readOnly = false;
+                r.readOnly = false;
+                updateDummy();
+            }
+        };
+
         s.oninput = updateDummy;
         r.oninput = updateDummy;
+
+        autofillActionPlan();
 
     } else {
         // --- RENDER ESTÁNDAR (TEXTO) ---
@@ -883,7 +920,13 @@ async function guardarHitoJSON(supabase, user, column, newObject, extraPayload =
                 hint: upsertError.hint,
                 code: upsertError.code
             });
-            alert("⚠️ Error de Base de Datos (Upsert):\nMensaje: " + upsertError.message + "\nCódigo: " + upsertError.code + "\nDetalle: " + (upsertError.details || "Ninguno"));
+
+            let message = upsertError.message;
+            if (upsertError.code === '42703') {
+                message = `La columna '${column}' no existe en la tabla. Asegúrate de haber ejecutado el SQL para añadirla.`;
+            }
+
+            alert("⚠️ Error de Base de Datos (Upsert):\nMensaje: " + message + "\nCódigo: " + upsertError.code);
             throw upsertError;
         }
 

@@ -45,6 +45,19 @@ Analiza el historial del usuario que se te proporciona en el CONTEXTO.
 TAREA: Identifica la creencia limitante principal que ha frenado su voz durante este viaje (miedo al juicio, perfeccionismo, invisibilidad, etc.).
 REQUISITO: Devuelve SOLO la creencia redactada en primera persona, de forma breve y potente (máx 15 palabras).
 Ejemplo: "Mi voz no es lo suficientemente buena para ser escuchada."
+`,
+    generate_action_plan: `
+[SISTEMA: GENERACIÓN DE PLAN DE ACCIÓN MENTOR]
+Analiza el historial del usuario en el CONTEXTO.
+TAREA: Genera un plan de acción personalizado para su desarrollo vocal y bienestar.
+REQUISITOS: 
+1. Genera 3 Objetivos SMART (Específicos, Medibles, Alcanzables, Relevantes, Temporales).
+2. Genera una Rutina de Autocuidado (3 pasos prácticos diarios).
+FORMATO: Devuelve ÚNICAMENTE un JSON con esta estructura:
+{
+  "smart_goals": "...",
+  "self_care_routine": "..."
+}
 `
 };
 
