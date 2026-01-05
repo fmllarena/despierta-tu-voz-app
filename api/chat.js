@@ -37,9 +37,15 @@ REGLAS CRÍTICAS:
 2. NUNCA repitas una pregunta o concepto que ya se haya preguntado. Se MUY original y creativo.
 3. PRIORIZA el estado emocional, familia y autoestima.
 4. NO fuerces la "voz" si el usuario no la ha mencionado.
-5. Devuelve ÚNICAMENTE un array JSON con esta estructura: 
-   [ { "id": "...", "text": "...", "type": "long_text" } ]
-  `
+    [ { "id": "...", "text": "...", "type": "long_text" } ]
+  `,
+    identify_limiting_belief: `
+[SISTEMA: EXTRACCIÓN DE CREENCIAS]
+Analiza el historial del usuario que se te proporciona en el CONTEXTO. 
+TAREA: Identifica la creencia limitante principal que ha frenado su voz durante este viaje (miedo al juicio, perfeccionismo, invisibilidad, etc.).
+REQUISITO: Devuelve SOLO la creencia redactada en primera persona, de forma breve y potente (máx 15 palabras).
+Ejemplo: "Mi voz no es lo suficientemente buena para ser escuchada."
+`
 };
 
 export default async function handler(req, res) {

@@ -549,28 +549,54 @@ function renderStep() {
                 <div class="transmuter-grid">
                     <div class="belief-box limiting">
                         <label>Sombra (Creencia Limitante)</label>
-                        <textarea id="limitingInput" placeholder="Ej: No tengo talento, mi voz es fea..."></textarea>
+                        <textarea id="limitingInput" readonly placeholder="Identificando tu bloqueo principal..."></textarea>
                     </div>
                     <div class="transmuter-arrow">→</div>
                     <div class="belief-box empowering">
                         <label>Luz (Verdad Potenciadora)</label>
-                        <textarea id="empoweringInput" placeholder="Ej: Mi voz es mi canal de expresión único y valioso..."></textarea>
+                        <textarea id="empoweringInput" placeholder="Escribe aquí tu nueva verdad..."></textarea>
                     </div>
                 </div>
-                <input type="hidden" id="answerInput"> <!-- Dummy for compatibility -->
+                <input type="hidden" id="answerInput"> 
             </div>
         `;
 
-        // Lógica especial para capturar ambos campos
         const limitInput = document.getElementById('limitingInput');
         const empowerInput = document.getElementById('empoweringInput');
         const dummy = document.getElementById('answerInput');
 
+        // Función para autocompletar la sombra mediante IA
+        const autofillShadow = async () => {
+            try {
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        intent: "identify_limiting_belief",
+                        message: "Analiza el historial para extraer 1 creencia.",
+                        context: JSON.stringify(journeyContext)
+                    })
+                });
+                const data = await response.json();
+                if (data.text) {
+                    limitInput.value = data.text.trim();
+                    updateDummy();
+                }
+            } catch (err) {
+                console.error("Error identificando creencia:", err);
+                limitInput.value = "Mi voz tiene miedo de ser juzgada."; // Fallback
+                limitInput.readOnly = false;
+            }
+        };
+
         const updateDummy = () => {
             dummy.value = `Sombra: ${limitInput.value} | Luz: ${empowerInput.value}`;
         };
+
         limitInput.oninput = updateDummy;
         empowerInput.oninput = updateDummy;
+
+        autofillShadow(); // Disparamos la detección automática en background
 
     } else if (question.type === 'purpose_guide') {
         // --- GUÍA DE PROPÓSITO (3 ACTOS) ---
