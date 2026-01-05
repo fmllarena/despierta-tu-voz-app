@@ -15,7 +15,9 @@ HERRAMIENTAS:
 [SISTEMA: ANÁLISIS FINAL DE ALQUIMIA]
 Has completado un módulo del viaje. 
 
-TAREA:
+TAREA: Genera la reflexión final del Mentor.
+REGLA DE ORO: Devuelve ÚNICAMENTE el texto de la reflexión. NO añadas preámbulos, análisis técnicos ni explicaciones de lo que has detectado. Empieza directamente con el mensaje.
+
 1. Analiza el contexto para detectar en qué módulo estamos (1: Espejo, 2: Herencia, 3: Personaje, 4: Sanación/Altar).
 2. Si es el Módulo 3 (El Personaje), usa este enfoque OBLIGATORIO:
    "Reconocer que has estado usando la máscara de [Nombre del Rol] es el primer paso para quitártela. Este personaje te sirvió en el pasado para protegerte, pero hoy tu voz ya no lo necesita para estar a salvo. En nuestro próximo ejercicio, vamos a cantar desde tu esencia, no desde tu máscara."
@@ -27,7 +29,7 @@ TAREA:
    "Has completado tu Gran Obra. Tu voz ya no es un eco de tus miedos o de tus ancestros, sino el canal de tu propósito. Recuerda: no busques la perfección, busca la conexión. Bienvenido a tu nueva libertad vocal."
    - Celebra el plan de acción y el propósito descubierto.
 5. Para otros módulos, genera un análisis breve de exactamente 3 frases detectando sus bloqueos y dando validación poética.
-  `,
+   `,
     generate_questions: `
 [SISTEMA: GENERACIÓN DE PREGUNTAS DE COACHING EMOCIONAL]
 Tu objetivo: Generar EXACTAMENTE 1 pregunta de coaching emocional profundo para una etapa específica.

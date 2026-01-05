@@ -513,11 +513,15 @@ input {
 .roadmap-container {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 20px;
-    padding: 20px;
+    gap: 12px;
+    /* Reduced gap */
+    padding: 12px;
+    /* Reduced padding */
     width: 100%;
-    max-width: 900px;
+    max-width: 800px;
+    /* Slightly narrower to avoid edges */
     margin: 0 auto;
+    box-sizing: border-box;
 }
 
 .roadmap-svg-layer {
@@ -529,17 +533,19 @@ input {
 .roadmap-node {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 10px;
+    /* Reduced gap */
     background: white;
-    padding: 15px 20px;
+    padding: 12px 15px;
+    /* Reduced padding */
     border-radius: 12px;
-    /* Square cards feel better in grid */
     border: 2px solid #eee;
     width: 100%;
     cursor: pointer;
     transition: all 0.3s ease;
     position: relative;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    box-sizing: border-box;
 }
 
 /* Module 5 special: last node spans 2 columns on desktop */
@@ -575,11 +581,12 @@ input {
 }
 
 .roadmap-node .node-icon {
-    font-size: 1.8em;
-    /* Slightly smaller */
+    font-size: 1.5em;
+    /* Smaller icon */
     background: #f4ece6;
-    width: 45px;
-    height: 45px;
+    width: 40px;
+    /* Smaller container */
+    height: 40px;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -590,8 +597,8 @@ input {
 .roadmap-node .node-info h3 {
     margin: 0;
     color: #4a3b32;
-    font-size: 0.95em;
-    /* Slightly smaller */
+    font-size: 0.9em;
+    /* Slightly smaller text */
 }
 
 .roadmap-node .node-info p {
