@@ -147,6 +147,13 @@ h3 {
     transform: translateY(-10px);
 }
 
+.empathy-icon {
+    width: 70px;
+    height: 70px;
+    object-fit: contain;
+    margin-bottom: 25px;
+}
+
 .empathy-card p {
     font-size: 1.1rem;
     font-weight: 500;
