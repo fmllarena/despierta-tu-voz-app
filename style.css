@@ -149,6 +149,13 @@ header p {
     text-transform: uppercase;
 }
 
+.chat-header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+}
+
 .messages {
     flex: 1;
     padding: 20px;
@@ -659,6 +666,13 @@ input {
     transform: scale(1.1);
 }
 
+#mainHelpBtn {
+    position: static;
+    width: 24px;
+    height: 24px;
+    font-size: 0.9em;
+}
+
 .help-tooltip {
     position: absolute;
     top: 55px;
@@ -677,6 +691,10 @@ input {
     overflow-y: auto;
     text-transform: none;
     /* Evita heredar el uppercase de la cabecera */
+}
+
+#mainHelpTooltip {
+    top: 80px;
 }
 
 .help-tooltip.active {
@@ -836,6 +854,10 @@ input {
 .finish-btn {
     background: #27ae60 !important;
     color: white !important;
+}
+
+#finishModuleBtn {
+    display: none;
 }
 
 @keyframes fadeIn {
