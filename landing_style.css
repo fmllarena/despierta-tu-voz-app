@@ -39,6 +39,19 @@ h3 {
     padding: 0 20px;
 }
 
+.header-nav {
+    padding: 20px 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.logo-text {
+    font-family: var(--font-serif);
+    font-size: 1.5rem;
+    color: var(--color-acento);
+}
+
 /* --- HERO SECTION --- */
 .hero {
     min-height: 90vh;
@@ -137,6 +150,13 @@ h3 {
 .empathy-card p {
     font-size: 1.1rem;
     font-weight: 500;
+}
+
+.empathy-conclusion {
+    max-width: 700px;
+    margin: 0 auto;
+    color: #666;
+    font-size: 1.1rem;
 }
 
 /* --- PHASES SECTION --- */
@@ -308,6 +328,20 @@ h3 {
     color: white;
 }
 
+.btn-nav {
+    padding: 10px 25px;
+    font-size: 0.9rem;
+}
+
+.btn-full-width {
+    width: 100%;
+}
+
+.btn-footer-cta {
+    padding: 20px 50px;
+    font-size: 1.2rem;
+}
+
 /* --- FOOTER --- */
 .footer {
     padding: 100px 0 50px;
@@ -321,6 +355,19 @@ h3 {
     color: var(--color-acento);
     max-width: 800px;
     margin: 0 auto 60px;
+}
+
+.footer-description {
+    margin-top: 30px;
+    color: #888;
+}
+
+.footer-bottom-info {
+    margin-top: 60px;
+    border-top: 1px solid #eee;
+    padding-top: 30px;
+    color: #bbb;
+    font-size: 0.9rem;
 }
 
 /* --- RESPONSIVE --- */

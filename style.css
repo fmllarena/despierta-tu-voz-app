@@ -17,7 +17,7 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    z-index: 1000;
+    z-index: 2000;
 }
 
 .auth-card {
@@ -259,7 +259,8 @@ input {
 }
 
 .header-buttons {
-    display: flex;
+    display: none;
+    /* Hidden by default, shown via JS after auth */
     gap: 10px;
     flex-wrap: wrap;
     justify-content: center;
@@ -656,7 +657,7 @@ input {
     align-items: center;
     font-weight: bold;
     font-size: 1.1em;
-    z-index: 1001;
+    z-index: 10;
     transition: all 0.3s ease;
 }
 
@@ -667,6 +668,8 @@ input {
 }
 
 #mainHelpBtn {
+    display: none;
+    /* Hidden by default, shown via JS after auth */
     position: static;
     width: 24px;
     height: 24px;
@@ -691,6 +694,16 @@ input {
     overflow-y: auto;
     text-transform: none;
     /* Evita heredar el uppercase de la cabecera */
+    font-weight: normal;
+}
+
+.help-tooltip * {
+    font-weight: inherit;
+}
+
+.help-tooltip strong,
+.help-tooltip b {
+    font-weight: bold;
 }
 
 #mainHelpTooltip {

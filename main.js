@@ -111,6 +111,16 @@ async function saludarUsuario() {
             const botiquinBtn = document.getElementById('botiquinBtn');
             if (bienvenidaBtn) bienvenidaBtn.style.display = 'block';
             if (botiquinBtn) botiquinBtn.style.display = 'block';
+            if (mainHelpBtn) mainHelpBtn.style.display = 'flex';
+            const headerButtons = document.querySelector('.header-buttons');
+            if (headerButtons) headerButtons.style.display = 'flex';
+
+            const viajeBtn = document.getElementById('viajeBtn');
+            const progresoBtn = document.getElementById('progresoBtn');
+            const logoutBtn = document.getElementById('logoutBtn');
+            if (viajeBtn) viajeBtn.style.display = 'block';
+            if (progresoBtn) progresoBtn.style.display = 'block';
+            if (logoutBtn) logoutBtn.style.display = 'block';
 
             if (!perfil || !perfil.ultimo_resumen) {
                 // ES LA PRIMERA VEZ
@@ -127,6 +137,13 @@ async function saludarUsuario() {
             const botiquinBtn = document.getElementById('botiquinBtn');
             if (bienvenidaBtn) bienvenidaBtn.style.display = 'none';
             if (botiquinBtn) botiquinBtn.style.display = 'none';
+            if (mainHelpBtn) mainHelpBtn.style.display = 'none';
+            const viajeBtn = document.getElementById('viajeBtn');
+            const progresoBtn = document.getElementById('progresoBtn');
+            const logoutBtn = document.getElementById('logoutBtn');
+            if (viajeBtn) viajeBtn.style.display = 'none';
+            if (progresoBtn) progresoBtn.style.display = 'none';
+            if (logoutBtn) logoutBtn.style.display = 'none';
             appendMessage("<b>Bienvenido/a, soy tu Mentor Vocal privado. En este espacio sagrado, transformaremos tus inquietudes en el oro de tu auténtica voz. ¿Cómo te sientes hoy?</b>", 'ia');
         }
     } catch (e) {
