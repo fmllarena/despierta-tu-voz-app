@@ -44,6 +44,24 @@ const signUpBtn = document.getElementById('signUpBtn');
 const authOverlay = document.getElementById('authOverlay');
 const authError = document.getElementById('authError');
 
+// Ayuda Principal
+const mainHelpBtn = document.getElementById('mainHelpBtn');
+const mainHelpTooltip = document.getElementById('mainHelpTooltip');
+
+if (mainHelpBtn && mainHelpTooltip) {
+    mainHelpBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        mainHelpTooltip.classList.toggle('active');
+    });
+
+    // Cerrar al hacer clic fuera
+    document.addEventListener('click', (e) => {
+        if (!mainHelpTooltip.contains(e.target) && e.target !== mainHelpBtn) {
+            mainHelpTooltip.classList.remove('active');
+        }
+    });
+}
+
 // Ya no inicializamos Gemini aquí (se hace en el servidor)
 
 // --- LÓGICA DE AUTENTICACIÓN Y SALUDO ---
