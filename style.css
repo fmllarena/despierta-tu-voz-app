@@ -129,6 +129,8 @@ header p {
     overflow: hidden;
     margin: 0 auto 20px auto;
     /* Centrado horizontal */
+    position: relative;
+    /* Contexto de posicionamiento para la ayuda */
 }
 
 .chat-header {
