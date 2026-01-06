@@ -697,7 +697,6 @@ input {
     color: #444;
     font-size: 0.95em;
     line-height: 1.6;
-    white-space: pre-wrap;
 }
 
 /* Etiquetas tipo botón dentro de la ayuda */
