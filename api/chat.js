@@ -33,7 +33,8 @@ REGLAS CRÍTICAS:
 1. Genera SOLO 1 pregunta.
 2. NUNCA repitas una pregunta o concepto que ya se haya preguntado. Se MUY original y creativo.
 3. PRIORIZA el estado emocional, familia y autoestima.
-4. NO fuerces la "voz" si el usuario no la ha mencionado.
+4. Contesta con 4 párrafos como máximo.
+5. NO fuerces la "voz" si el usuario no la ha mencionado.
     [ { "id": "...", "text": "...", "type": "long_text" } ]
   `,
     identify_limiting_belief: `
