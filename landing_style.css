@@ -358,6 +358,7 @@ h3 {
 .bio-content {
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 60px;
 }
 
@@ -366,11 +367,11 @@ h3 {
 }
 
 .bio-image-oval {
-    width: 320px;
-    height: 440px;
-    border-radius: 160px / 220px;
+    width: 210px;
+    height: 280px;
+    border-radius: 105px / 140px;
     overflow: hidden;
-    padding: 15px;
+    padding: 10px;
     background: var(--color-fondo);
     border: 2px solid #eee;
     box-shadow: var(--shadow);
@@ -406,6 +407,19 @@ h3 {
         height: 360px;
         border-radius: 130px / 180px;
     }
+}
+
+
+.phase-icon {
+    width: 120px;
+    height: 120px;
+    object-fit: contain;
+    margin-bottom: 20px;
+    background: white;
+    border-radius: 50%;
+    padding: 15px;
+    box-shadow: var(--shadow);
+    border: 1px solid #eee;
 }
 
 /* --- FOOTER --- */
