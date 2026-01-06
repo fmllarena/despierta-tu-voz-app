@@ -673,6 +673,8 @@ input {
     animation: fadeInDown 0.3s ease;
     max-height: 400px;
     overflow-y: auto;
+    text-transform: none;
+    /* Evita heredar el uppercase de la cabecera */
 }
 
 .help-tooltip.active {
