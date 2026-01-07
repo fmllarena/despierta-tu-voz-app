@@ -231,6 +231,14 @@ document.addEventListener('click', () => ELEMENTS.mainHelpTooltip?.classList.rem
 ELEMENTS.mainHelpTooltip?.addEventListener('click', e => e.stopPropagation());
 
 if (ELEMENTS.sendBtn) ELEMENTS.sendBtn.addEventListener('click', sendMessage);
+if (ELEMENTS.chatInput) {
+    ELEMENTS.chatInput.addEventListener('keydown', e => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            sendMessage();
+        }
+    });
+}
 if (ELEMENTS.navButtons.logout) {
     ELEMENTS.navButtons.logout.addEventListener('click', async () => {
         ELEMENTS.navButtons.logout.innerText = "Guardando...";
