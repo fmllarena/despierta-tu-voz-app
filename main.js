@@ -205,12 +205,15 @@ function appendMessage(text, type, id = null) {
     if (type.startsWith('ia')) {
         div.innerHTML = window.marked ? window.marked.parse(text) : text;
 
-        // Botón especial de Cerrar Sesión si el Mentor lo sugiere
         if (text.includes("cerrar sesión") || text.includes("encuentro de hoy quede guardado")) {
             const logoutBtn = document.createElement('button');
             logoutBtn.className = 'chat-logout-btn';
             logoutBtn.innerHTML = '✨ Guardar y Cerrar Sesión';
-            logoutBtn.onclick = () => ELEMENTS.navButtons.logout.click();
+            logoutBtn.onclick = () => {
+                logoutBtn.innerHTML = '⌛ Guardando...';
+                logoutBtn.disabled = true;
+                ELEMENTS.navButtons.logout.click();
+            };
             div.appendChild(logoutBtn);
         }
     } else {
