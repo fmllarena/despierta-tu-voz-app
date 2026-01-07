@@ -205,15 +205,6 @@ function appendMessage(text, type, id = null) {
     if (type.startsWith('ia')) {
         div.innerHTML = window.marked ? window.marked.parse(text) : text;
 
-        // Botón de audio para respuestas del Mentor
-        if (type === 'ia' || type === 'ia-botiquin') {
-            const audioBtn = document.createElement('button');
-            audioBtn.className = 'audio-btn';
-            audioBtn.innerHTML = '🔊 Oír Mentor';
-            audioBtn.onclick = () => hablarTexto(text, audioBtn);
-            div.appendChild(audioBtn);
-        }
-
         // Botón especial de Cerrar Sesión si el Mentor lo sugiere
         if (text.includes("cerrar sesión") || text.includes("encuentro de hoy quede guardado")) {
             const logoutBtn = document.createElement('button');

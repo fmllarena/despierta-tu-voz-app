@@ -304,8 +304,43 @@ h3 {
 .price {
     font-size: 3rem;
     font-weight: bold;
-    margin: 20px 0;
+    margin: 10px 0 20px;
     color: var(--color-acento);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    line-height: 1.1;
+}
+
+.price-old {
+    font-size: 1.1rem;
+    color: #999;
+    text-decoration: line-through;
+    font-weight: normal;
+    margin-bottom: 5px;
+}
+
+.price-label {
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--color-acento);
+    margin-bottom: 2px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.price-condition {
+    font-size: 1.2rem;
+    font-weight: normal;
+    display: block;
+}
+
+.price-sub {
+    font-size: 0.95rem;
+    color: #888;
+    font-weight: normal;
+    display: block;
+    margin-top: 5px;
 }
 
 .price span {
