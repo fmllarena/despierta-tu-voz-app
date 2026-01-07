@@ -189,7 +189,9 @@ h3 {
 
 .phases-app-img {
     max-width: 100%;
-    height: auto;
+    height: 500px;
+    width: auto;
+    object-fit: contain;
     border-radius: 40px;
     box-shadow: 0 30px 60px rgba(0, 0, 0, 0.15);
 }
