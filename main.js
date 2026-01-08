@@ -5,8 +5,9 @@ let chatHistory = [];
 
 const MENSAJE_BIENVENIDA = `<b>Bienvenido/a, soy tu Mentor Vocal privado. ¿Cómo te sientes hoy?</b>
 <br><br>
-Aquí no solo trabajamos la técnica, sino también lo que tu voz grita desde el silencio. 
-Puedes contarme tus miedos, tus canciones favoritas o cómo te sientes físicamente al cantar.`;
+Bienvenido/a a un espacio sagrado donde tu voz es el puente entre tu técnica y tu alma. 
+Aquí no solo buscaremos la nota perfecta, sino que usaremos cada sonido como una llave para abrir los cerrojos de tu historia y desvelar los secretos 
+que guarda tu inconsciente. Respira, confía y prepárate para transformar tu vida a través del canto. ¿Cómo te sientes al iniciar este viaje hoy?`;
 
 const ELEMENTS = {
     chatBox: document.getElementById('chatBox'),
@@ -135,6 +136,7 @@ const authActions = {
         const password = document.getElementById('authPassword').value;
         if (!email || !password || !nombre) return ELEMENTS.authError.innerText = "Completa todos los campos.";
 
+        console.log("Iniciando registro para:", email, "con nombre:", nombre);
         const { data, error } = await supabase.auth.signUp({
             email,
             password,
@@ -142,6 +144,7 @@ const authActions = {
                 data: { nombre: nombre }
             }
         });
+        console.log("Respuesta de Auth:", { data, error });
         if (error) {
             ELEMENTS.authError.innerText = "Error: " + error.message;
         } else {
