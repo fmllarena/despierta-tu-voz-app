@@ -3,7 +3,7 @@ let supabase;
 let userProfile = null;
 let chatHistory = [];
 
-const MENSAJE_BIENVENIDA = `<b>Bienvenido/a, soy tu Mentor Vocal privado. ¿Cómo te sientes hoy?</b>
+const MENSAJE_BIENVENIDA = `<b>Soy tu Mentor Vocal privado.</b>
 <br><br>
 Bienvenido/a a un espacio sagrado donde tu voz es el puente entre tu técnica y tu alma. 
 Aquí no solo buscaremos la nota perfecta, sino que usaremos cada sonido como una llave para abrir los cerrojos de tu historia y desvelar los secretos 
@@ -61,8 +61,16 @@ async function inicializarSupabase() {
 function setupAuthListener() {
     supabase.auth.onAuthStateChange((event, session) => {
         const user = session?.user;
-        updateUI(user);
-        if (user) {
+
+        // Solo actuar si el usuario realmente ha cambiado para evitar borrados accidentales
+        const userWasLoggedIn = !!userProfile;
+        const userIsLoggedIn = !!user;
+
+        if (event === 'SIGNED_OUT') {
+            userProfile = null;
+            updateUI(null);
+        } else if (user && !userWasLoggedIn) {
+            updateUI(user);
             cargarPerfil(user);
         }
     });
@@ -75,15 +83,49 @@ async function cargarPerfil(user) {
         .eq('user_id', user.id)
         .single();
 
-    // Si no existe perfil, informamos (esto no debería pasar con el nuevo trigger)
     if (!perfil) {
-        console.error("⚠️ Perfil no encontrado después del registro. Revisa el trigger en Supabase.");
+        console.error("⚠️ Perfil no encontrado.");
         return;
     }
 
     userProfile = perfil;
-    window.userProfile = perfil; // Mantener compatibilidad con otros módulos
-    saludarUsuario(user, perfil);
+    window.userProfile = perfil;
+
+    // Al cargar el perfil, recuperamos el historial para que no aparezca vacío
+    await cargarHistorialDesdeDB(user.id);
+
+    // Si no hay mensajes previos, saludar de forma estándar
+    if (ELEMENTS.chatBox.children.length === 0) {
+        saludarUsuario(user, perfil);
+    }
+}
+
+async function cargarHistorialDesdeDB(userId) {
+    try {
+        const { data: mensajes, error } = await supabase
+            .from('mensajes')
+            .select('*')
+            .eq('alumno', userId)
+            .order('created_at', { ascending: true })
+            .limit(30);
+
+        if (error) throw error;
+        if (!mensajes || mensajes.length === 0) return;
+
+        ELEMENTS.chatBox.innerHTML = "";
+        chatHistory = [];
+
+        mensajes.forEach(msg => {
+            appendMessage(msg.texto, msg.emisor);
+            // Reconstruir memoria de la IA
+            const role = msg.emisor === 'ia' ? 'model' : 'user';
+            chatHistory.push({ role: role, parts: [{ text: msg.texto }] });
+        });
+
+        console.log(`Historial recuperado: ${mensajes.length} mensajes.`);
+    } catch (e) {
+        console.warn("Error recuperando historial:", e);
+    }
 }
 
 function updateUI(user) {
@@ -120,11 +162,13 @@ async function saludarUsuario(user, perfil) {
     if (!ELEMENTS.chatBox) return;
     ELEMENTS.chatBox.innerHTML = "";
 
+    const nombre = perfil?.nombre || (user.email || "viajero/a").split('@')[0];
+    const nombreCap = nombre.charAt(0).toUpperCase() + nombre.slice(1);
+
     if (!perfil || !perfil.ultimo_resumen) {
-        appendMessage(MENSAJE_BIENVENIDA, 'ia', 'msg-bienvenida');
+        const bienvenidaPersonalizada = `¡Hola, <strong>${nombreCap}</strong>!<br><br>${MENSAJE_BIENVENIDA}`;
+        appendMessage(bienvenidaPersonalizada, 'ia', 'msg-bienvenida');
     } else {
-        const nombre = perfil.nombre || (user.email || "viajero/a").split('@')[0];
-        const nombreCap = nombre.charAt(0).toUpperCase() + nombre.slice(1);
         appendMessage(`¡Hola, <strong>${nombreCap}</strong>! Qué alegría encontrarte de nuevo. ¿Cómo te sientes hoy?`, 'ia');
     }
 }
@@ -198,6 +242,8 @@ async function sendMessage() {
     if (!text) return;
 
     appendMessage(text, 'user');
+    guardarMensajeDB(text, 'user'); // Guardar en Supabase sin esperar para no ralentizar
+
     ELEMENTS.chatInput.value = '';
     ELEMENTS.chatInput.disabled = true;
     ELEMENTS.sendBtn.disabled = true;
@@ -208,6 +254,8 @@ async function sendMessage() {
         const responseText = await llamarGemini(text, chatHistory, "mentor_chat", contexto);
 
         appendMessage(responseText, 'ia');
+        guardarMensajeDB(responseText, 'ia'); // Guardar respuesta de la IA
+
         chatHistory.push({ role: "user", parts: [{ text }] }, { role: "model", parts: [{ text: responseText }] });
     } catch (e) {
         appendMessage(`Error: ${e.message}`, 'ia');
@@ -215,6 +263,21 @@ async function sendMessage() {
         ELEMENTS.chatInput.disabled = false;
         ELEMENTS.sendBtn.disabled = false;
         ELEMENTS.chatInput.focus();
+    }
+}
+
+async function guardarMensajeDB(texto, emisor) {
+    try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        await supabase.from('mensajes').insert({
+            texto: texto,
+            emisor: emisor,
+            alumno: user.id
+        });
+    } catch (e) {
+        console.warn("No se pudo guardar el mensaje en el histórico:", e);
     }
 }
 
@@ -244,7 +307,13 @@ function appendMessage(text, type, id = null) {
     }
 
     ELEMENTS.chatBox.appendChild(div);
-    type === 'ia-botiquin' ? div.scrollIntoView({ behavior: 'smooth' }) : ELEMENTS.chatBox.scrollTop = ELEMENTS.chatBox.scrollHeight;
+
+    // Desplazar el chat: siempre queremos que la última respuesta de la IA sea visible desde su inicio
+    if (type.startsWith('ia')) {
+        div.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } else {
+        ELEMENTS.chatBox.scrollTop = ELEMENTS.chatBox.scrollHeight;
+    }
 }
 
 // Help Tooltip
@@ -298,7 +367,14 @@ const MODULOS = {
     toggleBienvenida() {
         document.getElementById('msg-botiquin')?.remove();
         const msg = document.getElementById('msg-bienvenida');
-        msg ? msg.remove() : appendMessage(MENSAJE_BIENVENIDA, 'ia', 'msg-bienvenida');
+        if (msg) return msg.remove();
+
+        // Recuperar nombre para el toggle también
+        const nombre = userProfile?.nombre || "viajero/a";
+        const nombreCap = nombre.charAt(0).toUpperCase() + nombre.slice(1);
+        const saludo = `¡Hola, <strong>${nombreCap}</strong>!<br><br>${MENSAJE_BIENVENIDA}`;
+
+        appendMessage(saludo, 'ia', 'msg-bienvenida');
     },
     async toggleProgreso() {
         ['msg-botiquin', 'msg-bienvenida'].forEach(id => document.getElementById(id)?.remove());
