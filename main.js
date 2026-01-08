@@ -102,6 +102,7 @@ async function cargarPerfil(user) {
 
 async function cargarHistorialDesdeDB(userId) {
     try {
+        console.log("Intentando recuperar historial para:", userId);
         const { data: mensajes, error } = await supabase
             .from('mensajes')
             .select('*')
@@ -109,22 +110,28 @@ async function cargarHistorialDesdeDB(userId) {
             .order('created_at', { ascending: true })
             .limit(30);
 
-        if (error) throw error;
-        if (!mensajes || mensajes.length === 0) return;
+        if (error) {
+            console.error("Error Supabase (select):", error);
+            return;
+        }
+
+        if (!mensajes || mensajes.length === 0) {
+            console.log("No hay mensajes previos en 'mensajes'.");
+            return;
+        }
 
         ELEMENTS.chatBox.innerHTML = "";
         chatHistory = [];
 
         mensajes.forEach(msg => {
             appendMessage(msg.texto, msg.emisor);
-            // Reconstruir memoria de la IA
             const role = msg.emisor === 'ia' ? 'model' : 'user';
             chatHistory.push({ role: role, parts: [{ text: msg.texto }] });
         });
 
-        console.log(`Historial recuperado: ${mensajes.length} mensajes.`);
+        console.log(`Historial recuperado con éxito: ${mensajes.length} mensajes.`);
     } catch (e) {
-        console.warn("Error recuperando historial:", e);
+        console.error("Error crítico recuperando historial:", e);
     }
 }
 
@@ -271,13 +278,20 @@ async function guardarMensajeDB(texto, emisor) {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
 
-        await supabase.from('mensajes').insert({
+        console.log(`Intentando guardar mensaje de ${emisor}...`);
+        const { error } = await supabase.from('mensajes').insert({
             texto: texto,
             emisor: emisor,
             alumno: user.id
         });
+
+        if (error) {
+            console.error("Error Supabase (insert):", error);
+        } else {
+            console.log("Mensaje guardado correctamente.");
+        }
     } catch (e) {
-        console.warn("No se pudo guardar el mensaje en el histórico:", e);
+        console.error("Error crítico guardando mensaje:", e);
     }
 }
 
