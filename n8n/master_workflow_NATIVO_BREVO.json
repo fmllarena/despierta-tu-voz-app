@@ -1,0 +1,208 @@
+{
+    "name": "Despierta tu Voz - NATIVO BREVO (V12)",
+    "nodes": [
+        {
+            "parameters": {
+                "httpMethod": "POST",
+                "path": "supabase-auth-webhook",
+                "options": {}
+            },
+            "name": "Webhook: Registro Supabase",
+            "type": "n8n-nodes-base.webhook",
+            "typeVersion": 1,
+            "position": [
+                0,
+                200
+            ]
+        },
+        {
+            "parameters": {
+                "resource": "contact",
+                "email": "={{ $json[\"body\"][\"record\"][\"email\"] }}",
+                "updateExisting": true,
+                "additionalFields": {}
+            },
+            "name": "Brevo: Añadir/Actualizar Contacto",
+            "type": "n8n-nodes-base.sendInBlue",
+            "typeVersion": 1,
+            "position": [
+                250,
+                200
+            ],
+            "credentials": {
+                "sendInBlueApi": {
+                    "id": "TU_ID_DE_CREDENCIAL_BREVO",
+                    "name": "Brevo Account"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "resource": "transactionalEmail",
+                "sender": "hola@despiertatuvoz.com",
+                "toEmail": "={{ $node[\"Webhook: Registro Supabase\"].json[\"body\"][\"record\"][\"email\"] }}",
+                "subject": "¡Bienvenido/a a Despierta tu Voz! 🎤",
+                "textContent": "Hola,\n\nTu viaje vocal comienza ahora. Ya tienes acceso al Módulo 1 y a tu Mentor IA."
+            },
+            "name": "Brevo: Email Bienvenida Gratis",
+            "type": "n8n-nodes-base.sendInBlue",
+            "typeVersion": 1,
+            "position": [
+                500,
+                200
+            ],
+            "credentials": {
+                "sendInBlueApi": {
+                    "id": "TU_ID_DE_CREDENCIAL_BREVO",
+                    "name": "Brevo Account"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "httpMethod": "POST",
+                "path": "stripe-checkout-webhook",
+                "options": {}
+            },
+            "name": "Webhook: Pago Stripe",
+            "type": "n8n-nodes-base.webhook",
+            "typeVersion": 1,
+            "position": [
+                0,
+                450
+            ]
+        },
+        {
+            "parameters": {
+                "conditions": {
+                    "boolean": [
+                        {
+                            "value1": "={{$json[\"body\"][\"type\"]}}",
+                            "value2": "checkout.session.completed"
+                        }
+                    ]
+                }
+            },
+            "name": "IF: Pago OK",
+            "type": "n8n-nodes-base.if",
+            "typeVersion": 1,
+            "position": [
+                250,
+                450
+            ]
+        },
+        {
+            "parameters": {
+                "requestMethod": "PATCH",
+                "method": "PATCH",
+                "url": "=https://axwwjtjcawuabzyojabu.supabase.co/rest/v1/user_profiles?user_id=eq.{{$node[\"Webhook: Pago Stripe\"].json[\"body\"][\"data\"][\"object\"][\"client_reference_id\"]}}",
+                "authentication": "none",
+                "headerParametersUi": {
+                    "parameter": [
+                        {
+                            "name": "apikey",
+                            "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF4d3dqdGpjYXd1YWJ6eW9qYWJ1Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2NzExNDI3OCwiZXhwIjoyMDgyNjkwMjc4fQ.a_lRvzOP4YYbyG6-diQdqn0RmSGqidFZQk3kvU6Ku9U"
+                        },
+                        {
+                            "name": "Authorization",
+                            "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF4d3dqdGpjYXd1YWJ6eW9qYWJ1Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2NzExNDI3OCwiZXhwIjoyMDgyNjkwMjc4fQ.a_lRvzOP4YYbyG6-diQdqn0RmSGqidFZQk3kvU6Ku9U"
+                        },
+                        {
+                            "name": "Content-Type",
+                            "value": "application/json"
+                        }
+                    ]
+                },
+                "jsonParameters": true,
+                "bodyParametersJson": "={\n  \"subscription_tier\": \"pro\",\n  \"stripe_customer_id\": \"{{$node[\"Webhook: Pago Stripe\"].json[\"body\"][\"data\"][\"object\"][\"customer\"]}}\"\n}",
+                "options": {}
+            },
+            "name": "HTTP: Upgrade Supabase",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 1,
+            "position": [
+                500,
+                450
+            ]
+        },
+        {
+            "parameters": {
+                "resource": "transactionalEmail",
+                "sender": "hola@despiertatuvoz.com",
+                "toEmail": "={{ $node[\"Webhook: Pago Stripe\"].json[\"body\"][\"data\"][\"object\"][\"customer_details\"][\"email\"] }}",
+                "subject": "¡Ya eres Alquimista Pro! 🎤💎",
+                "textContent": "¡Enhorabuena!\n\nHemos activado tu acceso completo. Ya puedes disfrutar de todos los módulos y la memoria pro del Mentor IA."
+            },
+            "name": "Brevo: Email Bienvenida Pro",
+            "type": "n8n-nodes-base.sendInBlue",
+            "typeVersion": 1,
+            "position": [
+                750,
+                450
+            ],
+            "credentials": {
+                "sendInBlueApi": {
+                    "id": "TU_ID_DE_CREDENCIAL_BREVO",
+                    "name": "Brevo Account"
+                }
+            }
+        }
+    ],
+    "connections": {
+        "Webhook: Registro Supabase": {
+            "main": [
+                [
+                    {
+                        "node": "Brevo: Añadir/Actualizar Contacto",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Brevo: Añadir/Actualizar Contacto": {
+            "main": [
+                [
+                    {
+                        "node": "Brevo: Email Bienvenida Gratis",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Webhook: Pago Stripe": {
+            "main": [
+                [
+                    {
+                        "node": "IF: Pago OK",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "IF: Pago OK": {
+            "main": [
+                [
+                    {
+                        "node": "HTTP: Upgrade Supabase",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "HTTP: Upgrade Supabase": {
+            "main": [
+                [
+                    {
+                        "node": "Brevo: Email Bienvenida Pro",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    }
+}

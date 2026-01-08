@@ -68,11 +68,17 @@ function setupAuthListener() {
 }
 
 async function cargarPerfil(user) {
-    const { data: perfil } = await supabase
+    let { data: perfil } = await supabase
         .from('user_profiles')
         .select('*')
         .eq('user_id', user.id)
         .single();
+
+    // Si no existe perfil, informamos (esto no debería pasar con el nuevo trigger)
+    if (!perfil) {
+        console.error("⚠️ Perfil no encontrado después del registro. Revisa el trigger en Supabase.");
+        return;
+    }
 
     userProfile = perfil;
     window.userProfile = perfil; // Mantener compatibilidad con otros módulos
@@ -116,7 +122,7 @@ async function saludarUsuario(user, perfil) {
     if (!perfil || !perfil.ultimo_resumen) {
         appendMessage(MENSAJE_BIENVENIDA, 'ia', 'msg-bienvenida');
     } else {
-        const nombre = (user.email || "viajero/a").split('@')[0];
+        const nombre = perfil.nombre || (user.email || "viajero/a").split('@')[0];
         const nombreCap = nombre.charAt(0).toUpperCase() + nombre.slice(1);
         appendMessage(`¡Hola, <strong>${nombreCap}</strong>! Qué alegría encontrarte de nuevo. ¿Cómo te sientes hoy?`, 'ia');
     }
@@ -124,13 +130,26 @@ async function saludarUsuario(user, perfil) {
 
 const authActions = {
     async signUp() {
+        const nombre = document.getElementById('authName').value;
         const email = document.getElementById('authEmail').value;
         const password = document.getElementById('authPassword').value;
-        if (!email || !password) return ELEMENTS.authError.innerText = "Completa los campos.";
+        if (!email || !password || !nombre) return ELEMENTS.authError.innerText = "Completa todos los campos.";
 
-        const { error } = await supabase.auth.signUp({ email, password });
-        if (error) ELEMENTS.authError.innerText = "Error: " + error.message;
-        else alert("Revisa tu email para confirmar.");
+        const { data, error } = await supabase.auth.signUp({
+            email,
+            password,
+            options: {
+                data: { nombre: nombre }
+            }
+        });
+        if (error) {
+            ELEMENTS.authError.innerText = "Error: " + error.message;
+        } else {
+            if (data?.user) {
+                console.log("Registro exitoso. El trigger de base de datos creará el perfil.");
+            }
+            alert("Registro exitoso. Revisa tu correo para confirmar la cuenta.");
+        }
     },
     async login() {
         const email = document.getElementById('authEmail').value;
