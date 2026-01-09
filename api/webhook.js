@@ -43,24 +43,62 @@ export default async function handler(req, res) {
     if (event.type === 'checkout.session.completed') {
         const session = event.data.object;
         const userId = session.client_reference_id;
-        const customerEmail = session.customer_details.email;
+        const planType = session.metadata?.planType || 'pro';
         const stripeCustomerId = session.customer;
 
-        console.log(`✅ Pago completado para el usuario: ${userId}`);
+        console.log(`✅ Pago completado para el usuario: ${userId} (Plan: ${planType})`);
 
-        // Actualizamos el perfil del usuario en Supabase
-        const { error } = await supabase
+        await supabase
             .from('user_profiles')
             .update({
-                subscription_tier: 'pro', // O dinámico según el plan
+                subscription_tier: planType,
                 stripe_customer_id: stripeCustomerId,
-                updated_at: new Date()
+                updated_at: new Date().toISOString()
             })
             .eq('user_id', userId);
+    }
 
-        if (error) {
-            console.error('Error actualizando Supabase:', error);
-            return res.status(500).json({ error: 'Error actualizando base de datos' });
+    // Manejamos la cancelación o fallo de pago permanente de la suscripción
+    if (event.type === 'customer.subscription.deleted') {
+        const subscription = event.data.object;
+        const stripeCustomerId = subscription.customer;
+
+        console.log(`ℹ️ Suscripción eliminada para el cliente Stripe: ${stripeCustomerId}`);
+
+        // 1. Buscamos al usuario por su ID de Stripe
+        const { data: profile, error: searchError } = await supabase
+            .from('user_profiles')
+            .select('user_id, email, nombre')
+            .eq('stripe_customer_id', stripeCustomerId)
+            .single();
+
+        if (profile && !searchError) {
+            // 2. Bajamos al usuario a plan 'free'
+            await supabase
+                .from('user_profiles')
+                .update({
+                    subscription_tier: 'free',
+                    updated_at: new Date().toISOString()
+                })
+                .eq('user_id', profile.user_id);
+
+            // 3. Disparamos el email de fallo/recuperación (#6)
+            // Llamamos a la Edge Function que crearemos ahora
+            try {
+                await fetch(`${supabaseUrl}/functions/v1/send-failure-email`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${supabaseServiceKey}`
+                    },
+                    body: JSON.stringify({
+                        user: profile
+                    })
+                });
+                console.log(`📩 Email de recuperación enviado a ${profile.email}`);
+            } catch (emailErr) {
+                console.error('Error disparando email de fallo:', emailErr);
+            }
         }
     }
 
