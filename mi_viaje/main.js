@@ -762,6 +762,16 @@ async function finishModuleWithAI(supabase, user, skipInputCheck = false) {
     console.log("💾 Finalizando módulo, guardando último hito...", hitoData);
     await guardarHitoJSON(supabase, user, step.field, hitoData);
 
+    // --- DISPARADOR DE EMAIL DE HITO (Brevo) ---
+    // Al actualizar 'last_hito_completed', el Webhook de Supabase lanzará el email automáticamente.
+    if (module.id >= 1 && module.id <= 5) {
+        await supabase
+            .from('user_profiles')
+            .update({ last_hito_completed: module.id })
+            .eq('user_id', user.id);
+        console.log(`🎯 Perfil actualizado: Módulo ${module.id} completado.`);
+    }
+
     const container = document.getElementById('questionContainer');
     container.innerHTML = `
         <div class="question-slide" style="text-align:center;">
