@@ -1,22 +1,22 @@
 // stripe-checkout.js
 
 // --- CONFIGURACIÓN DE SUPABASE ---
-let supabase;
+let supabaseClientPagos; // Renombrado para evitar colisión con el objeto global de la librería
 async function inicializarSupabase() {
-    if (supabase) return supabase; // Ya inicializado
+    if (supabaseClientPagos) return supabaseClientPagos;
 
     try {
-        console.log("🔍 Inicializando Supabase para pagos...");
+        console.log("🔍 Iniciando Supabase para pagos...");
         const response = await fetch('/api/config');
         if (!response.ok) throw new Error(`Error en config: ${response.statusText}`);
 
         const config = await response.json();
 
-        // El script de Supabase del CDN expone 'supabase' en el scope global
+        // El script de Supabase del CDN expone 'supabase' en el scope global como un objeto/librería
         if (window.supabase && typeof window.supabase.createClient === 'function') {
-            supabase = window.supabase.createClient(config.url, config.key);
-            console.log("✅ Supabase inicializado correctamente.");
-            return supabase;
+            supabaseClientPagos = window.supabase.createClient(config.url, config.key);
+            console.log("✅ Supabase inicializado correctamente para pagos.");
+            return supabaseClientPagos;
         } else {
             throw new Error("El SDK de Supabase no se cargó correctamente.");
         }
@@ -40,18 +40,18 @@ async function iniciarPago(planType) {
         return;
     }
 
-    // 1. Aseguramos Supabase
-    if (!supabase) {
-        supabase = await inicializarSupabase();
+    // 1. Aseguramos el cliente
+    if (!supabaseClientPagos) {
+        supabaseClientPagos = await inicializarSupabase();
     }
 
-    if (!supabase) {
+    if (!supabaseClientPagos) {
         alert("Error de conexión. Por favor, recarga la página.");
         return;
     }
 
     // 2. Obtenemos el usuario actual
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    const { data: { user }, error: userError } = await supabaseClientPagos.auth.getUser();
 
     if (userError || !user) {
         console.log("No hay usuario autenticado. Redirigiendo...");
@@ -89,6 +89,6 @@ async function iniciarPago(planType) {
     }
 }
 
-// Exportar a global para que index.html lo vea siempre
+// Exportar funciones críticas al objeto global window para asegurar visibilidad
 window.iniciarPago = iniciarPago;
 window.inicializarSupabasePagos = inicializarSupabase;
