@@ -349,6 +349,14 @@ async function guardarMensajeDB(texto, emisor) {
             console.error("Error Supabase (insert):", error);
         } else {
             console.log("Mensaje guardado correctamente.");
+            // --- ACTUALIZAR ACTIVIDAD PARA EMAIL DE INACTIVIDAD ---
+            await supabase
+                .from('user_profiles')
+                .update({
+                    last_active_at: new Date().toISOString(),
+                    email_inactividad_15_enviado: false // Resetear flag si vuelve a estar activo
+                })
+                .eq('user_id', user.id);
         }
     } catch (e) {
         console.error("Error crítico guardando mensaje:", e);
