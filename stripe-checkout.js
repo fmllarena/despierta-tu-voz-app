@@ -88,3 +88,7 @@ async function iniciarPago(planType) {
         alert("Error de conexión con el servidor. Por favor, comprueba tu internet.");
     }
 }
+
+// Exportar a global para que index.html lo vea siempre
+window.iniciarPago = iniciarPago;
+window.inicializarSupabasePagos = inicializarSupabase;

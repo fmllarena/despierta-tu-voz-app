@@ -1408,6 +1408,8 @@ input {
 
 /* --- ESTILOS MEJORAR PLAN (PREMIUM) --- */
 .upgrade-btn {
+    display: none;
+    /* Se activa vía JS en main.js */
     background: linear-gradient(135deg, #d4af37, #b8860b);
     color: white !important;
     font-weight: bold !important;
