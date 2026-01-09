@@ -91,14 +91,11 @@ async function cargarPerfil(user) {
     userProfile = perfil;
     window.userProfile = perfil;
 
-    // Al cargar el perfil, recuperamos el historial para que no aparezca vacío
+    // Al cargar el perfil, recuperamos el historial para el contexto de la IA
     await cargarHistorialDesdeDB(user.id);
 
-    // Si no hay mensajes en el historial (chatHistory vacío), saludar de forma personalizada
-    // Esto evita que el mensaje genérico de 'no logueado' bloquee el saludo real
-    if (chatHistory.length === 0) {
-        saludarUsuario(user, perfil);
-    }
+    // Saludar siempre al iniciar sesión para empezar con un chat limpio y el mensaje de bienvenida
+    saludarUsuario(user, perfil);
 }
 
 async function cargarHistorialDesdeDB(userId) {
@@ -125,7 +122,8 @@ async function cargarHistorialDesdeDB(userId) {
         chatHistory = [];
 
         mensajes.forEach(msg => {
-            appendMessage(msg.texto, msg.emisor);
+            // No añadimos los mensajes al UI (ChatBox) para empezar cada sesión limpios
+            // Pero sí los añadimos al chatHistory para que la IA tenga contexto
             const role = msg.emisor === 'ia' ? 'model' : 'user';
             chatHistory.push({ role: role, parts: [{ text: msg.texto }] });
         });
