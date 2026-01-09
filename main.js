@@ -94,8 +94,9 @@ async function cargarPerfil(user) {
     // Al cargar el perfil, recuperamos el historial para que no aparezca vacío
     await cargarHistorialDesdeDB(user.id);
 
-    // Si no hay mensajes previos, saludar de forma estándar
-    if (ELEMENTS.chatBox.children.length === 0) {
+    // Si no hay mensajes en el historial (chatHistory vacío), saludar de forma personalizada
+    // Esto evita que el mensaje genérico de 'no logueado' bloquee el saludo real
+    if (chatHistory.length === 0) {
         saludarUsuario(user, perfil);
     }
 }
@@ -169,13 +170,13 @@ async function saludarUsuario(user, perfil) {
     if (!ELEMENTS.chatBox) return;
     ELEMENTS.chatBox.innerHTML = "";
 
-    const nombre = perfil?.nombre || (user.email || "viajero/a").split('@')[0];
-    const nombreCap = nombre.charAt(0).toUpperCase() + nombre.slice(1);
-
+    // Si es la primera vez (no hay resumen previo), mostrar mensaje FIJO de bienvenida
+    // Esto evita problemas con variables de nombre en el primer contacto
     if (!perfil || !perfil.ultimo_resumen) {
-        const bienvenidaPersonalizada = `¡Hola, <strong>${nombreCap}</strong>!<br><br>${MENSAJE_BIENVENIDA}`;
-        appendMessage(bienvenidaPersonalizada, 'ia', 'msg-bienvenida');
+        appendMessage(MENSAJE_BIENVENIDA, 'ia', 'msg-bienvenida');
     } else {
+        const nombre = perfil?.nombre || (user.email || "viajero/a").split('@')[0];
+        const nombreCap = nombre.charAt(0).toUpperCase() + nombre.slice(1);
         appendMessage(`¡Hola, <strong>${nombreCap}</strong>! Qué alegría encontrarte de nuevo. ¿Cómo te sientes hoy?`, 'ia');
     }
 }
