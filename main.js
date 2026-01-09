@@ -26,7 +26,10 @@ const ELEMENTS = {
     },
     forgotPasswordLink: document.getElementById('forgotPasswordLink'),
     resetPasswordContainer: document.getElementById('resetPasswordContainer'),
-    updatePasswordBtn: document.getElementById('updatePasswordBtn')
+    updatePasswordBtn: document.getElementById('updatePasswordBtn'),
+    upgradeBtn: document.getElementById('upgradeBtn'),
+    upgradeModal: document.getElementById('upgradeModal'),
+    closeUpgrade: document.querySelector('.close-upgrade')
 };
 
 async function llamarGemini(message, history, intent, context = "") {
@@ -98,6 +101,9 @@ async function cargarPerfil(user) {
     userProfile = perfil;
     window.userProfile = perfil;
 
+    // Actualizar UI con el tier correcto del perfil
+    updateUI(user);
+
     // Al cargar el perfil, recuperamos el historial para el contexto de la IA
     await cargarHistorialDesdeDB(user.id);
 
@@ -152,6 +158,12 @@ function updateUI(user) {
     Object.values(ELEMENTS.navButtons).forEach(btn => {
         if (btn) btn.style.display = isVisible;
     });
+
+    if (ELEMENTS.upgradeBtn) {
+        // Solo mostramos "Mejorar Plan" si el usuario es FREE
+        const tier = userProfile?.subscription_tier || 'free';
+        ELEMENTS.upgradeBtn.style.display = (user && tier === 'free') ? 'block' : 'none';
+    }
 
     if (!user) {
         ELEMENTS.chatBox.innerHTML = "";
@@ -249,6 +261,21 @@ ELEMENTS.forgotPasswordLink?.addEventListener('click', (e) => {
     authActions.resetPassword();
 });
 ELEMENTS.updatePasswordBtn?.addEventListener('click', authActions.updatePassword);
+
+// --- LÓGICA DE MEJORAR PLAN (UPGRADE) ---
+ELEMENTS.upgradeBtn?.addEventListener('click', () => {
+    if (ELEMENTS.upgradeModal) ELEMENTS.upgradeModal.style.display = 'flex';
+});
+
+ELEMENTS.closeUpgrade?.addEventListener('click', () => {
+    if (ELEMENTS.upgradeModal) ELEMENTS.upgradeModal.style.display = 'none';
+});
+
+window.addEventListener('click', (e) => {
+    if (e.target === ELEMENTS.upgradeModal) {
+        ELEMENTS.upgradeModal.style.display = 'none';
+    }
+});
 
 document.querySelectorAll('#authEmail, #authPassword').forEach(el => {
     el?.addEventListener('keydown', e => e.key === 'Enter' && authActions.login());

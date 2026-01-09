@@ -84,7 +84,7 @@
                 <button id="bienvenidaBtn">Bienvenida</button>
                 <button id="viajeBtn" class="journey-btn">Mi Viaje</button>
                 <button id="progresoBtn">Mi Progreso</button>
-                <button id="botiquinBtn" title="Botiquín">Emergencia</button>
+                <button id="upgradeBtn" class="upgrade-btn" style="display: none;">Mejorar Plan</button>
                 <button id="logoutBtn">Cerrar Sesión</button>
             </div>
         </div>
@@ -100,6 +100,26 @@
         <div class="modal-content">
             <span class="close-modal">&times;</span>
             <div id="diarioContent"></div>
+        </div>
+    </div>
+    <!-- Modal para elegir Plan (Upgrade) -->
+    <div id="upgradeModal" class="modal">
+        <div class="modal-content upgrade-modal-content">
+            <span class="close-modal close-upgrade">&times;</span>
+            <h2>Mejora tu Experiencia</h2>
+            <p>Elige el plan que mejor se adapte a tu viaje vocal.</p>
+            <div class="upgrade-options">
+                <div class="upgrade-card pro">
+                    <h3>Plan PRO</h3>
+                    <p>Chat ilimitado y memoria relacional profunda.</p>
+                    <button onclick="iniciarPago('pro')" class="btn-upgrade">Elegir Pro</button>
+                </div>
+                <div class="upgrade-card premium">
+                    <h3>Plan TRANSFORMA</h3>
+                    <p>Todo el PRO + Sesiones 1/1 y Plan a medida.</p>
+                    <button onclick="iniciarPago('premium')" class="btn-upgrade">Elegir Transforma</button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -135,7 +155,8 @@
     </div>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    <script type="module" src="main.js?v=4.9"></script>
+    <script src="js/stripe-checkout.js"></script>
+    <script type="module" src="main.js?v=5.0"></script>
 </body>
 
 
