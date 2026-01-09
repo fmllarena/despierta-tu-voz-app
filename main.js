@@ -25,7 +25,10 @@ const ELEMENTS = {
         progreso: document.getElementById('progresoBtn'),
         botiquin: document.getElementById('botiquinBtn'),
         logout: document.getElementById('logoutBtn')
-    }
+    },
+    forgotPasswordLink: document.getElementById('forgotPasswordLink'),
+    resetPasswordContainer: document.getElementById('resetPasswordContainer'),
+    updatePasswordBtn: document.getElementById('updatePasswordBtn')
 };
 
 async function llamarGemini(message, history, intent, context = "") {
@@ -60,7 +63,13 @@ async function inicializarSupabase() {
 
 function setupAuthListener() {
     supabase.auth.onAuthStateChange((event, session) => {
+        console.log("Evento Auth:", event);
         const user = session?.user;
+
+        if (event === 'PASSWORD_RECOVERY') {
+            ELEMENTS.resetPasswordContainer.style.display = 'block';
+            ELEMENTS.authError.innerText = "Modo recuperación: Introduce tu nueva contraseña.";
+        }
 
         // Solo actuar si el usuario realmente ha cambiado para evitar borrados accidentales
         const userWasLoggedIn = !!userProfile;
@@ -211,11 +220,38 @@ const authActions = {
 
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) ELEMENTS.authError.innerText = "Error: " + error.message;
+    },
+    async resetPassword() {
+        const email = document.getElementById('authEmail').value;
+        if (!email) return ELEMENTS.authError.innerText = "Introduce tu email primero.";
+
+        const { error } = await supabase.auth.resetPasswordForEmail(email, {
+            redirectTo: window.location.origin
+        });
+        if (error) ELEMENTS.authError.innerText = "Error: " + error.message;
+        else alert("Correo de recuperación enviado. Revisa tu bandeja de entrada.");
+    },
+    async updatePassword() {
+        const newPassword = document.getElementById('newPassword').value;
+        if (!newPassword) return alert("Introduce la nueva contraseña.");
+
+        const { error } = await supabase.auth.updateUser({ password: newPassword });
+        if (error) alert("Error actualizando: " + error.message);
+        else {
+            alert("Contraseña actualizada con éxito.");
+            ELEMENTS.resetPasswordContainer.style.display = 'none';
+        }
     }
 };
 
 document.getElementById('signUpBtn')?.addEventListener('click', authActions.signUp);
 document.getElementById('loginBtn')?.addEventListener('click', authActions.login);
+ELEMENTS.forgotPasswordLink?.addEventListener('click', (e) => {
+    e.preventDefault();
+    authActions.resetPassword();
+});
+ELEMENTS.updatePasswordBtn?.addEventListener('click', authActions.updatePassword);
+
 document.querySelectorAll('#authEmail, #authPassword').forEach(el => {
     el?.addEventListener('keydown', e => e.key === 'Enter' && authActions.login());
 });
