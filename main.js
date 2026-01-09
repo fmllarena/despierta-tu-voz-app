@@ -3,9 +3,7 @@ let supabase;
 let userProfile = null;
 let chatHistory = [];
 
-const MENSAJE_BIENVENIDA = `<b>Soy tu Mentor Vocal privado.</b>
-<br><br>
-Bienvenido/a a un espacio sagrado donde tu voz es el puente entre tu técnica y tu alma. 
+const MENSAJE_BIENVENIDA = `Hola, ¿qué tal? <b>Soy tu Mentor Vocal privado.</b> Bienvenido/a a un espacio sagrado donde tu voz es el puente entre tu técnica y tu alma. 
 Aquí no solo buscaremos la nota perfecta, sino que usaremos cada sonido como una llave para abrir los cerrojos de tu historia y desvelar los secretos 
 que guarda tu inconsciente. Respira, confía y prepárate para transformar tu vida a través del canto. ¿Cómo te sientes al iniciar este viaje hoy?`;
 
