@@ -321,8 +321,8 @@ input {
 }
 
 .icon-nav-btn {
-    background: white !important;
-    border: 1px solid #eee !important;
+    background: transparent !important;
+    border: none !important;
     color: var(--color-texto) !important;
     flex: 0 0 45px;
     /* Slightly larger for better PC view */
@@ -351,17 +351,17 @@ input {
 
 .icon-nav-btn:hover {
     transform: translateY(-2px);
-    border-color: var(--color-acento) !important;
     background: #fdfaf5 !important;
 }
 
 .logout-btn {
     background: transparent !important;
-    border: 1px solid #ddd !important;
+    border: none !important;
     color: #e74c3c !important;
     padding: 4px 10px;
     border-radius: 8px;
-    font-size: 0.6em;
+    font-size: 0.75em;
+    /* Slightly larger */
     font-weight: bold;
     cursor: pointer;
     transition: all 0.2s;
@@ -374,7 +374,6 @@ input {
 .logout-btn:hover {
     background: #e74c3c !important;
     color: white !important;
-    border-color: #e74c3c !important;
 }
 
 /* Remove old individual button border/color overrides to avoid conflicts */
