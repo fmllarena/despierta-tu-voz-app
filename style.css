@@ -1625,13 +1625,26 @@ input {
 
     /* Ajuste global de modales para móviles */
     .modal-content {
-        padding: 20px !important;
-        width: 95% !important;
+        padding: 15px !important;
+        /* Slightly less padding */
+        width: 98% !important;
+        /* Maximize width */
+    }
+
+    .session-group {
+        padding: 12px !important;
+        /* Avoid internal overflow */
+        margin-top: 15px !important;
     }
 
     .booking-options {
         flex-direction: column !important;
-        gap: 10px !important;
+        gap: 8px !important;
+    }
+
+    .btn-booking {
+        width: 100% !important;
+        font-size: 0.85em !important;
     }
 }
 
