@@ -87,6 +87,7 @@
                 <button id="botiquinBtn" title="Botiquín">Emergencia</button>
                 <button id="sesionBtn" class="premium-btn">Sesiones 1/1</button>
                 <button id="upgradeBtn" class="upgrade-btn">Mejorar Plan</button>
+                <button id="ajustesBtn">Ajustes</button>
                 <button id="logoutBtn">Cerrar Sesión</button>
             </div>
         </div>
@@ -182,6 +183,82 @@
                     <button id="finishModuleBtn" class="nav-btn finish-btn">Finalizar
                         Módulo</button>
                 </div>
+            </div>
+        </div>
+    </div>
+    <!-- Modal de Ajustes -->
+    <div id="settingsModal" class="modal">
+        <div class="modal-content settings-modal-content">
+            <span class="close-modal close-settings">&times;</span>
+            <h2>Ajustes</h2>
+
+            <div class="settings-section profile-info">
+                <p><strong>Nombre:</strong> <span id="settingsUserName">...</span></p>
+                <p><strong>Plan:</strong> <span id="settingsUserTier">...</span></p>
+            </div>
+
+            <div class="settings-section">
+                <h3>Respuesta del Mentor</h3>
+                <div class="slider-group">
+                    <div class="slider-labels">
+                        <span>🧬 Técnico</span>
+                        <span>Enfoque</span>
+                        <span>🕯️ Emocional</span>
+                    </div>
+                    <input type="range" id="focusSlider" min="0" max="1" step="0.1" value="0.5"
+                        title="Enfoque del Mentor" placeholder="0.5">
+                </div>
+                <div class="slider-group">
+                    <div class="slider-labels">
+                        <span>🧘 Neutro</span>
+                        <span>Personalidad</span>
+                        <span>🔥 Motivador</span>
+                    </div>
+                    <input type="range" id="personalitySlider" min="0" max="1" step="0.1" value="0.5"
+                        title="Personalidad del Mentor" placeholder="0.5">
+                </div>
+                <div class="slider-group">
+                    <div class="slider-labels">
+                        <span>⚡ Breve/Directo</span>
+                        <span>Extensión</span>
+                        <span>📜 Detallado/Profundo</span>
+                    </div>
+                    <input type="range" id="lengthSlider" min="0" max="1" step="0.1" value="0.5"
+                        title="Extensión de las respuestas" placeholder="0.5">
+                </div>
+            </div>
+
+            <div class="settings-section">
+                <h3>Preferencias</h3>
+                <div class="setting-item">
+                    <label for="languageSelect">Idioma del Mentor:</label>
+                    <select id="languageSelect">
+                        <option value="es">Español</option>
+                        <option value="en">English</option>
+                        <option value="fr">Français</option>
+                        <option value="it">Italiano</option>
+                        <option value="de">Deutsch</option>
+                    </select>
+                </div>
+                <div class="setting-item">
+                    <label for="weeklyGoalInput">Objetivo Semanal:</label>
+                    <textarea id="weeklyGoalInput"
+                        placeholder="¿En qué te enfocas esta semana? (ej: Preparar mi audición)"></textarea>
+                </div>
+                <div class="setting-item">
+                    <label for="notificationSelect">Notificaciones Proactivas:</label>
+                    <select id="notificationSelect">
+                        <option value="off">OFF</option>
+                        <option value="daily">Diarias</option>
+                        <option value="weekly">Semanales</option>
+                        <option value="important">Solo importantes</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="settings-actions">
+                <button id="clearHistoryBtn" class="danger-btn">Borrar Historial de Chat</button>
+                <button id="saveSettingsBtn" class="save-btn">Guardar Cambios</button>
             </div>
         </div>
     </div>

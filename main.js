@@ -37,7 +37,20 @@ const ELEMENTS = {
     book30Btn: document.getElementById('book30Btn'),
     book60Btn: document.getElementById('book60Btn'),
     buyExtra30Btn: document.getElementById('buyExtra30Btn'),
-    buyExtra60Btn: document.getElementById('buyExtra60Btn')
+    buyExtra60Btn: document.getElementById('buyExtra60Btn'),
+    ajustesBtn: document.getElementById('ajustesBtn'),
+    settingsModal: document.getElementById('settingsModal'),
+    closeSettings: document.querySelector('.close-settings'),
+    saveSettingsBtn: document.getElementById('saveSettingsBtn'),
+    clearHistoryBtn: document.getElementById('clearHistoryBtn'),
+    settingsUserName: document.getElementById('settingsUserName'),
+    settingsUserTier: document.getElementById('settingsUserTier'),
+    focusSlider: document.getElementById('focusSlider'),
+    personalitySlider: document.getElementById('personalitySlider'),
+    lengthSlider: document.getElementById('lengthSlider'),
+    languageSelect: document.getElementById('languageSelect'),
+    weeklyGoalInput: document.getElementById('weeklyGoalInput'),
+    notificationSelect: document.getElementById('notificationSelect')
 };
 
 async function llamarGemini(message, history, intent, context = "") {
@@ -186,10 +199,12 @@ function updateUI(user) {
             ELEMENTS.upgradeBtn.style.display = 'block';
             ELEMENTS.sesionBtn.style.display = 'none';
         }
+        if (ELEMENTS.ajustesBtn) ELEMENTS.ajustesBtn.style.display = 'block';
     } else {
         ELEMENTS.authOverlay.style.display = 'flex';
         ELEMENTS.upgradeBtn.style.display = 'none';
         ELEMENTS.sesionBtn.style.display = 'none';
+        if (ELEMENTS.ajustesBtn) ELEMENTS.ajustesBtn.style.display = 'none';
     }
 
     if (!user) {
@@ -323,6 +338,16 @@ async function obtenerContextoAlumno() {
     let ctx = `\n[CONTEXTO PRIVADO DEL ALUMNO]\n`;
     if (perfil) {
         ctx += `- Historia Vocal: ${perfil.historia_vocal || 'N/A'}\n- Creencias: ${perfil.creencias || 'N/A'}\n- Alquimia: ${perfil.nivel_alquimia || 1}/10\n`;
+
+        // --- AJUSTES DEL MENTOR ---
+        ctx += `\n[PREFERENCIAS DE RESPUESTA]\n`;
+        ctx += `- Enfoque (0 Técnico - 1 Emocional): ${perfil.mentor_focus || 0.5}\n`;
+        ctx += `- Personalidad (0 Neutro - 1 Motivador): ${perfil.mentor_personality || 0.5}\n`;
+        ctx += `- Extensión (0 Breve - 1 Detallado): ${perfil.mentor_length || 0.5}\n`;
+        ctx += `- Idioma preferido: ${perfil.mentor_language || 'es'}\n`;
+        if (perfil.weekly_goal) ctx += `- Objetivo Semanal: ${perfil.weekly_goal}\n`;
+
+        ctx += `\nInstrucción adicional: Adapta tu tono y contenido a estas preferencias. Si el idioma no es 'es', responde en el idioma indicado.\n`;
     }
     if (viaje) {
         ctx += `\n[VIAJE]\n- M1: ${JSON.stringify(viaje.linea_vida_hitos?.respuestas || {})}\n- M2: ${JSON.stringify(viaje.herencia_raices?.respuestas || {})}\n`;
@@ -531,6 +556,98 @@ const MODULOS = {
         } catch (e) { console.error("Error resumen:", e); }
     }
 };
+
+const AJUSTES = {
+    abrirModal: () => {
+        if (!userProfile) return;
+        ELEMENTS.settingsUserName.innerText = userProfile.nombre || "Usuario";
+        ELEMENTS.settingsUserTier.innerText = (userProfile.subscription_tier || "free").toUpperCase();
+
+        // Cargar valores actuales
+        ELEMENTS.focusSlider.value = userProfile.mentor_focus ?? 0.5;
+        ELEMENTS.personalitySlider.value = userProfile.mentor_personality ?? 0.5;
+        ELEMENTS.lengthSlider.value = userProfile.mentor_length ?? 0.5;
+        ELEMENTS.languageSelect.value = userProfile.mentor_language || 'es';
+        ELEMENTS.weeklyGoalInput.value = userProfile.weekly_goal || '';
+        ELEMENTS.notificationSelect.value = userProfile.notification_pref || 'daily';
+
+        ELEMENTS.settingsModal.style.display = 'flex';
+    },
+
+    cerrarModal: () => {
+        ELEMENTS.settingsModal.style.display = 'none';
+    },
+
+    guardarAjustes: async () => {
+        const btn = ELEMENTS.saveSettingsBtn;
+        btn.disabled = true;
+        btn.innerText = "Guardando...";
+
+        try {
+            const updates = {
+                mentor_focus: parseFloat(ELEMENTS.focusSlider.value),
+                mentor_personality: parseFloat(ELEMENTS.personalitySlider.value),
+                mentor_length: parseFloat(ELEMENTS.lengthSlider.value),
+                mentor_language: ELEMENTS.languageSelect.value,
+                weekly_goal: ELEMENTS.weeklyGoalInput.value.trim(),
+                notification_pref: ELEMENTS.notificationSelect.value
+            };
+
+            const { error } = await supabase
+                .from('user_profiles')
+                .update(updates)
+                .eq('user_id', userProfile.user_id);
+
+            if (error) throw error;
+
+            // Actualizar perfil local
+            Object.assign(userProfile, updates);
+            alert("Ajustes guardados correctamente.");
+            AJUSTES.cerrarModal();
+        } catch (e) {
+            console.error("Error guardando ajustes:", e);
+            alert("Error al guardar: " + e.message);
+        } finally {
+            btn.disabled = false;
+            btn.innerText = "Guardar Cambios";
+        }
+    },
+
+    borrarHistorial: async () => {
+        if (!confirm("¿Estás seguro de que quieres borrar todo el historial de chat? Esta acción no se puede deshacer.")) return;
+
+        const btn = ELEMENTS.clearHistoryBtn;
+        btn.disabled = true;
+        btn.innerText = "Borrando...";
+
+        try {
+            const { error } = await supabase
+                .from('mensajes')
+                .delete()
+                .eq('alumno', userProfile.user_id);
+
+            if (error) throw error;
+
+            chatHistory = [];
+            ELEMENTS.chatBox.innerHTML = "";
+            saludarUsuario({ id: userProfile.user_id, email: userProfile.email }, userProfile);
+
+            alert("Historial borrado correctamente.");
+        } catch (e) {
+            console.error("Error borrando historial:", e);
+            alert("Error: " + e.message);
+        } finally {
+            btn.disabled = false;
+            btn.innerText = "Borrar Historial de Chat";
+        }
+    }
+};
+
+// Event Listeners Ajustes
+ELEMENTS.ajustesBtn?.addEventListener('click', () => AJUSTES.abrirModal());
+ELEMENTS.closeSettings?.addEventListener('click', () => AJUSTES.cerrarModal());
+ELEMENTS.saveSettingsBtn?.addEventListener('click', () => AJUSTES.guardarAjustes());
+ELEMENTS.clearHistoryBtn?.addEventListener('click', () => AJUSTES.borrarHistorial());
 
 // --- VOZ Y VIAJE ---
 
