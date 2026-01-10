@@ -312,6 +312,87 @@
         </div>
     </div>
 
+    <!-- MODAL DE CONSENTIMIENTO LEGAL -->
+    <div id="legalModal" class="modal">
+        <div class="modal-content legal-modal-content">
+            <h2>Compromiso y Privacidad</h2>
+            <p class="legal-intro">Al crear tu cuenta, te unes a este viaje de transformación. Para proteger tu
+                privacidad y la esencia de nuestra metodología, te pedimos que aceptes lo siguiente:</p>
+
+            <div class="legal-scroll-area">
+                <div class="legal-section">
+                    <h3>Propiedad del Contenido y Metodología</h3>
+                    <p>El usuario reconoce y acepta que todos los derechos de propiedad intelectual e industrial sobre
+                        los contenidos de la aplicación Despierta tu Voz (incluyendo, de forma enunciativa pero no
+                        limitativa: el nombre de la aplicación, logotipos, código fuente, interfaz de usuario, así como
+                        los textos, guiones y estructura de los 5 Módulos de Sanación Vocal, ejercicios de "Mi Viaje" y
+                        las respuestas generadas por el Mentor Vocal IA) son titularidad exclusiva de Despierta tu Voz.
+                    </p>
+
+                    <h3>Licencia de Uso Personal</h3>
+                    <p>Se concede al usuario una licencia de uso personal, no exclusiva e intransferible, para acceder y
+                        utilizar el contenido con fines de autodescubrimiento y formación personal. Queda estrictamente
+                        prohibida la reproducción, distribución, comunicación pública, transformación o cualquier otra
+                        forma de explotación de estos contenidos para fines comerciales o de formación a terceros sin el
+                        consentimiento expreso y por escrito del titular.</p>
+
+                    <h3>Protección de la Alquimia Vocal</h3>
+                    <p>La estructura específica del viaje (El Espejo del pasado, Raíces, Personaje, Altar y Propósito)
+                        constituye una obra original protegida por la Ley de Propiedad Intelectual española. El uso
+                        indebido de esta metodología fuera del entorno de la aplicación podrá dar lugar a las acciones
+                        legales correspondientes.</p>
+
+                    <div class="privacy-notice-box">
+                        <p><strong>Al aceptar, consientes el tratamiento de los datos que compartas con el Mentor IA
+                                para la personalización de tu proceso de aprendizaje y desbloqueo vocal.</strong></p>
+                    </div>
+
+                    <h3>Política de Privacidad y Protección de Datos</h3>
+                    <p><strong>1. ¿Quién cuida de tus datos?</strong><br>
+                        El responsable de tus datos es Despierta tu voz. Tratamos tu información con el único fin de
+                        proporcionarte la experiencia de mentoría vocal personalizada que buscas.</p>
+
+                    <p><strong>2. Tu privacidad con la IA (El Mentor Vocal):</strong><br>
+                        - <strong>Privacidad de las charlas:</strong> Tus conversaciones con el Mentor son privadas. No
+                        vendemos tus datos a terceros ni los usamos para publicidad.<br>
+                        - <strong>Uso del historial:</strong> En el Plan Pro/Premium, almacenamos el historial de tus
+                        charlas y los datos de tus Módulos para que la IA pueda tener "memoria" y ofrecerte un
+                        acompañamiento coherente.<br>
+                        - <strong>Entrenamiento:</strong> Los datos se procesan de forma anonimizada para mejorar la
+                        precisión de las respuestas del Mentor, siempre bajo estándares de seguridad de cifrado.</p>
+
+                    <p><strong>3. ¿Qué datos recogemos?</strong><br>
+                        - Datos de registro (Nombre y email).<br>
+                        - Datos de uso (Módulos completados y progreso en "Mi Viaje").<br>
+                        - Datos de pago (Gestionados de forma segura a través de Stripe, nosotros nunca vemos ni
+                        almacenamos tu número de tarjeta).</p>
+
+                    <p><strong>4. Tus derechos:</strong><br>
+                        En cualquier momento puedes escribirnos a app-mentor@despiertatuvoz.com para solicitar el acceso
+                        a tus datos, rectificarlos o pedir que los borremos definitivamente de nuestro sistema (Derecho
+                        al Olvido).</p>
+                </div>
+            </div>
+
+            <div class="legal-checks">
+                <label class="check-item">
+                    <input type="checkbox" id="checkTerms">
+                    <span>He leído y acepto los Términos y Condiciones y la Política de Privacidad.</span>
+                </label>
+                <label class="check-item">
+                    <input type="checkbox" id="checkMedical">
+                    <span>Entiendo que el Mentor Vocal IA es una herramienta de acompañamiento personal y no sustituye
+                        el asesoramiento médico o terapéutico profesional.</span>
+                </label>
+            </div>
+
+            <div class="legal-actions">
+                <button id="cancelLegalBtn" class="cancel-btn">Cancelar</button>
+                <button id="confirmLegalBtn" class="save-btn" disabled>Confirmar y Continuar</button>
+            </div>
+        </div>
+    </div>
+
     <footer class="app-footer">
         <p>© 2026 Despierta tu Voz. Todos los derechos reservados.</p>
     </footer>

@@ -50,7 +50,13 @@ const ELEMENTS = {
     lengthSlider: document.getElementById('lengthSlider'),
     languageSelect: document.getElementById('languageSelect'),
     weeklyGoalInput: document.getElementById('weeklyGoalInput'),
-    notificationSelect: document.getElementById('notificationSelect')
+    notificationSelect: document.getElementById('notificationSelect'),
+    // Legal Modal
+    legalModal: document.getElementById('legalModal'),
+    checkTerms: document.getElementById('checkTerms'),
+    checkMedical: document.getElementById('checkMedical'),
+    confirmLegalBtn: document.getElementById('confirmLegalBtn'),
+    cancelLegalBtn: document.getElementById('cancelLegalBtn')
 };
 
 async function llamarGemini(message, history, intent, context = "") {
@@ -120,7 +126,9 @@ async function cargarPerfil(user) {
     }
 
     userProfile = perfil;
-    window.userProfile = perfil;
+    // Asegurar que accepted_terms esté presente en el objeto global
+    userProfile.accepted_terms = !!perfil.accepted_terms;
+    window.userProfile = userProfile;
 
     // Actualizar UI con el tier correcto del perfil
     updateUI(user);
@@ -648,6 +656,79 @@ const AJUSTES = {
         }
     }
 };
+
+// --- MODAL LEGAL ---
+
+const LEGAL = {
+    pendingPlan: null,
+
+    abrirModal: (planType) => {
+        LEGAL.pendingPlan = planType;
+        if (ELEMENTS.legalModal) ELEMENTS.legalModal.style.display = 'flex';
+        // Reset checkboxes
+        if (ELEMENTS.checkTerms) ELEMENTS.checkTerms.checked = false;
+        if (ELEMENTS.checkMedical) ELEMENTS.checkMedical.checked = false;
+        if (ELEMENTS.confirmLegalBtn) ELEMENTS.confirmLegalBtn.disabled = true;
+    },
+
+    cerrarModal: () => {
+        if (ELEMENTS.legalModal) ELEMENTS.legalModal.style.display = 'none';
+        LEGAL.pendingPlan = null;
+    },
+
+    validarChecks: () => {
+        const bothChecked = ELEMENTS.checkTerms?.checked && ELEMENTS.checkMedical?.checked;
+        if (ELEMENTS.confirmLegalBtn) ELEMENTS.confirmLegalBtn.disabled = !bothChecked;
+    },
+
+    confirmarYContinuar: async () => {
+        const btn = ELEMENTS.confirmLegalBtn;
+        if (!btn) return;
+        btn.disabled = true;
+        btn.innerText = "Registrando...";
+
+        try {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) return;
+
+            // Actualizar en base de datos
+            const { error } = await supabase
+                .from('user_profiles')
+                .update({ accepted_terms: true })
+                .eq('user_id', user.id);
+
+            if (error) throw error;
+
+            // Actualizar perfil local
+            if (userProfile) userProfile.accepted_terms = true;
+
+            // Cerrar modal
+            LEGAL.cerrarModal();
+
+            // Continuar con el pago que quedó pendiente
+            if (LEGAL.pendingPlan && window.ejecutarPagoPostLegal) {
+                window.ejecutarPagoPostLegal(LEGAL.pendingPlan);
+            }
+
+        } catch (e) {
+            console.error("Error al aceptar términos:", e);
+            alert("Hubo un error al registrar tu aceptación. Inténtalo de nuevo.");
+            btn.disabled = false;
+            btn.innerText = "Confirmar y Continuar";
+        }
+    }
+};
+
+// Listeners para el Modal Legal
+ELEMENTS.checkTerms?.addEventListener('change', LEGAL.validarChecks);
+ELEMENTS.checkMedical?.addEventListener('change', LEGAL.validarChecks);
+ELEMENTS.cancelLegalBtn?.addEventListener('click', LEGAL.cerrarModal);
+ELEMENTS.confirmLegalBtn?.addEventListener('click', LEGAL.confirmarYContinuar);
+
+// Hacer accesible para stripe-checkout.js
+window.mostrarModalLegal = LEGAL.abrirModal;
+// Getter para que stripe-checkout.js vea el estado actual
+window.getAcceptedTermsStatus = () => userProfile?.accepted_terms || false;
 
 // Event Listeners Ajustes
 ELEMENTS.ajustesBtn?.addEventListener('click', () => AJUSTES.abrirModal());
