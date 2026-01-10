@@ -812,27 +812,60 @@ input {
     line-height: 1.6;
 }
 
-/* Etiquetas tipo botón dentro de la ayuda */
+/* Estructura de items en la ayuda */
+.help-item {
+    display: grid;
+    grid-template-columns: 55px 1fr;
+    gap: 15px;
+    align-items: start;
+    margin-bottom: 20px;
+    border-bottom: 1px dotted #f0f0f0;
+    padding-bottom: 10px;
+}
+
+.help-item:last-child {
+    border-bottom: none;
+}
+
+.help-desc {
+    font-size: 0.95em;
+    line-height: 1.5;
+    color: #444;
+}
+
 .help-btn-tag {
-    display: inline-flex;
+    display: flex;
     align-items: center;
+    justify-content: center;
     background: #f4ece6;
-    color: var(--color-acento);
-    padding: 2px 8px;
-    border-radius: 8px;
-    font-size: 0.8em;
-    font-weight: bold;
+    width: 55px;
+    height: 55px;
+    border-radius: 12px;
     border: 1px solid #ddd;
-    margin-right: 5px;
-    text-transform: none;
-    vertical-align: middle;
 }
 
 .help-btn-tag img {
     width: 40px !important;
     height: 40px !important;
     object-fit: contain;
-    margin-right: 8px;
+}
+
+/* Tags especiales para botones de texto en la ayuda */
+.logout-tag,
+.text-tag,
+.mic-tag {
+    font-size: 0.6em;
+    font-weight: bold;
+    color: #e74c3c;
+}
+
+.text-tag {
+    color: var(--color-acento);
+    font-size: 0.7em;
+}
+
+.mic-tag {
+    font-size: 1.2em;
 }
 
 @keyframes fadeInDown {
