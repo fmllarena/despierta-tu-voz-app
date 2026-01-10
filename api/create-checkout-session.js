@@ -14,13 +14,30 @@ export default async function handler(req, res) {
             return res.status(400).json({ error: 'Faltan datos obligatorios (planType, userId)' });
         }
 
-        // Mapeamos el slug del plan al Price ID real (desde variables de entorno)
+        // Mapeamos el slug del plan al Price ID real
         let stripePriceId = "";
-        if (planType === 'pro') stripePriceId = process.env.STRIPE_PRICE_PRO;
-        else if (planType === 'premium') stripePriceId = process.env.STRIPE_PRICE_PREMIUM;
+        let mode = "subscription";
+
+        if (planType === 'pro') {
+            stripePriceId = process.env.STRIPE_PRICE_PRO;
+        } else if (planType === 'premium') {
+            stripePriceId = process.env.STRIPE_PRICE_PREMIUM;
+        } else if (planType === 'extra_30_pro') {
+            stripePriceId = "price_1SnwBnHys1jlC29icNTshsmg";
+            mode = "payment";
+        } else if (planType === 'extra_60_pro') {
+            stripePriceId = "price_1SnwA8Hys1jlC29iNUeDFTok";
+            mode = "payment";
+        } else if (planType === 'extra_30_premium') {
+            stripePriceId = "price_1Snw2vHys1jlC29iPQEhHlVF";
+            mode = "payment";
+        } else if (planType === 'extra_60_premium') {
+            stripePriceId = "price_1Snw1WHys1jlC29ilCZ0A5NK";
+            mode = "payment";
+        }
 
         if (!stripePriceId) {
-            return res.status(400).json({ error: 'ID de precio no configurado para este plan' });
+            return res.status(400).json({ error: 'ID de precio no configurado para este tipo de sesión/plan' });
         }
 
         // Creamos la sesión de Checkout
@@ -32,13 +49,15 @@ export default async function handler(req, res) {
                     quantity: 1,
                 },
             ],
-            mode: 'subscription', // O 'payment' si fueran pagos únicos
+            mode: mode,
             success_url: `${req.headers.origin}/index.html?session_id={CHECKOUT_SESSION_ID}&payment=success`,
             cancel_url: `${req.headers.origin}/landing.html?payment=cancel`,
             customer_email: userEmail,
             client_reference_id: userId, // Importante para el webhook
             metadata: {
-                userId: userId
+                userId: userId,
+                planType: planType,
+                isExtra: (mode === 'payment' ? 'true' : 'false')
             }
         });
 
