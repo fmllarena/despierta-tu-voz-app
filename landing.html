@@ -215,6 +215,84 @@
         </div>
     </footer>
 
+    <!-- MODAL DE REGISTRO AMABLE (LANDING) -->
+    <div id="authLandingModal" class="modal">
+        <div class="modal-content">
+            <h2>Comienza tu Transformación</h2>
+            <p class="modal-intro">Crea tu cuenta para guardar tu progreso y acceder a tu Mentor Vocal en cualquier
+                momento.</p>
+
+            <div class="form-group">
+                <label for="landingEmail">Correo Electrónico</label>
+                <input type="email" id="landingEmail" placeholder="tu@email.com">
+            </div>
+            <div class="form-group">
+                <label for="landingPassword">Contraseña</label>
+                <input type="password" id="landingPassword" placeholder="Mínimo 6 caracteres">
+            </div>
+
+            <div id="landingAuthError"></div>
+
+            <div class="modal-actions">
+                <button id="btnLandingRegister" class="btn btn-primary">Registrarme y Continuar</button>
+                <button onclick="document.getElementById('authLandingModal').style.display='none'"
+                    class="btn btn-secondary">Ya tengo cuenta / Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL LEGAL (LANDING) -->
+    <div id="legalLandingModal" class="modal">
+        <div class="modal-content">
+            <h2>Compromiso y Privacidad</h2>
+
+            <div class="legal-scroll-area">
+                <div class="legal-section">
+                    <div class="privacy-notice-box">
+                        <p><strong>Al aceptar, consientes el tratamiento de los datos que compartas con el Mentor IA
+                                para la personalización de tu proceso de aprendizaje y desbloqueo vocal.</strong></p>
+                    </div>
+
+                    <h3>Propiedad del Contenido y Metodología</h3>
+                    <p>El usuario reconoce y acepta que todos los derechos de propiedad intelectual e industrial sobre
+                        los contenidos de la aplicación Despierta tu Voz (incluyendo los 5 Módulos de Sanación Vocal y
+                        las respuestas del Mentor Vocal IA) son titularidad exclusiva de Despierta tu Voz.</p>
+
+                    <h3>Licencia de Uso Personal</h3>
+                    <p>Se concede al usuario una licencia de uso personal, no exclusiva e intransferible. Queda
+                        estrictamente prohibida la reproducción o explotación comercial de estos contenidos sin
+                        consentimiento expreso.</p>
+
+                    <h3>Protección de la Alquimia Vocal</h3>
+                    <p>La estructura específica del viaje constituye una obra original protegida. El uso indebido fuera
+                        de la aplicación podrá dar lugar a acciones legales.</p>
+
+                    <h3>Política de Privacidad</h3>
+                    <p>Tus conversaciones son privadas. No vendemos tus datos a terceros. Usamos el historial para que
+                        la IA tenga memoria y te ofrezca un acompañamiento coherente. Puedes solicitar el borrado de tus
+                        datos en cualquier momento escribiendo a app-mentor@despiertatuvoz.com.</p>
+                </div>
+            </div>
+
+            <div class="legal-checks">
+                <label class="check-item">
+                    <input type="checkbox" id="checkTermsLanding">
+                    <span>Acepto los Términos, Condiciones y la Política de Privacidad.</span>
+                </label>
+                <label class="check-item">
+                    <input type="checkbox" id="checkMedicalLanding">
+                    <span>Entiendo que el Mentor Vocal IA no sustituye el asesoramiento médico profesional.</span>
+                </label>
+            </div>
+
+            <div class="modal-actions">
+                <button id="btnConfirmLegalLanding" class="btn btn-primary" disabled>Confirmar y Pagar</button>
+                <button onclick="document.getElementById('legalLandingModal').style.display='none'"
+                    class="btn btn-secondary">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="js/stripe-checkout.js"></script>
 

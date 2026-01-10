@@ -1917,6 +1917,7 @@ input {
         text-align: center;
     }
 }
+
 /* Footer de la App */
 .app-footer {
     padding: 20px 0;
@@ -1971,6 +1972,10 @@ input {
     flex-direction: column;
     gap: 12px;
     padding: 10px 0;
+    text-align: left;
+    /* Asegura alineación a la izquierda */
+    align-items: flex-start;
+    /* Evita que se estiren o centren */
 }
 
 .check-item {
@@ -1980,6 +1985,9 @@ input {
     cursor: pointer;
     font-size: 0.9em;
     color: #444;
+    text-align: left;
+    margin-left: 0;
+    padding-left: 0;
 }
 
 .check-item input {
@@ -2026,4 +2034,3 @@ input {
     line-height: 1.4;
     color: #444;
 }
-
