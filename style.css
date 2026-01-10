@@ -829,10 +829,10 @@ input {
 }
 
 .help-btn-tag img {
-    width: 20px;
-    height: 20px;
+    width: 40px !important;
+    height: 40px !important;
     object-fit: contain;
-    margin-right: 5px;
+    margin-right: 8px;
 }
 
 @keyframes fadeInDown {
