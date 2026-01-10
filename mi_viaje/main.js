@@ -765,9 +765,17 @@ async function finishModuleWithAI(supabase, user, skipInputCheck = false) {
     // --- DISPARADOR DE EMAIL DE HITO (Brevo) ---
     // Al actualizar 'last_hito_completed', el Webhook de Supabase lanzará el email automáticamente.
     if (module.id >= 1 && module.id <= 5) {
+        const updateData = { last_hito_completed: module.id };
+
+        // Si termina el viaje completo (M5), guardamos la fecha de finalización
+        if (module.id === 5) {
+            updateData.journey_completed_at = new Date().toISOString();
+            updateData.email_post_viaje_enviado = false; // Reset por si acaso
+        }
+
         await supabase
             .from('user_profiles')
-            .update({ last_hito_completed: module.id })
+            .update(updateData)
             .eq('user_id', user.id);
         console.log(`🎯 Perfil actualizado: Módulo ${module.id} completado.`);
     }
