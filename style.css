@@ -302,13 +302,17 @@ input {
 
 .header-buttons {
     display: none;
-    gap: 8px;
+    gap: 15px;
+    /* More gap for better distribution */
     flex-wrap: nowrap;
-    justify-content: center;
-    padding: 10px 5px;
+    justify-content: space-between;
+    /* Distribute horizontally */
+    padding: 10px 15px;
     width: 100%;
     max-width: 100vw;
     overflow-x: auto;
+    box-shadow: none !important;
+    /* Force removal of shadows elsewhere */
 }
 
 /* Hide scrollbar but keep functionality */
@@ -320,23 +324,29 @@ input {
     background: white !important;
     border: 1px solid #eee !important;
     color: var(--color-texto) !important;
-    flex: 0 0 40px;
-    width: 40px;
-    height: 40px;
-    border-radius: 8px;
+    flex: 0 0 45px;
+    /* Slightly larger for better PC view */
+    width: 45px;
+    height: 45px;
+    border-radius: 12px;
+    /* Square with rounded corners */
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
     transition: all 0.2s ease;
-    padding: 6px !important;
-    box-shadow: none;
+    padding: 8px !important;
+    box-shadow: none !important;
+    filter: none !important;
+    /* Ensure no drop-shadow from images */
 }
 
 .icon-nav-btn img {
-    width: 26px;
-    height: 26px;
+    width: 30px;
+    height: 30px;
     object-fit: contain;
+    filter: none !important;
+    /* Explicitly remove any shadow from the image file itself if exists */
 }
 
 .icon-nav-btn:hover {
