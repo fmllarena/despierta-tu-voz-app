@@ -1917,3 +1917,16 @@ input {
         text-align: center;
     }
 }
+/* Footer de la App */
+.app-footer {
+    padding: 20px 0;
+    text-align: center;
+    width: 100%;
+    color: #999;
+    font-size: 0.75em;
+    font-family: var(--fuente-principal);
+}
+
+.app-footer p {
+    margin: 0;
+}
