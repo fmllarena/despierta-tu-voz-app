@@ -1622,6 +1622,17 @@ input {
     .upgrade-card {
         width: 100%;
     }
+
+    /* Ajuste global de modales para móviles */
+    .modal-content {
+        padding: 20px !important;
+        width: 95% !important;
+    }
+
+    .booking-options {
+        flex-direction: column !important;
+        gap: 10px !important;
+    }
 }
 
 /* --- ESTILOS MODAL SESIÓN --- */
