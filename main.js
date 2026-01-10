@@ -191,11 +191,11 @@ function updateUI(user) {
             ELEMENTS.upgradeBtn.style.display = 'none';
             ELEMENTS.sesionBtn.style.display = 'block';
         } else if (tier === 'pro') {
-            ELEMENTS.upgradeBtn.innerText = "Mejorar a Transforma";
+            ELEMENTS.upgradeBtn.title = "Mejorar a Transforma";
             ELEMENTS.upgradeBtn.style.display = 'block';
-            ELEMENTS.sesionBtn.style.display = 'block'; // Pro también puede ver Sesiones (para extras)
+            ELEMENTS.sesionBtn.style.display = 'block';
         } else {
-            ELEMENTS.upgradeBtn.innerText = "Mejorar Plan";
+            ELEMENTS.upgradeBtn.title = "Mejorar Plan";
             ELEMENTS.upgradeBtn.style.display = 'block';
             ELEMENTS.sesionBtn.style.display = 'none';
         }
@@ -487,7 +487,7 @@ const MODULOS = {
         if (existing) return existing.remove();
 
         btn.disabled = true;
-        btn.innerText = "⏳";
+        // No cambiamos el texto para no borrar el icono
         try {
             const ctx = await obtenerContextoAlumno();
             const prompt = `${ctx}\n[MODO EMERGENCIA] Audición/presentación inminente. Basado en mi perfil, dame: 1. Ejercicio 2min, 2. Consejo técnico, 3. Frase poder, 4. Link YouTube música/frecuencia.`;
@@ -495,7 +495,6 @@ const MODULOS = {
             if (resp) appendMessage(resp, 'ia-botiquin', 'msg-botiquin');
         } finally {
             btn.disabled = false;
-            btn.innerText = "Emergencia";
         }
     },
     toggleBienvenida() {
