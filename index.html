@@ -85,6 +85,7 @@
                 <button id="viajeBtn" class="journey-btn">Mi Viaje</button>
                 <button id="progresoBtn">Mi Progreso</button>
                 <button id="botiquinBtn" title="Botiquín">Emergencia</button>
+                <button id="sesionBtn" class="premium-btn">Sesiones 1/1</button>
                 <button id="upgradeBtn" class="upgrade-btn">Mejorar Plan</button>
                 <button id="logoutBtn">Cerrar Sesión</button>
             </div>
@@ -101,6 +102,36 @@
         <div class="modal-content">
             <span class="close-modal">&times;</span>
             <div id="diarioContent"></div>
+        </div>
+    </div>
+    <!-- Modal para Sesiones 1/1 (Premium) -->
+    <div id="sesionModal" class="modal">
+        <div class="modal-content sesion-modal-content">
+            <span class="close-modal close-sesion">&times;</span>
+            <h2>Mis Sesiones 1/1</h2>
+            <div id="sessionQuotaInfo" class="session-quota-info">
+                <!-- Se poblará con los minutos restantes -->
+            </div>
+
+            <div class="session-actions">
+                <div class="session-group">
+                    <h3>Sesiones Incluidas</h3>
+                    <p class="session-desc">Dispones de 60 min mensuales (1 de 1h o 2 de 30min).</p>
+                    <div class="booking-options">
+                        <button id="book30Btn" class="btn-booking">Reservar 30 min</button>
+                        <button id="book60Btn" class="btn-booking">Reservar 1 hora</button>
+                    </div>
+                </div>
+
+                <div class="session-group extra">
+                    <h3>Sesiones Extras</h3>
+                    <p class="session-desc">¿Necesitas más tiempo? Reserva una sesión adicional.</p>
+                    <div class="booking-options">
+                        <button id="buyExtra30Btn" class="btn-booking btn-extra">Comprar Extra 30 min</button>
+                        <button id="buyExtra60Btn" class="btn-booking btn-extra">Comprar Extra 1 hora</button>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
     <!-- Modal para elegir Plan (Upgrade) -->

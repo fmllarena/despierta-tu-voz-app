@@ -1424,6 +1424,22 @@ input {
     box-shadow: 0 6px 15px rgba(184, 134, 11, 0.5);
 }
 
+.premium-btn {
+    display: none;
+    background: linear-gradient(135deg, #1a73e8, #0d47a1);
+    color: white !important;
+    font-weight: bold !important;
+    border: none !important;
+    box-shadow: 0 4px 12px rgba(13, 71, 161, 0.3);
+    border-radius: 20px;
+}
+
+.premium-btn:hover {
+    background: linear-gradient(135deg, #4285f4, #1a73e8);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(13, 71, 161, 0.5);
+}
+
 .upgrade-modal-content {
     max-width: 700px;
     background: #fff;
@@ -1519,4 +1535,95 @@ input {
     .upgrade-card {
         width: 100%;
     }
+}
+
+/* --- ESTILOS MODAL SESIÓN --- */
+.sesion-modal-content {
+    max-width: 600px;
+}
+
+.session-quota-info {
+    margin: 20px 0;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 10px;
+    border-left: 4px solid #1a73e8;
+}
+
+.quota-badge {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.quota-label {
+    font-weight: 600;
+    color: #555;
+}
+
+.quota-value {
+    font-size: 1.2em;
+    font-weight: bold;
+    color: #1a73e8;
+}
+
+.session-group {
+    margin-top: 25px;
+    padding: 20px;
+    border: 1px solid #eee;
+    border-radius: 12px;
+}
+
+.session-group.extra {
+    background: #fffdf5;
+    border-color: #ffe082;
+}
+
+.session-group h3 {
+    margin-bottom: 5px;
+    font-size: 1.1em;
+}
+
+.session-desc {
+    font-size: 0.9em;
+    color: #666;
+    margin-bottom: 20px;
+}
+
+.booking-options {
+    display: flex;
+    gap: 15px;
+}
+
+.btn-booking {
+    flex: 1;
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid #1a73e8;
+    background: white;
+    color: #1a73e8;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-booking:hover:not(:disabled) {
+    background: #1a73e8;
+    color: white;
+}
+
+.btn-booking:disabled {
+    border-color: #ccc;
+    color: #999;
+    cursor: not-allowed;
+}
+
+.btn-extra {
+    border-color: #d4af37;
+    color: #b8860b;
+}
+
+.btn-extra:hover {
+    background: #d4af37 !important;
+    color: white !important;
 }
