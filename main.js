@@ -568,7 +568,7 @@ const AJUSTES = {
             'premium': 'Transforma'
         };
         const tier = userProfile.subscription_tier || 'free';
-        ELEMENTS.settingsUserTier.innerText = TIER_NAMES[tier] || tier.toUpperCase();
+        ELEMENTS.settingsUserTier.innerText = `PLAN ${TIER_NAMES[tier] || tier.toUpperCase()}`;
 
         // Cargar valores actuales
         ELEMENTS.focusSlider.value = userProfile.mentor_focus ?? 0.5;
