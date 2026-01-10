@@ -29,7 +29,15 @@ const ELEMENTS = {
     updatePasswordBtn: document.getElementById('updatePasswordBtn'),
     upgradeBtn: document.getElementById('upgradeBtn'),
     upgradeModal: document.getElementById('upgradeModal'),
-    closeUpgrade: document.querySelector('.close-upgrade')
+    closeUpgrade: document.querySelector('.close-upgrade'),
+    sesionBtn: document.getElementById('sesionBtn'),
+    sesionModal: document.getElementById('sesionModal'),
+    closeSesion: document.querySelector('.close-sesion'),
+    sessionQuotaInfo: document.getElementById('sessionQuotaInfo'),
+    book30Btn: document.getElementById('book30Btn'),
+    book60Btn: document.getElementById('book60Btn'),
+    buyExtra30Btn: document.getElementById('buyExtra30Btn'),
+    buyExtra60Btn: document.getElementById('buyExtra60Btn')
 };
 
 async function llamarGemini(message, history, intent, context = "") {
@@ -159,10 +167,29 @@ function updateUI(user) {
         if (btn) btn.style.display = isVisible;
     });
 
-    if (ELEMENTS.upgradeBtn) {
-        // Solo mostramos "Mejorar Plan" si el usuario es FREE
+    if (user) {
+        ELEMENTS.authOverlay.style.display = 'none';
+
+        // El perfil puede tardar un poco en cargar, usamos el tier del perfil si existe
         const tier = userProfile?.subscription_tier || 'free';
-        ELEMENTS.upgradeBtn.style.display = (user && tier === 'free') ? 'block' : 'none';
+        console.log("Actualizando UI para Tier:", tier);
+
+        if (tier === 'premium') {
+            ELEMENTS.upgradeBtn.style.display = 'none';
+            ELEMENTS.sesionBtn.style.display = 'block';
+        } else if (tier === 'pro') {
+            ELEMENTS.upgradeBtn.innerText = "Mejorar a Transforma";
+            ELEMENTS.upgradeBtn.style.display = 'block';
+            ELEMENTS.sesionBtn.style.display = 'block'; // Pro también puede ver Sesiones (para extras)
+        } else {
+            ELEMENTS.upgradeBtn.innerText = "Mejorar Plan";
+            ELEMENTS.upgradeBtn.style.display = 'block';
+            ELEMENTS.sesionBtn.style.display = 'none';
+        }
+    } else {
+        ELEMENTS.authOverlay.style.display = 'flex';
+        ELEMENTS.upgradeBtn.style.display = 'none';
+        ELEMENTS.sesionBtn.style.display = 'none';
     }
 
     if (!user) {
@@ -354,7 +381,7 @@ async function guardarMensajeDB(texto, emisor) {
                 .from('user_profiles')
                 .update({
                     last_active_at: new Date().toISOString(),
-                    email_inactividad_15_enviado: false // Resetear flag si vuelve a estar activo
+                    email_inactividad_10_enviado: false // Resetear flag si vuelve a estar activo
                 })
                 .eq('user_id', user.id);
         }
@@ -594,5 +621,129 @@ ELEMENTS.navButtons.viaje?.addEventListener('click', async () => {
     } catch (e) { console.error(e); }
 });
 
+// --- SESIONES 1/1 (CAL.COM) ---
+
+const SESIONES = {
+    links: {
+        normal30: "https://cal.com/fernando-martinez-drmyul/30min",
+        normal60: "https://cal.com/fernando-martinez-drmyul/sesion-de-1-h",
+        extra30: "#", // Placeholder
+        extra60: "#"  // Placeholder
+    },
+
+    abrirModal: () => {
+        ELEMENTS.sesionModal.style.display = 'block';
+        SESIONES.actualizarInfoCuota();
+    },
+
+    actualizarInfoCuota: () => {
+        const consumed = userProfile?.sessions_minutes_consumed || 0;
+        const tier = userProfile?.subscription_tier || 'free';
+        const remaining = tier === 'premium' ? Math.max(0, 60 - consumed) : 0;
+
+        if (tier === 'premium') {
+            ELEMENTS.sessionQuotaInfo.innerHTML = `
+                <div class="quota-badge">
+                    <span class="quota-label">Tu tiempo incluido restante:</span>
+                    <span class="quota-value">${remaining} min</span>
+                </div>
+            `;
+            // Hab/Des botones incluidos
+            ELEMENTS.book30Btn.disabled = remaining < 30;
+            ELEMENTS.book60Btn.disabled = remaining < 60;
+
+            if (remaining < 30) {
+                ELEMENTS.book30Btn.innerText = "Cuota agotada";
+                ELEMENTS.book60Btn.innerText = "Cuota agotada";
+            } else if (remaining < 60) {
+                ELEMENTS.book60Btn.innerText = "Tiempo insuficiente";
+            } else {
+                ELEMENTS.book30Btn.innerText = "Reservar 30 min";
+                ELEMENTS.book60Btn.innerText = "Reservar 1 hora";
+            }
+        } else {
+            // Caso PRO
+            ELEMENTS.sessionQuotaInfo.innerHTML = `
+                <div class="quota-badge">
+                    <span class="quota-label">Tu plan actual no incluye sesiones 1/1 grupales/individules.</span>
+                </div>
+            `;
+            ELEMENTS.book30Btn.disabled = true;
+            ELEMENTS.book60Btn.disabled = true;
+            ELEMENTS.book30Btn.innerText = "No incluido";
+            ELEMENTS.book60Btn.innerText = "No incluido";
+        }
+    },
+
+    comprarExtra: (duracion) => {
+        const tier = userProfile?.subscription_tier || 'free';
+        const planKey = `extra_${duracion}_${tier}`;
+        console.log("Iniciando compra extra:", planKey);
+
+        if (window.iniciarPago) {
+            window.iniciarPago(planKey);
+        } else {
+            alert("El sistema de pagos no está listo. Por favor, recarga la página.");
+        }
+    },
+
+    reservar: (tipo) => {
+        const url = SESIONES.links[tipo];
+        if (url && url !== "#") {
+            // Añadimos el email del usuario para que Cal.com lo reconozca
+            const finalUrl = `${url}?email=${encodeURIComponent(userProfile.email)}&name=${encodeURIComponent(userProfile.nombre || "")}`;
+            window.open(finalUrl, '_blank');
+        } else {
+            alert("El enlace para esta sesión aún no está configurado.");
+        }
+    }
+};
+
+// Event Listeners Sesiones
+ELEMENTS.sesionBtn?.addEventListener('click', () => SESIONES.abrirModal());
+ELEMENTS.closeSesion?.addEventListener('click', () => ELEMENTS.sesionModal.style.display = 'none');
+ELEMENTS.book30Btn?.addEventListener('click', () => SESIONES.reservar('normal30'));
+ELEMENTS.book60Btn?.addEventListener('click', () => SESIONES.reservar('normal60'));
+ELEMENTS.buyExtra30Btn?.addEventListener('click', () => SESIONES.comprarExtra('30'));
+ELEMENTS.buyExtra60Btn?.addEventListener('click', () => SESIONES.comprarExtra('60'));
+
+window.addEventListener('click', e => {
+    if (e.target === ELEMENTS.sesionModal) ELEMENTS.sesionModal.style.display = 'none';
+    if (e.target.id === 'diarioModal') document.getElementById('diarioModal').style.display = 'none';
+});
+
 document.querySelector('.close-modal')?.addEventListener('click', () => document.getElementById('diarioModal').style.display = 'none');
-window.addEventListener('click', e => e.target.id === 'diarioModal' && (e.target.style.display = 'none'));
+
+// --- INICIALIZACIÓN Y ESTADOS DE PAGO ---
+async function checkPaymentStatus() {
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('payment') === 'success') {
+        const sessionId = urlParams.get('session_id');
+
+        // Limpiamos la URL sin recargar para una experiencia más limpia
+        window.history.replaceState({}, document.title, window.location.pathname);
+
+        if (sessionId) {
+            // Caso Actualización de Plan (Suscripción)
+            alert("¡Tu plan se ha actualizado con éxito! Bienvenido a tu nuevo nivel de transformación.");
+            // Recargamos el perfil para aplicar cambios de UI (tier)
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) await cargarPerfil(user);
+        } else {
+            // Caso Sesión Extra (Pago único)
+            // Nota: En la API configuramos el redirect directo a Cal.com o de vuelta aquí
+            alert("¡Sesión extra adquirida con éxito! Haz clic en 'Reservar' para elegir tu horario.");
+            SESIONES.abrirModal();
+        }
+    } else if (urlParams.get('payment') === 'cancel') {
+        window.history.replaceState({}, document.title, window.location.pathname);
+        alert("El proceso de pago fue cancelado.");
+    }
+}
+
+// Ejecutamos la comprobación al cargar
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', checkPaymentStatus);
+} else {
+    checkPaymentStatus();
+}
