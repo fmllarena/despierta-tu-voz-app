@@ -38,6 +38,24 @@ async function iniciarPago(planType) {
         return;
     }
 
+    // 2. Comprobar consentimiento legal
+    const isAccepted = window.getAcceptedTermsStatus ? window.getAcceptedTermsStatus() : true;
+    if (!isAccepted) {
+        // Pausar pago y mostrar modal legal
+        if (window.mostrarModalLegal) {
+            window.mostrarModalLegal(planType);
+            return;
+        }
+    }
+
+    await ejecutarPago(planType, user);
+}
+
+/**
+ * Función que realmente realiza la llamada a la API de Stripe
+ * Se separa para poder re-intentar tras el consentimiento legal.
+ */
+async function ejecutarPago(planType, user) {
     try {
         const response = await fetch('/api/create-checkout-session', {
             method: 'POST',
@@ -64,6 +82,15 @@ async function iniciarPago(planType) {
         alert("Error de conexión con el servidor de pagos.");
     }
 }
+
+// Función global para que main.js la llame tras aceptar el modal legal
+window.ejecutarPagoPostLegal = async (planType) => {
+    if (!supabasePagos) await inicializarSupabase();
+    const { data: { user } } = await supabasePagos.auth.getUser();
+    if (user) {
+        await ejecutarPago(planType, user);
+    }
+};
 
 // Aseguramos que sea accesible desde el modal del chat
 window.iniciarPago = iniciarPago;
