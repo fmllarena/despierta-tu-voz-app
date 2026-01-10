@@ -561,7 +561,14 @@ const AJUSTES = {
     abrirModal: () => {
         if (!userProfile) return;
         ELEMENTS.settingsUserName.innerText = userProfile.nombre || "Usuario";
-        ELEMENTS.settingsUserTier.innerText = (userProfile.subscription_tier || "free").toUpperCase();
+
+        const TIER_NAMES = {
+            'free': 'Explora',
+            'pro': 'Profundiza',
+            'premium': 'Transforma'
+        };
+        const tier = userProfile.subscription_tier || 'free';
+        ELEMENTS.settingsUserTier.innerText = TIER_NAMES[tier] || tier.toUpperCase();
 
         // Cargar valores actuales
         ELEMENTS.focusSlider.value = userProfile.mentor_focus ?? 0.5;
