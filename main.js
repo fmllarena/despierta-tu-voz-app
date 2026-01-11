@@ -2,6 +2,7 @@
 let supabase;
 let userProfile = null;
 let chatHistory = [];
+let isRecoveringPassword = false;
 
 const MENSAJE_BIENVENIDA = `<p>Hola, ¿qué tal? Soy tu Mentor Vocal privado.</p><br><p>Bienvenido/a a un espacio sagrado donde tu voz es el puente entre tu técnica y tu alma. 
 Aquí no solo buscaremos la nota perfecta, sino que usaremos cada sonido como una llave para abrir los cerrojos de tu historia y desvelar los secretos 
@@ -95,8 +96,12 @@ function setupAuthListener() {
         const user = session?.user;
 
         if (event === 'PASSWORD_RECOVERY') {
+            isRecoveringPassword = true;
             ELEMENTS.resetPasswordContainer.style.display = 'block';
             ELEMENTS.authError.innerText = "Modo recuperación: Introduce tu nueva contraseña.";
+            // Ocultar campos normales de auth para que no confundan
+            document.querySelectorAll('#authOverlay input:not(#newPassword), #authOverlay .auth-buttons, #authOverlay .auth-extra')
+                .forEach(el => el.style.display = 'none');
         }
 
         // Solo actuar si el usuario realmente ha cambiado para evitar borrados accidentales
@@ -105,6 +110,7 @@ function setupAuthListener() {
 
         if (event === 'SIGNED_OUT') {
             userProfile = null;
+            isRecoveringPassword = false;
             updateUI(null);
         } else if (user && !userWasLoggedIn) {
             updateUI(user);
@@ -180,7 +186,7 @@ function updateUI(user) {
     const isVisible = user ? 'block' : 'none';
     const isFlex = user ? 'flex' : 'none';
 
-    ELEMENTS.authOverlay.style.display = user ? 'none' : 'flex';
+    ELEMENTS.authOverlay.style.display = (user && !isRecoveringPassword) ? 'none' : 'flex';
     if (ELEMENTS.headerButtons) ELEMENTS.headerButtons.style.display = isFlex;
     if (ELEMENTS.mainHelpBtn) ELEMENTS.mainHelpBtn.style.display = isFlex;
 
@@ -299,7 +305,8 @@ const authActions = {
         if (error) alert("Error actualizando: " + error.message);
         else {
             alert("Contraseña actualizada con éxito.");
-            ELEMENTS.resetPasswordContainer.style.display = 'none';
+            isRecoveringPassword = false;
+            location.reload();
         }
     }
 };
