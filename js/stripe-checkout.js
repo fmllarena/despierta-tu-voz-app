@@ -89,6 +89,9 @@ function setupLandingAuthListeners() {
         btnRegister.innerText = login ? "Entrar y Continuar" : "Registrarme y Continuar";
         toggleToLogin.style.display = login ? "none" : "inline";
         toggleToRegister.style.display = login ? "inline" : "none";
+        // Mostrar link de olvido de pass solo en modo login
+        const forgotWrap = document.getElementById('landingForgotPassWrap');
+        if (forgotWrap) forgotWrap.style.display = login ? "block" : "none";
         errorDiv.style.display = 'none';
         btnRegister.disabled = false;
     };
@@ -151,6 +154,31 @@ function setupLandingAuthListeners() {
             btnRegister.innerText = isLoginMode ? "Entrar y Continuar" : "Registrarme y Continuar";
         }
     });
+
+    const forgotBtn = document.getElementById('landingForgotPassLink');
+    if (forgotBtn) {
+        forgotBtn.addEventListener('click', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('landingEmail').value.trim();
+            if (!email) {
+                errorDiv.innerText = "Introduce tu email para enviarte el enlace de recuperación.";
+                errorDiv.style.display = 'block';
+                return;
+            }
+            try {
+                if (!supabasePagos) await inicializarSupabase();
+                const { error } = await supabasePagos.auth.resetPasswordForEmail(email, {
+                    redirectTo: window.location.origin + '/index.html'
+                });
+                if (error) throw error;
+                alert("Correo de recuperación enviado. Revisa tu bandeja de entrada.");
+            } catch (err) {
+                errorDiv.innerText = "Error: " + err.message;
+                errorDiv.style.display = 'block';
+            }
+        });
+    }
+
     btnRegister.dataset.listenerSet = "true";
 }
 
