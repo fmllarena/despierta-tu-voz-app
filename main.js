@@ -347,15 +347,40 @@ async function obtenerContextoAlumno() {
     if (perfil) {
         ctx += `- Historia Vocal: ${perfil.historia_vocal || 'N/A'}\n- Creencias: ${perfil.creencias || 'N/A'}\n- Alquimia: ${perfil.nivel_alquimia || 1}/10\n`;
 
-        // --- AJUSTES DEL MENTOR ---
-        ctx += `\n[PREFERENCIAS DE RESPUESTA]\n`;
-        ctx += `- Enfoque (0 Técnico - 1 Emocional): ${perfil.mentor_focus || 0.5}\n`;
-        ctx += `- Personalidad (0 Neutro - 1 Motivador): ${perfil.mentor_personality || 0.5}\n`;
-        ctx += `- Extensión (0 Breve - 1 Detallado): ${perfil.mentor_length || 0.5}\n`;
-        ctx += `- Idioma preferido: ${perfil.mentor_language || 'es'}\n`;
+        // --- AJUSTES DEL MENTOR (Traducción a instrucciones explícitas) ---
+        const focus = perfil.mentor_focus ?? 0.5;
+        const personality = perfil.mentor_personality ?? 0.5;
+        const length = perfil.mentor_length ?? 0.5;
+
+        ctx += `\n[INSTRUCCIONES DE ESTILO DEL MENTOR]\n`;
+
+        // Longitud (Extensión)
+        if (length < 0.3) {
+            ctx += `- Sé muy BREVE, conciso y directo. Evita los párrafos largos y ve al grano.\n`;
+        } else if (length > 0.7) {
+            ctx += `- Sé muy DETALLADO, profundo y extenso en tus explicaciones. No escatimes en palabras.\n`;
+        } else {
+            ctx += `- Mantén una extensión de respuesta equilibrada y moderada.\n`;
+        }
+
+        // Enfoque (Técnico vs Emocional)
+        if (focus < 0.3) {
+            ctx += `- Prioriza el enfoque TÉCNICO y anatómico del canto.\n`;
+        } else if (focus > 0.7) {
+            ctx += `- Prioriza el enfoque EMOCIONAL, espiritual y holístico.\n`;
+        }
+
+        // Personalidad (Neutro vs Motivador)
+        if (personality > 0.7) {
+            ctx += `- Tu tono debe ser extremadamente MOTIVADOR, cálido y empoderador.\n`;
+        } else if (personality < 0.3) {
+            ctx += `- Tu tono debe ser NEUTRO, profesional y calmado.\n`;
+        }
+
+        ctx += `- Idioma del alumno: ${perfil.mentor_language || 'es'}. Si el idioma no es 'es', responde en dicho idioma.\n`;
         if (perfil.weekly_goal) ctx += `- Objetivo Semanal: ${perfil.weekly_goal}\n`;
 
-        ctx += `\nInstrucción adicional: Adapta tu tono y contenido a estas preferencias. Si el idioma no es 'es', responde en el idioma indicado.\n`;
+        ctx += `\nInstrucción crítica: Adapta rigorosamente tu respuesta a estas instrucciones de estilo.\n`;
     }
     if (viaje) {
         ctx += `\n[VIAJE]\n- M1: ${JSON.stringify(viaje.linea_vida_hitos?.respuestas || {})}\n- M2: ${JSON.stringify(viaje.herencia_raices?.respuestas || {})}\n`;
