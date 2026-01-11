@@ -365,7 +365,7 @@ async function obtenerContextoAlumno() {
 
     let ctx = `\n[CONTEXTO PRIVADO DEL ALUMNO]\n`;
     if (perfil) {
-        ctx += `- Historia Vocal: ${perfil.historia_vocal || 'N/A'}\n- Creencias: ${perfil.creencias || 'N/A'}\n- Alquimia: ${perfil.nivel_alquimia || 1}/10\n`;
+        ctx += `- Historia Vocal: ${perfil.historia_vocal || 'N/A'}\n- Creencias: ${perfil.creencias || 'N/A'}\n- Alquimia: ${perfil.nivel_alquimia || 1}/10\n- Viaje Completado: ${perfil.last_hito_completed >= 5 ? 'SÍ' : 'NO'} (Último hito: ${perfil.last_hito_completed || 0})\n`;
 
         // --- AJUSTES DEL MENTOR (Traducción a instrucciones explícitas) ---
         const focus = perfil.mentor_focus ?? 0.5;
