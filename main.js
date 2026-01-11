@@ -551,11 +551,23 @@ const MODULOS = {
 
         btn.disabled = true;
         // No cambiamos el texto para no borrar el icono
+
+        // Mensaje de espera parpadeante
+        appendMessage("Preparando tu botiquín...", 'ia thinking', 'msg-botiquin-thinking');
+
         try {
             const ctx = await obtenerContextoAlumno();
             const prompt = `${ctx}\n[MODO EMERGENCIA] Audición/presentación inminente. Basado en mi perfil, dame: 1. Ejercicio 2min, 2. Consejo técnico, 3. Frase poder, 4. Link YouTube música/frecuencia.`;
             const resp = await llamarGemini(prompt, [], "mentor_chat");
+
+            // Eliminar mensaje de espera
+            document.getElementById('msg-botiquin-thinking')?.remove();
+
             if (resp) appendMessage(resp, 'ia-botiquin', 'msg-botiquin');
+        } catch (e) {
+            console.error(e);
+            document.getElementById('msg-botiquin-thinking')?.remove();
+            appendMessage("Error al preparar el botiquín. Inténtalo de nuevo.", 'ia');
         } finally {
             btn.disabled = false;
         }
