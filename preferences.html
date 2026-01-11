@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestiona tu conexión - Despierta tu Voz</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" type="image/png" href="logo-appDTV2.png">
+    <style>
+        .preferences-container {
+            width: 95%;
+            max-width: 500px;
+            margin: 40px auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            text-align: center;
+        }
+
+        .preferences-header {
+            margin-bottom: 30px;
+        }
+
+        .preferences-header h1 {
+            color: var(--color-acento);
+            font-size: 1.8em;
+            margin-bottom: 15px;
+        }
+
+        .preferences-header p {
+            font-size: 1em;
+            color: #666;
+            line-height: 1.5;
+        }
+
+        .preference-option {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 20px;
+            background: #fdfaf7;
+            border-radius: 15px;
+            margin-bottom: 15px;
+            transition: all 0.3s ease;
+            text-align: left;
+        }
+
+        .option-main {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex: 1;
+        }
+
+        .option-icon {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: white;
+            border-radius: 50%;
+            padding: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+        }
+
+        .option-icon img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .option-text h3 {
+            margin: 0;
+            font-size: 1.05em;
+            color: #2c3e50;
+        }
+
+        .option-text p {
+            margin: 5px 0 0 0;
+            font-size: 0.9em;
+            color: #777;
+        }
+
+        /* Toggle Switch Styles */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 26px;
+            margin-left: 15px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 34px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked+.slider {
+            background-color: var(--color-acento);
+        }
+
+        input:checked+.slider:before {
+            transform: translateX(24px);
+        }
+
+        input:disabled+.slider {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .save-preferences-btn {
+            width: 100%;
+            padding: 15px;
+            background: var(--color-acento);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            font-size: 1.1em;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: all 0.3s;
+        }
+
+        .save-preferences-btn:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+        }
+
+        .save-preferences-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .account-deletion-section {
+            margin-top: 40px;
+            padding-top: 30px;
+            border-top: 1px solid #eee;
+            text-align: center;
+        }
+
+        .account-deletion-section p {
+            font-size: 0.9em;
+            color: #888;
+            margin-bottom: 15px;
+        }
+
+        .delete-account-btn {
+            background: transparent;
+            color: #e74c3c;
+            border: 1px solid #e74c3c;
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .delete-account-btn:hover {
+            background: #e74c3c;
+            color: white;
+        }
+
+        #statusMessage {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 10px;
+            display: none;
+        }
+
+        .status-success {
+            background: #d4edda;
+            color: #155724;
+            display: block !important;
+        }
+
+        .status-error {
+            background: #f8d7da;
+            color: #721c24;
+            display: block !important;
+        }
+
+        .preferences-footer {
+            text-align: center;
+            padding: 20px;
+            color: #888;
+        }
+
+        @media (max-width: 480px) {
+            .preferences-container {
+                margin: 20px auto;
+                padding: 20px;
+            }
+
+            .option-main {
+                gap: 10px;
+            }
+
+            .option-icon {
+                width: 35px;
+                height: 35px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <div class="header-main">
+            <img src="logo-appDTV2.png" alt="Despierta tu Voz Logo" class="app-logo">
+            <h2>Despierta tu Voz</h2>
+        </div>
+    </header>
+
+    <div class="preferences-container">
+        <div class="preferences-header">
+            <h1>Gestiona tu conexión con Despierta tu Voz 🌿</h1>
+            <p>Tú eres quien marca el ritmo de tu viaje. Elige qué tipo de mensajes quieres recibir en tu bandeja de
+                entrada para que tu proceso de autodescubrimiento sea fluido y no una carga.</p>
+        </div>
+
+        <div id="preferencesForm">
+            <!-- Opción 1: Marketing -->
+            <div class="preference-option">
+                <div class="option-main">
+                    <div class="option-icon">
+                        <img src="assets/icon_bienvenida.png" alt="Musical Note">
+                    </div>
+                    <div class="option-text">
+                        <h3>Inspiración y Comunidad</h3>
+                        <p>"Quiero recibir chispas de inspiración y novedades para mantenerme conectado con mi voz."</p>
+                    </div>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" id="marketingToggle" checked aria-label="Activar Inspiración y Comunidad">
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <!-- Opción 2: Lifecycle -->
+            <div class="preference-option">
+                <div class="option-main">
+                    <div class="option-icon">
+                        <img src="assets/icon_viaje.png" alt="Seed">
+                    </div>
+                    <div class="option-text">
+                        <h3>Acompañamiento en el Viaje</h3>
+                        <p>"Quiero que el Mentor me siga guiando y celebrando mis avances en los módulos de 'Mi Viaje'."
+                        </p>
+                    </div>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" id="lifecycleToggle" checked aria-label="Activar Acompañamiento en el Viaje">
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <!-- Opción 3: Transactional -->
+            <div class="preference-option">
+                <div class="option-main">
+                    <div class="option-icon">
+                        <img src="assets/icon_ajustes.png" alt="Lock">
+                    </div>
+                    <div class="option-text">
+                        <h3>Solo lo imprescindible</h3>
+                        <p>"Solo comunicaciones técnicas y administrativas necesarias."</p>
+                    </div>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" id="transactionalToggle" checked disabled
+                        aria-label="Comunicaciones obligatorias"
+                        title="Estas comunicaciones son necesarias para el servicio">
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <button id="saveBtn" class="save-preferences-btn">Guardar Preferencias</button>
+            <div id="statusMessage"></div>
+        </div>
+
+        <div class="account-deletion-section">
+            <p>¿Deseas cerrar tu bitácora por completo? Si decides que este camino ya no es para ti, puedes solicitar la
+                eliminación total de tu cuenta y tus datos. Ten en cuenta que esto borrará tu progreso en los módulos y
+                la memoria de tu Mentor.</p>
+            <button id="deleteAccountBtn" class="delete-account-btn">Eliminar mi cuenta y mis datos</button>
+        </div>
+    </div>
+
+    <footer class="app-footer preferences-footer">
+        <p>© 2026 Despierta tu Voz. Todos los derechos reservados.</p>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script type="module" src="js/preferences.js"></script>
+</body>
+
+</html>
