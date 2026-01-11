@@ -62,7 +62,6 @@ async function syncJourneyStatus(supabase, user) {
         if (Array.isArray(data.plan_accion) && data.plan_accion.length > 0) detectedHito = 5;
 
         if (detectedHito > lastHito) {
-            console.log(`[SYNC] Detectado hito real: M${detectedHito}. Actualizando perfil...`);
             await supabase
                 .from('user_profiles')
                 .update({ last_hito_completed: detectedHito })
@@ -82,11 +81,9 @@ function renderRoadmap() {
     const lastHito = window.userProfile?.last_hito_completed || 0;
     const subscriptionTier = window.userProfile?.subscription_tier || 'free';
 
-    console.log(`[DEBUG] lastHito: ${lastHito}, tier: ${subscriptionTier}`);
-
     MODULES_METADATA.forEach((mod, index) => {
-        // MODO BETA: Todos desbloqueados para pruebas
-        const isUnlocked = true;
+        // En Pro/Premium se desbloquean todos, en Free solo el primero
+        const isUnlocked = (subscriptionTier !== 'free' || mod.id === 1);
         const isCompleted = mod.id <= lastHito;
 
         // Render Node
@@ -94,7 +91,6 @@ function renderRoadmap() {
         node.className = `roadmap-node ${isUnlocked ? 'unlocked' : 'locked'} ${isCompleted ? 'completed' : ''}`;
 
         node.onclick = () => {
-            console.log(`[DEBUG] Click en Módulo ${mod.id}. isCompleted: ${isCompleted}`);
             if (isUnlocked) {
                 if (isCompleted) {
                     abrirBitacora(mod);
@@ -102,7 +98,7 @@ function renderRoadmap() {
                     openModule(index);
                 }
             } else {
-                alert("Este módulo forma parte del Plan Profundiza.");
+                alert("Este módulo forma parte del Plan Profundiza. ¡Mejora tu plan para continuar el viaje!");
             }
         };
 
