@@ -13,10 +13,14 @@ let journeyContext = [];
 let cachedSupabase = null;
 let cachedUser = null;
 
-export function initJourney(supabaseClient, user) {
+export async function initJourney(supabaseClient, user) {
     cachedSupabase = supabaseClient;
     cachedUser = user;
     console.log("Iniciando Mi Viaje 2.0 (Dynamic)...", user);
+
+    // Sincronización proactiva para usuarios antiguos
+    await syncJourneyStatus(supabaseClient, user);
+
     renderRoadmap();
 
     // UI Events
@@ -32,6 +36,43 @@ export function initJourney(supabaseClient, user) {
     document.getElementById('nextQBtn').onclick = () => nextStep(cachedSupabase, cachedUser);
     document.getElementById('prevQBtn').onclick = prevStep;
     document.getElementById('finishModuleBtn').onclick = () => finishModuleWithAI(cachedSupabase, cachedUser);
+}
+
+/**
+ * Detecta si el usuario ya tiene datos grabados para evitar que módulos antiguos salgan bloqueados
+ */
+async function syncJourneyStatus(supabase, user) {
+    try {
+        const lastHito = window.userProfile?.last_hito_completed || 0;
+
+        // Pedimos todas las columnas clave que indican fin de módulo
+        const { data, error } = await supabase
+            .from('user_coaching_data')
+            .select('linea_vida_hitos, herencia_raices, roles_familiares, ritual_sanacion, plan_accion')
+            .eq('user_id', user.id)
+            .maybeSingle();
+
+        if (error || !data) return;
+
+        let detectedHito = 0;
+        if (Array.isArray(data.linea_vida_hitos) && data.linea_vida_hitos.length > 0) detectedHito = 1;
+        if (Array.isArray(data.herencia_raices) && data.herencia_raices.length > 0) detectedHito = 2;
+        if (Array.isArray(data.roles_familiares) && data.roles_familiares.length > 0) detectedHito = 3;
+        if (Array.isArray(data.ritual_sanacion) && data.ritual_sanacion.length > 0) detectedHito = 4;
+        if (Array.isArray(data.plan_accion) && data.plan_accion.length > 0) detectedHito = 5;
+
+        if (detectedHito > lastHito) {
+            console.log(`[SYNC] Detectado hito real: M${detectedHito}. Actualizando perfil...`);
+            await supabase
+                .from('user_profiles')
+                .update({ last_hito_completed: detectedHito })
+                .eq('user_id', user.id);
+
+            if (window.userProfile) window.userProfile.last_hito_completed = detectedHito;
+        }
+    } catch (e) {
+        console.error("Error en syncJourneyStatus:", e);
+    }
 }
 
 function renderRoadmap() {
