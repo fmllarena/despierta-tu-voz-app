@@ -357,7 +357,8 @@
             </div>
 
             <button id="saveBtn" class="save-preferences-btn">Guardar Preferencias</button>
-            <a href="index.html" class="back-link">← Volver a la aplicación</a>
+            <a href="index.html" onclick="if(history.length > 1){ history.back(); return false; }" class="back-link">←
+                Volver a la aplicación</a>
             <div id="statusMessage"></div>
         </div>
 
