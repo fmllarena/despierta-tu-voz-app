@@ -8,8 +8,12 @@
     <link rel="stylesheet" href="style.css">
     <link rel="icon" type="image/png" href="logo-appDTV2.png">
     <style>
+        * {
+            box-sizing: border-box;
+        }
+
         .preferences-container {
-            width: 95%;
+            width: 92%;
             max-width: 500px;
             margin: 40px auto;
             background: white;
@@ -232,18 +236,20 @@
             .preferences-container {
                 margin: 10px auto;
                 padding: 15px;
-                width: 98%;
+                width: 95%;
+                border-radius: 12px;
             }
 
             .preferences-header h1 {
-                font-size: 1.5em;
+                font-size: 1.4em;
+                word-wrap: break-word;
             }
 
             .preference-option {
-                padding: 15px;
+                padding: 12px;
                 flex-direction: column;
                 align-items: flex-start;
-                gap: 15px;
+                gap: 12px;
             }
 
             .option-main {
