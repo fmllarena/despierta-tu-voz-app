@@ -31,7 +31,7 @@ serve(async (req) => {
                 templateId: FAILURE_TEMPLATE_ID,
                 params: {
                     NOMBRE: userName
-                    // El botón en Brevo debe apuntar a: https://tu-app.vercel.app/landing.html#precios
+                    // El botón en Brevo debe apuntar a: https://app.despiertatuvoz.com/landing.html#precios
                 }
             })
         })

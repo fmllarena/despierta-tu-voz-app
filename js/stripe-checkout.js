@@ -72,12 +72,33 @@ async function iniciarPago(planType) {
  */
 function setupLandingAuthListeners() {
     const btnRegister = document.getElementById('btnLandingRegister');
+    const toggleToLogin = document.getElementById('toggleToLogin');
+    const toggleToRegister = document.getElementById('toggleToRegister');
+    const authTitle = document.getElementById('landingAuthTitle');
+    const authIntro = document.getElementById('landingAuthIntro');
+    const errorDiv = document.getElementById('landingAuthError');
+
     if (!btnRegister || btnRegister.dataset.listenerSet) return;
+
+    let isLoginMode = false;
+
+    const setMode = (login) => {
+        isLoginMode = login;
+        authTitle.innerText = login ? "Bienvenido de nuevo" : "Comienza tu Transformación";
+        authIntro.innerText = login ? "Inicia sesión para continuar con tu compra." : "Crea tu cuenta para guardar tu progreso y acceder a tu Mentor Vocal.";
+        btnRegister.innerText = login ? "Entrar y Continuar" : "Registrarme y Continuar";
+        toggleToLogin.style.display = login ? "none" : "inline";
+        toggleToRegister.style.display = login ? "inline" : "none";
+        errorDiv.style.display = 'none';
+        btnRegister.disabled = false;
+    };
+
+    if (toggleToLogin) toggleToLogin.addEventListener('click', () => setMode(true));
+    if (toggleToRegister) toggleToRegister.addEventListener('click', () => setMode(false));
 
     btnRegister.addEventListener('click', async () => {
         const email = document.getElementById('landingEmail').value.trim();
         const password = document.getElementById('landingPassword').value;
-        const errorDiv = document.getElementById('landingAuthError');
 
         if (!email || !password) {
             errorDiv.innerText = "Por favor, completa todos los campos.";
@@ -86,32 +107,48 @@ function setupLandingAuthListeners() {
         }
 
         btnRegister.disabled = true;
-        btnRegister.innerText = "Registrando...";
+        btnRegister.innerText = isLoginMode ? "Entrando..." : "Registrando...";
+        errorDiv.style.display = 'none';
 
         try {
             if (!supabasePagos) await inicializarSupabase();
-            const { data, error } = await supabasePagos.auth.signUp({
-                email,
-                password,
-            });
 
-            if (error) throw error;
+            let result;
+            if (isLoginMode) {
+                result = await supabasePagos.auth.signInWithPassword({ email, password });
+            } else {
+                result = await supabasePagos.auth.signUp({ email, password });
+            }
 
-            if (data.user) {
-                // Registro exitoso. Cerramos auth y abrimos legal.
-                document.getElementById('authLandingModal').style.display = 'none';
-                const legalModal = document.getElementById('legalLandingModal');
-                if (legalModal) {
-                    legalModal.style.display = 'flex';
-                    setupLandingLegalListeners();
+            if (result.error) throw result.error;
+
+            if (result.data.user) {
+                const user = result.data.user;
+                const isExistingUserOnRegister = !isLoginMode && user.identities && user.identities.length === 0;
+
+                if (isExistingUserOnRegister) {
+                    errorDiv.innerText = "Este correo ya está registrado. Por favor, selecciona 'Inicia sesión' arriba.";
+                    errorDiv.style.display = 'block';
+                    btnRegister.disabled = false;
+                    btnRegister.innerText = "Registrarme y Continuar";
+                } else {
+                    // Éxito (Login o Registro nuevo)
+                    document.getElementById('authLandingModal').style.display = 'none';
+                    const legalModal = document.getElementById('legalLandingModal');
+                    if (legalModal) {
+                        legalModal.style.display = 'flex';
+                        setupLandingLegalListeners();
+                    }
                 }
+            } else {
+                throw new Error("No se pudo establecer la sesión.");
             }
         } catch (e) {
-            console.error("Error en registro landing:", e);
-            errorDiv.innerText = e.message || "Error al registrarse.";
+            console.error("Error en auth landing:", e);
+            errorDiv.innerText = e.message || "Error al procesar el acceso.";
             errorDiv.style.display = 'block';
             btnRegister.disabled = false;
-            btnRegister.innerText = "Registrarme y Continuar";
+            btnRegister.innerText = isLoginMode ? "Entrar y Continuar" : "Registrarme y Continuar";
         }
     });
     btnRegister.dataset.listenerSet = "true";
@@ -132,29 +169,63 @@ function setupLandingLegalListeners() {
     check2.addEventListener('change', validate);
 
     btnConfirm.addEventListener('click', async () => {
+        console.log("Iniciando procesamiento legal en Landing...");
         btnConfirm.disabled = true;
         btnConfirm.innerText = "Procesando...";
 
         try {
             if (!supabasePagos) await inicializarSupabase();
-            const { data: { user } } = await supabasePagos.auth.getUser();
+
+            // Re-obtener sesión si es necesario para asegurar token fresco
+            const { data: { session } } = await supabasePagos.auth.getSession();
+            const user = session?.user;
 
             if (user) {
-                // Guardar aceptación en Supabase
-                const { error } = await supabasePagos
-                    .from('user_profiles')
-                    .update({ accepted_terms: true })
-                    .eq('user_id', user.id);
+                console.log("Usuario detectado para confirmación:", user.id);
 
-                if (error) throw error;
+                if (!window.pendingPlan) {
+                    console.error("Error: window.pendingPlan es null");
+                    throw new Error("No se ha detectado el plan seleccionado. Por favor, cierra este aviso y vuelve a pulsar el botón del plan.");
+                }
+
+                // Intentar actualizar el perfil (con reintentos leves si el trigger tarda)
+                let updateSuccess = false;
+                let attempts = 0;
+
+                while (!updateSuccess && attempts < 4) {
+                    console.log(`Intento de actualización de perfil ${attempts + 1}...`);
+                    const { error } = await supabasePagos
+                        .from('user_profiles')
+                        .update({ accepted_terms: true })
+                        .eq('user_id', user.id);
+
+                    if (!error) {
+                        updateSuccess = true;
+                        console.log("Perfil actualizado con éxito.");
+                    } else {
+                        console.warn(`Intento ${attempts + 1} fallido:`, error.message);
+                        attempts++;
+                        if (attempts < 4) await new Promise(r => setTimeout(r, 800));
+                    }
+                }
+
+                if (!updateSuccess) {
+                    throw new Error("No pudimos actualizar tu perfil de consentimiento. Por favor, inténtalo de nuevo en unos segundos.");
+                }
 
                 // Continuar al pago
-                document.getElementById('legalLandingModal').style.display = 'none';
+                console.log("Procediendo a ejecutar con el plan:", window.pendingPlan);
                 await ejecutarPago(window.pendingPlan, user);
+
+                // Ocultamos el modal solo si no ha habido error arriba
+                document.getElementById('legalLandingModal').style.display = 'none';
+            } else {
+                throw new Error("Sesión no encontrada. Por favor, inicia sesión de nuevo.");
             }
         } catch (e) {
-            console.error("Error legal landing:", e);
-            alert("Error al procesar el consentimiento.");
+            console.error("Error crítico en legal landing:", e);
+            alert(e.message || "Error al procesar el consentimiento.");
+            // Restauramos el botón solo en caso de error
             btnConfirm.disabled = false;
             btnConfirm.innerText = "Confirmar y Pagar";
         }
@@ -184,12 +255,11 @@ async function ejecutarPago(planType, user) {
         if (session.url) {
             window.location.href = session.url;
         } else {
-            console.error("Error en la sesión de Stripe:", session.error);
-            alert("Hubo un error al procesar el pago. Inténtalo de nuevo.");
+            throw new Error(session.error || "Hubo un error al procesar el pago.");
         }
     } catch (e) {
-        console.error("Error de red:", e);
-        alert("Error de conexión con el servidor de pagos.");
+        console.error("Error en ejecutarPago:", e);
+        throw e; // Re-lanzar para que el llamador pueda resetear la UI
     }
 }
 

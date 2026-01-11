@@ -22,4 +22,14 @@ ALTER TABLE public.mensajes
 ADD CONSTRAINT mensajes_alumno_fkey 
 FOREIGN KEY (alumno) REFERENCES auth.users(id) ON DELETE CASCADE;
 
+
+-- 3. Arreglar tabla user_coaching_data
+-- Aseguramos que los hitos del viaje también se borren
+ALTER TABLE public.user_coaching_data 
+DROP CONSTRAINT IF EXISTS user_coaching_data_user_id_fkey;
+
+ALTER TABLE public.user_coaching_data 
+ADD CONSTRAINT user_coaching_data_user_id_fkey 
+FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE;
+
 -- NOTA: Si tienes otras tablas que referencien a auth.users, habría que hacer lo mismo.

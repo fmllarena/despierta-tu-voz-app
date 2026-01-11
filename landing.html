@@ -215,11 +215,12 @@
         </div>
     </footer>
 
-    <!-- MODAL DE REGISTRO AMABLE (LANDING) -->
+    <!-- MODAL DE REGISTRO / LOGIN AMABLE (LANDING) -->
     <div id="authLandingModal" class="modal">
         <div class="modal-content">
-            <h2>Comienza tu Transformación</h2>
-            <p class="modal-intro">Crea tu cuenta para guardar tu progreso y acceder a tu Mentor Vocal en cualquier
+            <h2 id="landingAuthTitle">Comienza tu Transformación</h2>
+            <p id="landingAuthIntro" class="modal-intro">Crea tu cuenta para guardar tu progreso y acceder a tu Mentor
+                Vocal en cualquier
                 momento.</p>
 
             <div class="form-group">
@@ -228,15 +229,19 @@
             </div>
             <div class="form-group">
                 <label for="landingPassword">Contraseña</label>
-                <input type="password" id="landingPassword" placeholder="Mínimo 6 caracteres">
+                <input type="password" id="landingPassword" placeholder="Tu contraseña">
             </div>
 
             <div id="landingAuthError"></div>
 
             <div class="modal-actions">
                 <button id="btnLandingRegister" class="btn btn-primary">Registrarme y Continuar</button>
+                <p class="auth-toggle-text">
+                    <span id="toggleToLogin">¿Ya tienes cuenta? Inicia sesión aquí</span>
+                    <span id="toggleToRegister" style="display:none;">¿Eres nuevo? Crea tu cuenta aquí</span>
+                </p>
                 <button onclick="document.getElementById('authLandingModal').style.display='none'"
-                    class="btn btn-secondary">Ya tengo cuenta / Cancelar</button>
+                    class="btn btn-secondary">Cancelar</button>
             </div>
         </div>
     </div>

@@ -105,28 +105,37 @@ function showStatus(text, type) {
 }
 
 async function requestAccountDeletion() {
-    const confirmDelete = confirm("¿Estás completamente seguro de que quieres cerrar tu bitácora? Esta acción no se puede deshacer y borrará todo tu progreso y la memoria de tu Mentor.");
+    const confirmDelete = confirm("¿Estás COMPLETAMENTE seguro de que quieres cerrar tu bitácora de forma definitiva? Esta acción es IRREVERSIBLE, se borrarán todos tus datos, tus progresos y tu cuenta para siempre. 🌿");
 
     if (confirmDelete) {
-        showStatus('Solicitud recibida. Procesaremos la eliminación de tus datos en las próximas 48 horas. Sentimos verte partir, pero respetamos tu viaje. 🌿', 'success');
+        showStatus('Procesando tu baja definitiva... Un momento, por favor.', 'success');
+        ELEMENTS.deleteAccountBtn.disabled = true;
 
-        // Aquí se podría enviar un email a administración o marcar un flag en la DB
         try {
-            const { data: { user } } = await supabase.auth.getUser();
-            const email = user?.email || "Email desconocido";
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session) throw new Error("No hay sesión activa");
 
-            // Simulación de notificación a administración o registro de baja
-            console.log(`Solicitud de baja definitiva para: ${email} (${userId})`);
+            // Llamada a la Edge Function de eliminación real
+            const { data, error } = await supabase.functions.invoke('delete-user-account', {
+                headers: {
+                    Authorization: `Bearer ${session.access_token}`
+                }
+            });
 
-            // Podríamos añadir una tabla 'deletion_requests' o enviar un webhook
-            await supabase.from('user_profiles').update({
-                deletion_requested_at: new Date().toISOString(),
-                consent_marketing: false,
-                consent_lifecycle: false
-            }).eq('user_id', userId);
+            if (error) throw error;
+
+            showStatus('Tu cuenta y tus datos han sido eliminados correctamente. Gracias por habernos permitido acompañarte en este tramo de tu viaje. Te deseamos lo mejor. ✨', 'success');
+
+            // Cerrar sesión localmente y redirigir
+            setTimeout(async () => {
+                await supabase.auth.signOut();
+                window.location.href = 'landing.html';
+            }, 3000);
 
         } catch (e) {
-            console.error("Error requesting deletion:", e);
+            console.error("Error deleting account:", e);
+            showStatus('No pudimos completar la eliminación automática. Por favor, contacta con nosotros en soporte@despiertatuvoz.com para que lo hagamos manualmente.', 'error');
+            ELEMENTS.deleteAccountBtn.disabled = false;
         }
     }
 }
