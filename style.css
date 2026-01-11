@@ -2014,7 +2014,7 @@ input {
     border: 1px solid #ddd;
     border-radius: 8px;
     font-family: var(--fuente-principal);
-    font-size: 0.95em;
+    font-size: 0.8em;
 }
 
 .setting-item textarea {
