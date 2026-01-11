@@ -38,18 +38,34 @@ function renderRoadmap() {
     const container = document.getElementById('journeyRoadmap');
     container.innerHTML = '';
 
+    const lastHito = window.userProfile?.last_hito_completed || 0;
     const subscriptionTier = window.userProfile?.subscription_tier || 'free';
 
+    console.log(`[DEBUG] lastHito: ${lastHito}, tier: ${subscriptionTier}`);
+
     MODULES_METADATA.forEach((mod, index) => {
-        // MODO BETA: Desbloqueamos todos los módulos para pruebas
+        // MODO BETA: Todos desbloqueados para pruebas
         const isUnlocked = true;
+        const isCompleted = mod.id <= lastHito;
 
         // Render Node
         const node = document.createElement('div');
-        node.className = `roadmap-node unlocked`;
+        node.className = `roadmap-node ${isUnlocked ? 'unlocked' : 'locked'} ${isCompleted ? 'completed' : ''}`;
+
         node.onclick = () => {
-            openModule(index);
+            console.log(`[DEBUG] Click en Módulo ${mod.id}. isCompleted: ${isCompleted}`);
+            if (isUnlocked) {
+                if (isCompleted) {
+                    abrirBitacora(mod);
+                } else {
+                    openModule(index);
+                }
+            } else {
+                alert("Este módulo forma parte del Plan Profundiza.");
+            }
         };
+
+        const statusIcon = isCompleted ? '✅' : (isUnlocked ? '▶' : '🔒');
 
         node.innerHTML = `
             <div class="node-icon">${mod.icon}</div>
@@ -57,7 +73,7 @@ function renderRoadmap() {
                 <h3>Módulo ${mod.id}: ${mod.title}</h3>
                 <p>${mod.description}</p>
             </div>
-            <div class="node-status">${isUnlocked ? '▶' : '🔒'}</div>
+            <div class="node-status">${statusIcon}</div>
         `;
         container.appendChild(node);
     });
@@ -97,6 +113,95 @@ async function openModule(index) {
         document.getElementById('moduloModal').style.display = 'none';
         document.getElementById('viajeModal').style.display = 'flex';
     }
+}
+
+async function abrirBitacora(mod) {
+    document.getElementById('viajeModal').style.display = 'none';
+    document.getElementById('moduloModal').style.display = 'flex';
+    renderLoading(`Abriendo Bitácora del Módulo ${mod.id}...`);
+
+    try {
+        const columns = {
+            1: ['linea_vida_hitos'],
+            2: ['herencia_raices'],
+            3: ['roles_familiares'],
+            4: ['carta_yo_pasado', 'carta_padres', 'sanacion_heridas', 'ritual_sanacion'],
+            5: ['inventario_creencias', 'proposito_vida', 'plan_accion']
+        };
+
+        const colList = columns[mod.id] || [];
+        const { data, error } = await cachedSupabase
+            .from('user_coaching_data')
+            .select(colList.join(','))
+            .eq('user_id', cachedUser.id)
+            .single();
+
+        if (error) throw error;
+
+        renderBitacora(mod, data);
+    } catch (err) {
+        console.error("Error cargando bitácora:", err);
+        alert("No se pudo cargar tu bitácora. Asegúrate de haber completado el módulo.");
+        document.getElementById('moduloModal').style.display = 'none';
+        document.getElementById('viajeModal').style.display = 'flex';
+    }
+}
+
+function renderBitacora(mod, data) {
+    const container = document.getElementById('questionContainer');
+    document.getElementById('nextQBtn').style.display = 'none';
+    document.getElementById('prevQBtn').style.display = 'none';
+    document.getElementById('finishModuleBtn').style.display = 'none';
+
+    let contentHtml = `
+        <div class="bitacora-view">
+            <div class="bitacora-header">
+                <span class="bitacora-icon">${mod.icon}</span>
+                <h2>Tu Memoria: ${mod.title}</h2>
+                <p>Aquí se guardan las semillas que plantaste en esta etapa de tu viaje.</p>
+            </div>
+            <div class="bitacora-body">
+    `;
+
+    // Iterar sobre las columnas y sus hitos
+    for (const [colName, hits] of Object.entries(data)) {
+        if (Array.isArray(hits) && hits.length > 0) {
+            hits.forEach(hito => {
+                contentHtml += `<div class="bitacora-entry">
+                    <h4>${hito.etapa || 'Hito'}</h4>
+                    <div class="entry-responses">`;
+
+                for (const [qId, answer] of Object.entries(hito.respuestas || {})) {
+                    contentHtml += `
+                        <div class="entry-item">
+                            <span class="entry-label">Reflexión:</span>
+                            <p class="entry-text">${answer}</p>
+                        </div>
+                    `;
+                }
+                contentHtml += `</div><div class="entry-date">${new Date(hito.fecha).toLocaleDateString()}</div></div>`;
+            });
+        }
+    }
+
+    contentHtml += `
+            </div>
+            <div class="bitacora-actions">
+                <button class="journey-btn secondary" onclick="document.querySelector('.close-modulo').click()">← Volver al Mapa</button>
+                <button class="journey-btn danger" id="restartModuleBtn">Reiniciar Módulo 🔄</button>
+            </div>
+        </div>
+    `;
+
+    container.innerHTML = contentHtml;
+
+    document.getElementById('restartModuleBtn').onclick = () => {
+        if (confirm("¿Estás seguro de que quieres reiniciar este módulo? Podrás volver a realizar los ejercicios, pero esto no borrará tu historial anterior en la base de datos (se añadirá como nuevas entradas).")) {
+            // Buscamos el índice del módulo en la metadata para abrirlo
+            const modIndex = MODULES_METADATA.findIndex(m => m.id === mod.id);
+            openModule(modIndex);
+        }
+    };
 }
 
 function renderIntro() {
@@ -777,6 +882,10 @@ async function finishModuleWithAI(supabase, user, skipInputCheck = false) {
             .from('user_profiles')
             .update(updateData)
             .eq('user_id', user.id);
+
+        // Sincronizar localmente para actualizar el Roadmap sin recargar la página
+        if (window.userProfile) window.userProfile.last_hito_completed = module.id;
+
         console.log(`🎯 Perfil actualizado: Módulo ${module.id} completado.`);
     }
 
@@ -802,14 +911,6 @@ async function finishModuleWithAI(supabase, user, skipInputCheck = false) {
         });
 
         const data = await response.json();
-
-        // RESILIENT UNLOCK: Unlock before rendering the UI
-        if (currentModuleIndex < MODULES_METADATA.length - 1) {
-            const nextId = MODULES_METADATA[currentModuleIndex + 1].id;
-            localStorage.setItem(`module_${nextId}_unlocked`, 'true');
-            console.log("Módulo desbloqueado proactivamente:", nextId);
-        }
-
         const isLastModule = currentModuleIndex === MODULES_METADATA.length - 1;
         const fixedLogoText = isLastModule
             ? "<strong>Has completado tu Gran Obra. Tu voz ya no es un eco de tus miedos o de tus ancestros, sino el canal de tu propósito.</strong><br><br>"
