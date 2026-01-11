@@ -222,6 +222,27 @@ header p {
     border: 1px solid #f0f0f0;
 }
 
+.ia.thinking {
+    font-style: italic;
+    color: #999;
+    background: #fafaf8;
+    animation: simplePulse 2s infinite ease-in-out;
+}
+
+@keyframes simplePulse {
+    0% {
+        opacity: 0.6;
+    }
+
+    50% {
+        opacity: 1;
+    }
+
+    100% {
+        opacity: 0.6;
+    }
+}
+
 #msg-bienvenida {
     background: #3E3E3E;
     color: white;
