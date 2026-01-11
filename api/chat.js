@@ -95,8 +95,9 @@ export default async function handler(req, res) {
         if (context) fullPrompt += `CONTEXTO EXTRA:\n${context}\n\n`;
         fullPrompt += `MENSAJE DEL USUARIO / DATOS:\n${message}`;
 
-        // Lista de modelos priorizando VELOCIDAD y Fiabilidad (Restaurando gemini-3-flash por petición)
-        const models = ["gemini-3-flash-preview", "gemini-3-flash", "gemini-1.5-flash", "gemini-2.0-flash-exp"];
+        // Lista de modelos solicitada por el usuario
+        // Nota: Los modelos no pertenecientes a Google fallarán con este SDK, pero se mantiene el orden pedido.
+        const models = ["gemini-3-flash", "gemini-3-pro", "claude-sonnet-4.5", "gpt-oss-1208", "gemini-1.5-flash"];
         let lastError = "";
 
         for (const modelName of models) {
