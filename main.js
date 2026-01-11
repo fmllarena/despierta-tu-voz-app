@@ -636,7 +636,7 @@ const AJUSTES = {
         ELEMENTS.lengthSlider.value = userProfile.mentor_length ?? 0.5;
         ELEMENTS.languageSelect.value = userProfile.mentor_language || 'es';
         ELEMENTS.weeklyGoalInput.value = userProfile.weekly_goal || '';
-        ELEMENTS.notificationSelect.value = userProfile.notification_pref || 'daily';
+        ELEMENTS.notificationSelect.value = userProfile.notification_pref || 'off';
 
         ELEMENTS.settingsModal.style.display = 'flex';
     },

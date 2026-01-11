@@ -1953,6 +1953,7 @@ input {
 .slider-labels {
     display: flex;
     justify-content: space-between;
+    flex-wrap: wrap;
     font-size: 0.8em;
     color: #666;
     margin-bottom: 8px;
@@ -1960,10 +1961,14 @@ input {
 }
 
 .slider-labels span:nth-child(2) {
+    width: 100%;
+    text-align: center;
     color: var(--color-acento);
     text-transform: uppercase;
     letter-spacing: 1px;
     font-size: 0.75em;
+    order: -1;
+    margin-bottom: 5px;
 }
 
 .settings-section input[type="range"] {
@@ -1998,9 +2003,9 @@ input {
 }
 
 .setting-item label {
-    font-size: 0.9em;
+    font-size: 0.8em;
     font-weight: bold;
-    color: #555;
+    color: var(--color-acento);
 }
 
 .setting-item select,
