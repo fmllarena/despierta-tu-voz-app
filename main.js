@@ -109,6 +109,7 @@ function setupAuthListener() {
 
         if (event === 'PASSWORD_RECOVERY') {
             isRecoveringPassword = true;
+            ELEMENTS.authOverlay.style.display = 'flex';
             ELEMENTS.resetPasswordContainer.style.display = 'block';
             ELEMENTS.authError.innerText = "Modo recuperación: Introduce tu nueva contraseña.";
             // Ocultar campos normales de auth para que no confundan
@@ -207,7 +208,9 @@ function updateUI(user) {
     });
 
     if (user) {
-        ELEMENTS.authOverlay.style.display = 'none';
+        if (!isRecoveringPassword) {
+            ELEMENTS.authOverlay.style.display = 'none';
+        }
 
         // El perfil puede tardar un poco en cargar, usamos el tier del perfil si existe
         const tier = userProfile?.subscription_tier || 'free';
@@ -304,7 +307,7 @@ const authActions = {
         if (!email) return ELEMENTS.authError.innerText = "Introduce tu email primero.";
 
         const { error } = await supabase.auth.resetPasswordForEmail(email, {
-            redirectTo: window.location.origin
+            redirectTo: window.location.origin + '/index.html'
         });
         if (error) ELEMENTS.authError.innerText = "Error: " + error.message;
         else alert("Correo de recuperación enviado. Revisa tu bandeja de entrada.");
