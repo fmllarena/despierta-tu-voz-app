@@ -1,20 +1,24 @@
 {
   "name": "Despierta tu Voz",
   "short_name": "DTV App",
-  "start_url": "/",
+  "description": "Tu Mentor Vocal de conexión emocional y técnica 24/7",
+  "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#tu-color-principal",
+  "background_color": "#fcfaf7",
+  "theme_color": "#8e7d6d",
+  "orientation": "portrait",
   "icons": [
     {
-      "src": "/icon-192.png",
+      "src": "web-app-manifest-192x192.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     },
     {
-      "src": "/icon-512.png",
+      "src": "web-app-manifest-512x512.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     }
   ]
 }
