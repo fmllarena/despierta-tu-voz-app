@@ -58,7 +58,7 @@ async function iniciarPago(planType) {
 
             // Si es la landing, necesitamos configurar los listeners aquí o asegurar que existan
             if (document.getElementById('legalLandingModal')) {
-                setupLandingLegalListeners();
+                setupLandingLegalListeners(user);
             }
             return;
         }
@@ -140,7 +140,7 @@ function setupLandingAuthListeners() {
                     const legalModal = document.getElementById('legalLandingModal');
                     if (legalModal) {
                         legalModal.style.display = 'flex';
-                        setupLandingLegalListeners();
+                        setupLandingLegalListeners(user);
                     }
                 }
             } else {
@@ -182,12 +182,18 @@ function setupLandingAuthListeners() {
     btnRegister.dataset.listenerSet = "true";
 }
 
-function setupLandingLegalListeners() {
+/**
+ * Listeners para el modal legal de la landing
+ * @param {Object} passedUser - El usuario obtenido tras login/registro (opcional)
+ */
+function setupLandingLegalListeners(passedUser = null) {
     const btnConfirm = document.getElementById('btnConfirmLegalLanding');
     const check1 = document.getElementById('checkTermsLanding');
     const check2 = document.getElementById('checkMedicalLanding');
 
     if (!btnConfirm || btnConfirm.dataset.listenerSet) return;
+
+    let currentUser = passedUser;
 
     const validate = () => {
         btnConfirm.disabled = !(check1.checked && check2.checked);
@@ -204,12 +210,20 @@ function setupLandingLegalListeners() {
         try {
             if (!supabasePagos) await inicializarSupabase();
 
-            // Re-obtener sesión si es necesario para asegurar token fresco
-            const { data: { session } } = await supabasePagos.auth.getSession();
-            const user = session?.user;
+            // Intentar obtener usuario de múltiples fuentes para máxima robustez
+            if (!currentUser) {
+                const { data: { user: authUser } } = await supabasePagos.auth.getUser();
+                currentUser = authUser;
+            }
 
-            if (user) {
-                console.log("Usuario detectado para confirmación:", user.id);
+            // Si sigue sin haber usuario, intentamos getSession
+            if (!currentUser) {
+                const { data: { session } } = await supabasePagos.auth.getSession();
+                currentUser = session?.user;
+            }
+
+            if (currentUser) {
+                console.log("Usuario detectado para confirmación:", currentUser.id);
 
                 if (!window.pendingPlan) {
                     console.error("Error: window.pendingPlan es null");
@@ -225,7 +239,7 @@ function setupLandingLegalListeners() {
                     const { error } = await supabasePagos
                         .from('user_profiles')
                         .update({ accepted_terms: true })
-                        .eq('user_id', user.id);
+                        .eq('user_id', currentUser.id);
 
                     if (!error) {
                         updateSuccess = true;
@@ -243,7 +257,7 @@ function setupLandingLegalListeners() {
 
                 // Continuar al pago
                 console.log("Procediendo a ejecutar con el plan:", window.pendingPlan);
-                await ejecutarPago(window.pendingPlan, user);
+                await ejecutarPago(window.pendingPlan, currentUser);
 
                 // Ocultamos el modal solo si no ha habido error arriba
                 document.getElementById('legalLandingModal').style.display = 'none';
