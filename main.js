@@ -64,7 +64,6 @@ const ELEMENTS = {
     lengthSlider: document.getElementById('lengthSlider'),
     languageSelect: document.getElementById('languageSelect'),
     weeklyGoalInput: document.getElementById('weeklyGoalInput'),
-    notificationSelect: document.getElementById('notificationSelect'),
     // Legal Modal
     legalModal: document.getElementById('legalModal'),
     checkTerms: document.getElementById('checkTerms'),
@@ -636,7 +635,6 @@ const AJUSTES = {
         ELEMENTS.lengthSlider.value = userProfile.mentor_length ?? 0.5;
         ELEMENTS.languageSelect.value = userProfile.mentor_language || 'es';
         ELEMENTS.weeklyGoalInput.value = userProfile.weekly_goal || '';
-        ELEMENTS.notificationSelect.value = userProfile.notification_pref || 'off';
 
         ELEMENTS.settingsModal.style.display = 'flex';
     },
@@ -656,8 +654,7 @@ const AJUSTES = {
                 mentor_personality: parseFloat(ELEMENTS.personalitySlider.value),
                 mentor_length: parseFloat(ELEMENTS.lengthSlider.value),
                 mentor_language: ELEMENTS.languageSelect.value,
-                weekly_goal: ELEMENTS.weeklyGoalInput.value.trim(),
-                notification_pref: ELEMENTS.notificationSelect.value
+                weekly_goal: ELEMENTS.weeklyGoalInput.value.trim()
             };
 
             const { error } = await supabase
