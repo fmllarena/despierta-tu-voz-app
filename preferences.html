@@ -162,10 +162,23 @@
         }
 
         .account-deletion-section {
-            margin-top: 40px;
-            padding-top: 30px;
+            margin-top: 30px;
+            padding-top: 25px;
             border-top: 1px solid #eee;
             text-align: center;
+        }
+
+        .back-link {
+            display: block;
+            margin-top: 15px;
+            color: #888;
+            text-decoration: none;
+            font-size: 0.9em;
+            transition: color 0.3s;
+        }
+
+        .back-link:hover {
+            color: var(--color-acento);
         }
 
         .account-deletion-section p {
@@ -217,17 +230,50 @@
 
         @media (max-width: 480px) {
             .preferences-container {
-                margin: 20px auto;
-                padding: 20px;
+                margin: 10px auto;
+                padding: 15px;
+                width: 98%;
+            }
+
+            .preferences-header h1 {
+                font-size: 1.5em;
+            }
+
+            .preference-option {
+                padding: 15px;
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
             }
 
             .option-main {
-                gap: 10px;
+                gap: 12px;
+                width: 100%;
             }
 
             .option-icon {
                 width: 35px;
                 height: 35px;
+                flex-shrink: 0;
+            }
+
+            .option-text h3 {
+                font-size: 1em;
+            }
+
+            .option-text p {
+                font-size: 0.85em;
+                line-height: 1.4;
+            }
+
+            .switch {
+                margin-left: 0;
+                align-self: flex-end;
+            }
+
+            .save-preferences-btn {
+                padding: 12px;
+                font-size: 1em;
             }
         }
     </style>
@@ -244,7 +290,8 @@
     <div class="preferences-container">
         <div class="preferences-header">
             <h1>Gestiona tu conexión con Despierta tu Voz 🌿</h1>
-            <p>Tú eres quien marca el ritmo de tu viaje. Elige qué tipo de mensajes quieres recibir en tu bandeja de
+            <p style="word-break: break-word;">Tú eres quien marca el ritmo de tu viaje. Elige qué tipo de mensajes
+                quieres recibir en tu bandeja de
                 entrada para que tu proceso de autodescubrimiento sea fluido y no una carga.</p>
         </div>
 
@@ -304,6 +351,7 @@
             </div>
 
             <button id="saveBtn" class="save-preferences-btn">Guardar Preferencias</button>
+            <a href="index.html" class="back-link">← Volver a la aplicación</a>
             <div id="statusMessage"></div>
         </div>
 
