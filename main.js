@@ -620,8 +620,23 @@ const MODULOS = {
 };
 
 const AJUSTES = {
-    abrirModal: () => {
-        if (!userProfile) return;
+    abrirModal: async () => {
+        if (!userProfile) {
+            console.log("Perfil no cargado, intentando recuperar...");
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+                await cargarPerfil(user);
+            } else {
+                alert("Debes iniciar sesión para ver los ajustes.");
+                return;
+            }
+        }
+
+        if (!userProfile) {
+            alert("No se pudo cargar tu perfil. Por favor, recarga la página.");
+            return;
+        }
+
         ELEMENTS.settingsUserName.innerText = userProfile.nombre || "Usuario";
 
         const TIER_NAMES = {
