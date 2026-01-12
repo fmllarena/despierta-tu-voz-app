@@ -95,13 +95,15 @@ export default async function handler(req, res) {
         if (context) fullPrompt += `CONTEXTO EXTRA:\n${context}\n\n`;
         fullPrompt += `MENSAJE DEL USUARIO / DATOS:\n${message}`;
 
-        // Lista de modelos definitiva (Gemini 3 Flash + Respaldo estable 1.5)
-        const models = ["gemini-3-flash", "gemini-1.5-flash", "gemini-1.5-pro"];
-        let lastError = "";
+        // Lista de modelos con IDs técnicos exactos
+        // gemini-3-flash-preview es el ID oficial para la preview actual.
+        // Usamos -latest para los 1.5 para asegurar que conectamos con la versión más reciente disponible.
+        const models = ["gemini-3-flash-preview", "gemini-1.5-flash-latest", "gemini-1.5-pro-latest"];
+        let errors = [];
 
         for (const modelName of models) {
             try {
-                console.log(`Probando modelo: ${modelName}`);
+                process.stdout.write(`Probando modelo: ${modelName}\n`);
                 const model = genAI.getGenerativeModel({ model: modelName });
 
                 let result;
@@ -115,14 +117,15 @@ export default async function handler(req, res) {
                 const responseText = result.response.text();
                 return res.status(200).json({ text: responseText });
             } catch (e) {
-                lastError = `${modelName}: ${e.message}`;
+                const errorMsg = `${modelName}: ${e.message}`;
+                errors.push(errorMsg);
                 console.warn(`Fallo con ${modelName}:`, e.message);
             }
         }
 
         return res.status(500).json({
             error: "No se pudo conectar con ningún modelo de Gemini.",
-            details: lastError
+            details: errors.join(" | ")
         });
 
     } catch (error) {
