@@ -80,7 +80,10 @@ async function llamarGemini(message, history, intent, context = "") {
             body: JSON.stringify({ message, history, intent, context })
         });
         const data = await response.json();
-        if (data.error) throw new Error(data.error);
+        if (data.error) {
+            const detailMsg = data.details ? ` (${data.details})` : "";
+            throw new Error(data.error + detailMsg);
+        }
         return data.text;
     } catch (e) {
         console.error("Error en llamarGemini:", e);
