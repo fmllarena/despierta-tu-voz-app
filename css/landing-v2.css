@@ -96,44 +96,47 @@ nav a:hover {
 /* HERO SECTION */
 .hero {
     position: relative;
-    height: 80vh;
+    height: 85vh;
     display: flex;
     align-items: center;
     justify-content: center;
     text-align: center;
     padding: 0 10%;
     color: white;
-    background: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url('https://images.unsplash.com/photo-1493225255756-d9584f8606e9?q=80&w=2070&auto=format&fit=crop');
+    background: linear-gradient(rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.45)), url('https://images.unsplash.com/photo-1493225255756-d9584f8606e9?q=80&w=2070&auto=format&fit=crop');
     background-size: cover;
     background-position: center;
+    overflow: hidden;
 }
 
 .hero-content {
-    max-width: 800px;
+    max-width: 850px;
+    z-index: 3;
 }
 
 .hero h1 {
-    font-size: 3.5rem;
-    margin-bottom: 20px;
-    line-height: 1.2;
+    font-size: 3.8rem;
+    margin-bottom: 25px;
+    line-height: 1.1;
 }
 
 .hero p {
-    font-size: 1.25rem;
-    margin-bottom: 35px;
-    opacity: 0.9;
+    font-size: 1.3rem;
+    margin-bottom: 40px;
+    opacity: 0.95;
+    font-weight: 300;
 }
 
 .hero-btns {
     display: flex;
-    gap: 20px;
+    gap: 25px;
     justify-content: center;
 }
 
 .btn-primary {
     background: var(--color-teal);
     color: white;
-    padding: 15px 30px;
+    padding: 16px 35px;
     border-radius: 40px;
     text-decoration: none;
     font-weight: 600;
@@ -144,7 +147,7 @@ nav a:hover {
 .btn-secondary {
     background: white;
     color: var(--color-text-dark);
-    padding: 15px 30px;
+    padding: 16px 35px;
     border-radius: 40px;
     text-decoration: none;
     font-weight: 600;
@@ -152,77 +155,298 @@ nav a:hover {
     transition: all 0.3s;
 }
 
+.btn-primary:hover,
+.btn-secondary:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+}
+
+/* ONDA DE VOZ SVG */
+.hero::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    width: 100%;
+    height: 80px;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 320'%3%3Cpath fill='%23f9f5f0' fill-opacity='1' d='M0,192L48,197.3C96,203,192,213,288,192C384,171,480,117,576,112C672,107,768,149,864,165.3C960,181,1056,171,1152,149.3C1248,128,1344,96,1392,80L1440,64L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z'%3E%3C/path%3E%3C/svg%3E");
+    background-size: cover;
+    z-index: 2;
+}
+
+/* NUDO SECTION */
+.nudo-section {
+    padding: 120px 10%;
+    text-align: center;
+    background: white;
+}
+
+.nudo-section h2 {
+    font-size: 3rem;
+    color: var(--color-brown);
+    margin-bottom: 35px;
+    letter-spacing: -1px;
+}
+
+.nudo-section p {
+    max-width: 850px;
+    margin: 0 auto;
+    font-size: 1.25rem;
+    color: var(--color-text-muted);
+    font-weight: 300;
+}
+
 /* SERVICES GRID */
 .services {
-    padding: 80px 5%;
+    padding: 100px 5%;
     text-align: center;
 }
 
 .services h2 {
-    font-size: 2.5rem;
-    margin-bottom: 50px;
+    font-size: 2.8rem;
+    margin-bottom: 60px;
+    color: var(--color-brown);
 }
 
 .services-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 30px;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 40px;
     max-width: 1200px;
     margin: 0 auto;
 }
 
 .service-card {
     background: white;
-    padding: 40px 30px;
+    padding: 60px 40px;
     border-radius: var(--border-radius-lg);
     box-shadow: var(--shadow-soft);
-    transition: transform 0.3s;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    border: 1px solid rgba(166, 93, 71, 0.05);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
 .service-card:hover {
-    transform: translateY(-10px);
+    transform: translateY(-15px) scale(1.02);
+    box-shadow: 0 25px 50px rgba(166, 93, 71, 0.15);
 }
 
 .service-icon {
-    font-size: 3rem;
-    margin-bottom: 20px;
-}
-
-/* FOOTER CTA */
-.footer-cta {
-    background: var(--color-brown);
-    color: white;
-    text-align: center;
-    padding: 100px 10%;
-}
-
-.footer-cta h2 {
+    width: 90px;
+    height: 90px;
+    background: var(--color-bg-light);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     font-size: 2.8rem;
     margin-bottom: 30px;
 }
 
+.service-card h3 {
+    margin-bottom: 15px;
+    font-size: 1.5rem;
+}
+
+/* SHOWCASE SECTION */
+.showcase {
+    background: var(--color-white);
+    padding: 120px 10%;
+    display: flex;
+    align-items: center;
+    gap: 80px;
+    flex-wrap: wrap;
+}
+
+.showcase-content {
+    flex: 1;
+    min-width: 350px;
+}
+
+.showcase-content h2 {
+    font-size: 3rem;
+    margin-bottom: 30px;
+    color: var(--color-brown);
+}
+
+.showcase-content p {
+    margin-bottom: 40px;
+    font-size: 1.15rem;
+    color: var(--color-text-muted);
+}
+
+.showcase-stats {
+    color: #d4af37;
+    font-size: 1.5rem;
+    margin-bottom: 30px;
+    font-weight: 700;
+}
+
+.showcase-avatars {
+    display: flex;
+    margin-bottom: 20px;
+}
+
+.avatar {
+    border-radius: 50%;
+    border: 3px solid white;
+    width: 50px;
+    height: 50px;
+    margin-left: -15px;
+    object-fit: cover;
+}
+
+.avatar:first-child {
+    margin-left: 0;
+}
+
+.showcase-visual {
+    flex: 1;
+    min-width: 350px;
+    text-align: center;
+}
+
+.app-mockup {
+    background: linear-gradient(135deg, #fff, #f9f5f0);
+    width: 100%;
+    max-width: 420px;
+    height: 580px;
+    border-radius: 45px;
+    border: 14px solid #2c2c2c;
+    box-shadow: 0 40px 80px rgba(0, 0, 0, 0.25);
+    position: relative;
+    overflow: hidden;
+    margin: 0 auto;
+}
+
+.mockup-bg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: url('https://images.unsplash.com/photo-1512428559083-a40ce10b8857?q=80&w=2070&auto=format&fit=crop');
+    background-size: cover;
+    opacity: 0.15;
+}
+
+.mockup-content {
+    position: relative;
+    z-index: 2;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 30px;
+}
+
+/* FOOTER CTA */
+.footer-cta {
+    background: linear-gradient(rgba(166, 93, 71, 0.88), rgba(166, 93, 71, 0.88)), url('https://images.unsplash.com/photo-1516280440614-37939bbacd81?q=80&w=2070&auto=format&fit=crop');
+    background-size: cover;
+    background-position: center;
+    color: white;
+    text-align: center;
+    padding: 140px 10%;
+}
+
+.footer-cta h2 {
+    font-size: 3.5rem;
+    margin-bottom: 45px;
+    text-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
 .btn-lg {
-    padding: 18px 45px;
-    font-size: 1.2rem;
+    padding: 20px 50px;
+    font-size: 1.3rem;
     background: white;
     color: var(--color-brown);
-    border-radius: 50px;
+    border-radius: 60px;
     text-decoration: none;
-    font-weight: 700;
-    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+    font-weight: 800;
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
+    transition: all 0.3s;
+    display: inline-block;
+}
+
+.btn-lg:hover {
+    background: var(--color-teal);
+    color: white;
+    transform: scale(1.08);
+}
+
+.social-links {
+    margin-top: 50px;
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+}
+
+.social-links a {
+    font-size: 2rem;
+    text-decoration: none;
+    transition: transform 0.3s;
+}
+
+.social-links a:hover {
+    transform: translateY(-5px);
+}
+
+footer {
+    text-align: center;
+    padding: 50px;
+    background: #232323;
+    color: white;
+    font-size: 0.9rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+footer p {
+    opacity: 0.7;
+    margin-bottom: 10px;
+}
+
+/* ANIMACIONES REVEAL */
+.reveal {
+    opacity: 0;
+    transform: translateY(40px);
+    transition: all 1s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.reveal.visible {
+    opacity: 1;
+    transform: translateY(0);
 }
 
 /* RESPONSIVE */
 @media (max-width: 768px) {
     .hero h1 {
-        font-size: 2.5rem;
+        font-size: 2.6rem;
+    }
+
+    .hero p {
+        font-size: 1.1rem;
     }
 
     .hero-btns {
         flex-direction: column;
     }
 
+    .nudo-section h2,
+    .services h2,
+    .showcase h2,
+    .footer-cta h2 {
+        font-size: 2.2rem;
+    }
+
     nav {
         display: none;
+    }
+
+    .showcase {
+        padding: 80px 5%;
     }
 }
