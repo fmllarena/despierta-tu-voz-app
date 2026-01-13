@@ -45,15 +45,13 @@ serve(async (req) => {
         // --- 1. PROCESAR DÍA 15 (Check-in Nuevos Usuarios) ---
         const date15 = new Date();
         date15.setDate(date15.getDate() - 15);
-        const iso15 = date15.toISOString().split('T')[0];
+        const iso15 = date15.toISOString();
 
         const { data: users15 } = await supabase
             .from('user_profiles')
             .select('user_id, email, nombre, created_at')
-            .eq('subscription_tier', 'free')
             .eq('email_retencion_15_enviado', false)
-            .gte('created_at', `${iso15}T00:00:00Z`)
-            .lte('created_at', `${iso15}T23:59:59Z`);
+            .lte('created_at', iso15);
 
         if (users15 && users15.length > 0) {
             console.log(`[Job] Enviando Día 15 a ${users15.length} usuarios...`);
@@ -69,15 +67,13 @@ serve(async (req) => {
         // --- 2. PROCESAR DÍA 23 (Fin de Ciclo) ---
         const date23 = new Date();
         date23.setDate(date23.getDate() - 23);
-        const iso23 = date23.toISOString().split('T')[0];
+        const iso23 = date23.toISOString();
 
         const { data: users23 } = await supabase
             .from('user_profiles')
             .select('user_id, email, nombre, created_at')
-            .eq('subscription_tier', 'free')
             .eq('email_retencion_23_enviado', false)
-            .gte('created_at', `${iso23}T00:00:00Z`)
-            .lte('created_at', `${iso23}T23:59:59Z`);
+            .lte('created_at', iso23);
 
         if (users23 && users23.length > 0) {
             console.log(`[Job] Enviando Día 23 a ${users23.length} usuarios...`);
@@ -97,14 +93,13 @@ serve(async (req) => {
         // --- 3. PROCESAR INACTIVIDAD (10 días sin mensajes) ---
         const dateInact = new Date();
         dateInact.setDate(dateInact.getDate() - 10);
-        const isoInact = dateInact.toISOString().split('T')[0];
+        const isoInact = dateInact.toISOString();
 
         const { data: usersInact } = await supabase
             .from('user_profiles')
             .select('user_id, email, nombre, last_active_at')
             .eq('email_inactividad_10_enviado', false)
-            .gte('last_active_at', `${isoInact}T00:00:00Z`)
-            .lte('last_active_at', `${isoInact}T23:59:59Z`);
+            .lte('last_active_at', isoInact);
 
         if (usersInact && usersInact.length > 0) {
             console.log(`[Job] Enviando Inactividad 10 a ${usersInact.length} usuarios...`);
@@ -120,14 +115,13 @@ serve(async (req) => {
         // --- 4. PROCESAR POST-VIAJE (5 días después de terminar M5) ---
         const datePost = new Date();
         datePost.setDate(datePost.getDate() - 5);
-        const isoPost = datePost.toISOString().split('T')[0];
+        const isoPost = datePost.toISOString();
 
         const { data: usersPost } = await supabase
             .from('user_profiles')
             .select('user_id, email, nombre, journey_completed_at')
             .eq('email_post_viaje_enviado', false)
-            .gte('journey_completed_at', `${isoPost}T00:00:00Z`)
-            .lte('journey_completed_at', `${isoPost}T23:59:59Z`);
+            .lte('journey_completed_at', isoPost);
 
         if (usersPost && usersPost.length > 0) {
             console.log(`[Job] Enviando Post-Viaje 5 a ${usersPost.length} usuarios...`);
