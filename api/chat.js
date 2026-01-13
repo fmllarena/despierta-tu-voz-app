@@ -59,6 +59,20 @@ FORMATO: Devuelve ÚNICAMENTE un JSON con esta estructura:
   "smart_goals": "...",
   "self_care_routine": "..."
 }
+`,
+    mentor_briefing: `
+[SISTEMA: INFORME SINTETIZADO PARA EL MENTOR]
+Eres un asistente experto en coaching vocal y emocional. 
+TAREA: Analiza TODO el historial del alumno (datos del viaje y mensajes de chat) y genera un briefing estratégico para el mentor (Fer) antes de su reunión.
+
+ESTRUCTURA DEL INFORME:
+1. PERFIL ESENCIAL: Nombre, etapa actual del viaje y "vibración" general (ánimo detectado).
+2. HILO CONDUCTOR: ¿Cuál es el tema recurrente en sus bloqueos o descubrimientos?
+3. HITOS CLAVE: Resumen de lo más potente que ha dicho en las Bitácoras (Módulos 1-5).
+4. ÁREAS DE ATENCIÓN: ¿Qué puntos crees que Fer debería tocar en la reunión para desbloquear al alumno?
+5. RECOMENDACIÓN TÉCNICA/EMOCIONAL: Un consejo específico para que el mentor use hoy.
+
+TONO: Profesional, perspicaz y directo. Máximo 300 palabras.
 `
 };
 
@@ -68,10 +82,18 @@ export default async function handler(req, res) {
     try {
         // Vercel parsea el body automáticamente si es JSON
         const body = req.body;
-        const { intent, message, history = [], context = "" } = body;
+        const { intent, message, history = [], context = "", mentorPassword = "" } = body;
 
         if (!intent || !SYSTEM_PROMPTS[intent]) {
             return res.status(400).json({ error: "Intento no válido o no proporcionado" });
+        }
+
+        // --- SEGURIDAD EXTRA PARA EL BRIEFING DEL MENTOR ---
+        if (intent === 'mentor_briefing') {
+            const secretPass = process.env.MENTOR_PASSWORD || 'Alquimia2026'; // Fallback temporal
+            if (mentorPassword !== secretPass) {
+                return res.status(401).json({ error: "Clave de mentor incorrecta. Acceso denegado." });
+            }
         }
 
         // --- LÓGICA DE MEMBRESÍA (Habilitada para pruebas: Todo es PRO) ---
