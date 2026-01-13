@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel del Mentor - Despierta tu Voz</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        .mentor-container {
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .search-section {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+
+        .search-section input {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #eee;
+            border-radius: 10px;
+            font-size: 1rem;
+        }
+
+        .search-section button {
+            padding: 12px 24px;
+            background: var(--color-acento, #9b59b6);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .report-section {
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .report-card {
+            background: #f9f9f9;
+            padding: 25px;
+            border-radius: 15px;
+            border-left: 5px solid var(--color-acento);
+            white-space: pre-line;
+            line-height: 1.6;
+            color: #333;
+        }
+
+        .loading-briefing {
+            text-align: center;
+            padding: 20px;
+            display: none;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+
+<body class="bg-viaje">
+    <div class="mentor-container">
+        <h1>🌿 Panel del Mentor</h1>
+        <p>Introduce el email del alumno para generar su briefing estratégico.</p>
+
+        <div class="search-section" style="flex-direction: column; gap: 15px;">
+            <input type="email" id="studentEmail" placeholder="email@alumno.com">
+            <input type="password" id="mentorPass" placeholder="Clave de acceso de Mentor">
+            <button id="generateBtn" style="width: 100%;">Generar Informe Inteligente</button>
+        </div>
+
+        <div id="loading" class="loading-briefing">
+            <p>🔮 Conectando con la sabiduría del Mentor... Analizando historial...</p>
+        </div>
+
+        <div id="reportContainer" class="report-section">
+            <h2>Informe del Alumno</h2>
+            <div id="reportContent" class="report-card"></div>
+        </div>
+
+        <div style="margin-top: 30px; text-align: center;">
+            <a href="index.html" style="color: #666; text-decoration: none;">← Volver a la App</a>
+        </div>
+    </div>
+
+    <script type="module" src="js/mentor-dashboard.js"></script>
+</body>
+
+</html>
