@@ -1,6 +1,7 @@
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm'
 
 let supabase;
+let currentStudentId = null;
 const MENTOR_EMAIL = 'fernando@despiertatuvoz.com';
 
 const ELEMENTS = {
@@ -9,7 +10,9 @@ const ELEMENTS = {
     generateBtn: document.getElementById('generateBtn'),
     loading: document.getElementById('loading'),
     reportContainer: document.getElementById('reportContainer'),
-    reportContent: document.getElementById('reportContent')
+    reportContent: document.getElementById('reportContent'),
+    mentorNotes: document.getElementById('mentorNotes'),
+    saveNotesBtn: document.getElementById('saveNotesBtn')
 };
 
 async function init() {
@@ -26,6 +29,7 @@ async function init() {
         }
 
         ELEMENTS.generateBtn.onclick = generateBriefing;
+        ELEMENTS.saveNotesBtn.onclick = saveNotes;
     } catch (e) {
         console.error("Error inicializando dashboard:", e);
     }
@@ -46,11 +50,13 @@ async function generateBriefing() {
         // 1. Buscar el ID del usuario por email
         const { data: userData, error: userError } = await supabase
             .from('user_profiles')
-            .select('user_id, nombre, subscription_tier, last_hito_completed')
+            .select('user_id, nombre, subscription_tier, last_hito_completed, mentor_notes')
             .eq('email', email)
             .single();
 
         if (userError || !userData) throw new Error("Alumno no encontrado.");
+        currentStudentId = userData.user_id;
+        ELEMENTS.mentorNotes.value = userData.mentor_notes || '';
 
         // 2. Obtener datos de coaching
         const { data: coachingData } = await supabase
@@ -100,6 +106,33 @@ async function generateBriefing() {
     } finally {
         ELEMENTS.generateBtn.disabled = false;
         ELEMENTS.loading.style.display = 'none';
+    }
+}
+
+async function saveNotes() {
+    if (!currentStudentId) return alert("Primero debes generar el informe de un alumno.");
+
+    ELEMENTS.saveNotesBtn.disabled = true;
+    ELEMENTS.saveNotesBtn.innerText = "Guardando...";
+
+    try {
+        const { error } = await supabase
+            .from('user_profiles')
+            .update({
+                mentor_notes: ELEMENTS.mentorNotes.value.trim(),
+                last_active_at: new Date().toISOString()
+            })
+            .eq('user_id', currentStudentId);
+
+        if (error) throw error;
+        alert("Anotaciones guardadas correctamente. La IA las tendrá en cuenta en el próximo encuentro. ✨");
+
+    } catch (e) {
+        console.error("Error guardando notas:", e);
+        alert("No se pudieron guardar las notas: " + e.message);
+    } finally {
+        ELEMENTS.saveNotesBtn.disabled = false;
+        ELEMENTS.saveNotesBtn.innerText = "Guardar Anotaciones ✨";
     }
 }
 
