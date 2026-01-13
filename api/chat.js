@@ -67,10 +67,11 @@ TAREA: Analiza TODO el historial del alumno (datos del viaje y mensajes de chat)
 
 ESTRUCTURA DEL INFORME:
 1. PERFIL ESENCIAL: Nombre, etapa actual del viaje y "vibración" general (ánimo detectado).
-2. HILO CONDUCTOR: ¿Cuál es el tema recurrente en sus bloqueos o descubrimientos?
-3. HITOS CLAVE: Resumen de lo más potente que ha dicho en las Bitácoras (Módulos 1-5).
-4. ÁREAS DE ATENCIÓN: ¿Qué puntos crees que Fer debería tocar en la reunión para desbloquear al alumno?
-5. RECOMENDACIÓN TÉCNICA/EMOCIONAL: Un consejo específico para que el mentor use hoy.
+2. ANOTACIONES DEL MENTOR: Si existen notas previas de Fer en el contexto, sintetízalas (son fundamentales).
+3. HILO CONDUCTOR: ¿Cuál es el tema recurrente en sus bloqueos o descubrimientos?
+4. HITOS CLAVE: Resumen de lo más potente que ha dicho en las Bitácoras (Módulos 1-5).
+5. ÁREAS DE ATENCIÓN: ¿Qué puntos crees que Fer debería tocar en la reunión para desbloquear al alumno?
+6. RECOMENDACIÓN TÉCNICA/EMOCIONAL: Un consejo específico para que el mentor use hoy.
 
 TONO: Profesional, perspicaz y directo. Máximo 300 palabras.
 `
