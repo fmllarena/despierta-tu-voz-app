@@ -920,8 +920,12 @@ async function finishModuleWithAI(supabase, user, skipInputCheck = false) {
             .update(updateData)
             .eq('user_id', user.id);
 
-        // Sincronizar localmente para actualizar el Roadmap sin recargar la página
+        // Sincronizar localmente y generar resumen de perfil proactivamente
         if (window.userProfile) window.userProfile.last_hito_completed = module.id;
+        if (window.generarYGuardarResumen) {
+            console.log("🎯 Disparando resumen de perfil tras hito...");
+            window.generarYGuardarResumen();
+        }
 
         console.log(`🎯 Perfil actualizado: Módulo ${module.id} completado.`);
     }
