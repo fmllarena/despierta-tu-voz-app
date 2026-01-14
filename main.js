@@ -58,6 +58,18 @@ async function loadBlogLibrary() {
 }
 loadBlogLibrary();
 
+// Detectar contexto de origen desde el blog (URL params)
+const urlParams = new URLSearchParams(window.location.search);
+const fromPost = urlParams.get('from_post');
+const fromCat = urlParams.get('cat');
+
+if (fromPost) {
+    sessionStorage.setItem('dtv_origin_post', decodeURIComponent(fromPost));
+}
+if (fromCat) {
+    sessionStorage.setItem('dtv_origin_cat', decodeURIComponent(fromCat));
+}
+
 const ELEMENTS = {
     chatBox: document.getElementById('chatBox'),
     chatInput: document.getElementById('chatMentoriaInput'),
@@ -414,6 +426,19 @@ async function obtenerContextoAlumno() {
     ]);
 
     let ctx = `\n[CONTEXTO PRIVADO DEL ALUMNO]\n`;
+    // --- CONTEXTO DE ORIGEN DEL BLOG ---
+    const originPost = sessionStorage.getItem('dtv_origin_post');
+    const originCat = sessionStorage.getItem('dtv_origin_cat');
+    if (originPost) {
+        ctx += `\n[CONTEXTO DE ENTRADA]\n`;
+        ctx += `- El alumno viene directamente de leer tu artículo: "${originPost}"\n`;
+        if (originCat) ctx += `- Categoría del artículo: ${originCat}\n`;
+        ctx += `- Acción: Salúdale reconociendo que viene de ese artículo y conecta tu primera respuesta con el tema del post si es posible.\n`;
+        // Limpiamos para que solo lo mencione una vez al inicio
+        sessionStorage.removeItem('dtv_origin_post');
+        sessionStorage.removeItem('dtv_origin_cat');
+    }
+
     if (perfil) {
         ctx += `- Historia Vocal: ${perfil.historia_vocal || 'N/A'}\n- Creencias: ${perfil.creencias || 'N/A'}\n- Alquimia: ${perfil.nivel_alquimia || 1}/10\n- Viaje Completado: ${perfil.last_hito_completed >= 5 ? 'SÍ' : 'NO'} (Último hito: ${perfil.last_hito_completed || 0})\n- ANOTACIONES PRIVADAS DEL MENTOR (FER): ${perfil.mentor_notes || 'Ninguna'}\n`;
 
