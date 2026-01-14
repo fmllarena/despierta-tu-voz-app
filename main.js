@@ -158,6 +158,14 @@ async function cargarPerfil(user) {
     // Al cargar el perfil, recuperamos el historial para el contexto de la IA
     await cargarHistorialDesdeDB(user.id);
 
+    // --- REPARACIÓN AUTOMÁTICA ---
+    // Si el perfil está vacío pero tenemos mensajes cargados, disparamos el resumen 
+    // proactivamente para "reparar" la cuenta sin esperar a un nuevo mensaje.
+    if (chatHistory.length > 0 && (!perfil.ultimo_resumen || !perfil.creencias)) {
+        console.log("🛠️ Detectada cuenta sin resumen pero con historial. Reparando perfil...");
+        MODULOS.generarYGuardarResumen();
+    }
+
     // Saludar siempre al iniciar sesión para empezar con un chat limpio y el mensaje de bienvenida
     saludarUsuario(user, perfil);
 }
@@ -475,6 +483,11 @@ async function guardarMensajeDB(texto, emisor) {
                     email_inactividad_10_enviado: false // Resetear flag si vuelve a estar activo
                 })
                 .eq('user_id', user.id);
+
+            // Generar resumen proactivo si es mensaje de la IA
+            if (emisor === 'ia') {
+                MODULOS.generarYGuardarResumen();
+            }
         }
     } catch (e) {
         console.error("Error crítico guardando mensaje:", e);
@@ -619,20 +632,37 @@ const MODULOS = {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
         try {
-            const prompt = `Genera un JSON: {"resumen":"técnico","creencias":"limitantes","historia_vocal":"pasado","nivel_alquimia":1-10,"creencias_transmutadas":"logros"}. Responde SOLO el JSON.`;
-            const raw = await llamarGemini(prompt, chatHistory, "mentor_chat");
+            console.log("🪄 [Proactivo] Generando resumen de perfil y transmutación...");
+            const contexto = await obtenerContextoAlumno();
+            const prompt = `Analiza profundamente nuestra conversación y el progreso del alumno. Genera un JSON con este formato: {"resumen":"resumen técnico de los últimos avances","creencias":"creencias limitantes detectadas o trabajadas hoy","historia_vocal":"actualización de su pasado vocal si ha revelado algo","nivel_alquimia":1-10,"creencias_transmutadas":"logros y transmutaciones conseguidas"}. Responde SOLO el JSON puramente.`;
+            const raw = await llamarGemini(prompt, chatHistory, "mentor_chat", contexto);
             const data = JSON.parse(raw.replace(/```json|```/g, "").trim());
-            await supabase.from('user_profiles').upsert({
-                user_id: user.id,
+
+            const { error } = await supabase.from('user_profiles').update({
                 ultimo_resumen: data.resumen,
                 creencias: data.creencias,
                 historia_vocal: data.historia_vocal,
                 nivel_alquimia: data.nivel_alquimia || 1,
-                creencias_transmutadas: data.creencias_transmutadas || ""
-            });
-        } catch (e) { console.error("Error resumen:", e); }
+                creencias_transmutadas: data.creencias_transmutadas || "",
+                last_active_at: new Date().toISOString()
+            }).eq('user_id', user.id);
+
+            if (error) throw error;
+            console.log("✅ Perfil actualizado con éxito.");
+
+            // Actualizar perfil local
+            if (userProfile) {
+                userProfile.ultimo_resumen = data.resumen;
+                userProfile.creencias = data.creencias;
+                userProfile.historia_vocal = data.historia_vocal;
+                userProfile.nivel_alquimia = data.nivel_alquimia;
+            }
+        } catch (e) { console.error("Error resumen proactivo:", e); }
     }
 };
+
+// Exportar funciones críticas al objeto window para acceso desde otros módulos (como Mi Viaje)
+window.generarYGuardarResumen = MODULOS.generarYGuardarResumen;
 
 const AJUSTES = {
     abrirModal: async () => {
