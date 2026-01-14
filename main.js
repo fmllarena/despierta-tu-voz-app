@@ -21,6 +21,43 @@ const FRASES_PENSAR = [
     "Buscando el silencio donde nace tu canto..."
 ];
 
+// --- FILTRO DE PRUDENCIA: Sesiones y Tiempo ---
+if (!sessionStorage.getItem('dtv_session_start')) {
+    sessionStorage.setItem('dtv_session_start', Date.now());
+}
+
+// Contar sesiones totales (persistente)
+let dtvSessions = parseInt(localStorage.getItem('dtv_total_sessions') || '0');
+if (!sessionStorage.getItem('dtv_session_counted')) {
+    dtvSessions++;
+    localStorage.setItem('dtv_total_sessions', dtvSessions);
+    sessionStorage.setItem('dtv_session_counted', 'true');
+}
+
+function canAIRecommend() {
+    const sessionStart = parseInt(sessionStorage.getItem('dtv_session_start'));
+    const minutesElapsed = (Date.now() - sessionStart) / 60000;
+    const totalSessions = parseInt(localStorage.getItem('dtv_total_sessions') || '1');
+
+    // Filtro: > 30 minutos O > 3 sesiones
+    return minutesElapsed >= 30 || totalSessions >= 3;
+}
+
+// Cargar biblioteca de artículos
+let blogLibrary = [];
+async function loadBlogLibrary() {
+    try {
+        const response = await fetch('https://despiertatuvoz.com/wp-content/themes/nuevo-index/biblioteca-blog.json');
+        if (response.ok) {
+            blogLibrary = await response.json();
+            console.log("📚 Biblioteca de blog cargada:", blogLibrary.length, "artículos.");
+        }
+    } catch (e) {
+        console.warn("No se pudo cargar la biblioteca del blog:", e.message);
+    }
+}
+loadBlogLibrary();
+
 const ELEMENTS = {
     chatBox: document.getElementById('chatBox'),
     chatInput: document.getElementById('chatMentoriaInput'),
@@ -414,6 +451,22 @@ async function obtenerContextoAlumno() {
         if (perfil.weekly_goal) ctx += `- Objetivo Semanal: ${perfil.weekly_goal}\n`;
 
         ctx += `\nInstrucción crítica: Adapta rigorosamente tu respuesta a estas instrucciones de estilo.\n`;
+
+        // RECOMENDACIONES DE BIBLIOTECA
+        if (canAIRecommend() && blogLibrary.length > 0) {
+            ctx += `\n[BIBLIOTECA DE ARTÍCULOS DE FERNANDO]\n`;
+            ctx += `- Tienes permiso para recomendar lecturas. Elige el artículo más relevante para el momento actual.\n`;
+            ctx += `- Solo recomienda si aporta valor real al bloqueo del alumno.\n`;
+
+            // Pasamos solo títulos y URLs para no saturar el prompt
+            const titles = blogLibrary.map(post => `- ${post.title}: ${post.url}`).join('\n');
+            ctx += `ARTÍCULOS DISPONIBLES:\n${titles}\n`;
+            ctx += `\nInstrucción de estilo: Si recomiendas un link, hazlo con calidez, citando que es un artículo de Fernando.\n`;
+        } else if (canAIRecommend() && blogLibrary.length === 0) {
+            ctx += `\n- Tienes permiso para recomendar artículos, pero la biblioteca no cargó. No inventes links.\n`;
+        } else {
+            ctx += `\n- Todavía NO es el momento de recomendar artículos externos. Céntrate en la charla directa de tú a tú.\n`;
+        }
     }
     if (viaje) {
         ctx += `\n[VIAJE]\n- M1: ${JSON.stringify(viaje.linea_vida_hitos?.respuestas || {})}\n- M2: ${JSON.stringify(viaje.herencia_raices?.respuestas || {})}\n`;
