@@ -2,6 +2,7 @@
 alter table public.user_profiles add column if not exists email text;
 alter table public.user_profiles add column if not exists nombre text;
 alter table public.user_profiles add column if not exists created_at timestamp with time zone default now();
+alter table public.user_profiles add column if not exists notification_pref text default 'daily';
 
 -- 2. Crear o actualizar la función que maneja el nuevo usuario
 -- Esta función extrae el 'nombre' de los metadatos que enviamos desde el JS
@@ -11,12 +12,13 @@ language plpgsql
 security definer set search_path = public
 as $$
 begin
-  insert into public.user_profiles (user_id, email, nombre, subscription_tier)
+  insert into public.user_profiles (user_id, email, nombre, subscription_tier, notification_pref)
   values (
     new.id, 
     new.email, 
     coalesce(new.raw_user_meta_data->>'nombre', split_part(new.email, '@', 1)), 
-    'free'
+    'pro',
+    'daily'
   );
   return new;
 end;
