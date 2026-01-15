@@ -16,6 +16,11 @@ REGLAS DE ORO:
     - Si la detectas, elige el artículo más relevante para el problema actual del alumno.
     - RECOMENDACIÓN NATURAL: No digas "Te recomiendo leer...", di algo como: "A propósito de esto que me cuentas, Fernando escribió un artículo sobre ello que quizás te resuene ahora... [Link]". Solo un link por recomendación.
 
+14. ADN DE VOZ DE FERNANDO MARTÍNEZ: Tu estilo debe ser una extensión de Fernando. Sigue estas 3 directrices:
+    - **La Metáfora Vital**: No hables solo de técnica; conecta la voz con la vida y la naturaleza (raíces, nudos, fluir, alquimia).
+    - **El Sentir como Brújula**: Antes de dar soluciones, invita al usuario a "sentir" su estado actual. Usa frases como "¿Qué tal si permitimos que...?" o "Te leo...".
+    - **Prudencia Emocional**: NUNCA menciones "creencias limitantes" o bloqueos profundos en la primera interacción de la sesión. Primero acoge y crea un espacio seguro.
+
 HERRAMIENTAS:
 - Si mencionan una canción, usa tus capacidades de búsqueda para entender su alma y ayudarles a interpretarla desde la emoción.
 - **CONTEXTO DEL VIAJE**: Usa los datos del bloque [DATOS DEL VIAJE] para personalizar tu guía. Puedes recordarles sus metas SMART, su rol de personaje o las cartas que escribieron si es relevante.
@@ -103,6 +108,7 @@ export default async function handler(req, res) {
         }
 
         // --- LÓGICA DE MEMBRESÍA (Habilitada para pruebas: Todo es PRO) ---
+
         const subscriptionTier = 'pro'; // Forzamos Pro para los beta-testers
         let adjustedHistory = history;
 
@@ -119,40 +125,54 @@ export default async function handler(req, res) {
         const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
         const systemPrompt = SYSTEM_PROMPTS[intent];
 
-        let fullPrompt = `${systemPrompt}\n\n`;
-        if (context) fullPrompt += `CONTEXTO EXTRA:\n${context}\n\n`;
-        fullPrompt += `MENSAJE DEL USUARIO / DATOS:\n${message}`;
+        // Usamos systemInstruction para separar las reglas del sistema de la charla del usuario
+        const modelConfig = {
+            model: "gemini-1.5-flash-latest", // Default inicial
+            systemInstruction: systemPrompt,
+        };
 
-        // Lista de modelos con IDs técnicos exactos
-        // gemini-3-flash-preview es el ID oficial para la preview actual.
-        // Usamos -latest para los 1.5 para asegurar que conectamos con la versión más reciente disponible.
-        const models = ["gemini-3-flash-preview", "gemini-1.5-flash-latest", "gemini-1.5-pro-latest"];
+        // Lista de modelos ordenados por velocidad y fiabilidad
+        const models = ["gemini-3-flash-preview", "gemini-1.5-flash", "gemini-1.5-pro"];
         let errors = [];
 
         for (const modelName of models) {
             try {
                 process.stdout.write(`Probando modelo: ${modelName}\n`);
-                const model = genAI.getGenerativeModel({ model: modelName });
+                const model = genAI.getGenerativeModel({ ...modelConfig, model: modelName });
+
+                // Añadimos un pequeño timeout manual para cada intento de modelo (12 segundos)
+                // Vercel tiene un límite total, pero queremos fallar rápido al siguiente modelo si uno tarda mucho.
+                const timeoutPromise = new Promise((_, reject) =>
+                    setTimeout(() => reject(new Error("Timeout del modelo")), 12000)
+                );
 
                 let result;
+                const promptFinal = context ? `CONTEXTO EXTRA:\n${context}\n\nMENSAJE:\n${message}` : message;
+
                 if (history && history.length > 0) {
                     const chat = model.startChat({ history });
-                    result = await chat.sendMessage(fullPrompt);
+                    result = await Promise.race([chat.sendMessage(promptFinal), timeoutPromise]);
                 } else {
-                    result = await model.generateContent(fullPrompt);
+                    result = await Promise.race([model.generateContent(promptFinal), timeoutPromise]);
                 }
 
-                const responseText = result.response.text();
+                let responseText = result.response.text();
+
+                if (!responseText || responseText.trim() === "") {
+                    throw new Error("Respuesta de IA vacía.");
+                }
+
                 return res.status(200).json({ text: responseText });
             } catch (e) {
                 const errorMsg = `${modelName}: ${e.message}`;
                 errors.push(errorMsg);
                 console.warn(`Fallo con ${modelName}:`, e.message);
+                // Si es un error de cuota o similar, intentamos el siguiente modelo
             }
         }
 
         return res.status(500).json({
-            error: "No se pudo conectar con ningún modelo de Gemini.",
+            error: "No se pudo conectar con ningún modelo de Gemini en este momento. Por favor, inténtalo de nuevo en unos segundos.",
             details: errors.join(" | ")
         });
 
