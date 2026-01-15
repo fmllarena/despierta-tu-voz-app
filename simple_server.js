@@ -28,10 +28,9 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 app.post("/api/chat", async (req, res) => {
     try {
         const { intent, message, history = [], context = "", subscription_tier = 'free' } = req.body;
-        // Usamos 2.0-flash por estabilidad en 2026
+        // Usamos gemini-3-flash-preview como motor principal (Vanguardia estable)
         const model = genAI.getGenerativeModel({
-            model: "gemini-2.0-flash",
-            systemInstruction: process.env.SYSTEM_PROMPTS?.[intent] || "" // Si estuviera en env, pero aquí lo simplificamos
+            model: "gemini-3-flash-preview"
         });
 
         const prompt = context ? `CONTEXTO EXTRA:\n${context}\n\nMENSAJE:\n${message}` : message;
