@@ -269,7 +269,7 @@ function setupLandingLegalListeners(passedUser = null) {
             alert(e.message || "Error al procesar el consentimiento.");
             // Restauramos el botón solo en caso de error
             btnConfirm.disabled = false;
-            btnConfirm.innerText = "Confirmar y Pagar";
+            btnConfirm.innerText = "Confirmar y Seguir";
         }
     });
     btnConfirm.dataset.listenerSet = "true";
