@@ -1,6 +1,8 @@
+import { createClient } from '@supabase/supabase-js';
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
 const SYSTEM_PROMPTS = {
+    // ... (mantenemos los mismos prompts)
     mentor_chat: `
 Eres el Mentor de "Despierta tu Voz". Tu enfoque es el Canto Holístico (basado en la metodología de Fernando Martínez).
 No eres un profesor de técnica tradicional; eres un guía hacia la autoconciencia y el autoconocimiento.
@@ -27,8 +29,15 @@ HERRAMIENTAS:
 - Si mencionan una canción, usa tus capacidades de búsqueda para entender su alma y ayudarles a interpretarla desde la emoción.
 - **CONTEXTO DEL VIAJE**: Usa los datos del bloque [DATOS DEL VIAJE] para personalizar tu guía. Puedes recordarles sus metas SMART, su rol de personaje o las cartas que escribieron si es relevante.
   `,
-    alchemy_analysis: `
-[SISTEMA: ANÁLISIS FINAL DE ALQUIMIA]
+    alchemy_analysis: `...`, // (abreviado por brevedad, el original se mantiene)
+    generate_questions: `...`, // (idéntico al original)
+    identify_limiting_belief: `...`, // (idéntico al original)
+    generate_action_plan: `...`, // (idéntico al original)
+    mentor_briefing: `...` // (idéntico al original)
+};
+
+// Re-hidratamos el objeto completo para evitar errores de referencia
+SYSTEM_PROMPTS.alchemy_analysis = `[SISTEMA: ANÁLISIS FINAL DE ALQUIMIA]
 Has completado un módulo del viaje. 
 
 TAREA: Genera una reflexión profunda y poética del Mentor.
@@ -38,10 +47,9 @@ REGLA DE ORO: Empiezas DIRECTAMENTE con el mensaje poético. NUNCA digas frases 
 2. Para el Módulo 5 (Alquimia Final): No te limites a un texto fijo. Analiza su viaje, menciona hilos conductores que has visto en sus respuestas y expande su visión. 
 3. Para Módulo 3 (Personaje): Analiza cómo su máscara de [Nombre del Rol] le ha servido y cómo ahora puede soltarla.
 4. Para Módulo 4: Valida la vulnerabilidad mostrada en las cartas.
-5. Usa un tono acogedor y profundamente humano. Extensión recomendada: 80-120 palabras.
-   `,
-    generate_questions: `
-[SISTEMA: GENERACIÓN DE PREGUNTAS DE COACHING EMOCIONAL]
+5. Usa un tono acogedor y profundamente humano. Extensión recomendada: 80-120 palabras.`;
+
+SYSTEM_PROMPTS.generate_questions = `[SISTEMA: GENERACIÓN DE PREGUNTAS DE COACHING EMOCIONAL]
 Tu objetivo: Generar EXACTAMENTE 1 pregunta de coaching emocional profundo para una etapa específica.
 
 REGLAS CRÍTICAS:
@@ -50,17 +58,15 @@ REGLAS CRÍTICAS:
 3. PRIORIZA el estado emocional, familia y autoestima.
 4. Contesta con 4 párrafos como máximo.
 5. NO fuerces la "voz" si el usuario no la ha mencionado.
-    [ { "id": "...", "text": "...", "type": "long_text" } ]
-  `,
-    identify_limiting_belief: `
-[SISTEMA: EXTRACCIÓN DE CREENCIAS]
+    [ { "id": "...", "text": "...", "type": "long_text" } ]`;
+
+SYSTEM_PROMPTS.identify_limiting_belief = `[SISTEMA: EXTRACCIÓN DE CREENCIAS]
 Analiza el historial del usuario que se te proporciona en el CONTEXTO. 
 TAREA: Identifica la creencia limitante principal que ha frenado su voz durante este viaje (miedo al juicio, perfeccionismo, invisibilidad, etc.) pero exponla con suavidad y solo algunas veces, no saques el tema constantemente.
 REQUISITO: Devuelve SOLO la creencia redactada en primera persona, de forma breve y potente (máx 15 palabras).
-Ejemplo: "Mi voz no es lo suficientemente buena para ser escuchada."
-`,
-    generate_action_plan: `
-[SISTEMA: GENERACIÓN DE PLAN DE ACCIÓN MENTOR]
+Ejemplo: "Mi voz no es lo suficientemente buena para ser escuchada."`;
+
+SYSTEM_PROMPTS.generate_action_plan = `[SISTEMA: GENERACIÓN DE PLAN DE ACCIÓN MENTOR]
 Analiza el historial del usuario en el CONTEXTO.
 TAREA: Genera un plan de acción personalizado para su desarrollo vocal y bienestar.
 REQUISITOS: 
@@ -70,10 +76,9 @@ FORMATO: Devuelve ÚNICAMENTE un JSON con esta estructura:
 {
   "smart_goals": "...",
   "self_care_routine": "..."
-}
-`,
-    mentor_briefing: `
-[SISTEMA: INFORME SINTETIZADO PARA EL MENTOR]
+}`;
+
+SYSTEM_PROMPTS.mentor_briefing = `[SISTEMA: INFORME SINTETIZADO PARA EL MENTOR]
 Eres un asistente experto en coaching vocal y emocional. 
 TAREA: Analiza TODO el historial del alumno (datos del viaje y mensajes de chat) y genera un briefing estratégico para el mentor (Fer) antes de su reunión.
 
@@ -85,73 +90,96 @@ ESTRUCTURA DEL INFORME:
 5. ÁREAS DE ATENCIÓN: ¿Qué puntos crees que Fer debería tocar en la reunión para desbloquear al alumno?
 6. RECOMENDACIÓN TÉCNICA/EMOCIONAL: Un consejo específico para que el mentor use hoy.
 
-TONO: Profesional, perspicaz y directo. Máximo 300 palabras.
-`
-};
+TONO: Profesional, perspicaz y directo. Máximo 300 palabras.`;
 
 export default async function handler(req, res) {
     if (req.method !== "POST") return res.status(405).json({ error: "Método no permitido" });
 
     try {
-        // Vercel parsea el body automáticamente si es JSON
-        const body = req.body;
-        const { intent, message, history = [], context = "", mentorPassword = "" } = body;
+        const { intent, message, history = [], userId, originPost, originCat, canRecommend, blogLibrary = [], mentorPassword = "" } = req.body;
 
         if (!intent || !SYSTEM_PROMPTS[intent]) {
-            return res.status(400).json({ error: "Intento no válido o no proporcionado" });
+            return res.status(400).json({ error: "Intento no válido" });
         }
 
-        // --- SEGURIDAD EXTRA PARA EL BRIEFING DEL MENTOR ---
+        // --- SEGURIDAD EXTRA PARA EL BRIEFING ---
         if (intent === 'mentor_briefing') {
-            const secretPass = process.env.MENTOR_PASSWORD || 'Alquimia2026'; // Fallback temporal
+            const secretPass = process.env.MENTOR_PASSWORD || 'Alquimia2026';
             if (mentorPassword !== secretPass) {
-                return res.status(401).json({ error: "Clave de mentor incorrecta. Acceso denegado." });
+                return res.status(401).json({ error: "Acceso denegado." });
             }
         }
 
-        // --- LÓGICA DE MEMBRESÍA (Habilitada para pruebas: Todo es PRO) ---
-        const subscriptionTier = 'pro';
-        let adjustedHistory = history || [];
+        let context = "";
 
-        // --- SANITIZACIÓN DE HISTORIAL ---
-        // El SDK falla si hay partes vacías: "Each Content should have at least one part"
-        adjustedHistory = adjustedHistory.filter(h =>
-            h.parts &&
-            h.parts.length > 0 &&
-            h.parts[0].text &&
-            h.parts[0].text.trim() !== ""
-        );
+        // --- OBTENCIÓN DE CONTEXTO EN EL SERVIDOR (SEGURIDAD) ---
+        if (userId && (intent === 'mentor_chat' || intent === 'mentor_briefing' || intent === 'alchemy_analysis')) {
+            const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
 
-        if (!process.env.GEMINI_API_KEY) {
-            return res.status(500).json({ error: "Falta GEMINI_API_KEY en el servidor." });
+            const [{ data: perfil }, { data: viaje }] = await Promise.all([
+                supabase.from('user_profiles').select('*').eq('user_id', userId).single(),
+                supabase.from('user_coaching_data').select('*').eq('user_id', userId).single()
+            ]);
+
+            if (perfil) {
+                context = `\n[CONTEXTO PRIVADO DEL ALUMNO]\n`;
+                if (originPost) {
+                    context += `\n[CONTEXTO DE ENTRADA]\n- El alumno viene de: "${originPost}"\n- Categoría: ${originCat}\n- Acción: Salúdale conectando con el post.\n`;
+                }
+
+                context += `- Historia Vocal: ${perfil.historia_vocal || 'N/A'}\n`;
+                context += `- Creencias: ${perfil.creencias || 'N/A'}\n`;
+                context += `- Alquimia: ${perfil.nivel_alquimia || 1}/10\n`;
+                context += `- Viaje Completado: ${perfil.last_hito_completed >= 5 ? 'SÍ' : 'NO'}\n`;
+                context += `- ANOTACIONES PRIVADAS DEL MENTOR (FER): ${perfil.mentor_notes || 'Ninguna'}\n`;
+
+                // Estilo
+                const length = perfil.mentor_length ?? 0.5;
+                const focus = perfil.mentor_focus ?? 0.5;
+                const personality = perfil.mentor_personality ?? 0.5;
+
+                context += `\n[INSTRUCCIONES DE ESTILO]\n`;
+                if (length < 0.3) context += `- Sé muy BREVE y directo.\n`;
+                else if (length > 0.7) context += `- Sé muy DETALLADO y profundo.\n`;
+
+                if (focus < 0.3) context += `- Enfoque TÉCNICO.\n`;
+                else if (focus > 0.7) context += `- Enfoque EMOCIONAL.\n`;
+
+                if (personality > 0.7) context += `- Tono MOTIVADOR y cálido.\n`;
+                else if (personality < 0.3) context += `- Tono NEUTRO y calmado.\n`;
+
+                context += `- Idioma: ${perfil.mentor_language || 'es'}.\n`;
+
+                // Artículos
+                if (canRecommend && blogLibrary.length > 0) {
+                    context += `\n[BIBLIOTECA DE ARTÍCULOS DE FERNANDO]\n`;
+                    const titles = blogLibrary.map(post => `- ${post.title}: ${post.url}`).join('\n');
+                    context += `ARTÍCULOS DISPONIBLES:\n${titles}\n`;
+                }
+            }
+
+            if (viaje) {
+                context += `\n[DATOS DEL VIAJE]\n- M1: ${JSON.stringify(viaje.linea_vida_hitos?.respuestas || {})}\n- M2: ${JSON.stringify(viaje.herencia_raices?.respuestas || {})}\n`;
+            }
         }
 
+        // --- LLAMADA A GEMINI ---
+        if (!process.env.GEMINI_API_KEY) return res.status(500).json({ error: "Falta API Key" });
+
         const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-        const systemPrompt = SYSTEM_PROMPTS[intent];
-
-        // Usamos systemInstruction para separar las reglas del sistema de la charla del usuario
-        const modelConfig = {
-            systemInstruction: systemPrompt,
-        };
-
-        // Lista de modelos optimizada para 2026 (Siguiendo jerarquía de estabilidad):
-        // 1. Gemini 3 (Vanguardia/Motor principal)
-        // 2. Gemini 1.5 (Ultra-estable/LTS - Backup de seguridad)
-        const models = ["gemini-3-flash-preview", "gemini-1.5-flash-latest", "gemini-1.5-pro-latest"];
+        const modelConfig = { systemInstruction: SYSTEM_PROMPTS[intent] };
+        const models = ["gemini-2.0-flash", "gemini-1.5-flash", "gemini-1.5-pro"];
         let errors = [];
 
         for (const modelName of models) {
             try {
-                process.stdout.write(`Probando modelo: ${modelName}\n`);
                 const model = genAI.getGenerativeModel({ ...modelConfig, model: modelName });
-
-                const timeoutPromise = new Promise((_, reject) =>
-                    setTimeout(() => reject(new Error("Timeout del modelo")), 12000)
-                );
-
-                let result;
+                const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 20000));
                 const promptFinal = context ? `CONTEXTO EXTRA:\n${context}\n\nMENSAJE:\n${message}` : message;
 
+                let adjustedHistory = history.filter(h => h.parts && h.parts.length > 0 && h.parts[0].text?.trim() !== "");
+
+                let result;
                 if (adjustedHistory.length > 0) {
                     const chat = model.startChat({ history: adjustedHistory });
                     result = await Promise.race([chat.sendMessage(promptFinal), timeoutPromise]);
@@ -159,28 +187,16 @@ export default async function handler(req, res) {
                     result = await Promise.race([model.generateContent(promptFinal), timeoutPromise]);
                 }
 
-                let responseText = result.response.text();
-
-                if (!responseText || responseText.trim() === "") {
-                    throw new Error("Respuesta de IA vacía.");
-                }
-
-                return res.status(200).json({ text: responseText });
+                return res.status(200).json({ text: result.response.text() });
             } catch (e) {
-                const errorMsg = `${modelName}: ${e.message}`;
-                errors.push(errorMsg);
-                console.warn(`Fallo con ${modelName}:`, e.message);
-                // Si es un error de cuota o similar, intentamos el siguiente modelo
+                errors.push(`${modelName}: ${e.message}`);
             }
         }
 
-        return res.status(500).json({
-            error: "No se pudo conectar con ningún modelo de Gemini en este momento. Por favor, inténtalo de nuevo en unos segundos.",
-            details: errors.join(" | ")
-        });
+        return res.status(500).json({ error: "Error de conexión con IA", details: errors.join(" | ") });
 
     } catch (error) {
-        console.error("Error crítico en api/chat:", error);
+        console.error("Error crítico:", error);
         return res.status(500).json({ error: "Error en el servidor", details: error.message });
     }
 }
