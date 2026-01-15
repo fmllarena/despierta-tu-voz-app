@@ -8,18 +8,7 @@ const MENSAJE_BIENVENIDA = `<p>Hola, ¿qué tal? Soy tu Mentor Vocal privado.</p
 Aquí no solo buscaremos la nota perfecta, sino que usaremos cada sonido como una llave para abrir los cerrojos de tu historia y desvelar los secretos 
 que guarda tu inconsciente. Respira, confía y prepárate para transformar tu vida a través del canto. ¿Cómo te sientes al iniciar este viaje hoy?</p>`;
 
-const FRASES_PENSAR = [
-    "Escuchando el eco de tu alma...",
-    "Sintonizando tu vibración única...",
-    "Buscando la nota en tu interior...",
-    "Explorando tu diario de alquimia...",
-    "Tu voz está viajando por el altar...",
-    "Sintiendo el peso de tus palabras...",
-    "La alquimia vocal lleva su tiempo...",
-    "Preparando una respuesta desde el corazón...",
-    "Conectando con tu esencia sonora...",
-    "Buscando el silencio donde nace tu canto..."
-];
+const FRASES_PENSAR = ["Procesando tu pregunta..."];
 
 // --- FILTRO DE PRUDENCIA: Sesiones y Tiempo ---
 if (!sessionStorage.getItem('dtv_session_start')) {
@@ -512,8 +501,7 @@ async function sendMessage() {
     ELEMENTS.sendBtn.disabled = true;
 
     // --- ESTADO PENSANDO ---
-    const fraseAleatoria = FRASES_PENSAR[Math.floor(Math.random() * FRASES_PENSAR.length)];
-    appendMessage(fraseAleatoria, 'ia thinking', 'msg-thinking');
+    appendMessage(FRASES_PENSAR[0], 'ia thinking', 'msg-thinking');
 
     try {
         ['msg-botiquin', 'msg-bienvenida'].forEach(id => document.getElementById(id)?.remove());
@@ -523,13 +511,18 @@ async function sendMessage() {
         // Quitar burbuja de pensar
         document.getElementById('msg-thinking')?.remove();
 
-        appendMessage(responseText, 'ia');
-        guardarMensajeDB(responseText, 'ia'); // Guardar respuesta de la IA
-
-        chatHistory.push({ role: "user", parts: [{ text }] }, { role: "model", parts: [{ text: responseText }] });
+        if (responseText && responseText.trim() !== "") {
+            appendMessage(responseText, 'ia');
+            guardarMensajeDB(responseText, 'ia'); // Guardar respuesta de la IA
+            chatHistory.push({ role: "user", parts: [{ text }] }, { role: "model", parts: [{ text: responseText }] });
+        } else {
+            console.warn("Recibida respuesta vacía de Gemini.");
+            appendMessage("Lo siento, no he podido procesar eso bien. ¿Podrías repetirlo de otra forma?", 'ia');
+        }
     } catch (e) {
         document.getElementById('msg-thinking')?.remove();
-        appendMessage(`Error: ${e.message}`, 'ia');
+        console.error("Error en sendMessage:", e);
+        appendMessage(`Vaya, parece que hay un pequeño problema técnico: ${e.message}. Prueba de nuevo en unos instantes.`, 'ia');
     } finally {
         ELEMENTS.chatInput.disabled = false;
         ELEMENTS.sendBtn.disabled = false;
