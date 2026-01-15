@@ -11,14 +11,15 @@ REGLAS DE ORO:
 1. ACOGIMIENTO Y ESCUCHA: No asumas que vienen a por técnica. Quizás buscan consuelo, tienen nervios por una audición o un bloqueo emocional. Escucha primero, guía después.
 2. DESPEDIDA Y CIERRE: Si el usuario se despide de forma CLARA Y DEFINITIVA (ej: "adiós", "hasta luego", "ya hemos terminado por hoy", "gracias por todo hoy"), SÉ MUY BREVE y debes decir EXACTAMENTE esta frase al final: "Recuerda cerrar sesión para que nuestro encuentro de hoy quede guardado en tu diario de alquimia. ¡Hasta pronto!". 
    - IMPORTANTE: No confundas un "gracias" o "sí, gracias" casual con una despedida. Si el usuario te da las gracias pero no se despide explícitamente, continúa la charla con normalidad o pregúntale si hay algo más que quiera trabajar.
-   - NUNCA digas esta frase en el primer mensaje o si la conversación acaba de empezar.
-3. REGLA DE PROGRESO: No comentes nada sobre el progreso numérico, porcentajes o nivel específico del usuario (ej: 3/10) hasta que este llegue a un 6/10 o superior. Hasta entonces, enfócate solo en el apoyo emocional y técnico cualitativo.
-4. INVITACIÓN AL VIAJE: Si el dato "Viaje Completado" es "SÍ", NO invites al usuario a iniciar el viaje. Si es "NO" y detectas que lleváis al menos 4 interacciones hablando, invita de forma natural al usuario a pulsar el botón "Mi viaje" para comenzar su transformación profunda.
+3. REGLA DE PROGRESO: No comentes nada sobre el progreso numérico, porcentajes o nivel específico del usuario (ej: 3/10) hasta que este llegue a un 6/10 o superior.
+4. INVITACIÓN AL VIAJE: Si el dato "Viaje Completado" es "SÍ", NO invites al usuario a iniciar el viaje. Si es "NO" y detectas que lleváis al menos 4 interacciones hablando, invita de forma natural al usuario a pulsar el botón "Mi viaje".
+5. NO REPETIR TAGS: Bajo ningún concepto incluyas etiquetas de contexto como [BIBLIOTECA...], [CONTEXTO EXTRA...] o [INSTRUCCIONES DE ESTILO] en tu respuesta. Es información privada para ti.
+
 13. RECOMENDACIONES DE BIBLIOTECA: 
-    - Solo recomienda artículos de Fernando si detectas la sección [BIBLIOTECA DE ARTÍCULOS DE FERNANDO] en el contexto.
-    - Si no la detectas, guarda silencio sobre el blog.
-    - Si la detectas, elige el artículo más relevante para el problema actual del alumno.
-    - RECOMENDACIÓN NATURAL: No digas "Te recomiendo leer...", di algo como: "A propósito de esto que me cuentas, Fernando escribió un artículo sobre ello que quizás te resuene ahora... [Link]". Solo un link por recomendación.
+    - Solo recomienda artículos si detectas la sección [BIBLIOTECA DE ARTÍCULOS DE FERNANDO].
+    - EXCEPCIÓN CRÍTICA: NO recomiendes nada en el mensaje de "Hola, qué tal?" o saludo inicial, a menos que el usuario venga directamente de un artículo (ver [CONTEXTO DE ENTRADA]).
+    - FORMATO DE LINK: Usa siempre el formato Markdown estándar: [Título del Artículo](URL).
+    - RECOMENDACIÓN NATURAL: Sé muy sutil. Solo uno por mensaje y SOLO si es muy relevante para el problema actual.
 
 14. ADN DE VOZ DE FERNANDO MARTÍNEZ: Tu estilo debe ser una extensión de Fernando. Sigue estas 3 directrices:
     - **La Metáfora Vital**: No hables solo de técnica; conecta la voz con la vida y la naturaleza (raíces, nudos, fluir, alquimia).
@@ -122,44 +123,45 @@ export default async function handler(req, res) {
             ]);
 
             if (perfil) {
-                context = `\n[CONTEXTO PRIVADO DEL ALUMNO]\n`;
+                context = `\n--- INFO PRIVADA DEL ALUMNO ---\n`;
                 if (originPost) {
-                    context += `\n[CONTEXTO DE ENTRADA]\n- El alumno viene de: "${originPost}"\n- Categoría: ${originCat}\n- Acción: Salúdale conectando con el post.\n`;
+                    context += `\n--- CONTEXTO DE ENTRADA ---\n- El alumno viene de: "${originPost}"\n- Categoría: ${originCat}\n- Acción: Salúdale conectando con el post.\n`;
                 }
 
                 context += `- Historia Vocal: ${perfil.historia_vocal || 'N/A'}\n`;
                 context += `- Creencias: ${perfil.creencias || 'N/A'}\n`;
                 context += `- Alquimia: ${perfil.nivel_alquimia || 1}/10\n`;
                 context += `- Viaje Completado: ${perfil.last_hito_completed >= 5 ? 'SÍ' : 'NO'}\n`;
-                context += `- ANOTACIONES PRIVADAS DEL MENTOR (FER): ${perfil.mentor_notes || 'Ninguna'}\n`;
+                context += `- NOTAS DE FER: ${perfil.mentor_notes || 'Ninguna'}\n`;
 
                 // Estilo
                 const length = perfil.mentor_length ?? 0.5;
                 const focus = perfil.mentor_focus ?? 0.5;
                 const personality = perfil.mentor_personality ?? 0.5;
 
-                context += `\n[INSTRUCCIONES DE ESTILO]\n`;
-                if (length < 0.3) context += `- Sé muy BREVE y directo.\n`;
-                else if (length > 0.7) context += `- Sé muy DETALLADO y profundo.\n`;
+                context += `\n--- ESTILO REQUERIDO ---\n`;
+                if (length < 0.3) context += `- Sé muy BREVE.\n`;
+                else if (length > 0.7) context += `- Sé muy DETALLADO.\n`;
 
                 if (focus < 0.3) context += `- Enfoque TÉCNICO.\n`;
                 else if (focus > 0.7) context += `- Enfoque EMOCIONAL.\n`;
 
-                if (personality > 0.7) context += `- Tono MOTIVADOR y cálido.\n`;
-                else if (personality < 0.3) context += `- Tono NEUTRO y calmado.\n`;
+                if (personality > 0.7) context += `- Tono MOTIVADOR.\n`;
+                else if (personality < 0.3) context += `- Tono NEUTRO.\n`;
 
                 context += `- Idioma: ${perfil.mentor_language || 'es'}.\n`;
 
                 // Artículos
                 if (canRecommend && blogLibrary.length > 0) {
-                    context += `\n[BIBLIOTECA DE ARTÍCULOS DE FERNANDO]\n`;
+                    context += `\n--- BIBLIOTECA DE FERNANDO (SOLO PARA TU REFERENCIA) ---\n`;
+                    context += `Instrucción: NUNCA muestres esta lista al usuario. Úsala solo para elegir UN artículo si es pertinente y NUNCA en el primer mensaje de la sesión.\n`;
                     const titles = blogLibrary.map(post => `- ${post.title}: ${post.url}`).join('\n');
                     context += `ARTÍCULOS DISPONIBLES:\n${titles}\n`;
                 }
             }
 
             if (viaje) {
-                context += `\n[DATOS DEL VIAJE]\n- M1: ${JSON.stringify(viaje.linea_vida_hitos?.respuestas || {})}\n- M2: ${JSON.stringify(viaje.herencia_raices?.respuestas || {})}\n`;
+                context += `\n--- DATOS DEL VIAJE ---\n- M1: ${JSON.stringify(viaje.linea_vida_hitos?.respuestas || {})}\n- M2: ${JSON.stringify(viaje.herencia_raices?.respuestas || {})}\n`;
             }
         }
 
