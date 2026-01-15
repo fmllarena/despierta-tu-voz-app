@@ -240,6 +240,10 @@
                     <span id="toggleToLogin">¿Ya tienes cuenta? Inicia sesión aquí</span>
                     <span id="toggleToRegister" style="display:none;">¿Eres nuevo? Crea tu cuenta aquí</span>
                 </p>
+                <p id="landingForgotPassWrap" style="display:none; margin-top: 10px; font-size: 0.85em;">
+                    <a href="#" id="landingForgotPassLink"
+                        style="color: var(--color-acento); text-decoration: none;">¿Has olvidado tu contraseña?</a>
+                </p>
                 <button onclick="document.getElementById('authLandingModal').style.display='none'"
                     class="btn btn-secondary">Cancelar</button>
             </div>
@@ -300,6 +304,36 @@
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="js/stripe-checkout.js"></script>
+    <script>
+        // Lógica de detección de promo
+        window.addEventListener('load', () => {
+            const params = new URLSearchParams(window.location.search);
+            const promo = params.get('promo');
+            if (promo) {
+                console.log("🎁 Promo detectada:", promo);
+                sessionStorage.setItem('dtv_promo_code', promo);
+
+                // Actualizar la card de Profundiza (Pro)
+                const proCard = document.querySelector('.pricing-card.featured');
+                if (proCard) {
+                    const priceEl = proCard.querySelector('.price');
+                    if (priceEl) {
+                        priceEl.innerHTML = `
+                            <div class="promo-badge" style="background: var(--color-acento); color: white; padding: 5px 10px; border-radius: 20px; font-size: 0.8em; margin-bottom: 10px; display: inline-block; font-weight: 600;">PROMO ACTIVADA</div>
+                            <div style="font-size: 1.5em; font-weight: 700;">1 MES GRATIS</div>
+                            <div style="font-size: 1.1em; color: var(--color-acento); font-weight: 800;">SIN TARJETA</div>
+                            <div style="font-size: 0.8em; margin-top: 5px;">Luego 9,90€/mes</div>
+                        `;
+                    }
+                    const btn = proCard.querySelector('button');
+                    if (btn) {
+                        btn.innerText = "Activar gratis ahora ✨";
+                        btn.style.boxShadow = "0 0 20px rgba(var(--color-acento-rgb), 0.4)";
+                    }
+                }
+            }
+        });
+    </script>
 
 </body>
 
