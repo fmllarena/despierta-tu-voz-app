@@ -300,7 +300,9 @@ async function ejecutarPago(planType, user) {
                     window.location.href = "index.html";
                     return;
                 } else {
-                    alert("Error con el código: " + (data.error || "Desconocido"));
+                    const errorMsg = data.error || "Desconocido";
+                    const details = data.details ? `\nDetalles: ${data.details}` : "";
+                    alert(`Error con el código: ${errorMsg}${details}`);
                     // Si falla el código, dejamos que intente el pago normal por si acaso
                 }
             }
