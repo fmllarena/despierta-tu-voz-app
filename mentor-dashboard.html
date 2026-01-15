@@ -82,7 +82,8 @@
         <p>Introduce el email del alumno para generar su briefing estratégico.</p>
 
         <div class="search-section" style="flex-direction: column; gap: 15px;">
-            <input type="email" id="studentEmail" placeholder="email@alumno.com">
+            <input type="email" id="studentEmail" list="studentList" placeholder="Email o Nombre del alumno...">
+            <datalist id="studentList"></datalist>
             <input type="password" id="mentorPass" placeholder="Clave de acceso de Mentor">
             <button id="generateBtn" style="width: 100%;">Generar Informe Inteligente</button>
         </div>
