@@ -108,15 +108,17 @@ export default async function handler(req, res) {
         }
 
         // --- LÓGICA DE MEMBRESÍA (Habilitada para pruebas: Todo es PRO) ---
+        const subscriptionTier = 'pro';
+        let adjustedHistory = history || [];
 
-        const subscriptionTier = 'pro'; // Forzamos Pro para los beta-testers
-        let adjustedHistory = history;
-
-        // Si el usuario fuera 'free', limitaríamos el historial...
-        // Pero para el testeo, dejamos el historial intacto para todos.
-        if (subscriptionTier === 'free' && intent === 'mentor_chat') {
-            adjustedHistory = [];
-        }
+        // --- SANITIZACIÓN DE HISTORIAL ---
+        // El SDK falla si hay partes vacías: "Each Content should have at least one part"
+        adjustedHistory = adjustedHistory.filter(h =>
+            h.parts &&
+            h.parts.length > 0 &&
+            h.parts[0].text &&
+            h.parts[0].text.trim() !== ""
+        );
 
         if (!process.env.GEMINI_API_KEY) {
             return res.status(500).json({ error: "Falta GEMINI_API_KEY en el servidor." });
@@ -127,12 +129,12 @@ export default async function handler(req, res) {
 
         // Usamos systemInstruction para separar las reglas del sistema de la charla del usuario
         const modelConfig = {
-            model: "gemini-1.5-flash-latest", // Default inicial
             systemInstruction: systemPrompt,
         };
 
-        // Lista de modelos ordenados por velocidad y fiabilidad (Actualizado 2026)
-        const models = ["gemini-3-flash", "gemini-3-flash-preview", "gemini-2.5-flash", "gemini-2.0-flash"];
+        // Lista de modelos optimizada para 2026:
+        // gemini-2.0-flash es el estándar sólido. 3-flash todavía puede ser inestable.
+        const models = ["gemini-2.0-flash", "gemini-3-flash-preview", "gemini-1.5-flash", "gemini-2.0-pro-exp"];
         let errors = [];
 
         for (const modelName of models) {
@@ -140,8 +142,6 @@ export default async function handler(req, res) {
                 process.stdout.write(`Probando modelo: ${modelName}\n`);
                 const model = genAI.getGenerativeModel({ ...modelConfig, model: modelName });
 
-                // Añadimos un pequeño timeout manual para cada intento de modelo (12 segundos)
-                // Vercel tiene un límite total, pero queremos fallar rápido al siguiente modelo si uno tarda mucho.
                 const timeoutPromise = new Promise((_, reject) =>
                     setTimeout(() => reject(new Error("Timeout del modelo")), 12000)
                 );
@@ -149,8 +149,8 @@ export default async function handler(req, res) {
                 let result;
                 const promptFinal = context ? `CONTEXTO EXTRA:\n${context}\n\nMENSAJE:\n${message}` : message;
 
-                if (history && history.length > 0) {
-                    const chat = model.startChat({ history });
+                if (adjustedHistory.length > 0) {
+                    const chat = model.startChat({ history: adjustedHistory });
                     result = await Promise.race([chat.sendMessage(promptFinal), timeoutPromise]);
                 } else {
                     result = await Promise.race([model.generateContent(promptFinal), timeoutPromise]);
