@@ -9,17 +9,19 @@ export default async function handler(req, res) {
 
     try {
         const { code, userId } = req.body;
+        console.log(`🔍 Intento de canje: Code="${code}", UserId="${userId}"`);
 
         if (!code || !userId) {
             return res.status(400).json({ error: 'Faltan datos (code, userId)' });
         }
 
+        const normalizedCode = code.trim().toUpperCase();
         // --- SISTEMA DE CÓDIGOS (Simplificado) ---
-        // Puedes añadir más códigos aquí o llevarlos a una tabla en Supabase en el futuro
-        const VALID_CODES = ['ALQUIMIA2026', 'PROMO2026', 'FERNANDO2026'];
+        const VALID_CODES = ['PROMO1MES', 'ALQUIMIA2026', 'PROMO2026', 'FERNANDO2026'];
 
-        if (!VALID_CODES.includes(code.toUpperCase())) {
-            return res.status(400).json({ error: 'El código promocional no es válido o ha expirado.' });
+        if (!VALID_CODES.includes(normalizedCode)) {
+            console.warn(`❌ Código no aceptado: "${normalizedCode}"`);
+            return res.status(400).json({ error: `El código promocional "${normalizedCode}" no es válido.` });
         }
 
         console.log(`🎁 Canjeando promo ${code} para usuario ${userId}`);
