@@ -271,7 +271,8 @@
                             de permanencia; puedes cancelar cuando quieras.</p>
                         <p><strong>2. Garantía de Precio Blindado:</strong> Tu tarifa se fija en
                             <strong>9,90€/mes</strong> (IVA incluido) de forma vitalicia mientras mantengas tu
-                            suscripción activa, protegiéndote de la subida a 19,90€.</p>
+                            suscripción activa, protegiéndote de la subida a 19,90€.
+                        </p>
                         <p><strong>3. Renovación:</strong> Finalizado el mes gratuito, podrás formalizar tu suscripción
                             para mantener este precio exclusivo.</p>
                     </div>
@@ -347,6 +348,16 @@
                         btn.style.boxShadow = "0 0 20px rgba(var(--color-acento-rgb), 0.4)";
                     }
                 }
+
+                // Ocultar botones de distracción
+                const distraciones = [
+                    document.querySelector('.btn-nav'), // Acceso Alumnos
+                    document.querySelector('.hero .btn-primary'), // Empezar mi camino gratis
+                    document.querySelector('.btn-footer-cta') // Footer CTA
+                ];
+                distraciones.forEach(el => { if (el) el.style.display = 'none'; });
+
+                // Opcional: Desplazar suavemente a precios o dejar que ellos naveguen
             }
         });
     </script>
