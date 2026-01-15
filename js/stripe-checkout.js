@@ -280,6 +280,32 @@ function setupLandingLegalListeners(passedUser = null) {
  */
 async function ejecutarPago(planType, user) {
     try {
+        const promo = sessionStorage.getItem('dtv_promo_code');
+
+        // --- NUEVA LÓGICA: CANJE SIN TARJETA ---
+        if (promo && planType === 'pro') {
+            const confirmPromo = confirm(`🎁 ¡Buenas noticias! Tienes un código de promoción: ${promo}.\n\n¿Quieres activar tu mes gratis del Plan Pro ahora mismo sin necesidad de tarjeta?`);
+
+            if (confirmPromo) {
+                const response = await fetch('/api/redeem-promo', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ code: promo, userId: user.id })
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    alert("✨ ¡Enhorabuena! Tu mes gratis ha sido activado. Ya tienes acceso a todas las funciones Pro.");
+                    sessionStorage.removeItem('dtv_promo_code');
+                    window.location.href = "index.html";
+                    return;
+                } else {
+                    alert("Error con el código: " + (data.error || "Desconocido"));
+                    // Si falla el código, dejamos que intente el pago normal por si acaso
+                }
+            }
+        }
+
         const response = await fetch('/api/create-checkout-session', {
             method: 'POST',
             headers: {
