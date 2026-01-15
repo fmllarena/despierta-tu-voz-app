@@ -132,9 +132,10 @@ export default async function handler(req, res) {
             systemInstruction: systemPrompt,
         };
 
-        // Lista de modelos optimizada para 2026:
-        // gemini-2.0-flash es el estándar sólido. 3-flash todavía puede ser inestable.
-        const models = ["gemini-2.0-flash", "gemini-3-flash-preview", "gemini-1.5-flash", "gemini-2.0-pro-exp"];
+        // Lista de modelos optimizada para 2026 (Siguiendo jerarquía de estabilidad):
+        // 1. Gemini 3 (Vanguardia/Motor principal)
+        // 2. Gemini 1.5 (Ultra-estable/LTS - Backup de seguridad)
+        const models = ["gemini-3-flash-preview", "gemini-1.5-flash-latest", "gemini-1.5-pro-latest"];
         let errors = [];
 
         for (const modelName of models) {
