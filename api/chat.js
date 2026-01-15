@@ -131,8 +131,8 @@ export default async function handler(req, res) {
             systemInstruction: systemPrompt,
         };
 
-        // Lista de modelos ordenados por velocidad y fiabilidad
-        const models = ["gemini-3-flash-preview", "gemini-1.5-flash", "gemini-1.5-pro"];
+        // Lista de modelos ordenados por velocidad y fiabilidad (Actualizado 2026)
+        const models = ["gemini-3-flash", "gemini-3-flash-preview", "gemini-2.5-flash", "gemini-2.0-flash"];
         let errors = [];
 
         for (const modelName of models) {
