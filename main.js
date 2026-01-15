@@ -110,12 +110,12 @@ const ELEMENTS = {
     cancelLegalBtn: document.getElementById('cancelLegalBtn')
 };
 
-async function llamarGemini(message, history, intent, context = "") {
+async function llamarGemini(message, history, intent, extraData = {}) {
     try {
         const response = await fetch('/api/chat', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ message, history, intent, context })
+            body: JSON.stringify({ message, history, intent, ...extraData })
         });
         const data = await response.json();
         if (data.error) {
@@ -404,90 +404,8 @@ document.querySelectorAll('#authEmail, #authPassword').forEach(el => {
 
 // --- LÓGICA DE CONTEXTO DEL ALUMNO (SUPABASE) ---
 
-async function obtenerContextoAlumno() {
-    if (!supabase) return "";
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return "";
+// La obtención de contexto ahora se realiza de forma segura en el servidor (api/chat.js)
 
-    const [{ data: perfil }, { data: viaje }] = await Promise.all([
-        supabase.from('user_profiles').select('*').eq('user_id', user.id).single(),
-        supabase.from('user_coaching_data').select('*').eq('user_id', user.id).single()
-    ]);
-
-    let ctx = `\n[CONTEXTO PRIVADO DEL ALUMNO]\n`;
-    // --- CONTEXTO DE ORIGEN DEL BLOG ---
-    const originPost = sessionStorage.getItem('dtv_origin_post');
-    const originCat = sessionStorage.getItem('dtv_origin_cat');
-    if (originPost) {
-        ctx += `\n[CONTEXTO DE ENTRADA]\n`;
-        ctx += `- El alumno viene directamente de leer tu artículo: "${originPost}"\n`;
-        if (originCat) ctx += `- Categoría del artículo: ${originCat}\n`;
-        ctx += `- Acción: Salúdale reconociendo que viene de ese artículo y conecta tu primera respuesta con el tema del post si es posible.\n`;
-        // Limpiamos para que solo lo mencione una vez al inicio
-        sessionStorage.removeItem('dtv_origin_post');
-        sessionStorage.removeItem('dtv_origin_cat');
-    }
-
-    if (perfil) {
-        ctx += `- Historia Vocal: ${perfil.historia_vocal || 'N/A'}\n- Creencias: ${perfil.creencias || 'N/A'}\n- Alquimia: ${perfil.nivel_alquimia || 1}/10\n- Viaje Completado: ${perfil.last_hito_completed >= 5 ? 'SÍ' : 'NO'} (Último hito: ${perfil.last_hito_completed || 0})\n- ANOTACIONES PRIVADAS DEL MENTOR (FER): ${perfil.mentor_notes || 'Ninguna'}\n`;
-
-        // --- AJUSTES DEL MENTOR (Traducción a instrucciones explícitas) ---
-        const focus = perfil.mentor_focus ?? 0.5;
-        const personality = perfil.mentor_personality ?? 0.5;
-        const length = perfil.mentor_length ?? 0.5;
-
-        ctx += `\n[INSTRUCCIONES DE ESTILO DEL MENTOR]\n`;
-
-        // Longitud (Extensión)
-        if (length < 0.3) {
-            ctx += `- Sé muy BREVE, conciso y directo. Evita los párrafos largos y ve al grano.\n`;
-        } else if (length > 0.7) {
-            ctx += `- Sé muy DETALLADO, profundo y extenso en tus explicaciones. No escatimes en palabras.\n`;
-        } else {
-            ctx += `- Mantén una extensión de respuesta equilibrada y moderada.\n`;
-        }
-
-        // Enfoque (Técnico vs Emocional)
-        if (focus < 0.3) {
-            ctx += `- Prioriza el enfoque TÉCNICO y anatómico del canto.\n`;
-        } else if (focus > 0.7) {
-            ctx += `- Prioriza el enfoque EMOCIONAL, espiritual y holístico.\n`;
-        }
-
-        // Personalidad (Neutro vs Motivador)
-        if (personality > 0.7) {
-            ctx += `- Tu tono debe ser extremadamente MOTIVADOR, cálido y empoderador.\n`;
-        } else if (personality < 0.3) {
-            ctx += `- Tu tono debe ser NEUTRO, profesional y calmado.\n`;
-        }
-
-        ctx += `- Idioma del alumno: ${perfil.mentor_language || 'es'}. Si el idioma no es 'es', responde en dicho idioma.\n`;
-        if (perfil.weekly_goal) ctx += `- Objetivo Semanal: ${perfil.weekly_goal}\n`;
-
-        ctx += `\nInstrucción crítica: Adapta rigorosamente tu respuesta a estas instrucciones de estilo.\n`;
-
-        // RECOMENDACIONES DE BIBLIOTECA
-        if (canAIRecommend() && blogLibrary.length > 0) {
-            ctx += `\n[BIBLIOTECA DE ARTÍCULOS DE FERNANDO]\n`;
-            ctx += `- Tienes permiso para recomendar lecturas. Elige el artículo más relevante para el momento actual.\n`;
-            ctx += `- Solo recomienda si aporta valor real al bloqueo del alumno.\n`;
-
-            // Pasamos solo títulos y URLs para no saturar el prompt
-            const titles = blogLibrary.map(post => `- ${post.title}: ${post.url}`).join('\n');
-            ctx += `ARTÍCULOS DISPONIBLES:\n${titles}\n`;
-            ctx += `\nInstrucción de estilo: Si recomiendas un link, hazlo con calidez, citando que es un artículo de Fernando.\n`;
-        } else if (canAIRecommend() && blogLibrary.length === 0) {
-            ctx += `\n- Tienes permiso para recomendar artículos, pero la biblioteca no cargó. No inventes links.\n`;
-        } else {
-            ctx += `\n- Todavía NO es el momento de recomendar artículos externos. Céntrate en la charla directa de tú a tú.\n`;
-        }
-    }
-    if (viaje) {
-        ctx += `\n[VIAJE]\n- M1: ${JSON.stringify(viaje.linea_vida_hitos?.respuestas || {})}\n- M2: ${JSON.stringify(viaje.herencia_raices?.respuestas || {})}\n`;
-        // ... (el resto del contexto se mantiene igual o truncado)
-    }
-    return ctx + `\n------------------------\n`;
-}
 
 async function sendMessage() {
     const text = ELEMENTS.chatInput.value.trim();
@@ -505,8 +423,21 @@ async function sendMessage() {
 
     try {
         ['msg-botiquin', 'msg-bienvenida'].forEach(id => document.getElementById(id)?.remove());
-        const contexto = await obtenerContextoAlumno();
-        const responseText = await llamarGemini(text, chatHistory, "mentor_chat", contexto);
+
+        const { data: { user } } = await supabase.auth.getUser();
+        const extraData = {
+            userId: user?.id,
+            originPost: sessionStorage.getItem('dtv_origin_post'),
+            originCat: sessionStorage.getItem('dtv_origin_cat'),
+            canRecommend: canAIRecommend(),
+            blogLibrary: blogLibrary // Enviamos la lista de títulos para que la IA elija
+        };
+
+        const responseText = await llamarGemini(text, chatHistory, "mentor_chat", extraData);
+
+        // Limpieza de origen tras el primer mensaje
+        sessionStorage.removeItem('dtv_origin_post');
+        sessionStorage.removeItem('dtv_origin_cat');
 
         // Quitar burbuja de pensar
         document.getElementById('msg-thinking')?.remove();
@@ -643,9 +574,9 @@ const MODULOS = {
         appendMessage("Preparando tu botiquín...", 'ia thinking', 'msg-botiquin-thinking');
 
         try {
-            const ctx = await obtenerContextoAlumno();
-            const prompt = `${ctx}\n[MODO EMERGENCIA] Audición/presentación inminente. Basado en mi perfil, dame: 1. Ejercicio 2min, 2. Consejo técnico, 3. Frase poder, 4. Link YouTube música/frecuencia.`;
-            const resp = await llamarGemini(prompt, [], "mentor_chat");
+            const { data: { user } } = await supabase.auth.getUser();
+            const prompt = `[MODO EMERGENCIA] Audición/presentación inminente. Basado en mi perfil, dame: 1. Ejercicio 2min, 2. Consejo técnico, 3. Frase poder, 4. Link YouTube música/frecuencia.`;
+            const resp = await llamarGemini(prompt, [], "mentor_chat", { userId: user?.id });
 
             // Eliminar mensaje de espera
             document.getElementById('msg-botiquin-thinking')?.remove();
@@ -704,9 +635,8 @@ const MODULOS = {
         if (!user) return;
         try {
             console.log("🪄 [Proactivo] Generando resumen de perfil y transmutación...");
-            const contexto = await obtenerContextoAlumno();
             const prompt = `Analiza profundamente nuestra conversación y el progreso del alumno. Genera un JSON con este formato: {"resumen":"resumen técnico de los últimos avances","creencias":"creencias limitantes detectadas o trabajadas hoy","historia_vocal":"actualización de su pasado vocal si ha revelado algo","nivel_alquimia":1-10,"creencias_transmutadas":"logros y transmutaciones conseguidas"}. Responde SOLO el JSON puramente.`;
-            const raw = await llamarGemini(prompt, chatHistory, "mentor_chat", contexto);
+            const raw = await llamarGemini(prompt, chatHistory, "mentor_chat", { userId: user.id });
             const data = JSON.parse(raw.replace(/```json|```/g, "").trim());
 
             const { error } = await supabase.from('user_profiles').update({
@@ -728,7 +658,9 @@ const MODULOS = {
                 userProfile.historia_vocal = data.historia_vocal;
                 userProfile.nivel_alquimia = data.nivel_alquimia;
             }
-        } catch (e) { console.error("Error resumen proactivo:", e); }
+        } catch (e) {
+            console.error("Error resumen proactivo:", e);
+        }
     }
 };
 
