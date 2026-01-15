@@ -28,23 +28,55 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 app.post("/api/chat", async (req, res) => {
     try {
         const { intent, message, history = [], context = "", subscription_tier = 'free' } = req.body;
-        const model = genAI.getGenerativeModel({ model: "gemini-3-flash" });
+        // Usamos 2.0-flash por estabilidad en 2026
+        const model = genAI.getGenerativeModel({
+            model: "gemini-2.0-flash",
+            systemInstruction: process.env.SYSTEM_PROMPTS?.[intent] || "" // Si estuviera en env, pero aquí lo simplificamos
+        });
 
-        let adjustedHistory = history;
-        if (subscription_tier === 'free' && intent === 'mentor_chat') {
-            adjustedHistory = [];
-        }
+        const prompt = context ? `CONTEXTO EXTRA:\n${context}\n\nMENSAJE:\n${message}` : message;
 
-        const prompt = context ? `${context}\n\n${message}` : message;
-
-        if (adjustedHistory && adjustedHistory.length > 0) {
-            const chat = model.startChat({ history: adjustedHistory });
+        if (history && history.length > 0) {
+            const chat = model.startChat({ history });
             const result = await chat.sendMessage(prompt);
             res.json({ text: result.response.text() });
         } else {
             const result = await model.generateContent(prompt);
             res.json({ text: result.response.text() });
         }
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.post("/api/redeem-promo", async (req, res) => {
+    try {
+        const { code, userId } = req.body;
+        const VALID_CODES = ['ALQUIMIA2026', 'PROMO2026', 'FERNANDO2026'];
+
+        if (!code || !userId) {
+            return res.status(400).json({ error: 'Faltan datos' });
+        }
+
+        if (!VALID_CODES.includes(code.toUpperCase())) {
+            return res.status(400).json({ error: 'Código no válido' });
+        }
+
+        // Importamos Supabase aquí o usamos una instancia global
+        const { createClient } = require('@supabase/supabase-js');
+        const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
+
+        const { error } = await supabase
+            .from('user_profiles')
+            .update({
+                subscription_tier: 'pro',
+                mentor_notes: `Promo ${code} canjeada localmente`
+            })
+            .eq('user_id', userId);
+
+        if (error) throw error;
+        res.json({ success: true });
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: err.message });
