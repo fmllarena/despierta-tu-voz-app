@@ -50,6 +50,7 @@ export default async function handler(req, res) {
                 },
             ],
             mode: mode,
+            allow_promotion_codes: true, // Permitir códigos de descuento
             success_url: `${req.headers.origin}/index.html?session_id={CHECKOUT_SESSION_ID}&payment=success`,
             cancel_url: `${req.headers.origin}/landing.html?payment=cancel`,
             customer_email: userEmail,
