@@ -1,11 +1,18 @@
-import { createClient } from '@supabase/supabase-js';
-
-const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-const supabase = createClient(supabaseUrl, supabaseServiceKey);
+import import { createClient } from '@supabase/supabase-js';
 
 export default async function handler(req, res) {
     if (req.method !== 'POST') return res.status(405).json({ error: 'Método no permitido' });
+
+    // 1. Comprobar Variables de Entorno
+    const { SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY } = process.env;
+    if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+        return res.status(500).json({
+            error: 'Configuración incompleta',
+            details: 'Faltan claves de Supabase en Vercel.'
+        });
+    }
+
+    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
     try {
         const { code, userId } = req.body;
@@ -16,32 +23,52 @@ export default async function handler(req, res) {
         }
 
         const normalizedCode = code.trim().toUpperCase();
-        // --- SISTEMA DE CÓDIGOS (Simplificado) ---
         const VALID_CODES = ['PROMO1MES', 'ALQUIMIA2026', 'PROMO2026', 'FERNANDO2026'];
 
         if (!VALID_CODES.includes(normalizedCode)) {
-            console.warn(`❌ Código no aceptado: "${normalizedCode}"`);
-            return res.status(400).json({ error: `El código promocional "${normalizedCode}" no es válido.` });
+            return res.status(400).json({ error: `El código "${normalizedCode}" no es válido.` });
         }
 
-        console.log(`🎁 Canjeando promo ${code} para usuario ${userId}`);
+        // 2. Verificar si el usuario existe y su nivel actual
+        const { data: profile, error: profileError } = await supabase
+            .from('user_profiles')
+            .select('subscription_tier')
+            .eq('user_id', userId)
+            .single();
 
-        // Actualizamos el tier directamente sin pasar por Stripe
-        const { error } = await supabase
+        if (profileError || !profile) {
+            return res.status(404).json({
+                error: 'Usuario no encontrado',
+                details: 'No existe un perfil para este ID en la tabla user_profiles.'
+            });
+        }
+
+        if (profile.subscription_tier === 'pro' || profile.subscription_tier === 'premium') {
+            return res.status(200).json({
+                success: true,
+                message: 'Ya tienes un plan activo. ¡No necesitas redimir el código!'
+            });
+        }
+
+        // 3. Proceder al alta Pro
+        const { error: updateError } = await supabase
             .from('user_profiles')
             .update({
                 subscription_tier: 'pro',
                 updated_at: new Date().toISOString(),
-                mentor_notes: `Promo ${code} canjeada el ${new Date().toLocaleDateString()}`
+                mentor_notes: `Promo ${normalizedCode} canjeada`
             })
             .eq('user_id', userId);
 
-        if (error) throw error;
+        if (updateError) throw updateError;
 
-        return res.status(200).json({ success: true, message: '¡Promoción activada con éxito!' });
+        return res.status(200).json({ success: true });
 
     } catch (err) {
-        console.error('Error en redeem-promo:', err);
-        return res.status(500).json({ error: 'Error al activar la promoción', details: err.message });
+        console.error('Error crítico:', err);
+        return res.status(500).json({
+            error: 'Database Error',
+            details: err.message
+        });
     }
 }
