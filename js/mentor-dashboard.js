@@ -6,6 +6,7 @@ const MENTOR_EMAIL = 'fernando@despiertatuvoz.com';
 
 const ELEMENTS = {
     studentEmail: document.getElementById('studentEmail'),
+    studentList: document.getElementById('studentList'),
     mentorPass: document.getElementById('mentorPass'),
     generateBtn: document.getElementById('generateBtn'),
     loading: document.getElementById('loading'),
@@ -30,8 +31,34 @@ async function init() {
 
         ELEMENTS.generateBtn.onclick = generateBriefing;
         ELEMENTS.saveNotesBtn.onclick = saveNotes;
+
+        // Cargar lista de alumnos para el buscador
+        await cargarListaAlumnos();
     } catch (e) {
         console.error("Error inicializando dashboard:", e);
+    }
+}
+
+async function cargarListaAlumnos() {
+    try {
+        const { data: alumnos, error } = await supabase
+            .from('user_profiles')
+            .select('nombre, email, last_active_at')
+            .order('last_active_at', { ascending: false });
+
+        if (error) throw error;
+
+        ELEMENTS.studentList.innerHTML = '';
+        alumnos.forEach(alum => {
+            const option = document.createElement('option');
+            // Format: "Nombre (email)" para que el mentor reconozca rápido
+            option.value = alum.email;
+            option.innerText = alum.nombre || 'Sin nombre';
+            ELEMENTS.studentList.appendChild(option);
+        });
+        console.log(`Cargados ${alumnos.length} alumnos en la lista.`);
+    } catch (e) {
+        console.error("Error cargando lista de alumnos:", e);
     }
 }
 
