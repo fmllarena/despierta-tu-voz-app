@@ -2290,8 +2290,8 @@ input {
     .whatsapp-float {
         width: 50px;
         height: 50px;
-        bottom: 85px;
-        /* Más arriba para no tapar el input de chat */
+        bottom: 110px;
+        /* Más elevado para no tapar el micrófono en móviles */
         right: 15px;
     }
 
