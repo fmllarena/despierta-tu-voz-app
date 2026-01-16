@@ -170,7 +170,7 @@ export default async function handler(req, res) {
 
         const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
         const modelConfig = { systemInstruction: SYSTEM_PROMPTS[intent] };
-        const models = ["gemini-2.0-flash", "gemini-1.5-flash", "gemini-1.5-pro"];
+        const models = ["gemini-3-flash", "gemini-2.0-flash", "gemini-1.5-flash", "gemini-1.5-pro"];
         let errors = [];
 
         for (const modelName of models) {
