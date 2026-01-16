@@ -121,6 +121,14 @@
                     <div class="help-desc"><strong>Micrófono</strong> – Pulsa para hablar en lugar de escribir (el
                         Mentor transcribirá tus palabras).</div>
                 </div>
+                <div class="help-item">
+                    <span class="help-btn-tag">
+                        <div class="mic-tag"><img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg"
+                                style="width: 18px; height: 18px;" alt="WhatsApp Icon"></div>
+                    </span>
+                    <div class="help-desc"><strong>Reportar Fallo</strong> – Si ves algo extraño, pulsa el botón verde
+                        de abajo para enviarme un WhatsApp.</div>
+                </div>
             </div>
             <div class="header-buttons">
                 <button id="bienvenidaBtn" class="icon-nav-btn" title="Bienvenida">
@@ -358,7 +366,8 @@
                             de permanencia.</p>
                         <p><strong>2. Garantía de Precio Blindado:</strong> Tu tarifa se fija en
                             <strong>9,90€/mes</strong> (IVA incluido) de forma vitalicia mientras mantengas tu
-                            suscripción activa (PVP oficial: 19,90€).</p>
+                            suscripción activa (PVP oficial: 19,90€).
+                        </p>
                         <p><strong>3. Renovación:</strong> Finalizado el mes gratuito, podrás mantener este precio
                             exclusivo al activar tu suscripción.</p>
                     </div>
@@ -412,6 +421,14 @@
     <footer class="app-footer">
         <p>© 2026 Despierta tu Voz. Todos los derechos reservados.</p>
     </footer>
+
+    <!-- Botón Flotante WhatsApp para Reportar Fallos -->
+    <a href="https://wa.me/34644233393?text=Hola,%20estoy%20usando%20la%20App%20y%20he%20visto%20algo%20que%20no%20va%20bien%3A"
+        class="whatsapp-float" target="_blank" rel="noopener noreferrer" id="whatsappReportBtn"
+        title="Reportar un fallo por WhatsApp">
+        <div class="whatsapp-tooltip">¿Has visto algún fallo? Cuéntamelo 🌿</div>
+        <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" alt="WhatsApp Support">
+    </a>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>

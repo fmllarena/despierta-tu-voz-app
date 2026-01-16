@@ -80,6 +80,7 @@ const ELEMENTS = {
     resetPasswordContainer: document.getElementById('resetPasswordContainer'),
     updatePasswordBtn: document.getElementById('updatePasswordBtn'),
     upgradeBtn: document.getElementById('upgradeBtn'),
+    whatsappReportBtn: document.getElementById('whatsappReportBtn'),
     upgradeModal: document.getElementById('upgradeModal'),
     closeUpgrade: document.querySelector('.close-upgrade'),
     sesionBtn: document.getElementById('sesionBtn'),
@@ -278,11 +279,13 @@ function updateUI(user) {
             ELEMENTS.sesionBtn.style.display = 'none';
         }
         if (ELEMENTS.ajustesBtn) ELEMENTS.ajustesBtn.style.display = 'block';
+        if (ELEMENTS.whatsappReportBtn) ELEMENTS.whatsappReportBtn.style.display = 'flex';
     } else {
         ELEMENTS.authOverlay.style.display = 'flex';
         ELEMENTS.upgradeBtn.style.display = 'none';
         ELEMENTS.sesionBtn.style.display = 'none';
         if (ELEMENTS.ajustesBtn) ELEMENTS.ajustesBtn.style.display = 'none';
+        if (ELEMENTS.whatsappReportBtn) ELEMENTS.whatsappReportBtn.style.display = 'none';
     }
 
     if (!user) {
