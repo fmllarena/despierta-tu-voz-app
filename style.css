@@ -2407,6 +2407,26 @@ input {
     height: 20px;
 }
 
+/* Estilos para el botón de Soporte con Texto */
+.support-bubble-text {
+    width: auto !important;
+    padding: 0 20px;
+    height: 45px !important;
+    border-radius: 25px !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 0.9em;
+    letter-spacing: 0.5px;
+    background-color: var(--color-acento) !important;
+    /* Usar el color de la marca en lugar del verde de WhatsApp */
+}
+
+.support-label {
+    white-space: nowrap;
+}
+
 /* Ajuste específico para móvil del modal de soporte */
 @media (max-width: 480px) {
     .support-modal-content {
@@ -2415,5 +2435,10 @@ input {
         margin-bottom: 0;
         border-bottom-left-radius: 0;
         border-bottom-right-radius: 0;
+    }
+
+    .support-bubble-text {
+        bottom: 100px !important;
+        right: 15px !important;
     }
 }
