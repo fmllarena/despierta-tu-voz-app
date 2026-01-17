@@ -147,20 +147,19 @@ async function processChat(req) {
 
         let perfil, viaje;
 
-        // ESTRATEGIA: Si es el primer mensaje, solo cargamos el perfil para evitar Timeout.
-        // A partir del segundo, cargamos también los datos pesados del viaje.
-        const isFirstMessage = (intent === 'mentor_chat' && (!history || history.length === 0));
-
-        if (isFirstMessage) {
+        // ESTRATEGIA: Carga quirúrgica para evitar Timeouts.
+        // El chat normal (mentor_chat) es ligero: solo Perfil + Resumen.
+        // Solo cargamos el Viaje crudo (pesado) para análisis de alquimia o briefing.
+        if (intent === 'mentor_chat') {
             const { data } = await supabase.from('user_profiles')
-                .select('historia_vocal, creencias, nivel_alquimia, mentor_notes')
+                .select('nombre, historia_vocal, creencias, nivel_alquimia, mentor_notes, ultimo_resumen')
                 .eq('user_id', userId)
                 .maybeSingle();
             perfil = data;
         } else {
             const [perfilRes, viajeRes] = await Promise.all([
                 supabase.from('user_profiles')
-                    .select('historia_vocal, creencias, nivel_alquimia, mentor_notes')
+                    .select('nombre, historia_vocal, creencias, nivel_alquimia, mentor_notes, ultimo_resumen')
                     .eq('user_id', userId)
                     .maybeSingle(),
                 supabase.from('user_coaching_data')
@@ -173,12 +172,14 @@ async function processChat(req) {
         }
 
         if (perfil) {
-            context += `\n--- INFO ALUMNO ---\n- Historia: ${perfil.historia_vocal || 'N/A'}\n- Creencias: ${perfil.creencias || 'N/A'}\n- Nivel: ${perfil.nivel_alquimia || 1}/10\n- Notas Fer: ${perfil.mentor_notes || 'Ninguna'}\n`;
+            context += `\n--- PERFIL ALUMNO ---\n- Nombre: ${perfil.nombre || 'N/A'}\n- Historia: ${perfil.historia_vocal || 'N/A'}\n- Creencias: ${perfil.creencias || 'N/A'}\n- Nivel: ${perfil.nivel_alquimia || 1}/10\n- Notas Fer: ${perfil.mentor_notes || 'Ninguna'}\n- Resumen actual: ${perfil.ultimo_resumen || 'Sin resumen previo'}\n`;
             if (canRecommend && blogLibrary.length > 0) {
                 context += `\n--- ARTÍCULOS ---\n${blogLibrary.map(p => `- ${p.title}: ${p.url}`).join('\n')}\n`;
             }
         }
-        if (viaje) context += `\n--- DATOS VIAJE ---\n- M1: ${JSON.stringify(viaje.linea_vida_hitos?.respuestas || {})}\n- M2: ${JSON.stringify(viaje.herencia_raices?.respuestas || {})}\n`;
+        if (viaje) {
+            context += `\n--- DATOS DE "MI VIAJE" ---\n- Hitos: ${JSON.stringify(viaje.linea_vida_hitos?.respuestas || {})}\n- Raíces: ${JSON.stringify(viaje.herencia_raices?.respuestas || {})}\n`;
+        }
     }
 
     if (intent === 'web_assistant') {
