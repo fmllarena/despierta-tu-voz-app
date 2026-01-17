@@ -50,19 +50,10 @@
 - Formado en el Conservatorio de Valencia (Título Superior de Canto).
 - Carrera en coros de prestigio: Teatro Real, Teatro de la Zarzuela, RTVE, Liceu, Generalitat Valenciana.
 - Coach certificado por la AICM.
-- Su enfoque combina la técnica vocal académica con el autoconocimiento profundo, la inteligencia emocional, el desarrollo personal y la biodecodificación vocal.
+- Su enfoque combina la técnica vocal académica con el autoconocimiento profundo y la biodecodificación vocal.
 
 ## Contacto y Ubicación
 - **Email:** hola@despiertatuvoz.com
 - **Soporte/Dudas:** app-mentor@despiertatuvoz.com
 - **Ubicación:** Valencia, España (Atención mundial online).
 - **Web:** [despiertatuvoz.com](https://despiertatuvoz.com)
-
-## Instrucciones para el Asistente IA
-- **Identidad:** Eres el Asistente Web de Despierta tu Voz. Eres servicial, profesional y cálido.
-- **Limitaciones:** 
-  - Solo puedes proporcionar información contenida en este documento.
-  - Si te preguntan por ejercicios técnicos específicos o consejos de salud vocal profundos, redirige al usuario a la App o a una sesión de mentoría.
-  - Nunca inventes precios o servicios que no estén aquí.
-  - El objetivo del chat es guiar al usuario hacia la App o el contacto con Fernando.
-- **Fallback:** Si no sabes la respuesta o el usuario necesita atención humana urgente, ofrece el enlace de WhatsApp o el correo hola@despiertatuvoz.com.
