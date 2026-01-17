@@ -140,9 +140,16 @@ async function processChat(req) {
     let context = "";
     if (userId && (intent === 'mentor_chat' || intent === 'mentor_briefing' || intent === 'alchemy_analysis')) {
         const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
+        // Optimización: Solo cargamos campos estrictamente necesarios para el prompt
         const [perfilRes, viajeRes] = await Promise.all([
-            supabase.from('user_profiles').select('*').eq('user_id', userId).maybeSingle(),
-            supabase.from('user_coaching_data').select('*').eq('user_id', userId).maybeSingle()
+            supabase.from('user_profiles')
+                .select('historia_vocal, creencias, nivel_alquimia, mentor_notes')
+                .eq('user_id', userId)
+                .maybeSingle(),
+            supabase.from('user_coaching_data')
+                .select('linea_vida_hitos, herencia_raices')
+                .eq('user_id', userId)
+                .maybeSingle()
         ]);
         const perfil = perfilRes?.data;
         const viaje = viajeRes?.data;
@@ -172,7 +179,8 @@ async function processChat(req) {
 
     if (!process.env.GEMINI_API_KEY) throw new Error("Falta API Key");
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-    const models = ["gemini-3-flash-preview", "gemini-3-flash", "gemini-2.0-flash", "gemini-2.0-flash-exp", "gemini-1.5-flash", "gemini-1.5-pro"];
+    // Siguiendo tus instrucciones: Mantengo Gemini 3 y 1.5, elimino Gemini 2.
+    const models = ["gemini-3-flash-preview", "gemini-3-flash", "gemini-1.5-flash", "gemini-1.5-pro"];
 
     let sanitizedHistory = [];
     if (Array.isArray(history)) {
