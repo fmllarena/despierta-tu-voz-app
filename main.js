@@ -39,10 +39,10 @@ async function loadBlogLibrary() {
         const response = await fetch('https://despiertatuvoz.com/wp-content/themes/nuevo-index/biblioteca-blog.json');
         if (response.ok) {
             blogLibrary = await response.json();
-            console.log("📚 Biblioteca de blog cargada:", blogLibrary.length, "artículos.");
+            console.log("📚 Biblioteca de blog cargada.");
         }
     } catch (e) {
-        console.warn("No se pudo cargar la biblioteca del blog:", e.message);
+        console.warn("Biblioteca no disponible.");
     }
 }
 loadBlogLibrary();
@@ -205,7 +205,16 @@ async function llamarGemini(message, history, intent, extraData = {}) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ message, history, intent, ...extraData })
         });
-        const data = await response.json();
+
+        const rawText = await response.text();
+        let data;
+        try {
+            data = JSON.parse(rawText);
+        } catch (jsonErr) {
+            console.error("Respuesta no es JSON:", rawText);
+            throw new Error(`Error del servidor (No JSON): ${rawText.substring(0, 50)}...`);
+        }
+
         if (data.error) {
             const detailMsg = data.details ? ` (${data.details})` : "";
             throw new Error(data.error + detailMsg);
@@ -274,9 +283,12 @@ async function cargarPerfil(user) {
     }
 
     userProfile = perfil;
-    // Asegurar que accepted_terms esté presente en el objeto global
+    // Asegurar que accepted_terms esté presente en el objeto local
     userProfile.accepted_terms = !!perfil.accepted_terms;
-    window.userProfile = userProfile;
+
+    // --- OPTIMIZACIÓN: Calentamiento de API (Warmup) ---
+    // Enviamos una señal silenciosa para que Vercel prepare la conexión
+    llamarGemini("", [], "warmup", { userId: user.id }).catch(() => { });
 
     // Actualizar UI con el tier correcto del perfil
     updateUI(user);
@@ -298,7 +310,6 @@ async function cargarPerfil(user) {
 
 async function cargarHistorialDesdeDB(userId) {
     try {
-        console.log("Intentando recuperar historial para:", userId);
         const { data: mensajes, error } = await supabase
             .from('mensajes')
             .select('*')
@@ -326,7 +337,7 @@ async function cargarHistorialDesdeDB(userId) {
             chatHistory.push({ role: role, parts: [{ text: msg.texto }] });
         });
 
-        console.log(`Historial recuperado con éxito: ${mensajes.length} mensajes.`);
+        // Historial recuperado para contexto de IA
     } catch (e) {
         console.error("Error crítico recuperando historial:", e);
     }
