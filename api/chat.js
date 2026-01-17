@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import Anthropic from '@anthropic-ai/sdk';
 
 const SYSTEM_PROMPTS = {
     // ... (mantenemos los mismos prompts)
@@ -34,7 +35,20 @@ HERRAMIENTAS:
     generate_questions: `...`, // (idéntico al original)
     identify_limiting_belief: `...`, // (idéntico al original)
     generate_action_plan: `...`, // (idéntico al original)
-    mentor_briefing: `...` // (idéntico al original)
+    mentor_briefing: `...`, // (idéntico al original)
+    support_chat: `
+Eres el Asistente de Soporte de "Despierta tu Voz". Tu único objetivo es ayudar al usuario con dudas técnicas, de pagos o sobre el funcionamiento de la app.
+
+DIRECTRICES:
+1. TONO: Amable, eficiente y resolutivo. Estilo "Despierta tu Voz" (cercano pero profesional).
+2. PAGOS/PLANES: 
+   - Plan EXPLORA: ¡GRATIS el primer mes! Ideal para probar la app. Incluye chat diario con el mentor IA y acceso al primer módulo ("Mi Viaje"). (IMPORTANTE: NO guarda el historial para futuras sesiones).
+   - Plan PROFUNDIZA (Pro): Subscripción de 9,90€/mes oferta de lanzamiento (luego 19,90€/mes). Incluye todo lo anterior, acceso total a la app, todos los módulos de desarrollo personal y la memoria relacional del mentor aplicada al repertorio vocal. (IMPORTANTE: NO incluye sesión grupal).
+   - Plan TRANSFORMA (Mentoría 1/1): 79,90€/mes oferta de lanzamiento (luego 99€/mes). Incluye todo lo del Plan Profundiza más una mentoría 1/1 con Fernando Martínez (a elegir: 2 sesiones de 30 min o 1 de 1 hora).
+3. PROBLEMAS TÉCNICOS: Si el usuario tiene un error grave o no puedes resolver su duda después de un par de intentos, sugiérele hablar con una persona.
+4. ESCALADO A WHATSAPP: Si el usuario pregunta por WhatsApp o pide hablar con Fer/soporte humano, dile que puede usar el botón que aparecerá debajo para chatear directamente.
+5. NO ERES EL MENTOR VOCAL: No des consejos de canto ni coaching emocional. Si te preguntan sobre eso, dile "Para temas de tu voz o tu proceso interno, usa el chat principal con el Mentor Vocal. Aquí me encargo de ayudarte con la app y soporte técnico".
+`
 };
 
 // Re-hidratamos el objeto completo para evitar errores de referencia
@@ -94,6 +108,17 @@ ESTRUCTURA DEL INFORME:
 TONO: Profesional, perspicaz y directo. Máximo 300 palabras.`;
 
 export default async function handler(req, res) {
+    // --- SOPORTE CORS ---
+    res.setHeader('Access-Control-Allow-Credentials', true);
+    res.setHeader('Access-Control-Allow-Origin', '*'); // En producción podrías limitarlo a tu dominio
+    res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
+    res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version');
+
+    if (req.method === 'OPTIONS') {
+        res.status(200).end();
+        return;
+    }
+
     if (req.method !== "POST") return res.status(405).json({ error: "Método no permitido" });
 
     try {
@@ -170,6 +195,8 @@ export default async function handler(req, res) {
 
         const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
         const modelConfig = { systemInstruction: SYSTEM_PROMPTS[intent] };
+
+        // Lista de modelos válida y actualizada
         const models = [
             "gemini-3-flash-preview",
             "gemini-3-flash",
@@ -188,7 +215,18 @@ export default async function handler(req, res) {
                 const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 20000));
                 const promptFinal = context ? `CONTEXTO EXTRA:\n${context}\n\nMENSAJE:\n${message}` : message;
 
-                let adjustedHistory = history.filter(h => h.parts && h.parts.length > 0 && h.parts[0].text?.trim() !== "");
+                // Filtrado robusto del historial
+                let adjustedHistory = [];
+                if (Array.isArray(history)) {
+                    adjustedHistory = history.filter(h =>
+                        h &&
+                        typeof h === 'object' &&
+                        h.parts &&
+                        Array.isArray(h.parts) &&
+                        h.parts.length > 0 &&
+                        h.parts[0].text
+                    );
+                }
 
                 let result;
                 if (adjustedHistory.length > 0) {
@@ -201,6 +239,40 @@ export default async function handler(req, res) {
                 return res.status(200).json({ text: result.response.text() });
             } catch (e) {
                 errors.push(`${modelName}: ${e.message}`);
+            }
+        }
+
+        // --- FALLBACK A CLAUDE (SI GEMINI FALLA) ---
+        if (process.env.ANTHROPIC_API_KEY) {
+            try {
+                const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+
+                // Convertimos el historial de Gemini a formato Claude
+                const claudeHistory = history
+                    .filter(h => h.parts && h.parts.length > 0 && h.parts[0].text?.trim() !== "")
+                    .map(h => ({
+                        role: h.role === 'model' ? 'assistant' : 'user',
+                        content: h.parts[0].text
+                    }));
+
+                const promptFinal = context ? `CONTEXTO EXTRA:\n${context}\n\nMENSAJE:\n${message}` : message;
+
+                const response = await anthropic.messages.create({
+                    model: "claude-3-5-sonnet-20241022",
+                    max_tokens: 1024,
+                    system: SYSTEM_PROMPTS[intent],
+                    messages: [
+                        ...claudeHistory,
+                        { role: "user", content: promptFinal }
+                    ],
+                });
+
+                return res.status(200).json({
+                    text: response.content[0].text,
+                    info: "Respuesta proporcionada por Claude (Backup)"
+                });
+            } catch (claudeError) {
+                errors.push(`Claude: ${claudeError.message}`);
             }
         }
 
