@@ -547,6 +547,11 @@ async function sendMessage() {
             appendMessage(responseText, 'ia');
             guardarMensajeDB(responseText, 'ia'); // Guardar respuesta de la IA
             chatHistory.push({ role: "user", parts: [{ text }] }, { role: "model", parts: [{ text: responseText }] });
+
+            // Mantener solo los últimos 30 mensajes (15 interacciones) para evitar lentitud
+            if (chatHistory.length > 30) {
+                chatHistory = chatHistory.slice(-30);
+            }
         } else {
             console.warn("Recibida respuesta vacía de Gemini.");
             appendMessage("Lo siento, no he podido procesar eso bien. ¿Podrías repetirlo de otra forma?", 'ia');
