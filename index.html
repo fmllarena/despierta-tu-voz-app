@@ -422,13 +422,38 @@
         <p>© 2026 Despierta tu Voz. Todos los derechos reservados.</p>
     </footer>
 
-    <!-- Botón Flotante WhatsApp para Reportar Fallos -->
-    <a href="https://wa.me/34644233393?text=Hola,%20estoy%20usando%20la%20App%20y%20quisiera%20comentar%20que..."
-        class="whatsapp-float" target="_blank" rel="noopener noreferrer" id="whatsappReportBtn"
-        title="Reportar un fallo por WhatsApp">
-        <div class="whatsapp-tooltip">¿Quieres comentarme algo? Cuéntamelo 🌿</div>
-        <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" alt="WhatsApp Support">
-    </a>
+    <!-- Botón Soporte (IA + WhatsApp) -->
+    <div class="whatsapp-float" id="supportBubble" title="Soporte y Ayuda">
+        <div class="whatsapp-tooltip">¿Necesitas ayuda? 🌿</div>
+        <img src="assets/icon_sistema.png" alt="Soporte"
+            onerror="this.src='https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg'">
+    </div>
+
+    <!-- Modal de Soporte Híbrido -->
+    <div id="supportModal" class="modal support-modal">
+        <div class="modal-content support-modal-content">
+            <span class="close-modal close-support">&times;</span>
+            <div class="support-header">
+                <h3>Asistente de Soporte</h3>
+                <p>Resuelvo tus dudas sobre la app, pagos o planes al instante.</p>
+            </div>
+            <div id="supportChatBox" class="messages support-messages">
+                <div class="message ia">¡Hola! Soy tu asistente de soporte. ¿En qué puedo ayudarte hoy? ✨</div>
+            </div>
+            <div class="support-input-area">
+                <input type="text" id="supportInput" placeholder="Escribe tu duda..." autocomplete="off">
+                <button id="sendSupportBtn">▶</button>
+            </div>
+            <div id="whatsappSupportLink" class="whatsapp-fallback" style="display: none;">
+                <p>Si prefieres hablar con una persona:</p>
+                <a href="https://wa.me/34644233393?text=Hola,%20estoy%20usando%20la%20App%20y%20necesito%20ayuda%20técnica..."
+                    target="_blank" rel="noopener" class="btn-whatsapp-direct">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" alt="WhatsApp">
+                    Chatear por WhatsApp
+                </a>
+            </div>
+        </div>
+    </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>

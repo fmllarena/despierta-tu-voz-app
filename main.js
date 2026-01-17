@@ -108,8 +108,95 @@ const ELEMENTS = {
     checkTerms: document.getElementById('checkTerms'),
     checkMedical: document.getElementById('checkMedical'),
     confirmLegalBtn: document.getElementById('confirmLegalBtn'),
-    cancelLegalBtn: document.getElementById('cancelLegalBtn')
+    cancelLegalBtn: document.getElementById('cancelLegalBtn'),
+    // Soporte Híbrido
+    supportBubble: document.getElementById('supportBubble'),
+    supportModal: document.getElementById('supportModal'),
+    supportChatBox: document.getElementById('supportChatBox'),
+    supportInput: document.getElementById('supportInput'),
+    sendSupportBtn: document.getElementById('sendSupportBtn'),
+    whatsappSupportLink: document.getElementById('whatsappSupportLink'),
+    closeSupport: document.querySelector('.close-support')
 };
+
+const SOPORTE = {
+    history: [],
+    isOpen: false,
+
+    abrir: function () {
+        ELEMENTS.supportModal.style.display = 'flex';
+        this.isOpen = true;
+    },
+
+    cerrar: function () {
+        ELEMENTS.supportModal.style.display = 'none';
+        this.isOpen = false;
+    },
+
+    enviar: async function () {
+        const text = ELEMENTS.supportInput.value.trim();
+        if (!text) return;
+
+        // Limpiar input
+        ELEMENTS.supportInput.value = "";
+
+        // Añadir a UI
+        this.appendMessage(text, 'user');
+
+        // Preparar historial para Gemini
+        this.history.push({ role: 'user', parts: [{ text: text }] });
+
+        // Crear contenedor de "escribiendo"
+        const typingId = 'ia-typing-' + Date.now();
+        this.appendMessage("...", 'ia', typingId);
+
+        try {
+            const respuesta = await llamarGemini(text, this.history, 'support_chat', {
+                userId: userProfile?.user_id
+            });
+
+            // Reemplazar "escribiendo" con la respuesta real
+            const typingEl = document.getElementById(typingId);
+            if (typingEl) {
+                typingEl.innerHTML = marked.parse(respuesta);
+                typingEl.classList.remove('typing');
+            }
+
+            this.history.push({ role: 'model', parts: [{ text: respuesta }] });
+
+            // Mostrar el link de WhatsApp si el historial es largo o la IA detecta necesidad
+            if (this.history.length > 4 || respuesta.toLowerCase().includes("whatsapp") || respuesta.toLowerCase().includes("persona")) {
+                ELEMENTS.whatsappSupportLink.style.display = 'block';
+            }
+
+        } catch (e) {
+            console.error("Error soporte:", e);
+            const typingEl = document.getElementById(typingId);
+            if (typingEl) typingEl.innerText = "Lo siento, he tenido un pequeño nudo en mi proceso. ¿Podrías intentar contactarme por WhatsApp directamente?";
+            ELEMENTS.whatsappSupportLink.style.display = 'block';
+        }
+    },
+
+    appendMessage: function (text, role, id = null) {
+        const msgDiv = document.createElement('div');
+        msgDiv.className = `message ${role}`;
+        if (id) msgDiv.id = id;
+        if (text === "...") msgDiv.classList.add('typing');
+
+        msgDiv.innerHTML = role === 'ia' ? (text === "..." ? text : marked.parse(text)) : text;
+
+        ELEMENTS.supportChatBox.appendChild(msgDiv);
+        ELEMENTS.supportChatBox.scrollTop = ELEMENTS.supportChatBox.scrollHeight;
+    }
+};
+
+// Listeners Soporte
+ELEMENTS.supportBubble?.addEventListener('click', () => SOPORTE.abrir());
+ELEMENTS.closeSupport?.addEventListener('click', () => SOPORTE.cerrar());
+ELEMENTS.sendSupportBtn?.addEventListener('click', () => SOPORTE.enviar());
+ELEMENTS.supportInput?.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') SOPORTE.enviar();
+});
 
 async function llamarGemini(message, history, intent, extraData = {}) {
     try {
@@ -279,13 +366,13 @@ function updateUI(user) {
             ELEMENTS.sesionBtn.style.display = 'none';
         }
         if (ELEMENTS.ajustesBtn) ELEMENTS.ajustesBtn.style.display = 'block';
-        if (ELEMENTS.whatsappReportBtn) ELEMENTS.whatsappReportBtn.style.display = 'flex';
+        if (ELEMENTS.supportBubble) ELEMENTS.supportBubble.style.display = 'flex';
     } else {
         ELEMENTS.authOverlay.style.display = 'flex';
         ELEMENTS.upgradeBtn.style.display = 'none';
         ELEMENTS.sesionBtn.style.display = 'none';
         if (ELEMENTS.ajustesBtn) ELEMENTS.ajustesBtn.style.display = 'none';
-        if (ELEMENTS.whatsappReportBtn) ELEMENTS.whatsappReportBtn.style.display = 'none';
+        if (ELEMENTS.supportBubble) ELEMENTS.supportBubble.style.display = 'none';
     }
 
     if (!user) {

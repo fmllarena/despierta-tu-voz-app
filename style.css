@@ -2300,3 +2300,120 @@ input {
         /* No tooltip on mobile to avoid clutter */
     }
 }
+
+/* --- SOPORTE HÍBRIDO MODAL --- */
+.support-modal-content {
+    max-width: 450px;
+    height: 600px;
+    display: flex;
+    flex-direction: column;
+    padding: 25px !important;
+}
+
+.support-header {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.support-header h3 {
+    color: var(--color-acento);
+    margin: 0;
+}
+
+.support-header p {
+    font-size: 0.85em;
+    color: #666;
+    margin-top: 5px;
+}
+
+.support-messages {
+    flex-grow: 1;
+    overflow-y: auto;
+    background: #fdfaf7;
+    border-radius: 12px;
+    padding: 15px;
+    margin-bottom: 15px;
+    border: 1px solid #eee;
+}
+
+.support-input-area {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.support-input-area input {
+    flex-grow: 1;
+    padding: 10px 15px;
+    border-radius: 20px;
+    border: 1px solid #ddd;
+    outline: none;
+    font-family: inherit;
+}
+
+.support-input-area button {
+    background: var(--color-acento);
+    color: white;
+    border: none;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s;
+}
+
+.support-input-area button:hover {
+    transform: scale(1.1);
+}
+
+.whatsapp-fallback {
+    text-align: center;
+    padding-top: 15px;
+    border-top: 1px solid #eee;
+    animation: fadeInUp 0.5s ease both;
+}
+
+.whatsapp-fallback p {
+    font-size: 0.8em;
+    color: #888;
+    margin-bottom: 10px;
+}
+
+.btn-whatsapp-direct {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    background: #25d366;
+    color: white;
+    text-decoration: none;
+    padding: 10px 20px;
+    border-radius: 25px !important;
+    font-weight: bold;
+    font-size: 0.9em;
+    transition: all 0.3s;
+    box-shadow: 0 4px 12px rgba(37, 211, 102, 0.3);
+}
+
+.btn-whatsapp-direct:hover {
+    background: #128c7e;
+    transform: translateY(-2px);
+}
+
+.btn-whatsapp-direct img {
+    width: 20px;
+    height: 20px;
+}
+
+/* Ajuste específico para móvil del modal de soporte */
+@media (max-width: 480px) {
+    .support-modal-content {
+        height: 80vh !important;
+        width: 100% !important;
+        margin-bottom: 0;
+        border-bottom-left-radius: 0;
+        border-bottom-right-radius: 0;
+    }
+}
