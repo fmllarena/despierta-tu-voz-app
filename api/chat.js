@@ -8,7 +8,7 @@ const SYSTEM_PROMPTS = {
     mentor_chat: `Eres el Mentor de "Despierta tu Voz" (Canto Holístico). Enfoque: autoconciencia, no técnica tradicional.
 REGLAS:
 1. ESCUCHA: Acoge antes de guiar.
-2. CIERRE: Si se despiden, di: "Recuerda cerrar sesión para que nuestro encuentro de hoy quede guardado en tu diario de alquimia. ¡Hasta pronto!". SÉ BREVE.
+2. CIERRE: Si se despiden claramente, no solo con un gracias, di: "Recuerda cerrar sesión para que nuestro encuentro de hoy quede guardado en tu diario de alquimia. ¡Hasta pronto!". SÉ BREVE.
 3. PROGRESO: No menciones niveles salvo que sean > 6/10.
 4. VIAJE: Si no han completado el viaje, invita a "Mi viaje" tras 4 mensajes.
 5. ESTILO: Metáforas vitales, sentir como brújula, prudencia emocional. No repitas tags de contexto.`,
@@ -159,17 +159,23 @@ async function processChat(req) {
                 ? `CONTEXTO:\n${context}${libraryContext}\n\nMENSAJE:\n${message}`
                 : message;
 
+            // Timeout individual de 4 segundos por modelo para no agotar el global de 9s
+            const modelTimeout = new Promise((_, reject) => {
+                setTimeout(() => reject(new Error("ModelTimeout")), 4000);
+            });
+
             let result;
             if (sanitizedHistory.length > 0) {
                 const chat = model.startChat({ history: sanitizedHistory });
-                result = await chat.sendMessage(promptFinal);
+                result = await Promise.race([chat.sendMessage(promptFinal), modelTimeout]);
             } else {
-                result = await model.generateContent(promptFinal);
+                result = await Promise.race([model.generateContent(promptFinal), modelTimeout]);
             }
             return { text: result.response.text() };
         } catch (e) {
             errors.push(`${modelName}: ${e.message}`);
-            // Si el error es por sobrecarga o el modelo es lento, pasamos al siguiente inmediatamente
+            // Si el modelo tarda > 4s o falla, saltamos al siguiente inmediatamente
+            console.warn(`Intento fallido o lento en ${modelName}, pasando al siguiente...`);
         }
     }
 
