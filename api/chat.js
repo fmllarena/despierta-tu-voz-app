@@ -126,8 +126,8 @@ async function processChat(req) {
 
     if (!process.env.GEMINI_API_KEY) throw new Error("Falta API Key");
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-    // Siguiendo tus instrucciones: Mantengo Gemini 3 y 1.5, elimino Gemini 2.
-    const models = ["gemini-3-flash-preview", "gemini-3-flash", "gemini-1.5-flash", "gemini-1.5-pro"];
+    // Corregimos nombres: 'gemini-3' no existe en la API pública. Usamos 1.5 y 2.0 (si está disponible)
+    const models = ["gemini-1.5-flash", "gemini-1.5-pro", "gemini-2.0-flash-exp"];
 
     let sanitizedHistory = [];
     if (Array.isArray(history)) {
@@ -159,9 +159,9 @@ async function processChat(req) {
                 ? `CONTEXTO:\n${context}${libraryContext}\n\nMENSAJE:\n${message}`
                 : message;
 
-            // Timeout individual de 4 segundos por modelo para no agotar el global de 9s
+            // Timeout individual de 5 segundos por modelo
             const modelTimeout = new Promise((_, reject) => {
-                setTimeout(() => reject(new Error("ModelTimeout")), 4000);
+                setTimeout(() => reject(new Error("ModelTimeout")), 5000);
             });
 
             let result;
