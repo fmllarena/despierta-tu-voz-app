@@ -130,6 +130,10 @@ module.exports = async function handler(req, res) {
 async function processChat(req) {
     const { intent, message, history = [], userId, canRecommend, blogLibrary = [], mentorPassword = "" } = req.body;
 
+    if (intent === 'warmup') {
+        return { text: "OK", status: "Warmed up" };
+    }
+
     if (!intent || !SYSTEM_PROMPTS[intent]) throw new Error("Intento no válido");
 
     if (intent === 'mentor_briefing') {
@@ -140,19 +144,34 @@ async function processChat(req) {
     let context = "";
     if (userId && (intent === 'mentor_chat' || intent === 'mentor_briefing' || intent === 'alchemy_analysis')) {
         const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
-        // Optimización: Solo cargamos campos estrictamente necesarios para el prompt
-        const [perfilRes, viajeRes] = await Promise.all([
-            supabase.from('user_profiles')
+
+        let perfil, viaje;
+
+        // ESTRATEGIA: Si es el primer mensaje, solo cargamos el perfil para evitar Timeout.
+        // A partir del segundo, cargamos también los datos pesados del viaje.
+        const isFirstMessage = (intent === 'mentor_chat' && (!history || history.length === 0));
+
+        if (isFirstMessage) {
+            const { data } = await supabase.from('user_profiles')
                 .select('historia_vocal, creencias, nivel_alquimia, mentor_notes')
                 .eq('user_id', userId)
-                .maybeSingle(),
-            supabase.from('user_coaching_data')
-                .select('linea_vida_hitos, herencia_raices')
-                .eq('user_id', userId)
-                .maybeSingle()
-        ]);
-        const perfil = perfilRes?.data;
-        const viaje = viajeRes?.data;
+                .maybeSingle();
+            perfil = data;
+        } else {
+            const [perfilRes, viajeRes] = await Promise.all([
+                supabase.from('user_profiles')
+                    .select('historia_vocal, creencias, nivel_alquimia, mentor_notes')
+                    .eq('user_id', userId)
+                    .maybeSingle(),
+                supabase.from('user_coaching_data')
+                    .select('linea_vida_hitos, herencia_raices')
+                    .eq('user_id', userId)
+                    .maybeSingle()
+            ]);
+            perfil = perfilRes?.data;
+            viaje = viajeRes?.data;
+        }
+
         if (perfil) {
             context += `\n--- INFO ALUMNO ---\n- Historia: ${perfil.historia_vocal || 'N/A'}\n- Creencias: ${perfil.creencias || 'N/A'}\n- Nivel: ${perfil.nivel_alquimia || 1}/10\n- Notas Fer: ${perfil.mentor_notes || 'Ninguna'}\n`;
             if (canRecommend && blogLibrary.length > 0) {
