@@ -175,6 +175,7 @@ async function processChat(req) {
         }
     }
 
+    /* 
     if (process.env.ANTHROPIC_API_KEY) {
         try {
             const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
@@ -191,6 +192,7 @@ async function processChat(req) {
             return { text: response.content[0].text, info: "Claude Backup" };
         } catch (ce) { errors.push(`Claude: ${ce.message}`); }
     }
+    */
 
     throw new Error(`Error conexión IA: ${errors.join(" | ")}`);
 }
