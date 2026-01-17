@@ -1,6 +1,8 @@
 const { createClient } = require('@supabase/supabase-js');
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 const Anthropic = require('@anthropic-ai/sdk');
+const fs = require('fs');
+const path = require('path');
 
 const SYSTEM_PROMPTS = {
     mentor_chat: `
@@ -77,6 +79,18 @@ Eres el Asistente de Soporte Técnico de "Despierta tu Voz". Tu prioridad es ayu
    - Plan PROFUNDIZA (Pro): 9,90€/mes (lanzamiento).
    - Plan TRANSFORMA (Mentoría 1/1): 79,90€/mes (lanzamiento).
 4. REDIRECCIÓN: Si el problema es muy complejo o requiere una gestión manual de cuenta/pagos, indica al usuario que puede contactar por WhatsApp mediante el botón correspondiente.
+`,
+    web_assistant: `
+Eres el Asistente Web oficial de "Despierta tu Voz". 
+Tu misión es informar a los visitantes sobre los servicios, filosofía y planes de Despierta tu Voz basándote ESTRICTAMENTE en la Base de Conocimiento proporcionada.
+
+REGLAS CRÍTICAS:
+1. FUENTE DE VERDAD ÚNICA: Solo responde usando la información del bloque [BASE DE CONOCIMIENTO OFICIAL]. Si algo no está ahí, di que no tienes esa información y ofrece contactar con Fernando a través de hola@despiertatuvoz.com.
+2. PROHIBIDO DAR CONSEJOS TÉCNICOS: Si el usuario te pide ejercicios vocales, técnicas de respiración o consejos médicos, redirígelos a la App o a una mentoría individual. Di algo como: "Esa es una excelente pregunta técnica. Para trabajar ese aspecto de forma segura y personalizada, te recomiendo usar nuestra App Mentor DTV o reservar una sesión de valoración de mentoría."
+3. TONO: Cálido, profesional, empático y servicial. Eres la primera cara del proyecto.
+4. LLAMADA A LA ACCIÓN: Tu objetivo final es que el usuario pruebe la App de forma gratuita o se interese por la mentoría.
+5. FALLBACK: Si detectas frustración o una duda compleja, ofrece el botón de WhatsApp (si está disponible en la web) o el email de contacto.
+6. NO ALUCINAR: Nunca inventes precios, fechas de talleres o capacidades que no estén en el documento.
 `
 };
 
@@ -139,6 +153,21 @@ async function processChat(req) {
             }
         }
         if (viaje) context += `\n--- DATOS VIAJE ---\n- M1: ${JSON.stringify(viaje.linea_vida_hitos?.respuestas || {})}\n- M2: ${JSON.stringify(viaje.herencia_raices?.respuestas || {})}\n`;
+    }
+
+    if (intent === 'web_assistant') {
+        try {
+            // Intentar cargar la base de conocimiento local
+            const knowledgePath = path.join(process.cwd(), 'knowledge', 'web_info.md');
+            if (fs.existsSync(knowledgePath)) {
+                const knowledge = fs.readFileSync(knowledgePath, 'utf8');
+                context += `\n[BASE DE CONOCIMIENTO OFICIAL]\n${knowledge}\n`;
+            } else {
+                console.warn("Base de conocimiento no encontrada en:", knowledgePath);
+            }
+        } catch (err) {
+            console.error("Error al cargar la base de conocimiento:", err);
+        }
     }
 
     if (!process.env.GEMINI_API_KEY) throw new Error("Falta API Key");
