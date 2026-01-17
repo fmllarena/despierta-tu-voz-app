@@ -1,6 +1,6 @@
-import { createClient } from '@supabase/supabase-js';
-import { GoogleGenerativeAI } from "@google/generative-ai";
-import Anthropic from '@anthropic-ai/sdk';
+const { createClient } = require('@supabase/supabase-js');
+const { GoogleGenerativeAI } = require("@google/generative-ai");
+const Anthropic = require('@anthropic-ai/sdk');
 
 const SYSTEM_PROMPTS = {
     mentor_chat: `
@@ -78,7 +78,7 @@ Eres el Asistente de Soporte de "Despierta tu Voz". Ayuda con dudas técnicas, d
 `
 };
 
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
     // SOPORTE CORS
     res.setHeader('Access-Control-Allow-Credentials', true);
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -88,92 +88,109 @@ export default async function handler(req, res) {
     if (req.method === 'OPTIONS') return res.status(200).end();
     if (req.method !== "POST") return res.status(405).json({ error: "Método no permitido" });
 
+    // Timeout global de 9 segundos para evitar el error de Vercel (10s límite)
+    const globalTimeout = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error("GlobalTimeout")), 9000);
+    });
+
     try {
-        const { intent, message, history = [], userId, originPost, originCat, canRecommend, blogLibrary = [], mentorPassword = "" } = req.body;
-
-        if (!intent || !SYSTEM_PROMPTS[intent]) return res.status(400).json({ error: "Intento no válido" });
-
-        if (intent === 'mentor_briefing') {
-            const secretPass = process.env.MENTOR_PASSWORD || 'Alquimia2026';
-            if (mentorPassword !== secretPass) return res.status(401).json({ error: "Acceso denegado." });
-        }
-
-        let context = "";
-        if (userId && (intent === 'mentor_chat' || intent === 'mentor_briefing' || intent === 'alchemy_analysis')) {
-            const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
-            const [perfilRes, viajeRes] = await Promise.all([
-                supabase.from('user_profiles').select('*').eq('user_id', userId).maybeSingle(),
-                supabase.from('user_coaching_data').select('*').eq('user_id', userId).maybeSingle()
-            ]);
-            const perfil = perfilRes?.data;
-            const viaje = viajeRes?.data;
-            if (perfil) {
-                context += `\n--- INFO ALUMNO ---\n- Historia: ${perfil.historia_vocal || 'N/A'}\n- Creencias: ${perfil.creencias || 'N/A'}\n- Nivel: ${perfil.nivel_alquimia || 1}/10\n- Notas Fer: ${perfil.mentor_notes || 'Ninguna'}\n`;
-                if (canRecommend && blogLibrary.length > 0) {
-                    context += `\n--- ARTÍCULOS ---\n${blogLibrary.map(p => `- ${p.title}: ${p.url}`).join('\n')}\n`;
-                }
-            }
-            if (viaje) context += `\n--- DATOS VIAJE ---\n- M1: ${JSON.stringify(viaje.linea_vida_hitos?.respuestas || {})}\n- M2: ${JSON.stringify(viaje.herencia_raices?.respuestas || {})}\n`;
-        }
-
-        if (!process.env.GEMINI_API_KEY) return res.status(500).json({ error: "Falta API Key" });
-        const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-        const models = ["gemini-3-flash-preview", "gemini-3-flash", "gemini-2.0-flash", "gemini-2.0-flash-exp", "gemini-1.5-flash", "gemini-1.5-pro"];
-
-        // Historial Robusto
-        let sanitizedHistory = [];
-        if (Array.isArray(history)) {
-            let lastRole = null;
-            sanitizedHistory = history.filter(h => {
-                if (!h?.parts?.[0]?.text) return false;
-                const role = h.role === 'model' ? 'model' : 'user';
-                if (role === lastRole) return false;
-                lastRole = role;
-                return true;
-            });
-            if (sanitizedHistory.length > 0 && sanitizedHistory[sanitizedHistory.length - 1].role === 'user') sanitizedHistory.pop();
-        }
-
-        let errors = [];
-        for (const modelName of models) {
-            try {
-                const model = genAI.getGenerativeModel({ systemInstruction: SYSTEM_PROMPTS[intent], model: modelName });
-                const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 8000));
-                const promptFinal = context ? `CONTEXTO:\n${context}\n\nMENSAJE:\n${message}` : message;
-                let result;
-                if (sanitizedHistory.length > 0) {
-                    const chat = model.startChat({ history: sanitizedHistory });
-                    result = await Promise.race([chat.sendMessage(promptFinal), timeoutPromise]);
-                } else {
-                    result = await Promise.race([model.generateContent(promptFinal), timeoutPromise]);
-                }
-                return res.status(200).json({ text: result.response.text() });
-            } catch (e) {
-                errors.push(`${modelName}: ${e.message}`);
-            }
-        }
-
-        if (process.env.ANTHROPIC_API_KEY) {
-            try {
-                const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-                const promptFinal = context ? `CONTEXTO:\n${context}\n\nMENSAJE:\n${message}` : message;
-                const response = await anthropic.messages.create({
-                    model: "claude-3-5-sonnet-20241022",
-                    max_tokens: 1024,
-                    system: SYSTEM_PROMPTS[intent],
-                    messages: [
-                        ...sanitizedHistory.map(h => ({ role: h.role === 'model' ? 'assistant' : 'user', content: h.parts[0].text })),
-                        { role: "user", content: promptFinal }
-                    ],
-                });
-                return res.status(200).json({ text: response.content[0].text, info: "Claude Backup" });
-            } catch (ce) { errors.push(`Claude: ${ce.message}`); }
-        }
-
-        return res.status(500).json({ error: "Error conexión IA", details: errors.join(" | ") });
-
+        const result = await Promise.race([processChat(req), globalTimeout]);
+        return res.status(200).json(result);
     } catch (error) {
-        console.error("Error crítico:", error);
-        return res.status(500).json({ error: "Error servidor", details: error.message });
+        console.error("Error en chat handler:", error);
+        const status = error.message === "GlobalTimeout" ? 504 : 500;
+        const msg = error.message === "GlobalTimeout"
+            ? "Vaya, parece que la IA está tardando demasiado. Prueba de nuevo en unos instantes."
+            : "Vaya, parece que hay un pequeño problema técnico. Prueba de nuevo en unos instantes.";
+
+        return res.status(status).json({
+            error: msg,
+            details: error.message,
+            isTimeout: error.message === "GlobalTimeout"
+        });
     }
+};
+
+async function processChat(req) {
+    const { intent, message, history = [], userId, canRecommend, blogLibrary = [], mentorPassword = "" } = req.body;
+
+    if (!intent || !SYSTEM_PROMPTS[intent]) throw new Error("Intento no válido");
+
+    if (intent === 'mentor_briefing') {
+        const secretPass = process.env.MENTOR_PASSWORD || 'Alquimia2026';
+        if (mentorPassword !== secretPass) throw new Error("Acceso denegado.");
+    }
+
+    let context = "";
+    if (userId && (intent === 'mentor_chat' || intent === 'mentor_briefing' || intent === 'alchemy_analysis')) {
+        const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
+        const [perfilRes, viajeRes] = await Promise.all([
+            supabase.from('user_profiles').select('*').eq('user_id', userId).maybeSingle(),
+            supabase.from('user_coaching_data').select('*').eq('user_id', userId).maybeSingle()
+        ]);
+        const perfil = perfilRes?.data;
+        const viaje = viajeRes?.data;
+        if (perfil) {
+            context += `\n--- INFO ALUMNO ---\n- Historia: ${perfil.historia_vocal || 'N/A'}\n- Creencias: ${perfil.creencias || 'N/A'}\n- Nivel: ${perfil.nivel_alquimia || 1}/10\n- Notas Fer: ${perfil.mentor_notes || 'Ninguna'}\n`;
+            if (canRecommend && blogLibrary.length > 0) {
+                context += `\n--- ARTÍCULOS ---\n${blogLibrary.map(p => `- ${p.title}: ${p.url}`).join('\n')}\n`;
+            }
+        }
+        if (viaje) context += `\n--- DATOS VIAJE ---\n- M1: ${JSON.stringify(viaje.linea_vida_hitos?.respuestas || {})}\n- M2: ${JSON.stringify(viaje.herencia_raices?.respuestas || {})}\n`;
+    }
+
+    if (!process.env.GEMINI_API_KEY) throw new Error("Falta API Key");
+    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+    const models = ["gemini-3-flash-preview", "gemini-3-flash", "gemini-2.0-flash", "gemini-2.0-flash-exp", "gemini-1.5-flash", "gemini-1.5-pro"];
+
+    let sanitizedHistory = [];
+    if (Array.isArray(history)) {
+        let lastRole = null;
+        sanitizedHistory = history.filter(h => {
+            if (!h?.parts?.[0]?.text) return false;
+            const role = h.role === 'model' ? 'model' : 'user';
+            if (role === lastRole) return false;
+            lastRole = role;
+            return true;
+        });
+        if (sanitizedHistory.length > 0 && sanitizedHistory[sanitizedHistory.length - 1].role === 'user') sanitizedHistory.pop();
+    }
+
+    let errors = [];
+    for (const modelName of models) {
+        try {
+            const model = genAI.getGenerativeModel({ systemInstruction: SYSTEM_PROMPTS[intent], model: modelName });
+            const promptFinal = context ? `CONTEXTO:\n${context}\n\nMENSAJE:\n${message}` : message;
+
+            let result;
+            if (sanitizedHistory.length > 0) {
+                const chat = model.startChat({ history: sanitizedHistory });
+                result = await chat.sendMessage(promptFinal);
+            } else {
+                result = await model.generateContent(promptFinal);
+            }
+            return { text: result.response.text() };
+        } catch (e) {
+            errors.push(`${modelName}: ${e.message}`);
+        }
+    }
+
+    if (process.env.ANTHROPIC_API_KEY) {
+        try {
+            const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+            const promptFinal = context ? `CONTEXTO:\n${context}\n\nMENSAJE:\n${message}` : message;
+            const response = await anthropic.messages.create({
+                model: "claude-3-5-sonnet-20241022",
+                max_tokens: 1024,
+                system: SYSTEM_PROMPTS[intent],
+                messages: [
+                    ...sanitizedHistory.map(h => ({ role: h.role === 'model' ? 'assistant' : 'user', content: h.parts[0].text })),
+                    { role: "user", content: promptFinal }
+                ],
+            });
+            return { text: response.content[0].text, info: "Claude Backup" };
+        } catch (ce) { errors.push(`Claude: ${ce.message}`); }
+    }
+
+    throw new Error(`Error conexión IA: ${errors.join(" | ")}`);
 }

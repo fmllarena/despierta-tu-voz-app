@@ -1,17 +1,11 @@
-import Stripe from 'stripe';
-import { createClient } from '@supabase/supabase-js';
+const Stripe = require('stripe');
+const { createClient } = require('@supabase/supabase-js');
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
-
-export const config = {
-    api: {
-        bodyParser: false, // Stripe necesita el body "raw" para verificar la firma
-    },
-};
 
 async function buffer(readable) {
     const chunks = [];
@@ -21,7 +15,7 @@ async function buffer(readable) {
     return Buffer.concat(chunks);
 }
 
-export default async function handler(req, res) {
+const handler = async function (req, res) {
     if (req.method !== 'POST') {
         return res.status(405).send('Método no permitido');
     }
@@ -103,4 +97,12 @@ export default async function handler(req, res) {
     }
 
     res.json({ received: true });
-}
+};
+
+handler.config = {
+    api: {
+        bodyParser: false,
+    },
+};
+
+module.exports = handler;
