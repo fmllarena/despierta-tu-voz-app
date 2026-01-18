@@ -145,8 +145,8 @@ async function processChat(req) {
     if (!process.env.GEMINI_API_KEY) throw new Error("Falta API Key");
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-    // Modelos estables y rápidos. El 2.0 Flash es excelente pero a veces falla en regiones específicas.
-    const models = ["gemini-1.5-flash", "gemini-1.5-pro"];
+    // Listado de modelos para 2026. Gemini 3 es el estándar actual.
+    const models = ["gemini-3-flash-preview", "gemini-3-flash", "gemini-2.0-flash", "gemini-1.5-flash-latest"];
 
     let sanitizedHistory = [];
     if (Array.isArray(history)) {
