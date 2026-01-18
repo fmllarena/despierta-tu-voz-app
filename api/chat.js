@@ -145,8 +145,8 @@ async function processChat(req) {
     if (!process.env.GEMINI_API_KEY) throw new Error("Falta API Key");
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-    // Listado de modelos para 2026. Gemini 3 es el estándar actual.
-    const models = ["gemini-3-flash-preview", "gemini-3-flash", "gemini-2.0-flash", "gemini-1.5-flash-latest"];
+    // Modelos estables 1.5 para evitar timeouts en conversaciones largas
+    const models = ["gemini-1.5-flash-latest", "gemini-1.5-flash", "gemini-1.5-pro"];
 
     let sanitizedHistory = [];
     if (Array.isArray(history)) {
