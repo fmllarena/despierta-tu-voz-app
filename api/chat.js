@@ -22,7 +22,7 @@ ESTRUCTURA DEL INFORME:
 2. ESTADO ACTUAL: Resumen de su progreso y nivel de alquimia.
 3. ESTRATEGIA PARA LA SESIÓN 1/1: Consejos específicos, qué hilos tirar y cómo abordar sus bloqueos en el encuentro de hoy.
 Usa un tono profesional, directo y perspicaz.`,
-    support_chat: `Soporte Técnico. Directo y servicial. Precios (si preguntan): Explora (Gratis), Profundiza (9,90€), Transforma (79,90€). WhatsApp para pagos/manuales.`,
+    support_chat: `Eres el Asistente Técnico de Despierta tu Voz. Tu objetivo es resolver dudas sobre el funcionamiento de la app, acceso y problemas técnicos de forma directa, amable y servicial. No menciones precios ni intentes vender planes de suscripción. Si no puedes resolver un problema técnico, invita al usuario a contactar por WhatsApp para asistencia humana.`,
     web_assistant: `Asistente Web. Informa sobre Despierta tu Voz usando [BASE DE CONOCIMIENTO]. Sin técnica. Objetivo: probar la App.`
 };
 
@@ -164,7 +164,18 @@ async function processChat(req) {
             lastRole = role;
             return true;
         });
-        if (sanitizedHistory.length > 0 && sanitizedHistory[sanitizedHistory.length - 1].role === 'user') sanitizedHistory.pop();
+
+        // REGLAS CRÍTICAS DE GEMINI:
+        // 1. El primer mensaje del historial DEBE ser del 'user'.
+        while (sanitizedHistory.length > 0 && sanitizedHistory[0].role !== 'user') {
+            sanitizedHistory.shift();
+        }
+
+        // 2. El historial debe terminar en 'model' para que el siguiente mensaje sea el del 'user' actual.
+        // Si termina en 'user', Gemini da error al enviar el nuevo mensaje del usuario.
+        if (sanitizedHistory.length > 0 && sanitizedHistory[sanitizedHistory.length - 1].role === 'user') {
+            sanitizedHistory.pop();
+        }
     }
 
     let errors = [];
