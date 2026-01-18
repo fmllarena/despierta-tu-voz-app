@@ -316,8 +316,8 @@ async function cargarHistorialDesdeDB(userId) {
             .from('mensajes')
             .select('*')
             .eq('alumno', userId)
-            .order('created_at', { ascending: true })
-            .limit(30);
+            .order('created_at', { ascending: false })
+            .limit(15);
 
         if (error) {
             console.error("Error Supabase (select):", error);
@@ -332,7 +332,8 @@ async function cargarHistorialDesdeDB(userId) {
         ELEMENTS.chatBox.innerHTML = "";
         chatHistory = [];
 
-        mensajes.forEach(msg => {
+        // Invertimos el array para que queden en orden cronológico (el más antiguo primero)
+        mensajes.reverse().forEach(msg => {
             // No añadimos los mensajes al UI (ChatBox) para empezar cada sesión limpios
             // Pero sí los añadimos al chatHistory para que la IA tenga contexto
             const role = msg.emisor === 'ia' ? 'model' : 'user';
@@ -550,9 +551,9 @@ async function sendMessage() {
             guardarMensajeDB(responseText, 'ia'); // Guardar respuesta de la IA
             chatHistory.push({ role: "user", parts: [{ text }] }, { role: "model", parts: [{ text: responseText }] });
 
-            // Mantener solo los últimos 30 mensajes (15 interacciones) para evitar lentitud
-            if (chatHistory.length > 30) {
-                chatHistory = chatHistory.slice(-30);
+            // Mantener solo los últimos 15 mensajes para evitar lentitud y timeouts
+            if (chatHistory.length > 15) {
+                chatHistory = chatHistory.slice(-15);
             }
         } else {
             console.warn("Recibida respuesta vacía de Gemini.");
