@@ -145,8 +145,9 @@ async function processChat(req) {
     if (!process.env.GEMINI_API_KEY) throw new Error("Falta API Key");
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-    // Modelos estables 1.5 para evitar timeouts en conversaciones largas
-    const models = ["gemini-1.5-flash-latest", "gemini-1.5-flash", "gemini-1.5-pro"];
+    // Modelos disponibles para 2026. Priorizamos el flash estable de Gemini 3 y 2.0.
+    // Nota: El usuario reporta 404 en la familia 1.5, posiblmente por retiro/deprecación en su entorno.
+    const models = ["gemini-3-flash", "gemini-2.0-flash", "gemini-3-flash-preview"];
 
     let sanitizedHistory = [];
     if (Array.isArray(history)) {
@@ -170,9 +171,9 @@ async function processChat(req) {
                 ? `CONTEXTO:\n${context}\n\nMENSAJE:\n${message}`
                 : message;
 
-            // Tiempo por modelo ajustable: 6s es generoso.
+            // Tiempo por modelo: 4s para permitir pasar al siguiente si hay lentitud sin agotar los 9s globales.
             const modelTimeout = new Promise((_, reject) => {
-                setTimeout(() => reject(new Error("ModelTimeout")), 6000);
+                setTimeout(() => reject(new Error("ModelTimeout")), 4000);
             });
 
             let result;
