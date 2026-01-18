@@ -261,6 +261,7 @@ function setupAuthListener() {
 
         if (event === 'SIGNED_OUT') {
             userProfile = null;
+            window.userProfile = null;
             isRecoveringPassword = false;
             updateUI(null);
         } else if (user && !userWasLoggedIn) {
@@ -283,6 +284,7 @@ async function cargarPerfil(user) {
     }
 
     userProfile = perfil;
+    window.userProfile = perfil; // Exportar para otros módulos (Mi Viaje)
     // Asegurar que accepted_terms esté presente en el objeto local
     userProfile.accepted_terms = !!perfil.accepted_terms;
 
@@ -763,6 +765,7 @@ const MODULOS = {
                 userProfile.creencias = data.creencias;
                 userProfile.historia_vocal = data.historia_vocal;
                 userProfile.nivel_alquimia = data.nivel_alquimia;
+                window.userProfile = userProfile;
             }
         } catch (e) {
             console.error("Error resumen proactivo:", e);
