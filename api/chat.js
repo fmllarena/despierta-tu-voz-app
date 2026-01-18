@@ -51,12 +51,15 @@ module.exports = async function handler(req, res) {
         const status = isTimeout ? 504 : 500;
 
         // Si el error es una de nuestras validaciones, lo pasamos tal cual
-        const knownErrors = ["Acceso denegado.", "Falta API Key", "Falta SUPABASE_SERVICE_ROLE_KEY", "Intento no válido", "Alumno no encontrado"];
+        const knownErrors = ["Acceso denegado.", "Falta API Key", "Falta SUPABASE_SERVICE_ROLE_KEY", "Intento no válido", "Alumno no encontrado", "Error conexión IA"];
         const isKnown = knownErrors.some(k => error.message.includes(k));
 
-        const msg = isTimeout
-            ? "Vaya, parece que la IA está tardando demasiado. Prueba de nuevo en unos instantes."
-            : (isKnown ? error.message : "Vaya, parece que hay un pequeño problema técnico. Prueba de nuevo en unos instantes.");
+        let msg = "Vaya, parece que hay un pequeño problema técnico. Prueba de nuevo en unos instantes.";
+        if (isTimeout) {
+            msg = "Vaya, parece que la IA está tardando demasiado. Prueba de nuevo en unos instantes.";
+        } else if (isKnown) {
+            msg = error.message;
+        }
 
         return res.status(status).json({
             error: msg,
@@ -120,9 +123,6 @@ async function processChat(req) {
 
         if (perfil) {
             context += `\n--- PERFIL ALUMNO ---\n- Nombre: ${perfil.nombre || 'N/A'}\n- Historia: ${perfil.historia_vocal || 'N/A'}\n- Creencias: ${perfil.creencias || 'N/A'}\n- Nivel: ${perfil.nivel_alquimia || 1}/10\n- Notas Fer: ${perfil.mentor_notes || 'Ninguna'}\n- Resumen actual: ${perfil.ultimo_resumen || 'Sin resumen previo'}\n`;
-            if (canRecommend && blogLibrary.length > 0) {
-                context += `\n--- ARTÍCULOS ---\n${blogLibrary.map(p => `- ${p.title}: ${p.url}`).join('\n')}\n`;
-            }
         }
         if (viaje) {
             context += `\n--- DATOS DE "MI VIAJE" ---\n- Hitos: ${JSON.stringify(viaje.linea_vida_hitos?.respuestas || {})}\n- Raíces: ${JSON.stringify(viaje.herencia_raices?.respuestas || {})}\n`;
@@ -136,8 +136,6 @@ async function processChat(req) {
             if (fs.existsSync(knowledgePath)) {
                 const knowledge = fs.readFileSync(knowledgePath, 'utf8');
                 context += `\n[BASE DE CONOCIMIENTO OFICIAL]\n${knowledge}\n`;
-            } else {
-                console.warn("Base de conocimiento no encontrada en:", knowledgePath);
             }
         } catch (err) {
             console.error("Error al cargar la base de conocimiento:", err);
@@ -146,8 +144,9 @@ async function processChat(req) {
 
     if (!process.env.GEMINI_API_KEY) throw new Error("Falta API Key");
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-    // Corregimos nombres: 'gemini-3' no existe en la API pública. Usamos 1.5 y 2.0 (si está disponible)
-    const models = ["gemini-1.5-flash", "gemini-1.5-pro", "gemini-2.0-flash-exp"];
+
+    // Modelos estables y rápidos. El 2.0 Flash es excelente pero a veces falla en regiones específicas.
+    const models = ["gemini-1.5-flash", "gemini-1.5-pro"];
 
     let sanitizedHistory = [];
     if (Array.isArray(history)) {
@@ -167,21 +166,13 @@ async function processChat(req) {
         try {
             const model = genAI.getGenerativeModel({ systemInstruction: SYSTEM_PROMPTS[intent], model: modelName });
 
-            // Optimización: Si hay muchos artículos, solo enviamos 5 aleatorios para no saturar el prompt
-            let libraryContext = "";
-            if (canRecommend && blogLibrary.length > 0) {
-                const shuffled = [...blogLibrary].sort(() => 0.5 - Math.random());
-                const selected = shuffled.slice(0, 5);
-                libraryContext = `\n--- ARTÍCULOS RECOMENDADOS ---\n${selected.map(p => `- ${p.title}: ${p.url}`).join('\n')}\n`;
-            }
-
-            const promptFinal = (context || libraryContext)
-                ? `CONTEXTO:\n${context}${libraryContext}\n\nMENSAJE:\n${message}`
+            const promptFinal = (context)
+                ? `CONTEXTO:\n${context}\n\nMENSAJE:\n${message}`
                 : message;
 
-            // Timeout individual de 5 segundos por modelo
+            // Tiempo por modelo ajustable: 6s es generoso.
             const modelTimeout = new Promise((_, reject) => {
-                setTimeout(() => reject(new Error("ModelTimeout")), 5000);
+                setTimeout(() => reject(new Error("ModelTimeout")), 6000);
             });
 
             let result;
@@ -193,9 +184,8 @@ async function processChat(req) {
             }
             return { text: result.response.text() };
         } catch (e) {
+            console.error(`Error en ${modelName}:`, e.message);
             errors.push(`${modelName}: ${e.message}`);
-            // Si el modelo tarda > 4s o falla, saltamos al siguiente inmediatamente
-            console.warn(`Intento fallido o lento en ${modelName}, pasando al siguiente...`);
         }
     }
 
