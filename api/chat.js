@@ -11,7 +11,8 @@ REGLAS:
 2. CIERRE: Si se despiden claramente, no solo con un gracias, di: "Recuerda cerrar sesión para que nuestro encuentro de hoy quede guardado en tu diario de alquimia. ¡Hasta pronto!". SÉ BREVE.
 3. PROGRESO: No menciones niveles salvo que sean > 6/10.
 4. VIAJE: Si no han completado el viaje, invita a "Mi viaje" tras 4 mensajes.
-5. ESTILO: Metáforas vitales, sentir como brújula, prudencia emocional. No repitas tags de contexto.`,
+5. MEMORIA: Si el contexto incluye "RECUERDOS RECUPERADOS", úsalos para responder sobre el pasado con precisión.
+6. ESTILO: Metáforas vitales, sentir como brújula, prudencia emocional. No repitas tags de contexto.`,
     alchemy_analysis: `Análisis poético directo (80-120 palabras). Sin preámbulos. Habla desde la sabiduría del Mentor sobre el módulo completado.`,
     generate_questions: `Genera 1 pregunta de coaching original. Máx 4 párrafos. No repetir conceptos.`,
     identify_limiting_belief: `Identifica creencia limitante principal. Responde en 1ª persona (máx 15 palabras).`,
@@ -131,6 +132,37 @@ async function processChat(req) {
             if (viaje.roles_familiares) context += `- Roles (M3): ${JSON.stringify(viaje.roles_familiares)}\n`;
             if (viaje.ritual_sanacion) context += `- Ritual (M4): ${JSON.stringify(viaje.ritual_sanacion)}\n`;
             if (viaje.plan_accion) context += `- Plan (M5): ${JSON.stringify(viaje.plan_accion)}\n`;
+        }
+
+        // --- BÚSQUEDA DINÁMICA DE MEMORIA ---
+        const memoryTriggers = ["recordar", "hablamos", "dijiste", "comentamos", "conversación", "anterior", "pasado", "memoria", "busc", "encontr", "qué hablamos", "recordamos", "hace tiempo"];
+        const lowerMsg = message.toLowerCase();
+        const triggersMemory = memoryTriggers.some(t => lowerMsg.includes(t));
+
+        if (triggersMemory && intent === 'mentor_chat') {
+            const stopWords = ["recuerdas", "cuándo", "sobre", "hemos", "tenido", "podemos", "puedes", "decirme", "acerca", "alguna", "algún", "cuando", "estuvimos"];
+            const keywords = message.toLowerCase()
+                .replace(/[?,.;!]/g, "")
+                .split(" ")
+                .filter(w => w.length > 3 && !memoryTriggers.includes(w) && !stopWords.includes(w));
+
+            if (keywords.length > 0) {
+                const { data: records } = await supabase
+                    .from('mensajes')
+                    .select('texto, emisor, created_at')
+                    .eq('alumno', userId)
+                    .ilike('texto', `%${keywords[0]}%`)
+                    .order('created_at', { ascending: false })
+                    .limit(5);
+
+                if (records && records.length > 0) {
+                    context += `\n--- RECUERDOS RECUPERADOS (Búsqueda por "${keywords[0]}") ---\n`;
+                    records.reverse().forEach(r => {
+                        const date = new Date(r.created_at).toLocaleDateString();
+                        context += `[${date}] ${r.emisor === 'ia' ? 'Mentor' : 'Alumno'}: ${r.texto.substring(0, 300)}${r.texto.length > 300 ? '...' : ''}\n`;
+                    });
+                }
+            }
         }
     }
 
