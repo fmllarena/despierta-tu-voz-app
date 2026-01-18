@@ -25,27 +25,17 @@ app.use(express.static('./'));
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
+const chatHandler = require("./api/chat.js");
+
 app.post("/api/chat", async (req, res) => {
+    // Simulamos el objeto req/res para el handler de chat.js
     try {
-        const { intent, message, history = [], context = "", subscription_tier = 'free' } = req.body;
-        // Usamos gemini-3-flash-preview como motor principal (Vanguardia estable)
-        const model = genAI.getGenerativeModel({
-            model: "gemini-3-flash-preview"
-        });
-
-        const prompt = context ? `CONTEXTO EXTRA:\n${context}\n\nMENSAJE:\n${message}` : message;
-
-        if (history && history.length > 0) {
-            const chat = model.startChat({ history });
-            const result = await chat.sendMessage(prompt);
-            res.json({ text: result.response.text() });
-        } else {
-            const result = await model.generateContent(prompt);
-            res.json({ text: result.response.text() });
-        }
+        await chatHandler(req, res);
     } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: err.message });
+        console.error("Error en /api/chat local:", err);
+        if (!res.headersSent) {
+            res.status(500).json({ error: err.message });
+        }
     }
 });
 
