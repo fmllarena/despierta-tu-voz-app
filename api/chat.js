@@ -16,7 +16,12 @@ REGLAS:
     generate_questions: `Genera 1 pregunta de coaching original. Máx 4 párrafos. No repetir conceptos.`,
     identify_limiting_belief: `Identifica creencia limitante principal. Responde en 1ª persona (máx 15 palabras).`,
     generate_action_plan: `3 Objetivos SMART y Rutina Autocuidado. SOLO JSON: {"smart_goals": "...", "self_care_routine": "..."}`,
-    mentor_briefing: `Sintetiza historial y datos del alumno para Fer. Sé estratégico.`,
+    mentor_briefing: `Eres el Mentor Estratégico. Analiza los datos del alumno para preparar a Fer (el mentor humano) para su sesión 1/1.
+ESTRUCTURA DEL INFORME:
+1. PERFIL PSICODINÁMICO: Quién es el alumno según su historia vocal y creencias limitantes.
+2. ESTADO ACTUAL: Resumen de su progreso y nivel de alquimia.
+3. ESTRATEGIA PARA LA SESIÓN 1/1: Consejos específicos, qué hilos tirar y cómo abordar sus bloqueos en el encuentro de hoy.
+Usa un tono profesional, directo y perspicaz.`,
     support_chat: `Soporte Técnico. Directo y servicial. Precios (si preguntan): Explora (Gratis), Profundiza (9,90€), Transforma (79,90€). WhatsApp para pagos/manuales.`,
     web_assistant: `Asistente Web. Informa sobre Despierta tu Voz usando [BASE DE CONOCIMIENTO]. Sin técnica. Objetivo: probar la App.`
 };
@@ -40,16 +45,23 @@ module.exports = async function handler(req, res) {
         const result = await Promise.race([processChat(req), globalTimeout]);
         return res.status(200).json(result);
     } catch (error) {
-        console.error("Error en chat handler:", error);
-        const status = error.message === "GlobalTimeout" ? 504 : 500;
-        const msg = error.message === "GlobalTimeout"
+        console.error("DEBUG ERR [chat.js]:", error);
+
+        const isTimeout = error.message === "GlobalTimeout";
+        const status = isTimeout ? 504 : 500;
+
+        // Si el error es una de nuestras validaciones, lo pasamos tal cual
+        const knownErrors = ["Acceso denegado.", "Falta API Key", "Falta SUPABASE_SERVICE_ROLE_KEY", "Intento no válido", "Alumno no encontrado"];
+        const isKnown = knownErrors.some(k => error.message.includes(k));
+
+        const msg = isTimeout
             ? "Vaya, parece que la IA está tardando demasiado. Prueba de nuevo en unos instantes."
-            : "Vaya, parece que hay un pequeño problema técnico. Prueba de nuevo en unos instantes.";
+            : (isKnown ? error.message : "Vaya, parece que hay un pequeño problema técnico. Prueba de nuevo en unos instantes.");
 
         return res.status(status).json({
             error: msg,
             details: error.message,
-            isTimeout: error.message === "GlobalTimeout"
+            isTimeout: isTimeout
         });
     }
 };
@@ -70,18 +82,22 @@ async function processChat(req) {
 
     let context = "";
     if (userId && (intent === 'mentor_chat' || intent === 'mentor_briefing' || intent === 'alchemy_analysis')) {
+        if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+            console.error("FATAL: Falta SUPABASE_SERVICE_ROLE_KEY en el servidor.");
+            throw new Error("Falta SUPABASE_SERVICE_ROLE_KEY en la configuración del servidor.");
+        }
+
         const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
 
         let perfil, viaje;
 
         // ESTRATEGIA: Carga quirúrgica para evitar Timeouts.
-        // El chat normal (mentor_chat) es ligero: solo Perfil + Resumen.
-        // Solo cargamos el Viaje crudo (pesado) para análisis de alquimia o briefing.
         if (intent === 'mentor_chat') {
-            const { data } = await supabase.from('user_profiles')
+            const { data, error } = await supabase.from('user_profiles')
                 .select('nombre, historia_vocal, creencias, nivel_alquimia, mentor_notes, ultimo_resumen')
                 .eq('user_id', userId)
                 .maybeSingle();
+            if (error) console.error("Error perfil:", error);
             perfil = data;
         } else {
             const [perfilRes, viajeRes] = await Promise.all([
@@ -94,6 +110,10 @@ async function processChat(req) {
                     .eq('user_id', userId)
                     .maybeSingle()
             ]);
+
+            if (perfilRes.error) console.error("Error perfilRes:", perfilRes.error);
+            if (viajeRes.error) console.error("Error viajeRes:", viajeRes.error);
+
             perfil = perfilRes?.data;
             viaje = viajeRes?.data;
         }
