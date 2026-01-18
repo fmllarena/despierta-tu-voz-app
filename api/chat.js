@@ -97,7 +97,7 @@ async function processChat(req) {
         // ESTRATEGIA: Carga quirúrgica para evitar Timeouts.
         if (intent === 'mentor_chat') {
             const { data, error } = await supabase.from('user_profiles')
-                .select('nombre, historia_vocal, creencias, nivel_alquimia, mentor_notes, ultimo_resumen')
+                .select('nombre, historia_vocal, creencias, nivel_alquimia, mentor_notes, ultimo_resumen, last_hito_completed')
                 .eq('user_id', userId)
                 .maybeSingle();
             if (error) console.error("Error perfil:", error);
@@ -105,11 +105,11 @@ async function processChat(req) {
         } else {
             const [perfilRes, viajeRes] = await Promise.all([
                 supabase.from('user_profiles')
-                    .select('nombre, historia_vocal, creencias, nivel_alquimia, mentor_notes, ultimo_resumen')
+                    .select('nombre, historia_vocal, creencias, nivel_alquimia, mentor_notes, ultimo_resumen, last_hito_completed')
                     .eq('user_id', userId)
                     .maybeSingle(),
                 supabase.from('user_coaching_data')
-                    .select('linea_vida_hitos, herencia_raices')
+                    .select('linea_vida_hitos, herencia_raices, roles_familiares, ritual_sanacion, plan_accion')
                     .eq('user_id', userId)
                     .maybeSingle()
             ]);
@@ -122,10 +122,15 @@ async function processChat(req) {
         }
 
         if (perfil) {
-            context += `\n--- PERFIL ALUMNO ---\n- Nombre: ${perfil.nombre || 'N/A'}\n- Historia: ${perfil.historia_vocal || 'N/A'}\n- Creencias: ${perfil.creencias || 'N/A'}\n- Nivel: ${perfil.nivel_alquimia || 1}/10\n- Notas Fer: ${perfil.mentor_notes || 'Ninguna'}\n- Resumen actual: ${perfil.ultimo_resumen || 'Sin resumen previo'}\n`;
+            context += `\n--- PERFIL ALUMNO ---\n- Nombre: ${perfil.nombre || 'N/A'}\n- Historia: ${perfil.historia_vocal || 'N/A'}\n- Creencias: ${perfil.creencias || 'N/A'}\n- Nivel: ${perfil.nivel_alquimia || 1}/10\n- Módulo actual: ${perfil.last_hito_completed || 0}/5\n- Notas Fer: ${perfil.mentor_notes || 'Ninguna'}\n- Resumen actual: ${perfil.ultimo_resumen || 'Sin resumen previo'}\n`;
         }
         if (viaje) {
-            context += `\n--- DATOS DE "MI VIAJE" ---\n- Hitos: ${JSON.stringify(viaje.linea_vida_hitos?.respuestas || {})}\n- Raíces: ${JSON.stringify(viaje.herencia_raices?.respuestas || {})}\n`;
+            context += `\n--- DATOS DE "MI VIAJE" ---\n`;
+            if (viaje.linea_vida_hitos) context += `- Hitos (M1): ${JSON.stringify(viaje.linea_vida_hitos)}\n`;
+            if (viaje.herencia_raices) context += `- Raíces (M2): ${JSON.stringify(viaje.herencia_raices)}\n`;
+            if (viaje.roles_familiares) context += `- Roles (M3): ${JSON.stringify(viaje.roles_familiares)}\n`;
+            if (viaje.ritual_sanacion) context += `- Ritual (M4): ${JSON.stringify(viaje.ritual_sanacion)}\n`;
+            if (viaje.plan_accion) context += `- Plan (M5): ${JSON.stringify(viaje.plan_accion)}\n`;
         }
     }
 
