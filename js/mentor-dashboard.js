@@ -78,33 +78,31 @@ async function generateBriefing() {
     ELEMENTS.loading.style.display = 'block';
     ELEMENTS.reportContainer.style.display = 'none';
 
+    // Resetear info previa si existe
+    if (ELEMENTS.reportContent) ELEMENTS.reportContent.innerText = "";
+
     try {
-        // 1. Obtener el ID del usuario (desde el mapa o consulta simple)
+        // 1. PASO 1: Búsqueda rápida (Reducimos variables para evitar timeout)
         const emailLower = email.toLowerCase();
-        let userId = alumnosMap[emailLower];
 
-        if (!userId) {
-            const { data: userData, error: userError } = await supabase
-                .from('user_profiles')
-                .select('user_id, mentor_notes')
-                .eq('email', email)
-                .single();
-            if (userError || !userData) throw new Error("Alumno no encontrado. Asegúrate de que el email es correcto.");
-            userId = userData.user_id;
-            ELEMENTS.mentorNotes.value = userData.mentor_notes || '';
-        } else {
-            // Si ya tenemos el ID, solo traemos las notas actuales
-            const { data: record } = await supabase
-                .from('user_profiles')
-                .select('mentor_notes')
-                .eq('user_id', userId)
-                .single();
-            ELEMENTS.mentorNotes.value = record?.mentor_notes || '';
-        }
+        // Buscamos solo lo esencial primero
+        const { data: userData, error: userError } = await supabase
+            .from('user_profiles')
+            .select('user_id, nombre, nivel_alquimia, mentor_notes')
+            .eq('email', emailLower)
+            .maybeSingle();
 
-        currentStudentId = userId;
+        if (userError) throw userError;
+        if (!userData) throw new Error("Alumno no encontrado. Revisa si el email es correcto.");
 
-        // 2. Llamar a la API de Briefing (La API ahora se encarga de buscar mensajes y coaching)
+        currentStudentId = userData.user_id;
+        ELEMENTS.mentorNotes.value = userData.mentor_notes || '';
+
+        // Actualizar UI con información rápida
+        ELEMENTS.loading.innerHTML = `<p>✅ Alumno encontrado: <strong>${userData.nombre || 'Sin nombre'}</strong> (Nivel ${userData.nivel_alquimia || 1}/10)</p>
+                                    <p>🔮 Generando ahora el informe estratégico... Esto puede tardar unos segundos.</p>`;
+
+        // 2. PASO 2: Llamada a la API de Briefing (Este es el proceso pesado)
         const briefingResponse = await fetch('/api/chat', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -117,17 +115,33 @@ async function generateBriefing() {
         });
 
         const briefingData = await briefingResponse.json();
-        if (briefingData.error) throw new Error(briefingData.error);
+
+        if (briefingData.error) {
+            if (briefingData.isTimeout) {
+                throw new Error("El servidor ha tardado demasiado en recopilar toda la historia vocal. Prueba de nuevo en unos segundos, ¡a veces el Mentor necesita un segundo resuello!");
+            }
+            throw new Error(briefingData.error);
+        }
 
         ELEMENTS.reportContent.innerText = briefingData.text;
         ELEMENTS.reportContainer.style.display = 'block';
 
     } catch (e) {
-        console.error("Error generando briefing:", e);
-        alert("Error: " + e.message);
+        console.error("Error en el proceso:", e);
+        alert("Aviso: " + e.message);
+        ELEMENTS.loading.innerHTML = `<p style="color: #e74c3c;">❌ Error: ${e.message}</p>`;
     } finally {
         ELEMENTS.generateBtn.disabled = false;
-        ELEMENTS.loading.style.display = 'none';
+        // Solo ocultamos el loading si hay un reporte o si hubo error definitivo
+        if (ELEMENTS.reportContainer.style.display === 'block' || ELEMENTS.loading.innerHTML.includes('❌')) {
+            ELEMENTS.loading.style.display = 'none';
+        }
+        // Restaurar texto original para la próxima vez
+        setTimeout(() => {
+            if (ELEMENTS.loading.style.display === 'none') {
+                ELEMENTS.loading.innerHTML = '<p>🔮 Conectando con la sabiduría del Mentor... Analizando historial...</p>';
+            }
+        }, 3000);
     }
 }
 
