@@ -562,7 +562,8 @@ async function sendMessage() {
     } catch (e) {
         document.getElementById('msg-thinking')?.remove();
         console.error("Error en sendMessage:", e);
-        appendMessage(`Vaya, parece que hay un pequeño problema técnico: ${e.message}. Prueba de nuevo en unos instantes.`, 'ia');
+        const errorMsg = e.message.includes("Vaya") ? e.message : `Vaya, parece que hay un pequeño problema técnico: ${e.message}. Prueba de nuevo en unos instantes.`;
+        appendMessage(errorMsg, 'ia');
     } finally {
         ELEMENTS.chatInput.disabled = false;
         ELEMENTS.sendBtn.disabled = false;
