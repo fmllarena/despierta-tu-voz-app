@@ -182,9 +182,9 @@ async function processChat(req) {
     if (!process.env.GEMINI_API_KEY) throw new Error("Falta API Key");
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-    // Modelos estables y potentes para 2024-2025. 
-    // Usamos 1.5 Pro para informes complejos (briefing) y 1.5 Flash como backup rápido.
-    const models = ["gemini-1.5-pro", "gemini-1.5-flash"];
+    // Modelos de última generación (2025-2026).
+    // Usamos Gemini 3 Pro para máxima inteligencia y Flash como respaldo.
+    const models = ["gemini-3-pro-preview", "gemini-3-flash-preview"];
 
     let sanitizedHistory = [];
     if (Array.isArray(history)) {
