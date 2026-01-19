@@ -182,9 +182,11 @@ async function processChat(req) {
     if (!process.env.GEMINI_API_KEY) throw new Error("Falta API Key");
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-    // Modelos de última generación (2025-2026).
-    // Usamos Gemini 3 Pro para máxima inteligencia y Flash como respaldo.
-    const models = ["gemini-3-pro-preview", "gemini-3-flash-preview"];
+    // ESTRATEGIA DE MODELOS: Priorizamos velocidad en el chat y potencia en el informe.
+    const isBriefing = (intent === 'mentor_briefing');
+    const models = isBriefing
+        ? ["gemini-3-pro-preview", "gemini-3-flash-preview"] // Briefing: Prioridad Pro
+        : ["gemini-3-flash-preview", "gemini-3-pro-preview"]; // Chat/Web: Prioridad Flash para velocidad
 
     let sanitizedHistory = [];
     if (Array.isArray(history)) {
@@ -211,7 +213,7 @@ async function processChat(req) {
     }
 
     let errors = [];
-    for (const modelName of models) {
+    for (const [index, modelName] of models.entries()) {
         try {
             const model = genAI.getGenerativeModel({ systemInstruction: SYSTEM_PROMPTS[intent], model: modelName });
 
@@ -219,11 +221,11 @@ async function processChat(req) {
                 ? `CONTEXTO:\n${context}\n\nMENSAJE:\n${message}`
                 : message;
 
-            // Tiempo por modelo: 8s. Como solo hay 2 modelos, si el primero falla por lentitud (8s), 
-            // el segundo probablemente ya no tenga tiempo (9s total global), pero aseguramos que el 
-            // primero tenga el máximo posible.
+            // Tiempo por modelo: Al primer modelo le damos 7s para que Vercel no nos corte antes del global.
+            // Si el primero falla o tarda, el segundo tiene poco margen pero asegura el intento.
+            const timeoutMillis = index === 0 ? 7500 : 1500;
             const modelTimeout = new Promise((_, reject) => {
-                setTimeout(() => reject(new Error("ModelTimeout")), 8000);
+                setTimeout(() => reject(new Error("ModelTimeout")), timeoutMillis);
             });
 
             let result;
