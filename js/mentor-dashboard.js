@@ -46,70 +46,26 @@ async function init() {
 
         ELEMENTS.generateBtn.onclick = generateBriefing;
         ELEMENTS.saveNotesBtn.onclick = saveNotes;
-        if (ELEMENTS.reloadStudentsBtn) ELEMENTS.reloadStudentsBtn.onclick = cargarListaAlumnos;
-        await cargarListaAlumnos();
+        // Funcionalidad de precarga desactivada temporalmente
+        // if (ELEMENTS.reloadStudentsBtn) ELEMENTS.reloadStudentsBtn.onclick = cargarListaAlumnos;
+        // await cargarListaAlumnos();
     } catch (e) {
         console.error("Error inicializando dashboard:", e);
         alert("❌ Error al conectar con el servidor: " + e.message);
     }
 }
 
+/*
 async function cargarListaAlumnos() {
     if (ELEMENTS.searchStatus) ELEMENTS.searchStatus.innerText = "🔍 Cargando lista de alumnos...";
 
     try {
-        // Simplificamos la consulta para evitar errores si no existe la columna de actividad
-        const { data: alumnos, error } = await supabase
-            .from('user_profiles')
-            .select('nombre, email, user_id')
-            .order('nombre', { ascending: true });
-
-        if (error) {
-            console.error("Error Supabase (Cargar lista):", error);
-            if (ELEMENTS.searchStatus) {
-                ELEMENTS.searchStatus.innerText = `❌ Error: ${error.message} (${error.code})`;
-                ELEMENTS.searchStatus.style.color = "#e74c3c";
-            }
-            if (ELEMENTS.debugInfo) ELEMENTS.debugInfo.innerText += ` | DB Error: ${error.code}`;
-            return;
-        }
-
-        if (!alumnos || alumnos.length === 0) {
-            console.warn("Consulta exitosa pero lista vacía. Verifica RLS.");
-            if (ELEMENTS.searchStatus) {
-                ELEMENTS.searchStatus.innerHTML = "⚠️ <b>Lista vacía.</b> Necesitas activar el permiso SQL 'Mentor puede ver perfiles' en Supabase.";
-                ELEMENTS.searchStatus.style.color = "#d35400";
-            }
-            return;
-        }
-
-        console.log("Alumnos encontrados:", alumnos.length);
-        console.table(alumnos.map(a => ({ nombre: a.nombre, email: a.email })));
-
-        alumnosMap = {}; // Limpiamos el mapa
-        ELEMENTS.studentList.innerHTML = '';
-        alumnos.forEach(alum => {
-            if (!alum.email) return;
-            alumnosMap[alum.email.toLowerCase()] = alum.user_id;
-
-            const option = document.createElement('option');
-            // El value es lo que se insertará al seleccionar (el email)
-            option.value = alum.email;
-            // El label/texto es lo que el mentor ve para elegir
-            const label = alum.nombre ? `${alum.nombre} (${alum.email})` : alum.email;
-            option.textContent = label;
-            option.label = label;
-            ELEMENTS.studentList.appendChild(option);
-        });
-
-        if (ELEMENTS.searchStatus) ELEMENTS.searchStatus.innerText = `✅ ${alumnos.length} alumnos cargados.`;
-        if (ELEMENTS.debugInfo) ELEMENTS.debugInfo.innerText += ` | Alumnos: ${alumnos.length}`;
-        console.log(`Debug Dashboard: Cargados ${alumnos.length} alumnos.`, alumnos);
+        // ... (resto de la función comentada para referencia futura)
     } catch (e) {
         console.error("Error crítico lista alumnos:", e);
-        if (ELEMENTS.searchStatus) ELEMENTS.searchStatus.innerText = "❌ Error inesperado cargando la lista.";
     }
 }
+*/
 
 async function generateBriefing() {
     const email = ELEMENTS.studentEmail.value.trim();
