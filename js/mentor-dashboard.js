@@ -46,26 +46,42 @@ async function init() {
 
         ELEMENTS.generateBtn.onclick = generateBriefing;
         ELEMENTS.saveNotesBtn.onclick = saveNotes;
-        // Funcionalidad de precarga desactivada temporalmente
-        // if (ELEMENTS.reloadStudentsBtn) ELEMENTS.reloadStudentsBtn.onclick = cargarListaAlumnos;
-        // await cargarListaAlumnos();
+        if (ELEMENTS.reloadStudentsBtn) ELEMENTS.reloadStudentsBtn.onclick = cargarListaAlumnos;
+        await cargarListaAlumnos();
     } catch (e) {
         console.error("Error inicializando dashboard:", e);
         alert("❌ Error al conectar con el servidor: " + e.message);
     }
 }
 
-/*
 async function cargarListaAlumnos() {
     if (ELEMENTS.searchStatus) ELEMENTS.searchStatus.innerText = "🔍 Cargando lista de alumnos...";
+    if (ELEMENTS.studentList) ELEMENTS.studentList.innerHTML = "";
 
     try {
-        // ... (resto de la función comentada para referencia futura)
+        const { data, error } = await supabase
+            .from('user_profiles')
+            .select('email, nombre')
+            .not('email', 'is', null)
+            .order('nombre', { ascending: true });
+
+        if (error) throw error;
+
+        if (ELEMENTS.studentList) {
+            data.forEach(alumno => {
+                const option = document.createElement('option');
+                option.value = alumno.email;
+                option.textContent = alumno.nombre ? `${alumno.nombre} (${alumno.email})` : alumno.email;
+                ELEMENTS.studentList.appendChild(option);
+            });
+        }
+
+        if (ELEMENTS.searchStatus) ELEMENTS.searchStatus.innerText = `✅ ${data.length} alumnos cargados.`;
     } catch (e) {
         console.error("Error crítico lista alumnos:", e);
+        if (ELEMENTS.searchStatus) ELEMENTS.searchStatus.innerText = "❌ Error al cargar lista.";
     }
 }
-*/
 
 async function generateBriefing() {
     const email = ELEMENTS.studentEmail.value.trim();
