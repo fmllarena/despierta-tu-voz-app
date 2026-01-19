@@ -57,7 +57,7 @@ module.exports = async function handler(req, res) {
 
         let msg = "Vaya, parece que hay un pequeño problema técnico. Prueba de nuevo en unos instantes.";
         if (isTimeout) {
-            msg = "Vaya, parece que la IA está tardando demasiado. Prueba de nuevo en unos instantes.";
+            msg = "¡Vaya! Parece que el Mentor se ha quedado sumergido en una meditación profunda intentando procesar toda la información y se ha olvidado del tiempo. 🧘‍♂️ ¿Podrías hacerme una pregunta un poco más corta o sencilla? Así podré responderte con más agilidad.";
         } else if (isKnown) {
             msg = error.message;
         }
