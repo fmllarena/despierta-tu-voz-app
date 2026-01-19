@@ -182,11 +182,10 @@ async function processChat(req) {
     if (!process.env.GEMINI_API_KEY) throw new Error("Falta API Key");
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-    // ESTRATEGIA DE MODELOS: Priorizamos velocidad en el chat y potencia en el informe.
+    // ESTRATEGIA DE MODELOS: Priorizamos estabilidad y rapidez (Gemini 2.0 Flash)
+    // para evitar los timeouts de Vercel.
     const isBriefing = (intent === 'mentor_briefing');
-    const models = isBriefing
-        ? ["gemini-3-pro-preview", "gemini-3-flash-preview"] // Briefing: Prioridad Pro
-        : ["gemini-3-flash-preview", "gemini-3-pro-preview"]; // Chat/Web: Prioridad Flash para velocidad
+    const models = ["gemini-2.0-flash", "gemini-1.5-flash", "gemini-3-flash-preview"];
 
     let sanitizedHistory = [];
     if (Array.isArray(history)) {
@@ -221,9 +220,11 @@ async function processChat(req) {
                 ? `CONTEXTO:\n${context}\n\nMENSAJE:\n${message}`
                 : message;
 
-            // Tiempo por modelo: Al primer modelo le damos 7s para que Vercel no nos corte antes del global.
-            // Si el primero falla o tarda, el segundo tiene poco margen pero asegura el intento.
-            const timeoutMillis = index === 0 ? 7500 : 1500;
+            // CONFIGURACIÓN DE TIEMPO (Crucial para Vercel):
+            // Briefing: 8s para el primer intento (necesitamos profundidad).
+            // Chat normal: 4s para saltar rápido si hay lentitud y evitar Timeout global.
+            const timeoutMillis = isBriefing ? (index === 0 ? 8000 : 1000) : 4000;
+
             const modelTimeout = new Promise((_, reject) => {
                 setTimeout(() => reject(new Error("ModelTimeout")), timeoutMillis);
             });
