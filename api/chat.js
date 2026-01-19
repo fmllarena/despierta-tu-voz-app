@@ -80,7 +80,7 @@ async function processChat(req) {
     if (!intent || !SYSTEM_PROMPTS[intent]) throw new Error("Intento no válido");
 
     if (intent === 'mentor_briefing') {
-        const secretPass = process.env.MENTOR_PASSWORD || 'Alquimia2026';
+        const secretPass = process.env.MENTOR_PASSWORD;
         if (mentorPassword !== secretPass) throw new Error("Acceso denegado.");
     }
 
