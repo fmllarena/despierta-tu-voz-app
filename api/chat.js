@@ -7,9 +7,9 @@ const path = require('path');
 const SYSTEM_PROMPTS = {
     mentor_chat: `Eres el Mentor de "Despierta tu Voz" (Canto Holístico). Enfoque: autoconciencia, no técnica tradicional.
 REGLAS:
-1. ESCUCHA: Acoge antes de guiar.
+1. ESCUCHA: Acoge el sentir del alumno. Evita saludos genéricos (como "¡Hola!") si detectas que ya está respondiendo a tu apertura de sesión. Ve directo al corazón de lo que te cuenta.
 2. CIERRE: Si se despiden claramente, no solo con un gracias, di: "Recuerda cerrar sesión para que nuestro encuentro de hoy quede guardado en tu diario de alquimia. ¡Hasta pronto!". SÉ BREVE.
-3. PROGRESO: No menciones niveles salvo que sean > 6/10.
+3. PROGRESO: No menciones niveles salvo que sean > 6/10 y solo de vez en cuando.
 4. VIAJE: Si no han completado el viaje, invita a "Mi viaje" tras 4 mensajes.
 5. MEMORIA: Si el contexto incluye "RECUERDOS RECUPERADOS", úsalos para responder sobre el pasado con precisión.
 6. ESTILO: Metáforas vitales, sentir como brújula, prudencia emocional. No repitas tags de contexto.`,
@@ -95,43 +95,37 @@ async function processChat(req) {
 
         let perfil, viaje;
 
-        // ESTRATEGIA: Carga quirúrgica para evitar Timeouts.
-        if (intent === 'mentor_chat') {
-            const { data, error } = await supabase.from('user_profiles')
-                .select('nombre, historia_vocal, creencias, nivel_alquimia, mentor_notes, ultimo_resumen, last_hito_completed')
-                .eq('user_id', userId)
-                .maybeSingle();
-            if (error) console.error("Error perfil:", error);
-            perfil = data;
-        } else {
-            const [perfilRes, viajeRes] = await Promise.all([
-                supabase.from('user_profiles')
-                    .select('nombre, historia_vocal, creencias, nivel_alquimia, mentor_notes, ultimo_resumen, last_hito_completed')
-                    .eq('user_id', userId)
-                    .maybeSingle(),
-                supabase.from('user_coaching_data')
-                    .select('linea_vida_hitos, herencia_raices, roles_familiares, ritual_sanacion, plan_accion')
-                    .eq('user_id', userId)
-                    .maybeSingle()
-            ]);
+        // ESTRATEGIA: Carga quirúrgica MÍNIMA para velocidad total.
+        const { data: perfilData, error: perfilErr } = await supabase.from('user_profiles')
+            .select('nombre, historia_vocal, ultimo_resumen')
+            .eq('user_id', userId)
+            .maybeSingle();
 
-            if (perfilRes.error) console.error("Error perfilRes:", perfilRes.error);
-            if (viajeRes.error) console.error("Error viajeRes:", viajeRes.error);
-
-            perfil = perfilRes?.data;
-            viaje = viajeRes?.data;
-        }
+        if (perfilErr) console.error("Error perfil:", perfilErr);
+        perfil = perfilData;
 
         if (perfil) {
-            context += `\n--- PERFIL ALUMNO ---\n- Nombre: ${perfil.nombre || 'N/A'}\n- Historia: ${perfil.historia_vocal || 'N/A'}\n- Creencias: ${perfil.creencias || 'N/A'}\n- Nivel: ${perfil.nivel_alquimia || 1}/10\n- Módulo actual: ${perfil.last_hito_completed || 0}/5\n- Notas Fer: ${perfil.mentor_notes || 'Ninguna'}\n- Resumen actual: ${perfil.ultimo_resumen || 'Sin resumen previo'}\n`;
+            context += `\n--- PERFIL ALUMNO ---\n- Nombre: ${perfil.nombre || 'N/A'}\n- Historia: ${perfil.historia_vocal || 'N/A'}\n- Resumen: ${perfil.ultimo_resumen || 'Sin resumen previo'}\n`;
         }
-        if (viaje) {
-            context += `\n--- DATOS DE "MI VIAJE" ---\n`;
-            if (viaje.linea_vida_hitos) context += `- Hitos (M1): ${JSON.stringify(viaje.linea_vida_hitos)}\n`;
-            if (viaje.herencia_raices) context += `- Raíces (M2): ${JSON.stringify(viaje.herencia_raices)}\n`;
-            if (viaje.roles_familiares) context += `- Roles (M3): ${JSON.stringify(viaje.roles_familiares)}\n`;
-            if (viaje.ritual_sanacion) context += `- Ritual (M4): ${JSON.stringify(viaje.ritual_sanacion)}\n`;
-            if (viaje.plan_accion) context += `- Plan (M5): ${JSON.stringify(viaje.plan_accion)}\n`;
+
+        // --- BÚSQUEDA DINÁMICA DE DATOS DE "MI VIAJE" ---
+        const coachingTriggers = ["viaje", "hitos", "raíces", "familia", "ritual", "plan", "coaching", "módulo", "ejercicio"];
+        const needsCoaching = coachingTriggers.some(t => message.toLowerCase().includes(t)) || intent === 'mentor_briefing';
+
+        if (needsCoaching) {
+            const { data: viaje } = await supabase.from('user_coaching_data')
+                .select('linea_vida_hitos, herencia_raices, roles_familiares, ritual_sanacion, plan_accion')
+                .eq('user_id', userId)
+                .maybeSingle();
+
+            if (viaje) {
+                context += `\n--- DATOS DEL VIAJE (Rescatados bajo demanda) ---\n`;
+                if (viaje.linea_vida_hitos) context += `- Hitos: ${JSON.stringify(viaje.linea_vida_hitos)}\n`;
+                if (viaje.herencia_raices) context += `- Raíces: ${JSON.stringify(viaje.herencia_raices)}\n`;
+                if (viaje.roles_familiares) context += `- Roles: ${JSON.stringify(viaje.roles_familiares)}\n`;
+                if (viaje.ritual_sanacion) context += `- Ritual: ${JSON.stringify(viaje.ritual_sanacion)}\n`;
+                if (viaje.plan_accion) context += `- Plan: ${JSON.stringify(viaje.plan_accion)}\n`;
+            }
         }
 
         // --- BÚSQUEDA DINÁMICA DE MEMORIA ---
