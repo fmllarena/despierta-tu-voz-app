@@ -249,7 +249,14 @@
                 <input type="password" id="mentorPass" placeholder="••••••••">
             </div>
 
-            <button id="generateBtn" class="main-btn">Generar Informe Inteligente</button>
+            <div class="input-group" style="margin-top: 10px;">
+                <label for="customQuery">Consulta específica / Rescatar datos (Opcional)</label>
+                <textarea id="customQuery"
+                    placeholder="Ej: ¿Qué miedos detectamos hace meses? o ¿Cuál es su ritual de sanación?"
+                    style="height: 80px;"></textarea>
+            </div>
+
+            <button id="generateBtn" class="main-btn">Generar Informe / Consultar IA</button>
             <p id="debugInfo" class="debug-info"></p>
         </div>
 
