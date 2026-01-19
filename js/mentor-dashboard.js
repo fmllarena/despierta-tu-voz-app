@@ -17,6 +17,7 @@ const ELEMENTS = {
     reportContent: document.getElementById('reportContent'),
     mentorNotes: document.getElementById('mentorNotes'),
     saveNotesBtn: document.getElementById('saveNotesBtn'),
+    customQuery: document.getElementById('customQuery'),
     debugInfo: document.getElementById('debugInfo')
 };
 
@@ -119,12 +120,17 @@ async function generateBriefing() {
                                     <p>🔮 Generando ahora el informe estratégico... Esto puede tardar unos segundos.</p>`;
 
         // 2. PASO 2: Llamada a la API de Briefing (Este es el proceso pesado)
+        const customQ = ELEMENTS.customQuery.value.trim();
+        const finalMessage = customQ
+            ? `CONSULTA ESPECÍFICA: ${customQ}\n(Para el alumno ${email})`
+            : `Genera el informe para ${email}`;
+
         const briefingResponse = await fetch('/api/chat', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 intent: 'mentor_briefing',
-                message: `Genera el informe para ${email}`,
+                message: finalMessage,
                 userId: currentStudentId,
                 mentorPassword: pass
             })
