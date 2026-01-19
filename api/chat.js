@@ -182,9 +182,9 @@ async function processChat(req) {
     if (!process.env.GEMINI_API_KEY) throw new Error("Falta API Key");
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-    // Modelos disponibles para 2026. Priorizamos el flash estable de Gemini 3 y 2.0.
-    // Nota: El usuario reporta 404 en la familia 1.5, posiblmente por retiro/deprecación en su entorno.
-    const models = ["gemini-3-flash", "gemini-2.0-flash", "gemini-3-flash-preview"];
+    // Modelos estables y potentes para 2024-2025. 
+    // Usamos 1.5 Pro para informes complejos (briefing) y 1.5 Flash como backup rápido.
+    const models = ["gemini-1.5-pro", "gemini-1.5-flash"];
 
     let sanitizedHistory = [];
     if (Array.isArray(history)) {
@@ -219,9 +219,11 @@ async function processChat(req) {
                 ? `CONTEXTO:\n${context}\n\nMENSAJE:\n${message}`
                 : message;
 
-            // Tiempo por modelo: 4s para permitir pasar al siguiente si hay lentitud sin agotar los 9s globales.
+            // Tiempo por modelo: 8s. Como solo hay 2 modelos, si el primero falla por lentitud (8s), 
+            // el segundo probablemente ya no tenga tiempo (9s total global), pero aseguramos que el 
+            // primero tenga el máximo posible.
             const modelTimeout = new Promise((_, reject) => {
-                setTimeout(() => reject(new Error("ModelTimeout")), 4000);
+                setTimeout(() => reject(new Error("ModelTimeout")), 8000);
             });
 
             let result;
