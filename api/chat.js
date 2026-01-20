@@ -12,7 +12,7 @@ REGLAS:
 3. PROGRESO: No menciones niveles salvo que sean > 6/10 y solo de vez en cuando.
 4. VIAJE: Si no han completado el viaje, invita a "Mi viaje" tras 4 mensajes.
 5. MEMORIA: Si el contexto incluye "RECUERDOS RECUPERADOS", úsalos para responder sobre el pasado con precisión.
-6. ESTILO: Metáforas vitales, sentir como brújula, prudencia emocional. No repitas tags de contexto.`,
+6. ESTILO: Metáforas vitales, sentir como brújula, para que el sonido sea medicina.`,
     alchemy_analysis: `Análisis poético directo (80-120 palabras). Sin preámbulos. Habla desde la sabiduría del Mentor sobre el módulo completado.`,
     generate_questions: `Genera 1 pregunta de coaching original. Máx 4 párrafos. No repetir conceptos.`,
     identify_limiting_belief: `Identifica creencia limitante principal. Responde en 1ª persona (máx 15 palabras).`,
@@ -54,7 +54,7 @@ module.exports = async function handler(req, res) {
         // Si el error es una de nuestras validaciones, lo pasamos tal cual
         const knownErrors = ["Acceso denegado.", "Falta API Key", "Falta SUPABASE_SERVICE_ROLE_KEY", "Intento no válido", "Alumno no encontrado"];
         const isKnown = knownErrors.some(k => error.message.includes(k));
-        const isAIError = error.message.includes("Error conexión IA");
+        const isAIError = error.message.includes("Error conexión IA") || error.message.includes("Error fetching") || error.message.includes("Insufficient Balance") || error.message.includes("ModelTimeout") || error.message.includes("ClaudeError");
 
         let msg = "Vaya, parece que hay un pequeño problema técnico. Prueba de nuevo en unos instantes.";
 
@@ -164,67 +164,70 @@ async function processChat(req) {
         }
     }
 
-    if (intent === 'web_assistant') {
-        try {
-            const knowledgePath = path.join(process.cwd(), 'knowledge', 'web_info.md');
-            if (fs.existsSync(knowledgePath)) {
-                const knowledge = fs.readFileSync(knowledgePath, 'utf8');
-                context += `\n[BASE DE CONOCIMIENTO OFICIAL]\n${knowledge}\n`;
-            }
-        } catch (err) {
-            console.error("Error al cargar la base de conocimiento:", err);
-        }
-    }
-
     const promptFinal = context ? `CONTEXTO:\n${context}\n\nMENSAJE:\n${message}` : message;
 
-    // --- CADENA DE IA (DEEPSEEK -> GEMINI -> CLAUDE) ---
+    // --- CADENA DE IA ACTUALIZADA ---
+    // 1. Claude 3.5 Haiku (Súper veloz y económico)
+    // 2. Claude 3.5 Sonnet (Máxima inteligencia y estabilidad)
+    // 3. Gemini 1.5/2.0 (Backup de Google)
+    // 4. DeepSeek (Backup final)
+
     let errors = [];
 
-    // 1. INTENTO DEEPSEEK (NUEVO)
-    if (process.env.DEEPSEEK_API_KEY) {
+    // 1. INTENTO CLAUDE HAIKU (NUEVA PRIORIDAD)
+    if (process.env.ANTHROPIC_API_KEY) {
         try {
-            console.log("🚀 Intentando con DeepSeek...");
-            const dsResponse = await Promise.race([
-                fetch("https://api.deepseek.com/chat/completions", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "Authorization": `Bearer ${process.env.DEEPSEEK_API_KEY}`
-                    },
-                    body: JSON.stringify({
-                        model: "deepseek-chat",
-                        messages: [
-                            { role: "system", content: SYSTEM_PROMPTS[intent] },
-                            ...formatHistoryForOpenAI(history),
-                            { role: "user", content: promptFinal }
-                        ],
-                        temperature: 0.7,
-                        max_tokens: 1024
-                    })
+            console.log("🚀 Intentando con Claude 3.5 Haiku...");
+            const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+            const response = await Promise.race([
+                anthropic.messages.create({
+                    model: "claude-3-5-haiku-latest",
+                    max_tokens: 1024,
+                    system: SYSTEM_PROMPTS[intent],
+                    messages: [
+                        ...formatHistoryForClaude(history),
+                        { role: "user", content: promptFinal }
+                    ],
                 }),
-                new Promise((_, reject) => setTimeout(() => reject(new Error("DeepSeekTimeout")), 5000))
+                new Promise((_, reject) => setTimeout(() => reject(new Error("ClaudeHaikuTimeout")), 5000))
             ]);
-
-            if (!dsResponse.ok) {
-                const errorData = await dsResponse.json();
-                throw new Error(`DeepSeek Error: ${errorData.error?.message || dsResponse.statusText}`);
-            }
-
-            const data = await dsResponse.json();
-            return { text: data.choices[0].message.content, info: "DeepSeek" };
-        } catch (e) {
-            console.error("Error DeepSeek:", e.message);
-            errors.push(`DeepSeek: ${e.message}`);
+            return { text: response.content[0].text, info: "Claude Haiku" };
+        } catch (ce) {
+            console.error("Error Claude Haiku:", ce.message);
+            errors.push(`Claude Haiku: ${ce.message}`);
         }
     }
 
-    // 2. INTENTO GEMINI (BACKUP)
+    // 2. INTENTO CLAUDE SONNET
+    if (process.env.ANTHROPIC_API_KEY) {
+        try {
+            console.log("🛡️ Fallback: Intentando con Claude 3.5 Sonnet...");
+            const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+            const response = await Promise.race([
+                anthropic.messages.create({
+                    model: "claude-3-5-sonnet-latest",
+                    max_tokens: 1024,
+                    system: SYSTEM_PROMPTS[intent],
+                    messages: [
+                        ...formatHistoryForClaude(history),
+                        { role: "user", content: promptFinal }
+                    ],
+                }),
+                new Promise((_, reject) => setTimeout(() => reject(new Error("ClaudeSonnetTimeout")), 8000))
+            ]);
+            return { text: response.content[0].text, info: "Claude Sonnet" };
+        } catch (ce) {
+            console.error("Error Claude Sonnet:", ce.message);
+            errors.push(`Claude Sonnet: ${ce.message}`);
+        }
+    }
+
+    // 3. INTENTO GEMINI
     if (process.env.GEMINI_API_KEY) {
         try {
-            console.log("fallback: Intentando con Gemini...");
+            console.log("🛡️ Fallback: Intentando con Gemini...");
             const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-            const models = ["gemini-1.5-flash", "gemini-2.0-flash"];
+            const models = ["gemini-1.5-flash-latest", "gemini-2.0-flash-exp"];
             const isBriefing = (intent === 'mentor_briefing');
 
             for (const [index, modelName] of models.entries()) {
@@ -256,23 +259,41 @@ async function processChat(req) {
         }
     }
 
-    // 3. INTENTO CLAUDE (ÚLTIMO RECURSO)
-    if (process.env.ANTHROPIC_API_KEY) {
+    // 4. INTENTO DEEPSEEK
+    if (process.env.DEEPSEEK_API_KEY) {
         try {
-            console.log("fallback: Intentando con Claude...");
-            const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-            const response = await anthropic.messages.create({
-                model: "claude-3-5-sonnet-20241022",
-                max_tokens: 1024,
-                system: SYSTEM_PROMPTS[intent],
-                messages: [
-                    ...formatHistoryForClaude(history),
-                    { role: "user", content: promptFinal }
-                ],
-            });
-            return { text: response.content[0].text, info: "Claude Backup" };
-        } catch (ce) {
-            errors.push(`Claude: ${ce.message}`);
+            console.log("🛡️ Fallback: Intentando con DeepSeek...");
+            const dsResponse = await Promise.race([
+                fetch("https://api.deepseek.com/chat/completions", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${process.env.DEEPSEEK_API_KEY}`
+                    },
+                    body: JSON.stringify({
+                        model: "deepseek-chat",
+                        messages: [
+                            { role: "system", content: SYSTEM_PROMPTS[intent] },
+                            ...formatHistoryForOpenAI(history),
+                            { role: "user", content: promptFinal }
+                        ],
+                        temperature: 0.7,
+                        max_tokens: 1024
+                    })
+                }),
+                new Promise((_, reject) => setTimeout(() => reject(new Error("DeepSeekTimeout")), 5000))
+            ]);
+
+            if (!dsResponse.ok) {
+                const errorData = await dsResponse.json();
+                throw new Error(`DeepSeek Error: ${errorData.error?.message || dsResponse.statusText}`);
+            }
+
+            const data = await dsResponse.json();
+            return { text: data.choices[0].message.content, info: "DeepSeek" };
+        } catch (e) {
+            console.error("Error DeepSeek:", e.message);
+            errors.push(`DeepSeek: ${e.message}`);
         }
     }
 
