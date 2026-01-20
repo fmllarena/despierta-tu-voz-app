@@ -216,7 +216,9 @@ async function llamarGemini(message, history, intent, extraData = {}) {
         }
 
         if (data.error) {
-            const detailMsg = data.details ? ` (${data.details})` : "";
+            // Si es un error de la IA (timeout o conexión), no mostramos los detalles técnicos al usuario para no asustarlo
+            const isFriendlyError = data.isTimeout || data.isAIError || data.error.includes("Vaya");
+            const detailMsg = (data.details && !isFriendlyError) ? ` (${data.details})` : "";
             throw new Error(data.error + detailMsg);
         }
         return data.text;
@@ -516,7 +518,7 @@ async function sendMessage() {
     if (!text) return;
 
     appendMessage(text, 'user');
-    guardarMensajeDB(text, 'user'); // Guardar en Supabase sin esperar para no ralentizar
+    await guardarMensajeDB(text, 'user'); // Asegurar el guardado antes de continuar
 
     ELEMENTS.chatInput.value = '';
     ELEMENTS.chatInput.disabled = true;
@@ -562,7 +564,9 @@ async function sendMessage() {
     } catch (e) {
         document.getElementById('msg-thinking')?.remove();
         console.error("Error en sendMessage:", e);
-        const errorMsg = e.message.includes("Vaya") ? e.message : `Vaya, parece que hay un pequeño problema técnico: ${e.message}. Prueba de nuevo en unos instantes.`;
+        // Si el mensaje ya es un error amigable (empieza por Vaya o ¡Vaya), lo usamos tal cual sin añadir técnicos
+        const isFriendly = e.message.startsWith("Vaya") || e.message.startsWith("¡Vaya");
+        const errorMsg = isFriendly ? e.message : `Vaya, parece que hay un pequeño problema técnico. Prueba de nuevo en unos instantes.`;
         appendMessage(errorMsg, 'ia');
     } finally {
         ELEMENTS.chatInput.disabled = false;
