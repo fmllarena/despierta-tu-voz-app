@@ -51,17 +51,17 @@ module.exports = async function handler(req, res) {
         const isTimeout = error.message === "GlobalTimeout";
         const status = isTimeout ? 504 : 500;
 
-        // Si el error es una de nuestras validaciones, lo pasamos tal cual
         const knownErrors = ["Acceso denegado.", "Falta API Key", "Falta SUPABASE_SERVICE_ROLE_KEY", "Intento no válido", "Alumno no encontrado"];
         const isKnown = knownErrors.some(k => error.message.includes(k));
 
-        // Escudo de IA: Capturamos cualquier error técnico de los proveedores
         const isAIError = error.message.includes("Error conexión IA") ||
             error.message.includes("Error fetching") ||
             error.message.includes("Insufficient Balance") ||
             error.message.includes("ModelTimeout") ||
             error.message.includes("404") ||
-            error.message.includes("not_found_error");
+            error.message.includes("not_found_error") ||
+            error.message.includes("ClaudeHaikuTimeout") ||
+            error.message.includes("ClaudeSonnetTimeout");
 
         let msg = "Vaya, parece que hay un pequeño problema técnico. Prueba de nuevo en unos instantes.";
 
@@ -98,24 +98,15 @@ async function processChat(req) {
 
     let context = "";
     if (userId && (intent === 'mentor_chat' || intent === 'mentor_briefing' || intent === 'alchemy_analysis')) {
-        if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
-            console.error("FATAL: Falta SUPABASE_SERVICE_ROLE_KEY en el servidor.");
-            throw new Error("Falta SUPABASE_SERVICE_ROLE_KEY en la configuración del servidor.");
-        }
-
         const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
-
-        // --- CARGA PARALELA DE DATOS (OPTIMIZACIÓN DE VELOCIDAD) ---
         const lowerMsg = message.toLowerCase();
 
-        // Triggers
         const coachingTriggers = ["viaje", "hitos", "raíces", "familia", "ritual", "plan", "coaching", "módulo", "ejercicio"];
         const memoryTriggers = ["recordar", "hablamos", "dijiste", "comentamos", "conversación", "anterior", "pasado", "memoria", "busc", "encontr", "qué hablamos", "recordamos", "hace tiempo"];
 
         const needsCoaching = coachingTriggers.some(t => lowerMsg.includes(t)) || intent === 'mentor_briefing';
         const triggersMemory = memoryTriggers.some(t => lowerMsg.includes(t)) && intent === 'mentor_chat';
 
-        // Lanzamos todas las promesas al mismo tiempo
         const promises = [
             supabase.from('user_profiles').select('nombre, historia_vocal, ultimo_resumen').eq('user_id', userId).maybeSingle()
         ];
@@ -127,12 +118,7 @@ async function processChat(req) {
         }
 
         if (triggersMemory) {
-            const stopWords = ["recuerdas", "cuándo", "sobre", "hemos", "tenido", "podemos", "puedes", "decirme", "acerca", "alguna", "algún", "cuando", "estuvimos"];
-            const keywords = message.toLowerCase()
-                .replace(/[?,.;!]/g, "")
-                .split(" ")
-                .filter(w => w.length > 3 && !memoryTriggers.includes(w) && !stopWords.includes(w));
-
+            const keywords = message.toLowerCase().replace(/[?,.;!]/g, "").split(" ").filter(w => w.length > 3);
             if (keywords.length > 0) {
                 promises.push(supabase.from('mensajes').select('texto, emisor, created_at').eq('alumno', userId).ilike('texto', `%${keywords[0]}%`).order('created_at', { ascending: false }).limit(5));
             } else {
@@ -144,62 +130,39 @@ async function processChat(req) {
 
         const [perfilRes, viajeRes, memoryRes] = await Promise.all(promises);
 
-        // 1. Contexto Perfil
         if (perfilRes.data) {
             const perfil = perfilRes.data;
             context += `\n--- PERFIL ALUMNO ---\n- Nombre: ${perfil.nombre || 'N/A'}\n- Historia: ${perfil.historia_vocal || 'N/A'}\n- Resumen: ${perfil.ultimo_resumen || 'Sin resumen previo'}\n`;
         }
-
-        // 2. Contexto Viaje
         if (viajeRes.data) {
             const viaje = viajeRes.data;
-            context += `\n--- DATOS DEL VIAJE (Rescatados bajo demanda) ---\n`;
-            if (viaje.linea_vida_hitos) context += `- Hitos: ${JSON.stringify(viaje.linea_vida_hitos)}\n`;
-            if (viaje.herencia_raices) context += `- Raíces: ${JSON.stringify(viaje.herencia_raices)}\n`;
-            if (viaje.roles_familiares) context += `- Roles: ${JSON.stringify(viaje.roles_familiares)}\n`;
-            if (viaje.ritual_sanacion) context += `- Ritual: ${JSON.stringify(viaje.ritual_sanacion)}\n`;
-            if (viaje.plan_accion) context += `- Plan: ${JSON.stringify(viaje.plan_accion)}\n`;
+            context += `\n--- DATOS DEL VIAJE ---\n${JSON.stringify(viaje)}\n`;
         }
-
-        // 3. Contexto Memoria
         if (memoryRes.data && memoryRes.data.length > 0) {
             context += `\n--- RECUERDOS RECUPERADOS ---\n`;
             memoryRes.data.reverse().forEach(r => {
-                const date = new Date(r.created_at).toLocaleDateString();
-                context += `[${date}] ${r.emisor === 'ia' ? 'Mentor' : 'Alumno'}: ${r.texto.substring(0, 300)}${r.texto.length > 300 ? '...' : ''}\n`;
+                context += `[${new Date(r.created_at).toLocaleDateString()}] ${r.emisor === 'ia' ? 'Mentor' : 'Alumno'}: ${r.texto}\n`;
             });
-        }
-    }
-
-    if (intent === 'web_assistant') {
-        try {
-            const knowledgePath = path.join(process.cwd(), 'knowledge', 'web_info.md');
-            if (fs.existsSync(knowledgePath)) {
-                const knowledge = fs.readFileSync(knowledgePath, 'utf8');
-                context += `\n[BASE DE CONOCIMIENTO OFICIAL]\n${knowledge}\n`;
-            }
-        } catch (err) {
-            console.error("Error al cargar la base de conocimiento:", err);
         }
     }
 
     const promptFinal = context ? `CONTEXTO:\n${context}\n\nMENSAJE:\n${message}` : message;
 
-    // --- CADENA DE IA ACTUALIZADA (SOLO CLAUDE Y GEMINI) ---
-    // 1. Claude 3.5 Haiku (Pura velocidad)
-    // 2. Claude 3.5 Sonnet (Máxima calidad)
-    // 3. Gemini 1.5 Flash (Backup)
+    // --- CADENA DE IA ACTUALIZADA (2026 EDITION) ---
+    // 1. Claude Haiku 4.5
+    // 2. Claude Sonnet 4
+    // 3. Gemini 1.5 Flash
 
     let errors = [];
 
-    // 1. INTENTO CLAUDE HAIKU (NUEVA PRIORIDAD)
+    // 1. INTENTO CLAUDE HAIKU 4.5
     if (process.env.ANTHROPIC_API_KEY) {
         try {
-            console.log("🚀 Intentando con Claude 3.5 Haiku...");
+            console.log("🚀 Intentando con Claude 4.5 Haiku...");
             const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
             const response = await Promise.race([
                 anthropic.messages.create({
-                    model: "claude-3-5-haiku-20241022",
+                    model: "claude-4-5-haiku-20251015", // Versión estable de 2025
                     max_tokens: 1024,
                     system: SYSTEM_PROMPTS[intent],
                     messages: [
@@ -207,23 +170,36 @@ async function processChat(req) {
                         { role: "user", content: promptFinal }
                     ],
                 }),
-                new Promise((_, reject) => setTimeout(() => reject(new Error("ClaudeHaikuTimeout")), 5000))
+                new Promise((_, reject) => setTimeout(() => reject(new Error("ClaudeHaiku4.5Timeout")), 5000))
             ]);
-            return { text: response.content[0].text, info: "Claude Haiku" };
+            return { text: response.content[0].text, info: "Claude 4.5 Haiku" };
         } catch (ce) {
-            console.error("Error Claude Haiku:", ce.message);
-            errors.push(`Claude Haiku: ${ce.message}`);
+            console.error("Error Claude 4.5 Haiku:", ce.message);
+            // Si da 404, intentamos con el alias 'latest' por si ha cambiado
+            if (ce.message.includes("404")) {
+                try {
+                    const response = await anthropic.messages.create({
+                        model: "claude-4-5-haiku-latest",
+                        max_tokens: 1024,
+                        system: SYSTEM_PROMPTS[intent],
+                        messages: [...formatHistoryForClaude(history), { role: "user", content: promptFinal }],
+                    });
+                    return { text: response.content[0].text, info: "Claude 4.5 Haiku (Latest)" };
+                } catch (ce2) { errors.push(`Claude 4.5 Haiku Alias: ${ce2.message}`); }
+            } else {
+                errors.push(`Claude 4.5 Haiku: ${ce.message}`);
+            }
         }
     }
 
-    // 2. INTENTO CLAUDE SONNET
+    // 2. INTENTO CLAUDE SONNET 4 (Respaldo de alta gama)
     if (process.env.ANTHROPIC_API_KEY) {
         try {
-            console.log("🛡️ Fallback: Intentando con Claude 3.5 Sonnet...");
+            console.log("🛡️ Fallback: Intentando con Claude 4 Sonnet...");
             const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
             const response = await Promise.race([
                 anthropic.messages.create({
-                    model: "claude-3-5-sonnet-20241022",
+                    model: "claude-4-sonnet-latest",
                     max_tokens: 1024,
                     system: SYSTEM_PROMPTS[intent],
                     messages: [
@@ -231,69 +207,44 @@ async function processChat(req) {
                         { role: "user", content: promptFinal }
                     ],
                 }),
-                new Promise((_, reject) => setTimeout(() => reject(new Error("ClaudeSonnetTimeout")), 8000))
+                new Promise((_, reject) => setTimeout(() => reject(new Error("ClaudeSonnet4Timeout")), 8000))
             ]);
-            return { text: response.content[0].text, info: "Claude Sonnet" };
+            return { text: response.content[0].text, info: "Claude 4 Sonnet" };
         } catch (ce) {
-            console.error("Error Claude Sonnet:", ce.message);
-            errors.push(`Claude Sonnet: ${ce.message}`);
+            console.error("Error Claude 4 Sonnet:", ce.message);
+            errors.push(`Claude 4 Sonnet: ${ce.message}`);
         }
     }
 
-    // 3. INTENTO GEMINI
+    // 3. INTENTO GEMINI (Backup final)
     if (process.env.GEMINI_API_KEY) {
         try {
             console.log("🛡️ Fallback: Intentando con Gemini...");
             const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-            const models = ["gemini-1.5-flash", "gemini-2.0-flash-exp"];
-            const isBriefing = (intent === 'mentor_briefing');
-
-            for (const [index, modelName] of models.entries()) {
-                try {
-                    const model = genAI.getGenerativeModel({ systemInstruction: SYSTEM_PROMPTS[intent], model: modelName });
-                    const timeoutMillis = isBriefing ? (index === 0 ? 8000 : 1000) : 4000;
-
-                    const modelTimeout = new Promise((_, reject) => {
-                        setTimeout(() => reject(new Error("ModelTimeout")), timeoutMillis);
-                    });
-
-                    let result;
-                    const sanitizedHistory = formatHistoryForGemini(history);
-
-                    if (sanitizedHistory.length > 0) {
-                        const chat = model.startChat({ history: sanitizedHistory });
-                        result = await Promise.race([chat.sendMessage(promptFinal), modelTimeout]);
-                    } else {
-                        result = await Promise.race([model.generateContent(promptFinal), modelTimeout]);
-                    }
-                    return { text: result.response.text(), info: "Gemini" };
-                } catch (ge) {
-                    console.error(`Error Gemini ${modelName}:`, ge.message);
-                    errors.push(`${modelName}: ${ge.message}`);
-                }
+            const model = genAI.getGenerativeModel({ systemInstruction: SYSTEM_PROMPTS[intent], model: "gemini-1.5-flash" });
+            const sanitizedHistory = formatHistoryForGemini(history);
+            let result;
+            if (sanitizedHistory.length > 0) {
+                const chat = model.startChat({ history: sanitizedHistory });
+                result = await chat.sendMessage(promptFinal);
+            } else {
+                result = await model.generateContent(promptFinal);
             }
-        } catch (e) {
-            errors.push(`Gemini Global: ${e.message}`);
+            return { text: result.response.text(), info: "Gemini" };
+        } catch (ge) {
+            errors.push(`Gemini: ${ge.message}`);
         }
     }
 
     throw new Error(`Error conexión IA: ${errors.join(" | ")}`);
 }
 
-// --- HELPER FUNCTIONS ---
-
-function formatHistoryForOpenAI(history) {
-    if (!Array.isArray(history)) return [];
-    return history
-        .filter(h => h?.parts?.[0]?.text)
-        .map(h => ({
-            role: h.role === 'model' ? 'assistant' : 'user',
-            content: h.parts[0].text
-        }));
-}
-
 function formatHistoryForClaude(history) {
-    return formatHistoryForOpenAI(history);
+    if (!Array.isArray(history)) return [];
+    return history.filter(h => h?.parts?.[0]?.text).map(h => ({
+        role: h.role === 'model' ? 'assistant' : 'user',
+        content: h.parts[0].text
+    }));
 }
 
 function formatHistoryForGemini(history) {
@@ -306,12 +257,7 @@ function formatHistoryForGemini(history) {
         lastRole = role;
         return true;
     });
-
-    while (sanitized.length > 0 && sanitized[0].role !== 'user') {
-        sanitized.shift();
-    }
-    if (sanitized.length > 0 && sanitized[sanitized.length - 1].role === 'user') {
-        sanitized.pop();
-    }
+    while (sanitized.length > 0 && sanitized[0].role !== 'user') sanitized.shift();
+    if (sanitized.length > 0 && sanitized[sanitized.length - 1].role === 'user') sanitized.pop();
     return sanitized;
 }
