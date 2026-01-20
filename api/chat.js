@@ -88,9 +88,16 @@ async function processChat(req) {
         else promises.push(Promise.resolve({ data: null }));
 
         if (triggersMemory) {
-            const keywords = message.toLowerCase().replace(/[?,.;!]/g, "").split(" ").filter(w => w.length > 3);
-            if (keywords.length > 0) promises.push(supabase.from('mensajes').select('texto, emisor, created_at').eq('alumno', userId).ilike('texto', `%${keywords[0]}%`).order('created_at', { ascending: false }).limit(5));
-            else promises.push(Promise.resolve({ data: null }));
+            const noise = ["acuerdas", "hablamos", "dijiste", "comentamos", "anterior", "pasado", "memoria", "sobre", "puedes", "recordar", "sabes", "quiero", "tema", "algo"];
+            const keywords = message.toLowerCase().replace(/[?,.;!]/g, "").split(" ")
+                .filter(w => w.length > 3 && !noise.includes(w))
+                .sort((a, b) => b.length - a.length);
+
+            if (keywords.length > 0) {
+                const bestKeyword = keywords[0];
+                console.log(`🧠 Buscando memoria: ${bestKeyword}`);
+                promises.push(supabase.from('mensajes').select('texto, emisor, created_at').eq('alumno', userId).ilike('texto', `%${bestKeyword}%`).order('created_at', { ascending: false }).limit(5));
+            } else promises.push(Promise.resolve({ data: null }));
         } else promises.push(Promise.resolve({ data: null }));
 
         const [perfilRes, viajeRes, memoryRes] = await Promise.all(promises);
