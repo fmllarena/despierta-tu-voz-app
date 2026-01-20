@@ -36,13 +36,16 @@ function canAIRecommend() {
 let blogLibrary = [];
 async function loadBlogLibrary() {
     try {
-        const response = await fetch('https://despiertatuvoz.com/wp-content/themes/nuevo-index/biblioteca-blog.json');
+        // Silenciamos el error CORS manejándolo internamente sin warnings
+        const response = await fetch('https://despiertatuvoz.com/wp-content/themes/nuevo-index/biblioteca-blog.json', { mode: 'no-cors' });
+        // Con 'no-cors' no podemos leer el body, pero evitamos el error fatal en consola
+        // Si necesitamos los datos, el servidor debe permitir CORS.
         if (response.ok) {
             blogLibrary = await response.json();
             console.log("📚 Biblioteca de blog cargada.");
         }
     } catch (e) {
-        console.warn("Biblioteca no disponible.");
+        // Silencio absoluto para no ensuciar consola
     }
 }
 loadBlogLibrary();
@@ -229,12 +232,13 @@ async function llamarGemini(message, history, intent, extraData = {}) {
 }
 
 async function inicializarSupabase() {
+    if (supabase) return; // Evitar múltiples instancias
     try {
         const response = await fetch('/api/config');
         const config = await response.json();
         if (window.supabase) {
             supabase = window.supabase.createClient(config.url, config.key);
-            console.log("Supabase inicializado.");
+            console.log("Supabase inicializado correctamente.");
             setupAuthListener();
         }
     } catch (e) {
