@@ -52,12 +52,16 @@ module.exports = async function handler(req, res) {
         const status = isTimeout ? 504 : 500;
 
         // Si el error es una de nuestras validaciones, lo pasamos tal cual
-        const knownErrors = ["Acceso denegado.", "Falta API Key", "Falta SUPABASE_SERVICE_ROLE_KEY", "Intento no válido", "Alumno no encontrado", "Error conexión IA"];
+        const knownErrors = ["Acceso denegado.", "Falta API Key", "Falta SUPABASE_SERVICE_ROLE_KEY", "Intento no válido", "Alumno no encontrado"];
         const isKnown = knownErrors.some(k => error.message.includes(k));
+        const isAIError = error.message.includes("Error conexión IA");
 
         let msg = "Vaya, parece que hay un pequeño problema técnico. Prueba de nuevo en unos instantes.";
+
         if (isTimeout) {
             msg = "¡Vaya! Parece que el Mentor se ha quedado sumergido en una meditación profunda intentando procesar toda la información y se ha olvidado del tiempo. 🧘‍♂️ ¿Podrías hacerme una pregunta un poco más corta o sencilla? Así podré responderte con más agilidad.";
+        } else if (isAIError) {
+            msg = "Vaya, parece que el Mentor está recibiendo muchísimas consultas ahora mismo y su voz se ha quedado un poco en silencio. 🌿 Por favor, espera unos instantes y vuelve a intentarlo, ¡estoy deseando seguir conversando contigo!";
         } else if (isKnown) {
             msg = error.message;
         }
@@ -65,6 +69,7 @@ module.exports = async function handler(req, res) {
         return res.status(status).json({
             error: msg,
             details: error.message,
+            isAIError: isAIError,
             isTimeout: isTimeout
         });
     }
@@ -179,7 +184,7 @@ async function processChat(req) {
     // ESTRATEGIA DE MODELOS: Priorizamos estabilidad y rapidez (Gemini 2.0 Flash)
     // para evitar los timeouts de Vercel.
     const isBriefing = (intent === 'mentor_briefing');
-    const models = ["gemini-2.0-flash", "gemini-1.5-flash", "gemini-3-flash-preview"];
+    const models = ["gemini-1.5-flash", "gemini-2.0-flash", "gemini-1.5-flash-8b"];
 
     let sanitizedHistory = [];
     if (Array.isArray(history)) {
