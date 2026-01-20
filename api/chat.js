@@ -37,7 +37,6 @@ module.exports = async function handler(req, res) {
     if (req.method === 'OPTIONS') return res.status(200).end();
     if (req.method !== "POST") return res.status(405).json({ error: "Método no permitido" });
 
-    // Timeout global de 9 segundos para evitar el error de Vercel (10s límite)
     const globalTimeout = new Promise((_, reject) => {
         setTimeout(() => reject(new Error("GlobalTimeout")), 9000);
     });
@@ -57,10 +56,9 @@ module.exports = async function handler(req, res) {
         const isAIError = error.message.includes("Error conexión IA") ||
             error.message.includes("Error fetching") ||
             error.message.includes("Insufficient Balance") ||
-            error.message.includes("ModelTimeout") ||
+            error.message.includes("Timeout") ||
             error.message.includes("404") ||
-            error.message.includes("not_found_error") ||
-            error.message.includes("Timeout");
+            error.message.includes("not_found_error");
 
         let msg = "Vaya, parece que hay un pequeño problema técnico. Prueba de nuevo en unos instantes.";
 
@@ -132,17 +130,16 @@ async function processChat(req) {
     const isBriefing = intent === 'mentor_briefing';
     let errors = [];
 
-    // --- CADENA DE MANDOS (FALLBACK) ---
+    // --- CADENA DE MANDOS ACTUALIZADA (2026 EDITION) ---
 
-    // 1. CLAUDE (HAIKU 4.5 -> SONNET 4 -> SONNET 3.5 -> HAIKU 3.5)
+    // 1. CLAUDE (ORDEN: Haiku 4.5 -> Sonnet 4.5 -> Sonnet 3.5 [Date] -> Sonnet 3.5 [Latest])
     if (process.env.ANTHROPIC_API_KEY) {
         const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-        const models = ["claude-4-5-haiku-20251015", "claude-4-sonnet-20251015", "claude-3-5-sonnet-20241022", "claude-3-5-haiku-20241022"];
+        const models = ["claude-haiku-4-5", "claude-sonnet-4-5", "claude-3-5-sonnet-20241022", "claude-3-5-sonnet-latest"];
 
         for (const modelName of models) {
             try {
                 console.log(`Intentando Claude: ${modelName}...`);
-                // Tiempo: Para briefings damos hasta 8s, para chat normal 4s.
                 const timeoutMs = isBriefing ? 8000 : 4000;
                 const response = await Promise.race([
                     anthropic.messages.create({
@@ -157,29 +154,32 @@ async function processChat(req) {
             } catch (e) {
                 console.warn(`Fallo Claude ${modelName}:`, e.message);
                 errors.push(`${modelName}: ${e.message}`);
-                if (e.message === "Timeout") break; // Si da timeout, no seguimos perdiendo tiempo en Vercel
+                if (e.message === "Timeout") break;
             }
         }
     }
 
-    // 2. GEMINI (BACKUP)
+    // 2. GEMINI (BACKUP ESTABLE)
     if (process.env.GEMINI_API_KEY) {
         const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
         try {
-            console.log("Fallback: Intentando Gemini...");
+            console.log("Fallback: Intentando Gemini 1.5 Flash...");
+            // Usamos el ID estable sin forzar v1beta
             const model = genAI.getGenerativeModel({ systemInstruction: SYSTEM_PROMPTS[intent], model: "gemini-1.5-flash" });
             const sanitizedHistory = formatHistoryForGemini(history);
             let result;
+            const timeoutMs = 8000;
+
             if (sanitizedHistory.length > 0) {
                 const chat = model.startChat({ history: sanitizedHistory });
                 result = await Promise.race([
                     chat.sendMessage(promptFinal),
-                    new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 8000))
+                    new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), timeoutMs))
                 ]);
             } else {
                 result = await Promise.race([
                     model.generateContent(promptFinal),
-                    new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 8000))
+                    new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), timeoutMs))
                 ]);
             }
             return { text: result.response.text(), info: "Gemini 1.5 Flash" };
