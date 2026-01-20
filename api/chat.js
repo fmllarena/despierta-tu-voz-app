@@ -1,8 +1,12 @@
 const { createClient } = require('@supabase/supabase-js');
-const { GoogleGenerativeAI } = require("@google/generative-ai");
 const Anthropic = require('@anthropic-ai/sdk');
 const fs = require('fs');
 const path = require('path');
+
+// --- NOTA PERMANENTE DE SEGURIDAD (ENERO 2026) ---
+// ⚠️ NO INSTALAR NI USAR EL SDK DE GOOGLE PARA GEMINI EN ESTE PROYECTO.
+// ⚠️ EL SDK ESTÁ FORZANDO LA VERSIÓN 'v1beta' QUE PRODUCE ERRORES 404.
+// ✅ USAR SIEMPRE FETCH DIRECTO A 'v1' COMO SE MUESTRA ABAJO.
 
 const SYSTEM_PROMPTS = {
     mentor_chat: `Eres el Mentor de "Despierta tu Voz" (Canto Holístico). Enfoque: autoconciencia, no técnica tradicional.
@@ -34,6 +38,7 @@ module.exports = async function handler(req, res) {
     if (req.method === 'OPTIONS') return res.status(200).end();
     if (req.method !== "POST") return res.status(405).json({ error: "Método no permitido" });
 
+    // Timeout global de 9 segundos para evitar el error de Vercel (10s límite)
     const globalTimeout = new Promise((_, reject) => {
         setTimeout(() => reject(new Error("GlobalTimeout")), 9000);
     });
@@ -101,38 +106,55 @@ async function processChat(req) {
     const isBriefing = intent === 'mentor_briefing';
     let errors = [];
 
-    // --- CADENA DE MANDOS (REESTRUCTURADA: GEMINI PRIMERO POR PREFERENCIA DE TONO) ---
+    // --- CADENA DE MANDOS (RECUERDA: NO USAR SDK DE GOOGLE) ---
 
-    // 1. GEMINI (LÍDER - EL TONO MÁS QUERIDO)
+    // 1. GEMINI (LÍDER - VIA FETCH DIRECTO A v1)
     if (process.env.GEMINI_API_KEY) {
-        const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
         try {
-            console.log("🚀 Liderando con Gemini 1.5 Flash (Mejor tono)...");
-            const model = genAI.getGenerativeModel({ systemInstruction: SYSTEM_PROMPTS[intent], model: "gemini-1.5-flash" });
-            const sanitizedHistory = formatHistoryForGemini(history);
-            const timeoutMs = isBriefing ? 8000 : 6000; // Un poco más de margen para Gemini
-            let result;
-            if (sanitizedHistory.length > 0) {
-                const chat = model.startChat({ history: sanitizedHistory });
-                result = await Promise.race([chat.sendMessage(promptFinal), new Promise((_, r) => setTimeout(() => r(new Error("Timeout")), timeoutMs))]);
-            } else {
-                result = await Promise.race([model.generateContent(promptFinal), new Promise((_, r) => setTimeout(() => r(new Error("Timeout")), timeoutMs))]);
+            console.log("🚀 Liderando con Gemini 1.5 Flash (API v1)...");
+            const timeoutMs = isBriefing ? 8000 : 7000;
+
+            const requestBody = {
+                contents: [
+                    ...formatHistoryForGeminiREST(history),
+                    { role: "user", parts: [{ text: promptFinal }] }
+                ],
+                systemInstruction: { parts: [{ text: SYSTEM_PROMPTS[intent] }] }
+            };
+
+            const geminiResponse = await Promise.race([
+                fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(requestBody)
+                }),
+                new Promise((_, r) => setTimeout(() => r(new Error("Timeout")), timeoutMs))
+            ]);
+
+            if (!geminiResponse.ok) {
+                const errorData = await geminiResponse.json();
+                throw new Error(`Gemini API Error: ${errorData.error?.message || geminiResponse.statusText}`);
             }
-            return { text: result.response.text(), info: "Gemini 1.5 Flash" };
+
+            const data = await geminiResponse.json();
+            const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+            if (!text) throw new Error("Gemini devolvió una respuesta vacía.");
+
+            return { text: text, info: "Gemini 1.5 Flash (v1)" };
         } catch (e) {
             console.warn("Fallo Gemini (Saltando a Claude):", e.message);
             errors.push(`Gemini: ${e.message}`);
         }
     }
 
-    // 2. CLAUDE (FALLBACK: Haiku 4.5 -> Sonnet 4.5 -> Sonnet 3.5 [Date] -> Sonnet 3.5 [Latest])
+    // 2. CLAUDE (FALLBACK ROBUSTO)
     if (process.env.ANTHROPIC_API_KEY) {
         const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
         const models = ["claude-haiku-4-5", "claude-sonnet-4-5", "claude-3-5-sonnet-20241022", "claude-3-5-sonnet-latest"];
         for (const modelName of models) {
             try {
                 console.log(`🛡️ Fallback Claude: ${modelName}...`);
-                const timeoutMs = isBriefing ? 8000 : 4000;
+                const timeoutMs = isBriefing ? 8000 : 7500;
                 const response = await Promise.race([
                     anthropic.messages.create({
                         model: modelName,
@@ -146,7 +168,7 @@ async function processChat(req) {
             } catch (e) {
                 console.warn(`Fallo Claude ${modelName}:`, e.message);
                 errors.push(`${modelName}: ${e.message}`);
-                if (e.message === "Timeout") break;
+                if (e.message === "Timeout" && !isBriefing) break;
             }
         }
     }
@@ -159,7 +181,7 @@ function formatHistoryForClaude(history) {
     return history.filter(h => h?.parts?.[0]?.text).map(h => ({ role: h.role === 'model' ? 'assistant' : 'user', content: h.parts[0].text }));
 }
 
-function formatHistoryForGemini(history) {
+function formatHistoryForGeminiREST(history) {
     if (!Array.isArray(history)) return [];
     let lastRole = null;
     let sanitized = history.filter(h => {
@@ -168,7 +190,10 @@ function formatHistoryForGemini(history) {
         if (role === lastRole) return false;
         lastRole = role;
         return true;
-    });
+    }).map(h => ({
+        role: h.role === 'model' ? 'model' : 'user',
+        parts: [{ text: h.parts[0].text }]
+    }));
     while (sanitized.length > 0 && sanitized[0].role !== 'user') sanitized.shift();
     if (sanitized.length > 0 && sanitized[sanitized.length - 1].role === 'user') sanitized.pop();
     return sanitized;
