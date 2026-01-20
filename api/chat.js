@@ -29,10 +29,7 @@ Usa un tono profesional, directo y perspicaz.`,
 
 module.exports = async function handler(req, res) {
     // SOPORTE CORS
-    res.setHeader('Access-Control-Allow-Credentials', true);
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
-    res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version');
+    res.setHeader('Access-Control-Allow-Credentials', true).setHeader('Access-Control-Allow-Origin', '*').setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT').setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version');
 
     if (req.method === 'OPTIONS') return res.status(200).end();
     if (req.method !== "POST") return res.status(405).json({ error: "Método no permitido" });
@@ -46,22 +43,13 @@ module.exports = async function handler(req, res) {
         return res.status(200).json(result);
     } catch (error) {
         console.error("DEBUG ERR [chat.js]:", error);
-
         const isTimeout = error.message === "GlobalTimeout";
         const status = isTimeout ? 504 : 500;
-
         const knownErrors = ["Acceso denegado.", "Falta API Key", "Falta SUPABASE_SERVICE_ROLE_KEY", "Intento no válido", "Alumno no encontrado"];
         const isKnown = knownErrors.some(k => error.message.includes(k));
-
-        const isAIError = error.message.includes("Error conexión IA") ||
-            error.message.includes("Error fetching") ||
-            error.message.includes("Insufficient Balance") ||
-            error.message.includes("Timeout") ||
-            error.message.includes("404") ||
-            error.message.includes("not_found_error");
+        const isAIError = error.message.includes("Error conexión IA") || error.message.includes("Error fetching") || error.message.includes("Insufficient Balance") || error.message.includes("Timeout") || error.message.includes("404") || error.message.includes("not_found_error");
 
         let msg = "Vaya, parece que hay un pequeño problema técnico. Prueba de nuevo en unos instantes.";
-
         if (isTimeout) {
             msg = "¡Vaya! Parece que el Mentor se ha quedado sumergido en una meditación profunda intentando procesar toda la información y se ha olvidado del tiempo. 🧘‍♂️ ¿Podrías hacerme una pregunta un poco más corta o sencilla? Así podré responderte con más agilidad.";
         } else if (isAIError) {
@@ -70,55 +58,38 @@ module.exports = async function handler(req, res) {
             msg = error.message;
         }
 
-        return res.status(status).json({
-            error: msg,
-            details: error.message,
-            isAIError: isAIError,
-            isTimeout: isTimeout
-        });
+        return res.status(status).json({ error: msg, details: error.message, isAIError, isTimeout });
     }
 };
 
 async function processChat(req) {
     const { intent, message, history = [], userId, mentorPassword = "" } = req.body;
-
     if (intent === 'warmup') return { text: "OK" };
     if (!intent || !SYSTEM_PROMPTS[intent]) throw new Error("Intento no válido");
 
     if (intent === 'mentor_briefing') {
-        const secretPass = process.env.MENTOR_PASSWORD;
-        if (mentorPassword !== secretPass) throw new Error("Acceso denegado.");
+        if (mentorPassword !== process.env.MENTOR_PASSWORD) throw new Error("Acceso denegado.");
     }
 
     let context = "";
     if (userId && (intent === 'mentor_chat' || intent === 'mentor_briefing' || intent === 'alchemy_analysis')) {
         const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
         const lowerMsg = message.toLowerCase();
-
         const needsCoaching = intent === 'mentor_briefing' || ["viaje", "hitos", "raíces", "familia", "ritual", "plan", "coaching", "módulo", "ejercicio"].some(t => lowerMsg.includes(t));
         const triggersMemory = intent === 'mentor_chat' && ["recordar", "hablamos", "dijiste", "comentamos", "anterior", "pasado", "memoria"].some(t => lowerMsg.includes(t));
 
-        const promises = [
-            supabase.from('user_profiles').select('nombre, historia_vocal, ultimo_resumen').eq('user_id', userId).maybeSingle()
-        ];
-
-        if (needsCoaching) {
-            promises.push(supabase.from('user_coaching_data').select('linea_vida_hitos, herencia_raices, roles_familiares, ritual_sanacion, plan_accion').eq('user_id', userId).maybeSingle());
-        } else promises.push(Promise.resolve({ data: null }));
+        const promises = [supabase.from('user_profiles').select('nombre, historia_vocal, ultimo_resumen').eq('user_id', userId).maybeSingle()];
+        if (needsCoaching) promises.push(supabase.from('user_coaching_data').select('linea_vida_hitos, herencia_raices, roles_familiares, ritual_sanacion, plan_accion').eq('user_id', userId).maybeSingle());
+        else promises.push(Promise.resolve({ data: null }));
 
         if (triggersMemory) {
             const keywords = message.toLowerCase().replace(/[?,.;!]/g, "").split(" ").filter(w => w.length > 3);
-            if (keywords.length > 0) {
-                promises.push(supabase.from('mensajes').select('texto, emisor, created_at').eq('alumno', userId).ilike('texto', `%${keywords[0]}%`).order('created_at', { ascending: false }).limit(5));
-            } else promises.push(Promise.resolve({ data: null }));
+            if (keywords.length > 0) promises.push(supabase.from('mensajes').select('texto, emisor, created_at').eq('alumno', userId).ilike('texto', `%${keywords[0]}%`).order('created_at', { ascending: false }).limit(5));
+            else promises.push(Promise.resolve({ data: null }));
         } else promises.push(Promise.resolve({ data: null }));
 
         const [perfilRes, viajeRes, memoryRes] = await Promise.all(promises);
-
-        if (perfilRes.data) {
-            const p = perfilRes.data;
-            context += `\n--- PERFIL ---\n- Nombre: ${p.nombre}\n- Historia: ${p.historia_vocal}\n- Resumen: ${p.ultimo_resumen}\n`;
-        }
+        if (perfilRes.data) context += `\n--- PERFIL ---\n- Nombre: ${perfilRes.data.nombre}\n- Historia: ${perfilRes.data.historia_vocal}\n- Resumen: ${perfilRes.data.ultimo_resumen}\n`;
         if (viajeRes.data) context += `\n--- VIAJE ---\n${JSON.stringify(viajeRes.data)}\n`;
         if (memoryRes.data?.length > 0) {
             context += `\n--- MEMORIA ---\n`;
@@ -130,16 +101,37 @@ async function processChat(req) {
     const isBriefing = intent === 'mentor_briefing';
     let errors = [];
 
-    // --- CADENA DE MANDOS ACTUALIZADA (2026 EDITION) ---
+    // --- CADENA DE MANDOS (REESTRUCTURADA: GEMINI PRIMERO POR PREFERENCIA DE TONO) ---
 
-    // 1. CLAUDE (ORDEN: Haiku 4.5 -> Sonnet 4.5 -> Sonnet 3.5 [Date] -> Sonnet 3.5 [Latest])
+    // 1. GEMINI (LÍDER - EL TONO MÁS QUERIDO)
+    if (process.env.GEMINI_API_KEY) {
+        const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+        try {
+            console.log("🚀 Liderando con Gemini 1.5 Flash (Mejor tono)...");
+            const model = genAI.getGenerativeModel({ systemInstruction: SYSTEM_PROMPTS[intent], model: "gemini-1.5-flash" });
+            const sanitizedHistory = formatHistoryForGemini(history);
+            const timeoutMs = isBriefing ? 8000 : 6000; // Un poco más de margen para Gemini
+            let result;
+            if (sanitizedHistory.length > 0) {
+                const chat = model.startChat({ history: sanitizedHistory });
+                result = await Promise.race([chat.sendMessage(promptFinal), new Promise((_, r) => setTimeout(() => r(new Error("Timeout")), timeoutMs))]);
+            } else {
+                result = await Promise.race([model.generateContent(promptFinal), new Promise((_, r) => setTimeout(() => r(new Error("Timeout")), timeoutMs))]);
+            }
+            return { text: result.response.text(), info: "Gemini 1.5 Flash" };
+        } catch (e) {
+            console.warn("Fallo Gemini (Saltando a Claude):", e.message);
+            errors.push(`Gemini: ${e.message}`);
+        }
+    }
+
+    // 2. CLAUDE (FALLBACK: Haiku 4.5 -> Sonnet 4.5 -> Sonnet 3.5 [Date] -> Sonnet 3.5 [Latest])
     if (process.env.ANTHROPIC_API_KEY) {
         const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
         const models = ["claude-haiku-4-5", "claude-sonnet-4-5", "claude-3-5-sonnet-20241022", "claude-3-5-sonnet-latest"];
-
         for (const modelName of models) {
             try {
-                console.log(`Intentando Claude: ${modelName}...`);
+                console.log(`🛡️ Fallback Claude: ${modelName}...`);
                 const timeoutMs = isBriefing ? 8000 : 4000;
                 const response = await Promise.race([
                     anthropic.messages.create({
@@ -148,7 +140,7 @@ async function processChat(req) {
                         system: SYSTEM_PROMPTS[intent],
                         messages: [...formatHistoryForClaude(history), { role: "user", content: promptFinal }],
                     }),
-                    new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), timeoutMs))
+                    new Promise((_, r) => setTimeout(() => r(new Error("Timeout")), timeoutMs))
                 ]);
                 return { text: response.content[0].text, info: modelName };
             } catch (e) {
@@ -159,45 +151,12 @@ async function processChat(req) {
         }
     }
 
-    // 2. GEMINI (BACKUP ESTABLE)
-    if (process.env.GEMINI_API_KEY) {
-        const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-        try {
-            console.log("Fallback: Intentando Gemini 1.5 Flash...");
-            // Usamos el ID estable sin forzar v1beta
-            const model = genAI.getGenerativeModel({ systemInstruction: SYSTEM_PROMPTS[intent], model: "gemini-1.5-flash" });
-            const sanitizedHistory = formatHistoryForGemini(history);
-            let result;
-            const timeoutMs = 8000;
-
-            if (sanitizedHistory.length > 0) {
-                const chat = model.startChat({ history: sanitizedHistory });
-                result = await Promise.race([
-                    chat.sendMessage(promptFinal),
-                    new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), timeoutMs))
-                ]);
-            } else {
-                result = await Promise.race([
-                    model.generateContent(promptFinal),
-                    new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), timeoutMs))
-                ]);
-            }
-            return { text: result.response.text(), info: "Gemini 1.5 Flash" };
-        } catch (e) {
-            console.error("Fallo Gemini:", e.message);
-            errors.push(`Gemini: ${e.message}`);
-        }
-    }
-
     throw new Error(`Error conexión IA: ${errors.join(" | ")}`);
 }
 
 function formatHistoryForClaude(history) {
     if (!Array.isArray(history)) return [];
-    return history.filter(h => h?.parts?.[0]?.text).map(h => ({
-        role: h.role === 'model' ? 'assistant' : 'user',
-        content: h.parts[0].text
-    }));
+    return history.filter(h => h?.parts?.[0]?.text).map(h => ({ role: h.role === 'model' ? 'assistant' : 'user', content: h.parts[0].text }));
 }
 
 function formatHistoryForGemini(history) {
