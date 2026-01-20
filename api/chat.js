@@ -60,8 +60,7 @@ module.exports = async function handler(req, res) {
             error.message.includes("ModelTimeout") ||
             error.message.includes("404") ||
             error.message.includes("not_found_error") ||
-            error.message.includes("ClaudeHaikuTimeout") ||
-            error.message.includes("ClaudeSonnetTimeout");
+            error.message.includes("Timeout");
 
         let msg = "Vaya, parece que hay un pequeño problema técnico. Prueba de nuevo en unos instantes.";
 
@@ -83,12 +82,9 @@ module.exports = async function handler(req, res) {
 };
 
 async function processChat(req) {
-    const { intent, message, history = [], userId, canRecommend, blogLibrary = [], mentorPassword = "" } = req.body;
+    const { intent, message, history = [], userId, mentorPassword = "" } = req.body;
 
-    if (intent === 'warmup') {
-        return { text: "OK", status: "Warmed up" };
-    }
-
+    if (intent === 'warmup') return { text: "OK" };
     if (!intent || !SYSTEM_PROMPTS[intent]) throw new Error("Intento no válido");
 
     if (intent === 'mentor_briefing') {
@@ -101,11 +97,8 @@ async function processChat(req) {
         const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
         const lowerMsg = message.toLowerCase();
 
-        const coachingTriggers = ["viaje", "hitos", "raíces", "familia", "ritual", "plan", "coaching", "módulo", "ejercicio"];
-        const memoryTriggers = ["recordar", "hablamos", "dijiste", "comentamos", "conversación", "anterior", "pasado", "memoria", "busc", "encontr", "qué hablamos", "recordamos", "hace tiempo"];
-
-        const needsCoaching = coachingTriggers.some(t => lowerMsg.includes(t)) || intent === 'mentor_briefing';
-        const triggersMemory = memoryTriggers.some(t => lowerMsg.includes(t)) && intent === 'mentor_chat';
+        const needsCoaching = intent === 'mentor_briefing' || ["viaje", "hitos", "raíces", "familia", "ritual", "plan", "coaching", "módulo", "ejercicio"].some(t => lowerMsg.includes(t));
+        const triggersMemory = intent === 'mentor_chat' && ["recordar", "hablamos", "dijiste", "comentamos", "anterior", "pasado", "memoria"].some(t => lowerMsg.includes(t));
 
         const promises = [
             supabase.from('user_profiles').select('nombre, historia_vocal, ultimo_resumen').eq('user_id', userId).maybeSingle()
@@ -113,126 +106,86 @@ async function processChat(req) {
 
         if (needsCoaching) {
             promises.push(supabase.from('user_coaching_data').select('linea_vida_hitos, herencia_raices, roles_familiares, ritual_sanacion, plan_accion').eq('user_id', userId).maybeSingle());
-        } else {
-            promises.push(Promise.resolve({ data: null }));
-        }
+        } else promises.push(Promise.resolve({ data: null }));
 
         if (triggersMemory) {
             const keywords = message.toLowerCase().replace(/[?,.;!]/g, "").split(" ").filter(w => w.length > 3);
             if (keywords.length > 0) {
                 promises.push(supabase.from('mensajes').select('texto, emisor, created_at').eq('alumno', userId).ilike('texto', `%${keywords[0]}%`).order('created_at', { ascending: false }).limit(5));
-            } else {
-                promises.push(Promise.resolve({ data: null }));
-            }
-        } else {
-            promises.push(Promise.resolve({ data: null }));
-        }
+            } else promises.push(Promise.resolve({ data: null }));
+        } else promises.push(Promise.resolve({ data: null }));
 
         const [perfilRes, viajeRes, memoryRes] = await Promise.all(promises);
 
         if (perfilRes.data) {
-            const perfil = perfilRes.data;
-            context += `\n--- PERFIL ALUMNO ---\n- Nombre: ${perfil.nombre || 'N/A'}\n- Historia: ${perfil.historia_vocal || 'N/A'}\n- Resumen: ${perfil.ultimo_resumen || 'Sin resumen previo'}\n`;
+            const p = perfilRes.data;
+            context += `\n--- PERFIL ---\n- Nombre: ${p.nombre}\n- Historia: ${p.historia_vocal}\n- Resumen: ${p.ultimo_resumen}\n`;
         }
-        if (viajeRes.data) {
-            const viaje = viajeRes.data;
-            context += `\n--- DATOS DEL VIAJE ---\n${JSON.stringify(viaje)}\n`;
-        }
-        if (memoryRes.data && memoryRes.data.length > 0) {
-            context += `\n--- RECUERDOS RECUPERADOS ---\n`;
-            memoryRes.data.reverse().forEach(r => {
-                context += `[${new Date(r.created_at).toLocaleDateString()}] ${r.emisor === 'ia' ? 'Mentor' : 'Alumno'}: ${r.texto}\n`;
-            });
+        if (viajeRes.data) context += `\n--- VIAJE ---\n${JSON.stringify(viajeRes.data)}\n`;
+        if (memoryRes.data?.length > 0) {
+            context += `\n--- MEMORIA ---\n`;
+            memoryRes.data.reverse().forEach(r => context += `[${new Date(r.created_at).toLocaleDateString()}] ${r.emisor}: ${r.texto}\n`);
         }
     }
 
     const promptFinal = context ? `CONTEXTO:\n${context}\n\nMENSAJE:\n${message}` : message;
-
-    // --- CADENA DE IA ACTUALIZADA (2026 EDITION) ---
-    // 1. Claude Haiku 4.5
-    // 2. Claude Sonnet 4
-    // 3. Gemini 1.5 Flash
-
+    const isBriefing = intent === 'mentor_briefing';
     let errors = [];
 
-    // 1. INTENTO CLAUDE HAIKU 4.5
+    // --- CADENA DE MANDOS (FALLBACK) ---
+
+    // 1. CLAUDE (HAIKU 4.5 -> SONNET 4 -> SONNET 3.5 -> HAIKU 3.5)
     if (process.env.ANTHROPIC_API_KEY) {
-        try {
-            console.log("🚀 Intentando con Claude 4.5 Haiku...");
-            const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-            const response = await Promise.race([
-                anthropic.messages.create({
-                    model: "claude-4-5-haiku-20251015", // Versión estable de 2025
-                    max_tokens: 1024,
-                    system: SYSTEM_PROMPTS[intent],
-                    messages: [
-                        ...formatHistoryForClaude(history),
-                        { role: "user", content: promptFinal }
-                    ],
-                }),
-                new Promise((_, reject) => setTimeout(() => reject(new Error("ClaudeHaiku4.5Timeout")), 5000))
-            ]);
-            return { text: response.content[0].text, info: "Claude 4.5 Haiku" };
-        } catch (ce) {
-            console.error("Error Claude 4.5 Haiku:", ce.message);
-            // Si da 404, intentamos con el alias 'latest' por si ha cambiado
-            if (ce.message.includes("404")) {
-                try {
-                    const response = await anthropic.messages.create({
-                        model: "claude-4-5-haiku-latest",
-                        max_tokens: 1024,
+        const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+        const models = ["claude-4-5-haiku-20251015", "claude-4-sonnet-20251015", "claude-3-5-sonnet-20241022", "claude-3-5-haiku-20241022"];
+
+        for (const modelName of models) {
+            try {
+                console.log(`Intentando Claude: ${modelName}...`);
+                // Tiempo: Para briefings damos hasta 8s, para chat normal 4s.
+                const timeoutMs = isBriefing ? 8000 : 4000;
+                const response = await Promise.race([
+                    anthropic.messages.create({
+                        model: modelName,
+                        max_tokens: 1500,
                         system: SYSTEM_PROMPTS[intent],
                         messages: [...formatHistoryForClaude(history), { role: "user", content: promptFinal }],
-                    });
-                    return { text: response.content[0].text, info: "Claude 4.5 Haiku (Latest)" };
-                } catch (ce2) { errors.push(`Claude 4.5 Haiku Alias: ${ce2.message}`); }
-            } else {
-                errors.push(`Claude 4.5 Haiku: ${ce.message}`);
+                    }),
+                    new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), timeoutMs))
+                ]);
+                return { text: response.content[0].text, info: modelName };
+            } catch (e) {
+                console.warn(`Fallo Claude ${modelName}:`, e.message);
+                errors.push(`${modelName}: ${e.message}`);
+                if (e.message === "Timeout") break; // Si da timeout, no seguimos perdiendo tiempo en Vercel
             }
         }
     }
 
-    // 2. INTENTO CLAUDE SONNET 4 (Respaldo de alta gama)
-    if (process.env.ANTHROPIC_API_KEY) {
-        try {
-            console.log("🛡️ Fallback: Intentando con Claude 4 Sonnet...");
-            const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-            const response = await Promise.race([
-                anthropic.messages.create({
-                    model: "claude-4-sonnet-latest",
-                    max_tokens: 1024,
-                    system: SYSTEM_PROMPTS[intent],
-                    messages: [
-                        ...formatHistoryForClaude(history),
-                        { role: "user", content: promptFinal }
-                    ],
-                }),
-                new Promise((_, reject) => setTimeout(() => reject(new Error("ClaudeSonnet4Timeout")), 8000))
-            ]);
-            return { text: response.content[0].text, info: "Claude 4 Sonnet" };
-        } catch (ce) {
-            console.error("Error Claude 4 Sonnet:", ce.message);
-            errors.push(`Claude 4 Sonnet: ${ce.message}`);
-        }
-    }
-
-    // 3. INTENTO GEMINI (Backup final)
+    // 2. GEMINI (BACKUP)
     if (process.env.GEMINI_API_KEY) {
+        const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
         try {
-            console.log("🛡️ Fallback: Intentando con Gemini...");
-            const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+            console.log("Fallback: Intentando Gemini...");
             const model = genAI.getGenerativeModel({ systemInstruction: SYSTEM_PROMPTS[intent], model: "gemini-1.5-flash" });
             const sanitizedHistory = formatHistoryForGemini(history);
             let result;
             if (sanitizedHistory.length > 0) {
                 const chat = model.startChat({ history: sanitizedHistory });
-                result = await chat.sendMessage(promptFinal);
+                result = await Promise.race([
+                    chat.sendMessage(promptFinal),
+                    new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 8000))
+                ]);
             } else {
-                result = await model.generateContent(promptFinal);
+                result = await Promise.race([
+                    model.generateContent(promptFinal),
+                    new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 8000))
+                ]);
             }
-            return { text: result.response.text(), info: "Gemini" };
-        } catch (ge) {
-            errors.push(`Gemini: ${ge.message}`);
+            return { text: result.response.text(), info: "Gemini 1.5 Flash" };
+        } catch (e) {
+            console.error("Fallo Gemini:", e.message);
+            errors.push(`Gemini: ${e.message}`);
         }
     }
 
