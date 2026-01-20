@@ -54,7 +54,14 @@ module.exports = async function handler(req, res) {
         // Si el error es una de nuestras validaciones, lo pasamos tal cual
         const knownErrors = ["Acceso denegado.", "Falta API Key", "Falta SUPABASE_SERVICE_ROLE_KEY", "Intento no válido", "Alumno no encontrado"];
         const isKnown = knownErrors.some(k => error.message.includes(k));
-        const isAIError = error.message.includes("Error conexión IA") || error.message.includes("Error fetching") || error.message.includes("Insufficient Balance") || error.message.includes("ModelTimeout") || error.message.includes("ClaudeError");
+
+        // Escudo de IA: Capturamos cualquier error técnico de los proveedores
+        const isAIError = error.message.includes("Error conexión IA") ||
+            error.message.includes("Error fetching") ||
+            error.message.includes("Insufficient Balance") ||
+            error.message.includes("ModelTimeout") ||
+            error.message.includes("404") ||
+            error.message.includes("not_found_error");
 
         let msg = "Vaya, parece que hay un pequeño problema técnico. Prueba de nuevo en unos instantes.";
 
@@ -164,13 +171,24 @@ async function processChat(req) {
         }
     }
 
+    if (intent === 'web_assistant') {
+        try {
+            const knowledgePath = path.join(process.cwd(), 'knowledge', 'web_info.md');
+            if (fs.existsSync(knowledgePath)) {
+                const knowledge = fs.readFileSync(knowledgePath, 'utf8');
+                context += `\n[BASE DE CONOCIMIENTO OFICIAL]\n${knowledge}\n`;
+            }
+        } catch (err) {
+            console.error("Error al cargar la base de conocimiento:", err);
+        }
+    }
+
     const promptFinal = context ? `CONTEXTO:\n${context}\n\nMENSAJE:\n${message}` : message;
 
-    // --- CADENA DE IA ACTUALIZADA ---
-    // 1. Claude 3.5 Haiku (Súper veloz y económico)
-    // 2. Claude 3.5 Sonnet (Máxima inteligencia y estabilidad)
-    // 3. Gemini 1.5/2.0 (Backup de Google)
-    // 4. DeepSeek (Backup final)
+    // --- CADENA DE IA ACTUALIZADA (SOLO CLAUDE Y GEMINI) ---
+    // 1. Claude 3.5 Haiku (Pura velocidad)
+    // 2. Claude 3.5 Sonnet (Máxima calidad)
+    // 3. Gemini 1.5 Flash (Backup)
 
     let errors = [];
 
@@ -181,7 +199,7 @@ async function processChat(req) {
             const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
             const response = await Promise.race([
                 anthropic.messages.create({
-                    model: "claude-3-5-haiku-latest",
+                    model: "claude-3-5-haiku-20241022",
                     max_tokens: 1024,
                     system: SYSTEM_PROMPTS[intent],
                     messages: [
@@ -205,7 +223,7 @@ async function processChat(req) {
             const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
             const response = await Promise.race([
                 anthropic.messages.create({
-                    model: "claude-3-5-sonnet-latest",
+                    model: "claude-3-5-sonnet-20241022",
                     max_tokens: 1024,
                     system: SYSTEM_PROMPTS[intent],
                     messages: [
@@ -227,7 +245,7 @@ async function processChat(req) {
         try {
             console.log("🛡️ Fallback: Intentando con Gemini...");
             const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-            const models = ["gemini-1.5-flash-latest", "gemini-2.0-flash-exp"];
+            const models = ["gemini-1.5-flash", "gemini-2.0-flash-exp"];
             const isBriefing = (intent === 'mentor_briefing');
 
             for (const [index, modelName] of models.entries()) {
@@ -256,44 +274,6 @@ async function processChat(req) {
             }
         } catch (e) {
             errors.push(`Gemini Global: ${e.message}`);
-        }
-    }
-
-    // 4. INTENTO DEEPSEEK
-    if (process.env.DEEPSEEK_API_KEY) {
-        try {
-            console.log("🛡️ Fallback: Intentando con DeepSeek...");
-            const dsResponse = await Promise.race([
-                fetch("https://api.deepseek.com/chat/completions", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "Authorization": `Bearer ${process.env.DEEPSEEK_API_KEY}`
-                    },
-                    body: JSON.stringify({
-                        model: "deepseek-chat",
-                        messages: [
-                            { role: "system", content: SYSTEM_PROMPTS[intent] },
-                            ...formatHistoryForOpenAI(history),
-                            { role: "user", content: promptFinal }
-                        ],
-                        temperature: 0.7,
-                        max_tokens: 1024
-                    })
-                }),
-                new Promise((_, reject) => setTimeout(() => reject(new Error("DeepSeekTimeout")), 5000))
-            ]);
-
-            if (!dsResponse.ok) {
-                const errorData = await dsResponse.json();
-                throw new Error(`DeepSeek Error: ${errorData.error?.message || dsResponse.statusText}`);
-            }
-
-            const data = await dsResponse.json();
-            return { text: data.choices[0].message.content, info: "DeepSeek" };
-        } catch (e) {
-            console.error("Error DeepSeek:", e.message);
-            errors.push(`DeepSeek: ${e.message}`);
         }
     }
 
