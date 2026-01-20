@@ -81,22 +81,22 @@ async function processChat(req) {
         const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
         const lowerMsg = message.toLowerCase();
         const needsCoaching = intent === 'mentor_briefing' || ["viaje", "hitos", "raíces", "familia", "ritual", "plan", "coaching", "módulo", "ejercicio"].some(t => lowerMsg.includes(t));
-        const triggersMemory = intent === 'mentor_chat' && ["recordar", "hablamos", "dijiste", "comentamos", "anterior", "pasado", "memoria"].some(t => lowerMsg.includes(t));
+        const triggersMemory = intent === 'mentor_chat' && ["recordar", "hablamos", "dijiste", "comentamos", "anterior", "pasado", "memoria", "acuerdas", "acodar", "sabes", "sabías"].some(t => lowerMsg.includes(t));
 
         const promises = [supabase.from('user_profiles').select('nombre, historia_vocal, ultimo_resumen').eq('user_id', userId).maybeSingle()];
         if (needsCoaching) promises.push(supabase.from('user_coaching_data').select('linea_vida_hitos, herencia_raices, roles_familiares, ritual_sanacion, plan_accion').eq('user_id', userId).maybeSingle());
         else promises.push(Promise.resolve({ data: null }));
 
         if (triggersMemory) {
-            const noise = ["acuerdas", "hablamos", "dijiste", "comentamos", "anterior", "pasado", "memoria", "sobre", "puedes", "recordar", "sabes", "quiero", "tema", "algo"];
+            const noise = ["acuerdas", "hablamos", "dijiste", "comentamos", "anterior", "pasado", "memoria", "sobre", "puedes", "recordar", "sabes", "quiero", "tema", "algo", "sabías", "acordarte"];
             const keywords = message.toLowerCase().replace(/[?,.;!]/g, "").split(" ")
                 .filter(w => w.length > 3 && !noise.includes(w))
                 .sort((a, b) => b.length - a.length);
 
             if (keywords.length > 0) {
                 const bestKeyword = keywords[0];
-                console.log(`🧠 Buscando memoria: ${bestKeyword}`);
-                promises.push(supabase.from('mensajes').select('texto, emisor, created_at').eq('alumno', userId).ilike('texto', `%${bestKeyword}%`).order('created_at', { ascending: false }).limit(5));
+                console.log(`🧠 Memoria ACTIVADA para: ${bestKeyword}`);
+                promises.push(supabase.from('mensajes').select('texto, emisor, created_at').eq('alumno', userId).ilike('texto', `%${bestKeyword}%`).order('created_at', { ascending: false }).limit(6));
             } else promises.push(Promise.resolve({ data: null }));
         } else promises.push(Promise.resolve({ data: null }));
 
