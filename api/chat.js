@@ -6,7 +6,7 @@ const path = require('path');
 // --- NOTA PERMANENTE DE SEGURIDAD (ENERO 2026) ---
 // ⚠️ NO INSTALAR NI USAR EL SDK DE GOOGLE PARA GEMINI EN ESTE PROYECTO.
 // ⚠️ EL SDK ESTÁ FORZANDO LA VERSIÓN 'v1beta' QUE PRODUCE ERRORES 404.
-// ✅ USAR SIEMPRE FETCH DIRECTO A 'v1' COMO SE MUESTRA ABAJO.
+// ✅ USAR SIEMPRE FETCH DIRECTO A 'v1' PARA MÁXIMA ESTABILIDAD.
 
 const SYSTEM_PROMPTS = {
     mentor_chat: `Eres el Mentor de "Despierta tu Voz" (Canto Holístico). Enfoque: autoconciencia, no técnica tradicional.
@@ -38,9 +38,9 @@ module.exports = async function handler(req, res) {
     if (req.method === 'OPTIONS') return res.status(200).end();
     if (req.method !== "POST") return res.status(405).json({ error: "Método no permitido" });
 
-    // Timeout global de 9 segundos para evitar el error de Vercel (10s límite)
+    // Timeout global de 55 segundos para aprovechar el nuevo límite de Vercel (60s)
     const globalTimeout = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error("GlobalTimeout")), 9000);
+        setTimeout(() => reject(new Error("GlobalTimeout")), 55000);
     });
 
     try {
@@ -56,7 +56,7 @@ module.exports = async function handler(req, res) {
 
         let msg = "Vaya, parece que hay un pequeño problema técnico. Prueba de nuevo en unos instantes.";
         if (isTimeout) {
-            msg = "¡Vaya! Parece que el Mentor se ha quedado sumergido en una meditación profunda intentando procesar toda la información y se ha olvidado del tiempo. 🧘‍♂️ ¿Podrías hacerme una pregunta un poco más corta o sencilla? Así podré responderte con más agilidad.";
+            msg = "¡Vaya! Parece que el Mentor hoy se ha puesto especialmente profundo y su respuesta está tardando un poco más de lo habitual. 🧘‍♂️ La sabiduría requiere su tiempo... ¿Podrias probar con una pregunta más directa?";
         } else if (isAIError) {
             msg = "Vaya, parece que el Mentor está recibiendo muchísimas consultas ahora mismo y su voz se ha quedado un poco en silencio. 🌿 Por favor, espera unos instantes y vuelve a intentarlo, ¡estoy deseando seguir conversando contigo!";
         } else if (isKnown) {
@@ -113,13 +113,13 @@ async function processChat(req) {
     const isBriefing = intent === 'mentor_briefing';
     let errors = [];
 
-    // --- CADENA DE MANDOS (RECUERDA: NO USAR SDK DE GOOGLE) ---
+    // --- CADENA DE MANDOS (EDICIÓN 2026: POTENCIA MÁXIMA) ---
 
-    // 1. GEMINI (LÍDER - VIA FETCH DIRECTO A v1)
+    // 1. GEMINI (LÍDER - ACTUALIZADO A 3.0 FLASH)
     if (process.env.GEMINI_API_KEY) {
         try {
-            console.log("🚀 Liderando con Gemini 1.5 Flash (API v1)...");
-            const timeoutMs = isBriefing ? 8000 : 7000;
+            console.log("🚀 Liderando con Gemini 3.0 Flash (Máxima profundidad)...");
+            const timeoutMs = isBriefing ? 50000 : 30000;
 
             const requestBody = {
                 contents: [
@@ -130,7 +130,7 @@ async function processChat(req) {
             };
 
             const geminiResponse = await Promise.race([
-                fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`, {
+                fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-3-flash:generateContent?key=${process.env.GEMINI_API_KEY}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(requestBody)
@@ -147,7 +147,7 @@ async function processChat(req) {
             const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
             if (!text) throw new Error("Gemini devolvió una respuesta vacía.");
 
-            return { text: text, info: "Gemini 1.5 Flash (v1)" };
+            return { text: text, info: "Gemini 3.0 Flash" };
         } catch (e) {
             console.warn("Fallo Gemini (Saltando a Claude):", e.message);
             errors.push(`Gemini: ${e.message}`);
@@ -201,6 +201,7 @@ function formatHistoryForGeminiREST(history) {
         role: h.role === 'model' ? 'model' : 'user',
         parts: [{ text: h.parts[0].text }]
     }));
+    while (sanitized.length > 30) sanitized.shift(); // Limite de historial para no saturar contextos largos
     while (sanitized.length > 0 && sanitized[0].role !== 'user') sanitized.shift();
     if (sanitized.length > 0 && sanitized[sanitized.length - 1].role === 'user') sanitized.pop();
     return sanitized;
