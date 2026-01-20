@@ -98,47 +98,28 @@ async function processChat(req) {
 
         const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
 
-        let perfil, viaje;
+        // --- CARGA PARALELA DE DATOS (OPTIMIZACIÓN DE VELOCIDAD) ---
+        const lowerMsg = message.toLowerCase();
 
-        // ESTRATEGIA: Carga quirúrgica MÍNIMA para velocidad total.
-        const { data: perfilData, error: perfilErr } = await supabase.from('user_profiles')
-            .select('nombre, historia_vocal, ultimo_resumen')
-            .eq('user_id', userId)
-            .maybeSingle();
-
-        if (perfilErr) console.error("Error perfil:", perfilErr);
-        perfil = perfilData;
-
-        if (perfil) {
-            context += `\n--- PERFIL ALUMNO ---\n- Nombre: ${perfil.nombre || 'N/A'}\n- Historia: ${perfil.historia_vocal || 'N/A'}\n- Resumen: ${perfil.ultimo_resumen || 'Sin resumen previo'}\n`;
-        }
-
-        // --- BÚSQUEDA DINÁMICA DE DATOS DE "MI VIAJE" ---
+        // Triggers
         const coachingTriggers = ["viaje", "hitos", "raíces", "familia", "ritual", "plan", "coaching", "módulo", "ejercicio"];
-        const needsCoaching = coachingTriggers.some(t => message.toLowerCase().includes(t)) || intent === 'mentor_briefing';
+        const memoryTriggers = ["recordar", "hablamos", "dijiste", "comentamos", "conversación", "anterior", "pasado", "memoria", "busc", "encontr", "qué hablamos", "recordamos", "hace tiempo"];
+
+        const needsCoaching = coachingTriggers.some(t => lowerMsg.includes(t)) || intent === 'mentor_briefing';
+        const triggersMemory = memoryTriggers.some(t => lowerMsg.includes(t)) && intent === 'mentor_chat';
+
+        // Lanzamos todas las promesas al mismo tiempo
+        const promises = [
+            supabase.from('user_profiles').select('nombre, historia_vocal, ultimo_resumen').eq('user_id', userId).maybeSingle()
+        ];
 
         if (needsCoaching) {
-            const { data: viaje } = await supabase.from('user_coaching_data')
-                .select('linea_vida_hitos, herencia_raices, roles_familiares, ritual_sanacion, plan_accion')
-                .eq('user_id', userId)
-                .maybeSingle();
-
-            if (viaje) {
-                context += `\n--- DATOS DEL VIAJE (Rescatados bajo demanda) ---\n`;
-                if (viaje.linea_vida_hitos) context += `- Hitos: ${JSON.stringify(viaje.linea_vida_hitos)}\n`;
-                if (viaje.herencia_raices) context += `- Raíces: ${JSON.stringify(viaje.herencia_raices)}\n`;
-                if (viaje.roles_familiares) context += `- Roles: ${JSON.stringify(viaje.roles_familiares)}\n`;
-                if (viaje.ritual_sanacion) context += `- Ritual: ${JSON.stringify(viaje.ritual_sanacion)}\n`;
-                if (viaje.plan_accion) context += `- Plan: ${JSON.stringify(viaje.plan_accion)}\n`;
-            }
+            promises.push(supabase.from('user_coaching_data').select('linea_vida_hitos, herencia_raices, roles_familiares, ritual_sanacion, plan_accion').eq('user_id', userId).maybeSingle());
+        } else {
+            promises.push(Promise.resolve({ data: null }));
         }
 
-        // --- BÚSQUEDA DINÁMICA DE MEMORIA ---
-        const memoryTriggers = ["recordar", "hablamos", "dijiste", "comentamos", "conversación", "anterior", "pasado", "memoria", "busc", "encontr", "qué hablamos", "recordamos", "hace tiempo"];
-        const lowerMsg = message.toLowerCase();
-        const triggersMemory = memoryTriggers.some(t => lowerMsg.includes(t));
-
-        if (triggersMemory && intent === 'mentor_chat') {
+        if (triggersMemory) {
             const stopWords = ["recuerdas", "cuándo", "sobre", "hemos", "tenido", "podemos", "puedes", "decirme", "acerca", "alguna", "algún", "cuando", "estuvimos"];
             const keywords = message.toLowerCase()
                 .replace(/[?,.;!]/g, "")
@@ -146,28 +127,45 @@ async function processChat(req) {
                 .filter(w => w.length > 3 && !memoryTriggers.includes(w) && !stopWords.includes(w));
 
             if (keywords.length > 0) {
-                const { data: records } = await supabase
-                    .from('mensajes')
-                    .select('texto, emisor, created_at')
-                    .eq('alumno', userId)
-                    .ilike('texto', `%${keywords[0]}%`)
-                    .order('created_at', { ascending: false })
-                    .limit(5);
-
-                if (records && records.length > 0) {
-                    context += `\n--- RECUERDOS RECUPERADOS (Búsqueda por "${keywords[0]}") ---\n`;
-                    records.reverse().forEach(r => {
-                        const date = new Date(r.created_at).toLocaleDateString();
-                        context += `[${date}] ${r.emisor === 'ia' ? 'Mentor' : 'Alumno'}: ${r.texto.substring(0, 300)}${r.texto.length > 300 ? '...' : ''}\n`;
-                    });
-                }
+                promises.push(supabase.from('mensajes').select('texto, emisor, created_at').eq('alumno', userId).ilike('texto', `%${keywords[0]}%`).order('created_at', { ascending: false }).limit(5));
+            } else {
+                promises.push(Promise.resolve({ data: null }));
             }
+        } else {
+            promises.push(Promise.resolve({ data: null }));
+        }
+
+        const [perfilRes, viajeRes, memoryRes] = await Promise.all(promises);
+
+        // 1. Contexto Perfil
+        if (perfilRes.data) {
+            const perfil = perfilRes.data;
+            context += `\n--- PERFIL ALUMNO ---\n- Nombre: ${perfil.nombre || 'N/A'}\n- Historia: ${perfil.historia_vocal || 'N/A'}\n- Resumen: ${perfil.ultimo_resumen || 'Sin resumen previo'}\n`;
+        }
+
+        // 2. Contexto Viaje
+        if (viajeRes.data) {
+            const viaje = viajeRes.data;
+            context += `\n--- DATOS DEL VIAJE (Rescatados bajo demanda) ---\n`;
+            if (viaje.linea_vida_hitos) context += `- Hitos: ${JSON.stringify(viaje.linea_vida_hitos)}\n`;
+            if (viaje.herencia_raices) context += `- Raíces: ${JSON.stringify(viaje.herencia_raices)}\n`;
+            if (viaje.roles_familiares) context += `- Roles: ${JSON.stringify(viaje.roles_familiares)}\n`;
+            if (viaje.ritual_sanacion) context += `- Ritual: ${JSON.stringify(viaje.ritual_sanacion)}\n`;
+            if (viaje.plan_accion) context += `- Plan: ${JSON.stringify(viaje.plan_accion)}\n`;
+        }
+
+        // 3. Contexto Memoria
+        if (memoryRes.data && memoryRes.data.length > 0) {
+            context += `\n--- RECUERDOS RECUPERADOS ---\n`;
+            memoryRes.data.reverse().forEach(r => {
+                const date = new Date(r.created_at).toLocaleDateString();
+                context += `[${date}] ${r.emisor === 'ia' ? 'Mentor' : 'Alumno'}: ${r.texto.substring(0, 300)}${r.texto.length > 300 ? '...' : ''}\n`;
+            });
         }
     }
 
     if (intent === 'web_assistant') {
         try {
-            // Intentar cargar la base de conocimiento local
             const knowledgePath = path.join(process.cwd(), 'knowledge', 'web_info.md');
             if (fs.existsSync(knowledgePath)) {
                 const knowledge = fs.readFileSync(knowledgePath, 'utf8');
@@ -178,88 +176,141 @@ async function processChat(req) {
         }
     }
 
-    if (!process.env.GEMINI_API_KEY) throw new Error("Falta API Key");
-    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+    const promptFinal = context ? `CONTEXTO:\n${context}\n\nMENSAJE:\n${message}` : message;
 
-    // ESTRATEGIA DE MODELOS: Priorizamos estabilidad y rapidez (Gemini 2.0 Flash)
-    // para evitar los timeouts de Vercel.
-    const isBriefing = (intent === 'mentor_briefing');
-    const models = ["gemini-1.5-flash", "gemini-2.0-flash", "gemini-1.5-flash-8b"];
-
-    let sanitizedHistory = [];
-    if (Array.isArray(history)) {
-        let lastRole = null;
-        sanitizedHistory = history.filter(h => {
-            if (!h?.parts?.[0]?.text) return false;
-            const role = h.role === 'model' ? 'model' : 'user';
-            if (role === lastRole) return false;
-            lastRole = role;
-            return true;
-        });
-
-        // REGLAS CRÍTICAS DE GEMINI:
-        // 1. El primer mensaje del historial DEBE ser del 'user'.
-        while (sanitizedHistory.length > 0 && sanitizedHistory[0].role !== 'user') {
-            sanitizedHistory.shift();
-        }
-
-        // 2. El historial debe terminar en 'model' para que el siguiente mensaje sea el del 'user' actual.
-        // Si termina en 'user', Gemini da error al enviar el nuevo mensaje del usuario.
-        if (sanitizedHistory.length > 0 && sanitizedHistory[sanitizedHistory.length - 1].role === 'user') {
-            sanitizedHistory.pop();
-        }
-    }
-
+    // --- CADENA DE IA (DEEPSEEK -> GEMINI -> CLAUDE) ---
     let errors = [];
-    for (const [index, modelName] of models.entries()) {
+
+    // 1. INTENTO DEEPSEEK (NUEVO)
+    if (process.env.DEEPSEEK_API_KEY) {
         try {
-            const model = genAI.getGenerativeModel({ systemInstruction: SYSTEM_PROMPTS[intent], model: modelName });
+            console.log("🚀 Intentando con DeepSeek...");
+            const dsResponse = await Promise.race([
+                fetch("https://api.deepseek.com/chat/completions", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${process.env.DEEPSEEK_API_KEY}`
+                    },
+                    body: JSON.stringify({
+                        model: "deepseek-chat",
+                        messages: [
+                            { role: "system", content: SYSTEM_PROMPTS[intent] },
+                            ...formatHistoryForOpenAI(history),
+                            { role: "user", content: promptFinal }
+                        ],
+                        temperature: 0.7,
+                        max_tokens: 1024
+                    })
+                }),
+                new Promise((_, reject) => setTimeout(() => reject(new Error("DeepSeekTimeout")), 5000))
+            ]);
 
-            const promptFinal = (context)
-                ? `CONTEXTO:\n${context}\n\nMENSAJE:\n${message}`
-                : message;
-
-            // CONFIGURACIÓN DE TIEMPO (Crucial para Vercel):
-            // Briefing: 8s para el primer intento (necesitamos profundidad).
-            // Chat normal: 4s para saltar rápido si hay lentitud y evitar Timeout global.
-            const timeoutMillis = isBriefing ? (index === 0 ? 8000 : 1000) : 4000;
-
-            const modelTimeout = new Promise((_, reject) => {
-                setTimeout(() => reject(new Error("ModelTimeout")), timeoutMillis);
-            });
-
-            let result;
-            if (sanitizedHistory.length > 0) {
-                const chat = model.startChat({ history: sanitizedHistory });
-                result = await Promise.race([chat.sendMessage(promptFinal), modelTimeout]);
-            } else {
-                result = await Promise.race([model.generateContent(promptFinal), modelTimeout]);
+            if (!dsResponse.ok) {
+                const errorData = await dsResponse.json();
+                throw new Error(`DeepSeek Error: ${errorData.error?.message || dsResponse.statusText}`);
             }
-            return { text: result.response.text() };
+
+            const data = await dsResponse.json();
+            return { text: data.choices[0].message.content, info: "DeepSeek" };
         } catch (e) {
-            console.error(`Error en ${modelName}:`, e.message);
-            errors.push(`${modelName}: ${e.message}`);
+            console.error("Error DeepSeek:", e.message);
+            errors.push(`DeepSeek: ${e.message}`);
         }
     }
 
-    /* 
+    // 2. INTENTO GEMINI (BACKUP)
+    if (process.env.GEMINI_API_KEY) {
+        try {
+            console.log("fallback: Intentando con Gemini...");
+            const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+            const models = ["gemini-1.5-flash", "gemini-2.0-flash"];
+            const isBriefing = (intent === 'mentor_briefing');
+
+            for (const [index, modelName] of models.entries()) {
+                try {
+                    const model = genAI.getGenerativeModel({ systemInstruction: SYSTEM_PROMPTS[intent], model: modelName });
+                    const timeoutMillis = isBriefing ? (index === 0 ? 8000 : 1000) : 4000;
+
+                    const modelTimeout = new Promise((_, reject) => {
+                        setTimeout(() => reject(new Error("ModelTimeout")), timeoutMillis);
+                    });
+
+                    let result;
+                    const sanitizedHistory = formatHistoryForGemini(history);
+
+                    if (sanitizedHistory.length > 0) {
+                        const chat = model.startChat({ history: sanitizedHistory });
+                        result = await Promise.race([chat.sendMessage(promptFinal), modelTimeout]);
+                    } else {
+                        result = await Promise.race([model.generateContent(promptFinal), modelTimeout]);
+                    }
+                    return { text: result.response.text(), info: "Gemini" };
+                } catch (ge) {
+                    console.error(`Error Gemini ${modelName}:`, ge.message);
+                    errors.push(`${modelName}: ${ge.message}`);
+                }
+            }
+        } catch (e) {
+            errors.push(`Gemini Global: ${e.message}`);
+        }
+    }
+
+    // 3. INTENTO CLAUDE (ÚLTIMO RECURSO)
     if (process.env.ANTHROPIC_API_KEY) {
         try {
+            console.log("fallback: Intentando con Claude...");
             const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-            const promptFinal = context ? `CONTEXTO:\n${context}\n\nMENSAJE:\n${message}` : message;
             const response = await anthropic.messages.create({
                 model: "claude-3-5-sonnet-20241022",
                 max_tokens: 1024,
                 system: SYSTEM_PROMPTS[intent],
                 messages: [
-                    ...sanitizedHistory.map(h => ({ role: h.role === 'model' ? 'assistant' : 'user', content: h.parts[0].text })),
+                    ...formatHistoryForClaude(history),
                     { role: "user", content: promptFinal }
                 ],
             });
             return { text: response.content[0].text, info: "Claude Backup" };
-        } catch (ce) { errors.push(`Claude: ${ce.message}`); }
+        } catch (ce) {
+            errors.push(`Claude: ${ce.message}`);
+        }
     }
-    */
 
     throw new Error(`Error conexión IA: ${errors.join(" | ")}`);
+}
+
+// --- HELPER FUNCTIONS ---
+
+function formatHistoryForOpenAI(history) {
+    if (!Array.isArray(history)) return [];
+    return history
+        .filter(h => h?.parts?.[0]?.text)
+        .map(h => ({
+            role: h.role === 'model' ? 'assistant' : 'user',
+            content: h.parts[0].text
+        }));
+}
+
+function formatHistoryForClaude(history) {
+    return formatHistoryForOpenAI(history);
+}
+
+function formatHistoryForGemini(history) {
+    if (!Array.isArray(history)) return [];
+    let lastRole = null;
+    let sanitized = history.filter(h => {
+        if (!h?.parts?.[0]?.text) return false;
+        const role = h.role === 'model' ? 'model' : 'user';
+        if (role === lastRole) return false;
+        lastRole = role;
+        return true;
+    });
+
+    while (sanitized.length > 0 && sanitized[0].role !== 'user') {
+        sanitized.shift();
+    }
+    if (sanitized.length > 0 && sanitized[sanitized.length - 1].role === 'user') {
+        sanitized.pop();
+    }
+    return sanitized;
 }
