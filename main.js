@@ -224,6 +224,9 @@ async function llamarGemini(message, history, intent, extraData = {}) {
             const detailMsg = (data.details && !isFriendlyError) ? ` (${data.details})` : "";
             throw new Error(data.error + detailMsg);
         }
+        if (data.info) {
+            console.log(`🤖 IA Mentor: ${data.info}`);
+        }
         return data.text;
     } catch (e) {
         console.error("Error en llamarGemini:", e);
