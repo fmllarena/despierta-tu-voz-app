@@ -182,15 +182,15 @@ async function processChat(req) {
 
             return { text: text, info: "Groq (Llama 3.3 70B)" };
         } catch (e) {
-            console.warn("Fallo Groq (Saltando a Gemini):", e.message);
+            console.warn("⚠️ Fallo Groq (Saltando a Gemini):", e.message);
             errors.push(`Groq: ${e.message}`);
         }
     }
 
-    // 2. GEMINI (FALLBACK - ACTUALIZADO A 3.0 FLASH)
+    // 2. GEMINI (FALLBACK ESTABLE - 3.0 FLASH)
     if (process.env.GEMINI_API_KEY) {
         try {
-            console.log("🚀 Liderando con Gemini 3.0 Flash (Máxima profundidad 300s)...");
+            console.log("🚀 Backup con Gemini 3.0 Flash...");
             const timeoutMs = isBriefing ? 285000 : 280000;
 
             const requestBody = {
@@ -207,7 +207,7 @@ async function processChat(req) {
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(requestBody)
                 }),
-                new Promise((_, r) => setTimeout(() => r(new Error("Timeout")), timeoutMs))
+                new Promise((_, r) => setTimeout(() => r(new Error("Timeout Gemini")), timeoutMs))
             ]);
 
             if (!geminiResponse.ok) {
@@ -221,7 +221,7 @@ async function processChat(req) {
 
             return { text: text, info: "Gemini 3.0 Flash" };
         } catch (e) {
-            console.warn("Fallo Gemini (Saltando a Claude):", e.message);
+            console.warn("⚠️ Fallo Gemini (Saltando a Claude):", e.message);
             errors.push(`Gemini: ${e.message}`);
         }
     }
