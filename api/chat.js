@@ -108,12 +108,22 @@ async function processChat(req) {
         }
 
         const [perfilRes, viajeRes, memoryRes] = await Promise.all(promises);
+
+        console.log(`📊 [DEBUG Contexto] Perfil: ${perfilRes.data ? 'OK' : 'VACIÓ'}, Viaje: ${viajeRes.data ? 'OK' : 'VACIÓ'}, Memoria: ${memoryRes.data?.length || 0} filas.`);
+
         if (perfilRes.data) context += `\n--- PERFIL ---\n- Nombre: ${perfilRes.data.nombre}\n- Historia: ${perfilRes.data.historia_vocal}\n- Resumen: ${perfilRes.data.ultimo_resumen}\n`;
         if (viajeRes.data) context += `\n--- VIAJE ---\n${JSON.stringify(viajeRes.data)}\n`;
         if (memoryRes.data?.length > 0) {
-            context += `\n--- MEMORIA ---\n`;
-            memoryRes.data.reverse().forEach(r => context += `[${new Date(r.created_at).toLocaleDateString()}] ${r.emisor}: ${r.texto}\n`);
+            context += `\n--- MEMORIA RECUPERADA (Historial importante) ---\n`;
+            memoryRes.data.reverse().forEach(r => {
+                context += `[${new Date(r.created_at).toLocaleDateString()}] ${r.emisor}: ${r.texto}\n`;
+            });
+            console.log("📝 Contexto de memoria inyectado satisfactoriamente.");
         }
+    }
+
+    if (context) {
+        console.log("🔗 Contexto Final (Primeros 100 char):", context.substring(0, 100));
     }
 
     const promptFinal = context ? `CONTEXTO:\n${context}\n\nMENSAJE:\n${message}` : message;
