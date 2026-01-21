@@ -11,11 +11,11 @@ const path = require('path');
 const SYSTEM_PROMPTS = {
     mentor_chat: `Eres el Mentor de "Despierta tu Voz" (Canto Holístico). Enfoque: autoconciencia, no técnica tradicional.
 REGLAS:
-1. ESCUCHA: Acoge el sentir del alumno. Sé paciente y cálido, incluso si repite temas o preguntas; cada repetición es una oportunidad de profundizar en la herida o el bloqueo. Ve directo al corazón.
+1. ESCUCHA: Acoge el sentir del alumno. Sé infinitamente paciente y cálido; si el alumno repite temas o preguntas, es porque necesita profundizar en ese bloqueo. No muestres frustración, sino curiosidad compasiva.
 2. CIERRE: Si se despiden claramente, no solo con un gracias, di: "Recuerda cerrar sesión para que nuestro encuentro de hoy quede guardado en tu diario de alquimia. ¡Hasta pronto!". SÉ BREVE.
 3. PROGRESO: No menciones niveles salvo que sean > 6/10 y solo de vez en cuando.
 4. VIAJE: Si no han completado el viaje, invita a "Mi viaje" tras 4 mensajes.
-5. MEMORIA: En el contexto verás "MEMORIA ESTRATÉGICA" y "CRÓNICAS DE SESIÓN". Úsalas para recordar con precisión técnica y emocional los avances del alumno en el pasado sin que tenga que repetírtelos.
+5. MEMORIA: En el contexto dispones de "SITUACIÓN ACTUAL" (resumen global del presente) y "CRONOLOGÍA DE EVOLUCIÓN" (diario histórico de sesiones). Úsalas para reconocer el camino recorrido sin que el alumno tenga que repetirse, guiándole con la sabiduría de quien conoce toda su historia.
 6. ESTILO: Metáforas vitales, sentir como brújula, para que el sonido sea medicina.`,
     alchemy_analysis: `Análisis poético directo (80-120 palabras). Sin preámbulos. Habla desde la sabiduría del Mentor sobre el módulo completado.`,
     generate_questions: `Genera 1 pregunta de coaching original. Máx 4 párrafos. No repetir conceptos.`,
@@ -121,16 +121,16 @@ async function processChat(req) {
 
         console.log(`📊 [DEBUG Contexto] AlumnoID: ${userId.substring(0, 8)}... | Recientes: ${recentRes.data?.length || 0} | Crónicas: ${chronRes.data?.length || 0} | Profundos: ${deepRes.data?.length || 0} | Final: ${uniqueMessages.length} mensajes.`);
 
-        if (perfilRes.data) context += `\n--- PERFIL DEL ALUMNO ---\n- Nombre: ${perfilRes.data.nombre}\n- Historia Vocal: ${perfilRes.data.historia_vocal}\n- Último Resumen Alquimia: ${perfilRes.data.ultimo_resumen}\n`;
+        if (perfilRes.data) context += `\n--- SITUACIÓN ACTUAL SINTETIZADA (Perfil General) ---\n- Nombre: ${perfilRes.data.nombre}\n- Historia Vocal: ${perfilRes.data.historia_vocal}\n- Último Estado del Alumno: ${perfilRes.data.ultimo_resumen}\n`;
         if (viajeRes.data) context += `\n--- DATOS DE VIAJE/COACHING ---\n${JSON.stringify(viajeRes.data)}\n`;
 
         if (uniqueMessages.length > 0) {
-            context += `\n--- MEMORIA ESTRATÉGICA (Conversaciones y Crónicas pasadas) ---\n`;
+            context += `\n--- CRONOLOGÍA DE EVOLUCIÓN (Diario de Alquimia - Sesiones Pasadas) ---\n`;
             uniqueMessages.forEach(r => {
-                const prefix = r.emisor === 'resumen_diario' ? '📌 CRÓNICA DE SESIÓN' : r.emisor;
+                const prefix = r.emisor === 'resumen_diario' ? '📌 HITO EVOLUTIVO (Crónica)' : r.emisor;
                 context += `[${new Date(r.created_at).toLocaleDateString()}] ${prefix}: ${r.texto}\n`;
             });
-            console.log("📝 Contexto de memoria inyectado satisfactoriamente.");
+            console.log("📝 Contexto de memoria (Crónicas y Chat) inyectado satisfactoriamente.");
         }
     }
 
