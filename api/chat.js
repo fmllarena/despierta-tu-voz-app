@@ -38,9 +38,9 @@ module.exports = async function handler(req, res) {
     if (req.method === 'OPTIONS') return res.status(200).end();
     if (req.method !== "POST") return res.status(405).json({ error: "Método no permitido" });
 
-    // Timeout global de 55 segundos para aprovechar el nuevo límite de Vercel (60s)
+    // Timeout global de 290 segundos (Sincronizado con el máximo de Vercel Pro de 300s)
     const globalTimeout = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error("GlobalTimeout")), 55000);
+        setTimeout(() => reject(new Error("GlobalTimeout")), 290000);
     });
 
     try {
@@ -125,8 +125,8 @@ async function processChat(req) {
     // 1. GEMINI (LÍDER - ACTUALIZADO A 3.0 FLASH)
     if (process.env.GEMINI_API_KEY) {
         try {
-            console.log("🚀 Liderando con Gemini 3.0 Flash (Máxima profundidad)...");
-            const timeoutMs = isBriefing ? 50000 : 30000;
+            console.log("🚀 Liderando con Gemini 3.0 Flash (Máxima profundidad 300s)...");
+            const timeoutMs = isBriefing ? 285000 : 280000;
 
             const requestBody = {
                 contents: [
@@ -168,7 +168,7 @@ async function processChat(req) {
         for (const modelName of models) {
             try {
                 console.log(`🛡️ Fallback Claude: ${modelName}...`);
-                const timeoutMs = isBriefing ? 8000 : 7500;
+                const timeoutMs = isBriefing ? 275000 : 270000;
                 const response = await Promise.race([
                     anthropic.messages.create({
                         model: modelName,
