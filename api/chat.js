@@ -144,7 +144,50 @@ async function processChat(req) {
 
     // --- CADENA DE MANDOS (EDICIÓN 2026: POTENCIA MÁXIMA) ---
 
-    // 1. GEMINI (LÍDER - ACTUALIZADO A 3.0 FLASH)
+    // 1. GROQ (LÍDER DE VELOCIDAD - LLAMA 3.3 70B)
+    if (process.env.GROQ_API_KEY) {
+        try {
+            console.log("🚀 Liderando con Groq (Llama 3.3 70B)...");
+            const timeoutMs = isBriefing ? 60000 : 30000; // Groq es ultra rápido
+
+            const groqResponse = await Promise.race([
+                fetch("https://api.groq.com/openai/v1/chat/completions", {
+                    method: "POST",
+                    headers: {
+                        "Authorization": `Bearer ${process.env.GROQ_API_KEY}`,
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        model: "llama-3.3-70b-versatile",
+                        messages: [
+                            { role: "system", content: SYSTEM_PROMPTS[intent] },
+                            ...formatHistoryForGroq(history),
+                            { role: "user", content: promptFinal }
+                        ],
+                        temperature: 0.7,
+                        max_tokens: 1500
+                    })
+                }),
+                new Promise((_, r) => setTimeout(() => r(new Error("Timeout Groq")), timeoutMs))
+            ]);
+
+            if (!groqResponse.ok) {
+                const errorData = await groqResponse.json();
+                throw new Error(`Groq API Error: ${errorData.error?.message || groqResponse.statusText}`);
+            }
+
+            const data = await groqResponse.json();
+            const text = data.choices?.[0]?.message?.content;
+            if (!text) throw new Error("Groq devolvió una respuesta vacía.");
+
+            return { text: text, info: "Groq (Llama 3.3 70B)" };
+        } catch (e) {
+            console.warn("Fallo Groq (Saltando a Gemini):", e.message);
+            errors.push(`Groq: ${e.message}`);
+        }
+    }
+
+    // 2. GEMINI (FALLBACK - ACTUALIZADO A 3.0 FLASH)
     if (process.env.GEMINI_API_KEY) {
         try {
             console.log("🚀 Liderando con Gemini 3.0 Flash (Máxima profundidad 300s)...");
@@ -210,6 +253,14 @@ async function processChat(req) {
     }
 
     throw new Error(`Error conexión IA: ${errors.join(" | ")}`);
+}
+
+function formatHistoryForGroq(history) {
+    if (!Array.isArray(history)) return [];
+    return history.filter(h => h?.parts?.[0]?.text).map(h => ({
+        role: h.role === 'model' ? 'assistant' : 'user',
+        content: h.parts[0].text
+    }));
 }
 
 function formatHistoryForClaude(history) {
