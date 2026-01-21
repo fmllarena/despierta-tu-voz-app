@@ -37,7 +37,7 @@ let blogLibrary = [];
 async function loadBlogLibrary() {
     try {
         // Silenciamos el error CORS manejándolo internamente sin warnings
-        const response = await fetch('https://despiertatuvoz.com/wp-content/themes/nuevo-index/biblioteca-blog.json', { mode: 'no-cors' });
+        const response = await fetch('https://despiertatuvoz.com/wp-content/themes/dtv-theme/biblioteca-blog.json', { mode: 'no-cors' });
         // Con 'no-cors' no podemos leer el body, pero evitamos el error fatal en consola
         // Si necesitamos los datos, el servidor debe permitir CORS.
         if (response.ok) {
