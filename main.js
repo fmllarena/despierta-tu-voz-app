@@ -557,12 +557,18 @@ async function sendMessage() {
 
         if (responseText && responseText.trim() !== "") {
             appendMessage(responseText, 'ia');
-            guardarMensajeDB(responseText, 'ia'); // Guardar respuesta de la IA
+            await guardarMensajeDB(responseText, 'ia'); // Guardar respuesta de la IA
             chatHistory.push({ role: "user", parts: [{ text }] }, { role: "model", parts: [{ text: responseText }] });
 
-            // Mantener solo los últimos 15 mensajes para evitar lentitud y timeouts
-            if (chatHistory.length > 15) {
-                chatHistory = chatHistory.slice(-15);
+            // --- DISPARADOR DE CRÓNICA (Cada 8 mensajes para no saturar) ---
+            if (chatHistory.length % 8 === 0) {
+                console.log("📜 Sesión intensa detectada. Generando Crónica de Alquimia...");
+                MODULOS.generarCronicaSesion();
+            }
+
+            // Mantener historial manejable
+            if (chatHistory.length > 20) {
+                chatHistory = chatHistory.slice(-20);
             }
         } else {
             console.warn("Recibida respuesta vacía de Gemini.");
@@ -782,6 +788,22 @@ const MODULOS = {
             }
         } catch (e) {
             console.error("Error resumen proactivo:", e);
+        }
+    },
+    async generarCronicaSesion() {
+        if (!supabase || chatHistory.length < 4) return;
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+        try {
+            console.log("📝 [Cronista] Sintetizando sesión para memoria a largo plazo...");
+            const responseText = await llamarGemini("Genera la crónica de nuestra sesión de hoy.", chatHistory, "session_chronicle", { userId: user.id });
+
+            if (responseText) {
+                await guardarMensajeDB(responseText, 'resumen_diario');
+                console.log("✅ Crónica de Alquimia guardada en el historial.");
+            }
+        } catch (e) {
+            console.error("Error generando crónica:", e);
         }
     }
 };
