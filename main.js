@@ -588,17 +588,21 @@ async function sendMessage() {
     }
 }
 
-async function guardarMensajeDB(texto, emisor) {
+async function guardarMensajeDB(texto, emisor, customDate = null) {
     try {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
 
         console.log(`Intentando guardar mensaje de ${emisor}...`);
-        const { error } = await supabase.from('mensajes').insert({
+        const payload = {
             texto: texto,
             emisor: emisor,
             alumno: user.id
-        });
+        };
+
+        if (customDate) payload.created_at = customDate;
+
+        const { error } = await supabase.from('mensajes').insert(payload);
 
         if (error) {
             console.error("Error Supabase (insert):", error);
@@ -805,11 +809,68 @@ const MODULOS = {
         } catch (e) {
             console.error("Error generando crónica:", e);
         }
+    },
+    async sincronizarHistorialRetroactivo() {
+        if (!supabase) return;
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        console.log("🚀 [Sincronizador] Iniciando escaneo de historial completo...");
+
+        try {
+            // 1. Obtener todos los mensajes
+            const { data: todos, error } = await supabase
+                .from('mensajes')
+                .select('texto, emisor, created_at')
+                .eq('alumno', user.id)
+                .order('created_at', { ascending: true });
+
+            if (error) throw error;
+            if (!todos || todos.length === 0) return console.log("No hay mensajes para sincronizar.");
+
+            // 2. Agrupar por fecha (YYYY-MM-DD)
+            const grupos = {};
+            todos.forEach(m => {
+                const fecha = new Date(m.created_at).toISOString().split('T')[0];
+                if (!grupos[fecha]) grupos[fecha] = { mensajes: [], tieneCronica: false };
+                if (m.emisor === 'resumen_diario') grupos[fecha].tieneCronica = true;
+                else grupos[fecha].mensajes.push(m);
+            });
+
+            // 3. Generar crónicas para los días que no tienen
+            const fechasParaSincronizar = Object.keys(grupos).filter(f => !grupos[f].tieneCronica && grupos[f].mensajes.length > 2);
+
+            console.log(`📅 Encontrados ${fechasParaSincronizar.length} días sin crónica.`);
+
+            for (const fecha of fechasParaSincronizar) {
+                console.log(`🖋️ Generando crónica para: ${fecha}...`);
+                const hist = grupos[fecha].mensajes.map(m => ({
+                    role: m.emisor === 'ia' ? 'model' : 'user',
+                    parts: [{ text: m.texto }]
+                }));
+
+                const cronica = await llamarGemini(`Resume lo más importante de este día (${fecha}).`, hist, "session_chronicle", { userId: user.id });
+
+                if (cronica) {
+                    // Guardar al final del día (23:59)
+                    const endOfDay = `${fecha}T23:59:59Z`;
+                    await guardarMensajeDB(cronica, 'resumen_diario', endOfDay);
+                    console.log(`✅ Crónica guardada para ${fecha}`);
+                }
+                // Pequeña pausa para no saturar
+                await new Promise(r => setTimeout(r, 1000));
+            }
+            console.log("🏁 Sincronización retroactiva completada.");
+        } catch (e) {
+            console.error("Error en sincronización:", e);
+        }
     }
 };
 
-// Exportar funciones críticas al objeto window para acceso desde otros módulos (como Mi Viaje)
+// Exportar funciones críticas al objeto window para acceso desde otros módulos
 window.generarYGuardarResumen = MODULOS.generarYGuardarResumen;
+window.generarCronicaSesion = MODULOS.generarCronicaSesion;
+window.sincronizarHistorialRetroactivo = MODULOS.sincronizarHistorialRetroactivo;
 
 const AJUSTES = {
     abrirModal: async () => {
