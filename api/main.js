@@ -47,7 +47,7 @@ function canAIRecommend() {
 let blogLibrary = [];
 async function loadBlogLibrary() {
     try {
-        const response = await fetch('https://despiertatuvoz.com/wp-content/themes/nuevo-index/biblioteca-blog.json');
+        const response = await fetch('https://despiertatuvoz.com/wp-content/themes/dtv-theme/biblioteca-blog.json');
         if (response.ok) {
             blogLibrary = await response.json();
             console.log("📚 Biblioteca de blog cargada:", blogLibrary.length, "artículos.");
