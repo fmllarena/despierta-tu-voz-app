@@ -80,12 +80,15 @@ async function processChat(req) {
     if (userId && (intent === 'mentor_chat' || intent === 'mentor_briefing' || intent === 'alchemy_analysis')) {
         const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
         const lowerMsg = message.toLowerCase();
-        const needsCoaching = intent === 'mentor_briefing' || ["viaje", "hitos", "raíces", "familia", "ritual", "plan", "coaching", "módulo", "ejercicio"].some(t => lowerMsg.includes(t));
+
+        // Carga PROACTIVA: Siempre cargamos datos de coaching para el chat del mentor
+        const needsCoaching = true;
         const triggersMemory = intent === 'mentor_chat' && ["recordar", "hablamos", "dijiste", "comentamos", "anterior", "pasado", "memoria", "acuerdas", "acodar", "sabes", "sabías"].some(t => lowerMsg.includes(t));
 
-        const promises = [supabase.from('user_profiles').select('nombre, historia_vocal, ultimo_resumen').eq('user_id', userId).maybeSingle()];
-        if (needsCoaching) promises.push(supabase.from('user_coaching_data').select('linea_vida_hitos, herencia_raices, roles_familiares, ritual_sanacion, plan_accion').eq('user_id', userId).maybeSingle());
-        else promises.push(Promise.resolve({ data: null }));
+        const promises = [
+            supabase.from('user_profiles').select('nombre, historia_vocal, ultimo_resumen').eq('user_id', userId).maybeSingle(),
+            supabase.from('user_coaching_data').select('linea_vida_hitos, herencia_raices, roles_familiares, ritual_sanacion, plan_accion').eq('user_id', userId).maybeSingle()
+        ];
 
         if (triggersMemory) {
             const noise = ["acuerdas", "hablamos", "dijiste", "comentamos", "anterior", "pasado", "memoria", "sobre", "puedes", "recordar", "sabes", "quiero", "tema", "algo", "sabías", "acordarte"];
@@ -95,10 +98,14 @@ async function processChat(req) {
 
             if (keywords.length > 0) {
                 const bestKeyword = keywords[0];
-                console.log(`🧠 Memoria ACTIVADA para: ${bestKeyword}`);
-                promises.push(supabase.from('mensajes').select('texto, emisor, created_at').eq('alumno', userId).ilike('texto', `%${bestKeyword}%`).order('created_at', { ascending: false }).limit(6));
+                console.log(`🧠 Memoria PROFUNDA ACTIVADA para: ${bestKeyword}`);
+                // Ampliamos a 15 mensajes recuperados
+                promises.push(supabase.from('mensajes').select('texto, emisor, created_at').eq('alumno', userId).ilike('texto', `%${bestKeyword}%`).order('created_at', { ascending: false }).limit(15));
             } else promises.push(Promise.resolve({ data: null }));
-        } else promises.push(Promise.resolve({ data: null }));
+        } else {
+            // Si no hay trigger de palabra clave, cargamos siempre los últimos 5 para mantener frescura
+            promises.push(supabase.from('mensajes').select('texto, emisor, created_at').eq('alumno', userId).order('created_at', { ascending: false }).limit(5));
+        }
 
         const [perfilRes, viajeRes, memoryRes] = await Promise.all(promises);
         if (perfilRes.data) context += `\n--- PERFIL ---\n- Nombre: ${perfilRes.data.nombre}\n- Historia: ${perfilRes.data.historia_vocal}\n- Resumen: ${perfilRes.data.ultimo_resumen}\n`;
