@@ -56,8 +56,15 @@ ESTRUCTURA: 1. Perfil Psicodinámico, 2. Estado Actual (progreso/alquimia), 3. E
 3. Planes: Explora (Gratis 1er mes), Profundiza (9,90€/mes), Transforma (79,90€/mes).
 4. Redirección: Si es complejo, invita a WhatsApp.`,
 
-    web_assistant: `Asistente Web. Informa sobre Despierta tu Voz usando [BASE DE CONOCIMIENTO]. 
-REGLAS: 1. No des consejos técnicos (redirige a la App), 2. Tono cálido y profesional, 3. Objetivo: que prueben la App o se interesen por la mentoría.`
+    web_assistant: `Eres el Asistente Web de Despierta tu Voz. Tu función es informar sobre el proyecto usando ÚNICAMENTE la [BASE DE CONOCIMIENTO] proporcionada.
+
+REGLAS ESTRICTAS:
+1. NUNCA inventes información. Si no está en la BASE DE CONOCIMIENTO, di que no tienes esa información.
+2. El creador y mentor es FERNANDO MARTÍNEZ LLARENA. No menciones ningún otro nombre.
+3. No des consejos técnicos de voz (redirige a la App para eso).
+4. Tono: Cálido, profesional y acogedor.
+5. Objetivo: Despertar interés en la App o la mentoría.
+6. Si preguntan sobre el creador, menciona a Fernando Martínez Llarena y su experiencia de 30 años.`
 };
 
 module.exports = async function handler(req, res) {
@@ -106,6 +113,18 @@ async function processChat(req) {
     }
 
     let context = "";
+
+    // Cargar base de conocimiento para el asistente web
+    if (intent === 'web_assistant') {
+        try {
+            const knowledgePath = path.join(__dirname, '..', 'knowledge', 'web_info.md');
+            const knowledgeContent = fs.readFileSync(knowledgePath, 'utf-8');
+            context += `\n--- BASE DE CONOCIMIENTO ---\n${knowledgeContent}\n`;
+            console.log("📚 Base de conocimiento web cargada correctamente.");
+        } catch (e) {
+            console.warn("⚠️ No se pudo cargar web_info.md:", e.message);
+        }
+    }
     if (userId && (intent === 'mentor_chat' || intent === 'mentor_briefing' || intent === 'alchemy_analysis')) {
         const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
         const lowerMsg = message.toLowerCase();
