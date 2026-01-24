@@ -692,8 +692,29 @@ if (ELEMENTS.navButtons.logout) {
         // Generar resumen del perfil
         await MODULOS.generarYGuardarResumen();
 
-        await supabase.auth.signOut();
-        location.reload();
+        // CIERRE SUAVE: No hacer signOut ni reload
+        // El chat permanece visible para consulta
+        appendMessage(`✨ Sesión guardada con éxito.\n\nPuedes seguir explorando Mi Viaje, tu Diario de Alquimia, revisar esta conversación o cerrar la app cuando quieras.`, 'ia', 'msg-sesion-guardada');
+
+        // Añadir botón de cierre real al mensaje
+        setTimeout(() => {
+            const msgGuardada = document.getElementById('msg-sesion-guardada');
+            if (msgGuardada) {
+                const logoutRealBtn = document.createElement('button');
+                logoutRealBtn.className = 'chat-logout-btn';
+                logoutRealBtn.innerHTML = '🚪 Cerrar sesión y salir';
+                logoutRealBtn.onclick = async () => {
+                    logoutRealBtn.innerHTML = '⌛ Cerrando...';
+                    logoutRealBtn.disabled = true;
+                    await supabase.auth.signOut();
+                    location.reload();
+                };
+                msgGuardada.appendChild(logoutRealBtn);
+            }
+        }, 100);
+
+        // Resetear botón
+        ELEMENTS.navButtons.logout.innerText = "SALIR";
     });
 }
 
