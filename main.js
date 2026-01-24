@@ -560,9 +560,9 @@ async function sendMessage() {
             await guardarMensajeDB(responseText, 'ia'); // Guardar respuesta de la IA
             chatHistory.push({ role: "user", parts: [{ text }] }, { role: "model", parts: [{ text: responseText }] });
 
-            // --- DISPARADOR DE CRÓNICA (Cada 8 mensajes para no saturar) ---
-            if (chatHistory.length % 8 === 0) {
-                console.log("📜 Sesión intensa detectada. Generando Crónica de Alquimia...");
+            // --- DISPARADOR DE CRÓNICA (Cada 4 mensajes para capturar conversaciones cortas) ---
+            if (chatHistory.length % 4 === 0 && chatHistory.length >= 4) {
+                console.log("📜 Sesión detectada. Generando Crónica de Alquimia...");
                 MODULOS.generarCronicaSesion();
             }
 
@@ -682,7 +682,16 @@ if (ELEMENTS.chatInput) {
 if (ELEMENTS.navButtons.logout) {
     ELEMENTS.navButtons.logout.addEventListener('click', async () => {
         ELEMENTS.navButtons.logout.innerText = "Guardando...";
+
+        // Generar crónica de la sesión si hay al menos 2 mensajes (1 intercambio)
+        if (chatHistory.length >= 2) {
+            console.log("📝 Generando crónica final de la sesión antes de cerrar...");
+            await MODULOS.generarCronicaSesion();
+        }
+
+        // Generar resumen del perfil
         await MODULOS.generarYGuardarResumen();
+
         await supabase.auth.signOut();
         location.reload();
     });
@@ -794,16 +803,27 @@ const MODULOS = {
             console.error("Error resumen proactivo:", e);
         }
     },
+    lastCronicaTime: null, // Control para evitar duplicados
     async generarCronicaSesion() {
         if (!supabase || chatHistory.length < 4) return;
+
+        // Evitar generar múltiples crónicas en menos de 1 hora
+        const now = Date.now();
+        if (this.lastCronicaTime && (now - this.lastCronicaTime) < 3600000) {
+            console.log("⏭️ Crónica reciente ya generada, saltando...");
+            return;
+        }
+
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
+
         try {
             console.log("📝 [Cronista] Sintetizando sesión para memoria a largo plazo...");
             const responseText = await llamarGemini("Genera la crónica de nuestra sesión de hoy.", chatHistory, "session_chronicle", { userId: user.id });
 
             if (responseText) {
                 await guardarMensajeDB(responseText, 'resumen_diario');
+                this.lastCronicaTime = now; // Actualizar timestamp
                 console.log("✅ Crónica de Alquimia guardada en el historial.");
             }
         } catch (e) {
