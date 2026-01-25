@@ -4,9 +4,7 @@ let userProfile = null;
 let chatHistory = [];
 let isRecoveringPassword = false;
 
-const MENSAJE_BIENVENIDA = `<p>Hola, ¿qué tal? Soy tu Mentor Vocal privado.</p><br><p>Bienvenido/a a un espacio sagrado donde tu voz es el puente entre tu técnica y tu alma. 
-Aquí no solo buscaremos la nota perfecta, sino que usaremos cada sonido como una llave para abrir los cerrojos de tu historia y desvelar los secretos 
-que guarda tu inconsciente. Respira, confía y prepárate para transformar tu vida a través del canto. ¿Cómo te sientes al iniciar este viaje hoy?</p>`;
+const MENSAJE_BIENVENIDA = `<p>Hola, ¡qué alegría que estés aquí! Soy tu Mentor Vocal.</p><br><p>Mi misión es acompañarte a descubrir todo el potencial de tu voz, desde la técnica hasta lo que sientes al cantar. Para empezar con buen pie... ¿hay algo específico que te haya traído hoy aquí o algún bloqueo que te gustaría trabajar conmigo?</p>`;
 
 const FRASES_PENSAR = ["Procesando tu pregunta..."];
 
