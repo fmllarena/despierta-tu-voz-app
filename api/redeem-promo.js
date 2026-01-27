@@ -29,40 +29,71 @@ module.exports = async function handler(req, res) {
             return res.status(400).json({ error: `El código "${normalizedCode}" no es válido.` });
         }
 
-        // 2. Verificar si el usuario existe y su nivel actual
-        const { data: profile, error: profileError } = await supabase
-            .from('user_profiles')
-            .select('subscription_tier')
-            .eq('user_id', userId)
-            .single();
+        // 2. Verificar si el usuario existe y su nivel actual (con reintentos)
+        let profile = null;
+        let attempts = 0;
+        const maxAttempts = 5;
+        const delayMs = 800;
 
-        if (profileError || !profile) {
+        while (!profile && attempts < maxAttempts) {
+            attempts++;
+            console.log(`🔄 Intento ${attempts}/${maxAttempts} de buscar perfil para userId: ${userId}`);
+
+            const { data, error } = await supabase
+                .from('user_profiles')
+                .select('subscription_tier')
+                .eq('user_id', userId)
+                .single();
+
+            if (!error && data) {
+                profile = data;
+                console.log(`✅ Perfil encontrado en intento ${attempts}`);
+            } else if (attempts < maxAttempts) {
+                console.log(`⏳ Perfil no encontrado, esperando ${delayMs}ms...`);
+                await new Promise(resolve => setTimeout(resolve, delayMs));
+            }
+        }
+
+        if (!profile) {
             return res.status(404).json({
                 error: 'Usuario no encontrado',
-                details: 'No existe un perfil para este ID en la tabla user_profiles.'
+                details: 'El perfil aún no está disponible. Por favor, espera unos segundos e intenta de nuevo.'
             });
         }
 
-        if (profile.subscription_tier === 'pro' || profile.subscription_tier === 'premium') {
+        // 3. Registrar la promo (incluso si ya es Pro, para marcar el precio blindado)
+        const promoNote = `Promo ${normalizedCode} canjeada - Precio blindado 9,90€/mes`;
+
+        // Verificar si ya tiene esta promo registrada
+        if (profile.promo_locked_price === 9.90) {
             return res.status(200).json({
                 success: true,
-                message: 'Ya tienes un plan activo. ¡No necesitas redimir el código!'
+                message: '¡Esta promoción ya está activa en tu cuenta! Disfrutas del precio blindado de 9,90€/mes.'
             });
         }
 
-        // 3. Proceder al alta Pro
+        // Extender el trial 30 días más desde ahora (para dar tiempo a configurar pago)
+        const newTrialEnd = new Date();
+        newTrialEnd.setDate(newTrialEnd.getDate() + 30);
+
         const { error: updateError } = await supabase
             .from('user_profiles')
             .update({
-                subscription_tier: 'pro',
+                subscription_tier: 'pro',  // Asegurar que sea Pro
+                promo_locked_price: 9.90,  // Precio blindado
+                trial_end_date: newTrialEnd.toISOString(),  // Extender trial
                 updated_at: new Date().toISOString(),
-                mentor_notes: `Promo ${normalizedCode} canjeada`
+                mentor_notes: promoNote
             })
             .eq('user_id', userId);
 
         if (updateError) throw updateError;
 
-        return res.status(200).json({ success: true });
+        console.log(`✅ Promo ${normalizedCode} registrada para userId: ${userId} con precio blindado 9.90€`);
+        return res.status(200).json({
+            success: true,
+            message: '¡Promoción activada! Tienes acceso Pro con precio blindado de 9,90€/mes para siempre.'
+        });
 
     } catch (err) {
         console.error('Error crítico:', err);

@@ -253,66 +253,55 @@
     <!-- MODAL LEGAL (LANDING) -->
     <div id="legalLandingModal" class="modal">
         <div class="modal-content">
-            <h2>Compromiso y Privacidad</h2>
+            <h2>¡Bienvenido/a a tu transformación vocal! 🌿</h2>
+            <p class="modal-intro">Antes de empezar, queremos que sepas cómo cuidamos de ti y de tu viaje:</p>
 
             <div class="legal-scroll-area">
                 <div class="legal-section">
-                    <div class="privacy-notice-box">
-                        <p><strong>Al aceptar, consientes el tratamiento de los datos que compartas con el Mentor IA
-                                para la personalización de tu proceso de aprendizaje y desbloqueo vocal.</strong></p>
-                    </div>
-
-                    <div class="promo-terms-box"
-                        style="background: rgba(var(--color-acento-rgb), 0.1); border: 1px solid var(--color-acento); padding: 15px; border-radius: 10px; margin: 20px 0;">
-                        <h3 style="margin-top: 0; color: var(--color-acento);">Términos de la Promoción "Miembro Promo
-                            Inicial"</h3>
-                        <p><strong>1. Periodo de Prueba:</strong> Al activar el código <strong>PROMO1MES</strong>,
-                            disfrutarás de acceso total gratuito al Plan Pro durante 30 días naturales. Sin compromiso
-                            de permanencia; puedes cancelar cuando quieras.</p>
-                        <p><strong>2. Garantía de Precio Blindado:</strong> Tu tarifa se fija en
-                            <strong>9,90€/mes</strong> (IVA incluido) de forma vitalicia mientras mantengas tu
-                            suscripción activa, protegiéndote de la subida a 19,90€.
+                    <div id="promoTermsBox" class="promo-terms-box"
+                        style="display: none; background: rgba(var(--color-acento-rgb), 0.1); border: 1px solid var(--color-acento); padding: 15px; border-radius: 10px; margin: 20px 0;">
+                        <h3 style="margin-top: 0; color: var(--color-acento);">✨ Tu Promoción Especial</h3>
+                        <p><strong>🎁 1 mes gratis</strong> del Plan Pro con el código <strong>PROMO1MES</strong>. Sin
+                            tarjeta, sin compromiso.</p>
+                        <p><strong>🔒 Precio blindado:</strong> Si decides continuar, tu tarifa será de
+                            <strong>9,90€/mes</strong> para siempre (en lugar de 19,90€).
                         </p>
-                        <p><strong>3. Renovación:</strong> Finalizado el mes gratuito, podrás formalizar tu suscripción
-                            para mantener este precio exclusivo.</p>
+                        <p><strong>🌱 Libertad total:</strong> Cancela cuando quieras, sin penalizaciones.</p>
                     </div>
 
-                    <h3>Propiedad del Contenido y Metodología</h3>
-                    <p>El usuario reconoce y acepta que todos los derechos de propiedad intelectual e industrial sobre
-                        los contenidos de la aplicación Despierta tu Voz (incluyendo los 5 Módulos de Sanación Vocal y
-                        las respuestas del Mentor Vocal IA) son titularidad exclusiva de Despierta tu Voz.</p>
+                    <h3>💚 Tu privacidad es sagrada</h3>
+                    <p>Tus conversaciones con el Mentor son <strong>100% privadas</strong>. Nunca vendemos tus datos.
+                        Solo los usamos para que la IA te conozca mejor y pueda acompañarte de forma personalizada.</p>
+                    <p style="font-size: 0.9em; opacity: 0.8;">Si algún día quieres que borremos todo, escríbenos a
+                        <strong>app-mentor@despiertatuvoz.com</strong> y lo haremos sin preguntas.</p>
 
-                    <h3>Licencia de Uso Personal</h3>
-                    <p>Se concede al usuario una licencia de uso personal, no exclusiva e intransferible. Queda
-                        estrictamente prohibida la reproducción o explotación comercial de estos contenidos sin
-                        consentimiento expreso.</p>
+                    <h3>🎨 Nuestra metodología es única</h3>
+                    <p>Los 5 Módulos de Sanación Vocal y todo el contenido de la app son creación original de Despierta
+                        tu Voz. Te damos acceso para tu crecimiento personal, pero no para uso comercial o distribución.
+                    </p>
 
-                    <h3>Protección de la Alquimia Vocal</h3>
-                    <p>La estructura específica del viaje constituye una obra original protegida. El uso indebido fuera
-                        de la aplicación podrá dar lugar a acciones legales.</p>
-
-                    <h3>Política de Privacidad</h3>
-                    <p>Tus conversaciones son privadas. No vendemos tus datos a terceros. Usamos el historial para que
-                        la IA tenga memoria y te ofrezca un acompañamiento coherente. Puedes solicitar el borrado de tus
-                        datos en cualquier momento escribiendo a app-mentor@despiertatuvoz.com.</p>
+                    <h3>⚕️ Un recordatorio importante</h3>
+                    <p>El Mentor IA es una herramienta de acompañamiento emocional y vocal, pero <strong>no
+                            sustituye</strong> el consejo médico o terapéutico profesional. Si tienes dudas sobre tu
+                        salud vocal, consulta con un especialista.</p>
                 </div>
             </div>
 
             <div class="legal-checks">
                 <label class="check-item">
                     <input type="checkbox" id="checkTermsLanding">
-                    <span>Acepto los Términos, Condiciones y la Política de Privacidad.</span>
+                    <span>He leído y acepto las condiciones de uso y privacidad</span>
                 </label>
                 <label class="check-item">
                     <input type="checkbox" id="checkMedicalLanding">
-                    <span>Entiendo que el Mentor Vocal IA no sustituye el asesoramiento médico profesional.</span>
+                    <span>Entiendo que esto es acompañamiento, no tratamiento médico</span>
                 </label>
             </div>
 
             <div class="modal-actions">
-                <button id="btnConfirmLegalLanding" class="btn btn-primary" disabled>Confirmar y Seguir</button>
+                <button id="btnConfirmLegalLanding" class="btn btn-primary" disabled>¡Empezar mi viaje! ✨</button>
                 <button onclick="document.getElementById('legalLandingModal').style.display='none'"
-                    class="btn btn-secondary">Cancelar</button>
+                    class="btn btn-secondary">Volver</button>
             </div>
         </div>
     </div>
@@ -320,10 +309,17 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="js/stripe-checkout.js"></script>
     <script>
-        // Lógica de detección de promo
+        // Lógica de detección de promo y origen (Brevo)
         window.addEventListener('load', () => {
             const params = new URLSearchParams(window.location.search);
-            const promo = params.get('promo');
+            let promo = params.get('promo');
+            const source = params.get('utm_source');
+
+            // Si vienen de Brevo y no hay promo explícita, aplicamos la PROMO1MES por defecto
+            if (!promo && source === 'brevo') {
+                promo = 'PROMO1MES';
+            }
+
             if (promo) {
                 console.log("🎁 Promo detectada:", promo);
                 sessionStorage.setItem('dtv_promo_code', promo);
@@ -355,6 +351,10 @@
                     document.querySelector('.btn-footer-cta') // Footer CTA
                 ];
                 distraciones.forEach(el => { if (el) el.style.display = 'none'; });
+
+                // Opcional: Mostrar el cuadro de términos de promo en el modal legal
+                const promoTermsBox = document.getElementById('promoTermsBox');
+                if (promoTermsBox) promoTermsBox.style.display = 'block';
 
                 // Opcional: Desplazar suavemente a precios o dejar que ellos naveguen
             }

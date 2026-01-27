@@ -4,9 +4,7 @@ let userProfile = null;
 let chatHistory = [];
 let isRecoveringPassword = false;
 
-const MENSAJE_BIENVENIDA = `<p>Hola, ¿qué tal? Soy tu Mentor Vocal privado.</p><br><p>Bienvenido/a a un espacio sagrado donde tu voz es el puente entre tu técnica y tu alma. 
-Aquí no solo buscaremos la nota perfecta, sino que usaremos cada sonido como una llave para abrir los cerrojos de tu historia y desvelar los secretos 
-que guarda tu inconsciente. Respira, confía y prepárate para transformar tu vida a través del canto. ¿Cómo te sientes al iniciar este viaje hoy?</p>`;
+const MENSAJE_BIENVENIDA = `<p>Hola, ¡qué alegría que estés aquí! Soy tu Mentor Vocal.</p><br><p>Mi misión es acompañarte a descubrir todo el potencial de tu voz, desde la técnica hasta lo que sientes al cantar. Para empezar con buen pie... ¿hay algo específico que te haya traído hoy aquí o algún bloqueo que te gustaría trabajar conmigo?</p>`;
 
 const FRASES_PENSAR = ["Procesando tu pregunta..."];
 
@@ -60,6 +58,16 @@ if (fromPost) {
 }
 if (fromCat) {
     sessionStorage.setItem('dtv_origin_cat', decodeURIComponent(fromCat));
+}
+
+// Detectar promo o campaña de Brevo para guardar en sesión
+let urlPromo = urlParams.get('promo');
+const urlSource = urlParams.get('utm_source');
+if (!urlPromo && urlSource === 'brevo') {
+    urlPromo = 'PROMO1MES';
+}
+if (urlPromo) {
+    sessionStorage.setItem('dtv_promo_code', urlPromo);
 }
 
 const ELEMENTS = {
@@ -560,9 +568,9 @@ async function sendMessage() {
             await guardarMensajeDB(responseText, 'ia'); // Guardar respuesta de la IA
             chatHistory.push({ role: "user", parts: [{ text }] }, { role: "model", parts: [{ text: responseText }] });
 
-            // --- DISPARADOR DE CRÓNICA (Cada 8 mensajes para no saturar) ---
-            if (chatHistory.length % 8 === 0) {
-                console.log("📜 Sesión intensa detectada. Generando Crónica de Alquimia...");
+            // --- DISPARADOR DE CRÓNICA (Cada 4 mensajes para capturar conversaciones cortas) ---
+            if (chatHistory.length % 4 === 0 && chatHistory.length >= 4) {
+                console.log("📜 Sesión detectada. Generando Crónica de Alquimia...");
                 MODULOS.generarCronicaSesion();
             }
 
@@ -682,9 +690,39 @@ if (ELEMENTS.chatInput) {
 if (ELEMENTS.navButtons.logout) {
     ELEMENTS.navButtons.logout.addEventListener('click', async () => {
         ELEMENTS.navButtons.logout.innerText = "Guardando...";
+
+        // Generar crónica de la sesión si hay al menos 2 mensajes (1 intercambio)
+        if (chatHistory.length >= 2) {
+            console.log("📝 Generando crónica final de la sesión antes de cerrar...");
+            await MODULOS.generarCronicaSesion();
+        }
+
+        // Generar resumen del perfil
         await MODULOS.generarYGuardarResumen();
-        await supabase.auth.signOut();
-        location.reload();
+
+        // CIERRE SUAVE: No hacer signOut ni reload
+        // El chat permanece visible para consulta
+        appendMessage(`✨ Sesión guardada con éxito.\n\nPuedes seguir explorando Mi Viaje, tu Diario de Alquimia, revisar esta conversación o cerrar la app cuando quieras.`, 'ia', 'msg-sesion-guardada');
+
+        // Añadir botón de cierre real al mensaje
+        setTimeout(() => {
+            const msgGuardada = document.getElementById('msg-sesion-guardada');
+            if (msgGuardada) {
+                const logoutRealBtn = document.createElement('button');
+                logoutRealBtn.className = 'chat-logout-btn';
+                logoutRealBtn.innerHTML = '🚪 Cerrar sesión y salir';
+                logoutRealBtn.onclick = async () => {
+                    logoutRealBtn.innerHTML = '⌛ Cerrando...';
+                    logoutRealBtn.disabled = true;
+                    await supabase.auth.signOut();
+                    location.reload();
+                };
+                msgGuardada.appendChild(logoutRealBtn);
+            }
+        }, 100);
+
+        // Resetear botón
+        ELEMENTS.navButtons.logout.innerText = "SALIR";
     });
 }
 
@@ -794,16 +832,27 @@ const MODULOS = {
             console.error("Error resumen proactivo:", e);
         }
     },
+    lastCronicaTime: null, // Control para evitar duplicados
     async generarCronicaSesion() {
         if (!supabase || chatHistory.length < 4) return;
+
+        // Evitar generar múltiples crónicas en menos de 1 hora
+        const now = Date.now();
+        if (this.lastCronicaTime && (now - this.lastCronicaTime) < 3600000) {
+            console.log("⏭️ Crónica reciente ya generada, saltando...");
+            return;
+        }
+
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
+
         try {
             console.log("📝 [Cronista] Sintetizando sesión para memoria a largo plazo...");
             const responseText = await llamarGemini("Genera la crónica de nuestra sesión de hoy.", chatHistory, "session_chronicle", { userId: user.id });
 
             if (responseText) {
                 await guardarMensajeDB(responseText, 'resumen_diario');
+                this.lastCronicaTime = now; // Actualizar timestamp
                 console.log("✅ Crónica de Alquimia guardada en el historial.");
             }
         } catch (e) {
