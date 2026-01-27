@@ -29,17 +29,35 @@ module.exports = async function handler(req, res) {
             return res.status(400).json({ error: `El código "${normalizedCode}" no es válido.` });
         }
 
-        // 2. Verificar si el usuario existe y su nivel actual
-        const { data: profile, error: profileError } = await supabase
-            .from('user_profiles')
-            .select('subscription_tier')
-            .eq('user_id', userId)
-            .single();
+        // 2. Verificar si el usuario existe y su nivel actual (con reintentos)
+        let profile = null;
+        let attempts = 0;
+        const maxAttempts = 5;
+        const delayMs = 800;
 
-        if (profileError || !profile) {
+        while (!profile && attempts < maxAttempts) {
+            attempts++;
+            console.log(`🔄 Intento ${attempts}/${maxAttempts} de buscar perfil para userId: ${userId}`);
+
+            const { data, error } = await supabase
+                .from('user_profiles')
+                .select('subscription_tier')
+                .eq('user_id', userId)
+                .single();
+
+            if (!error && data) {
+                profile = data;
+                console.log(`✅ Perfil encontrado en intento ${attempts}`);
+            } else if (attempts < maxAttempts) {
+                console.log(`⏳ Perfil no encontrado, esperando ${delayMs}ms...`);
+                await new Promise(resolve => setTimeout(resolve, delayMs));
+            }
+        }
+
+        if (!profile) {
             return res.status(404).json({
                 error: 'Usuario no encontrado',
-                details: 'No existe un perfil para este ID en la tabla user_profiles.'
+                details: 'El perfil aún no está disponible. Por favor, espera unos segundos e intenta de nuevo.'
             });
         }
 
