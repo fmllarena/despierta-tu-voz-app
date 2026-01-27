@@ -56,6 +56,13 @@ async function iniciarPago(planType) {
             window.pendingPlan = planType;
             legalModal.style.display = 'flex';
 
+            // Control de visibilidad de los términos de promoción
+            const promoBox = legalModal.querySelector('.promo-terms-box') || document.getElementById('promoTermsBox');
+            if (promoBox) {
+                const promo = sessionStorage.getItem('dtv_promo_code');
+                promoBox.style.display = promo ? 'block' : 'none';
+            }
+
             // Si es la landing, necesitamos configurar los listeners aquí o asegurar que existan
             if (document.getElementById('legalLandingModal')) {
                 setupLandingLegalListeners(user);
