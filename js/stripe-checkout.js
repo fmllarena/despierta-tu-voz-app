@@ -294,23 +294,38 @@ async function ejecutarPago(planType, user) {
             const confirmPromo = confirm(`🎁 ¡Buenas noticias! Tienes un código de promoción: ${promo}.\n\n¿Quieres activar tu mes gratis del Plan Pro ahora mismo sin necesidad de tarjeta?`);
 
             if (confirmPromo) {
-                const response = await fetch('/api/redeem-promo', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ code: promo, userId: user.id })
-                });
+                // Mostrar indicador de carga
+                const loadingMsg = document.createElement('div');
+                loadingMsg.id = 'promo-loading';
+                loadingMsg.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:white;padding:30px;border-radius:15px;box-shadow:0 4px 20px rgba(0,0,0,0.3);z-index:10000;text-align:center;';
+                loadingMsg.innerHTML = '<p style="margin:0;font-size:1.2em;">⏳ Activando tu promoción...</p><p style="margin:10px 0 0;font-size:0.9em;opacity:0.7;">Esto puede tardar unos segundos</p>';
+                document.body.appendChild(loadingMsg);
 
-                const data = await response.json();
-                if (data.success) {
-                    alert("✨ ¡Enhorabuena! Tu mes gratis ha sido activado. Ya tienes acceso a todas las funciones Pro.");
-                    sessionStorage.removeItem('dtv_promo_code');
-                    window.location.href = "index.html";
-                    return;
-                } else {
-                    const errorMsg = data.error || "Desconocido";
-                    const details = data.details ? `\nDetalles: ${data.details}` : "";
-                    alert(`Error con el código: ${errorMsg}${details}`);
-                    // Si falla el código, dejamos que intente el pago normal por si acaso
+                try {
+                    const response = await fetch('/api/redeem-promo', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ code: promo, userId: user.id })
+                    });
+
+                    const data = await response.json();
+                    document.getElementById('promo-loading')?.remove();
+
+                    if (data.success) {
+                        alert("✨ ¡Enhorabuena! Tu mes gratis ha sido activado. Ya tienes acceso a todas las funciones Pro.");
+                        sessionStorage.removeItem('dtv_promo_code');
+                        window.location.href = "index.html";
+                        return;
+                    } else {
+                        const errorMsg = data.error || "Desconocido";
+                        const details = data.details ? `\n\n${data.details}` : "";
+                        alert(`❌ No pudimos activar la promoción: ${errorMsg}${details}`);
+                        // Si falla el código, dejamos que intente el pago normal por si acaso
+                    }
+                } catch (err) {
+                    document.getElementById('promo-loading')?.remove();
+                    alert(`❌ Error de conexión al activar la promoción. Por favor, inténtalo de nuevo.`);
+                    console.error('Error en redeem-promo:', err);
                 }
             }
         }
