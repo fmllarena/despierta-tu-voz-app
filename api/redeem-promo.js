@@ -32,7 +32,7 @@ module.exports = async function handler(req, res) {
         // 2. Verificar si el usuario existe y su nivel actual (con reintentos)
         let profile = null;
         let attempts = 0;
-        const maxAttempts = 5;
+        const maxAttempts = 10;
         const delayMs = 800;
 
         while (!profile && attempts < maxAttempts) {
