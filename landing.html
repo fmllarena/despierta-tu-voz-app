@@ -262,8 +262,8 @@
                                 para la personalización de tu proceso de aprendizaje y desbloqueo vocal.</strong></p>
                     </div>
 
-                    <div class="promo-terms-box"
-                        style="background: rgba(var(--color-acento-rgb), 0.1); border: 1px solid var(--color-acento); padding: 15px; border-radius: 10px; margin: 20px 0;">
+                    <div id="promoTermsBox" class="promo-terms-box"
+                        style="display: none; background: rgba(var(--color-acento-rgb), 0.1); border: 1px solid var(--color-acento); padding: 15px; border-radius: 10px; margin: 20px 0;">
                         <h3 style="margin-top: 0; color: var(--color-acento);">Términos de la Promoción "Miembro Promo
                             Inicial"</h3>
                         <p><strong>1. Periodo de Prueba:</strong> Al activar el código <strong>PROMO1MES</strong>,
@@ -320,10 +320,17 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="js/stripe-checkout.js"></script>
     <script>
-        // Lógica de detección de promo
+        // Lógica de detección de promo y origen (Brevo)
         window.addEventListener('load', () => {
             const params = new URLSearchParams(window.location.search);
-            const promo = params.get('promo');
+            let promo = params.get('promo');
+            const source = params.get('utm_source');
+
+            // Si vienen de Brevo y no hay promo explícita, aplicamos la PROMO1MES por defecto
+            if (!promo && source === 'brevo') {
+                promo = 'PROMO1MES';
+            }
+
             if (promo) {
                 console.log("🎁 Promo detectada:", promo);
                 sessionStorage.setItem('dtv_promo_code', promo);
@@ -355,6 +362,10 @@
                     document.querySelector('.btn-footer-cta') // Footer CTA
                 ];
                 distraciones.forEach(el => { if (el) el.style.display = 'none'; });
+
+                // Opcional: Mostrar el cuadro de términos de promo en el modal legal
+                const promoTermsBox = document.getElementById('promoTermsBox');
+                if (promoTermsBox) promoTermsBox.style.display = 'block';
 
                 // Opcional: Desplazar suavemente a precios o dejar que ellos naveguen
             }

@@ -60,6 +60,16 @@ if (fromCat) {
     sessionStorage.setItem('dtv_origin_cat', decodeURIComponent(fromCat));
 }
 
+// Detectar promo o campaña de Brevo para guardar en sesión
+let urlPromo = urlParams.get('promo');
+const urlSource = urlParams.get('utm_source');
+if (!urlPromo && urlSource === 'brevo') {
+    urlPromo = 'PROMO1MES';
+}
+if (urlPromo) {
+    sessionStorage.setItem('dtv_promo_code', urlPromo);
+}
+
 const ELEMENTS = {
     chatBox: document.getElementById('chatBox'),
     chatInput: document.getElementById('chatMentoriaInput'),
