@@ -70,6 +70,12 @@ if (urlPromo) {
     sessionStorage.setItem('dtv_promo_code', urlPromo);
 }
 
+// Detectar parámetro upgrade (desde email de fin de trial)
+const urlUpgrade = urlParams.get('upgrade');
+if (urlUpgrade) {
+    sessionStorage.setItem('dtv_auto_upgrade', urlUpgrade); // 'pro' o 'premium'
+}
+
 const ELEMENTS = {
     chatBox: document.getElementById('chatBox'),
     chatInput: document.getElementById('chatMentoriaInput'),
@@ -1312,6 +1318,21 @@ async function checkPaymentStatus() {
     } else if (urlParams.get('payment') === 'cancel') {
         window.history.replaceState({}, document.title, window.location.pathname);
         alert("El proceso de pago fue cancelado.");
+    }
+
+    // Detectar si viene desde email de fin de trial (upgrade=pro)
+    const autoUpgrade = sessionStorage.getItem('dtv_auto_upgrade');
+    if (autoUpgrade) {
+        sessionStorage.removeItem('dtv_auto_upgrade'); // Limpiar para que no se repita
+
+        // Esperar un momento para que la UI esté lista
+        setTimeout(() => {
+            const upgradeModal = document.getElementById('upgradeModal');
+            if (upgradeModal) {
+                upgradeModal.style.display = 'flex';
+                console.log(`🔔 Abriendo modal de upgrade automáticamente (plan: ${autoUpgrade})`);
+            }
+        }, 1000);
     }
 }
 
