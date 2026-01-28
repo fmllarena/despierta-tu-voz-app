@@ -75,7 +75,6 @@ const urlUpgrade = urlParams.get('upgrade');
 if (urlUpgrade) {
     sessionStorage.setItem('dtv_auto_upgrade', urlUpgrade); // 'pro' o 'premium'
 }
-
 const ELEMENTS = {
     chatBox: document.getElementById('chatBox'),
     chatInput: document.getElementById('chatMentoriaInput'),
