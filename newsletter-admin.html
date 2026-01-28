@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Newsletter Admin | Despierta tu Voz</title>
+    <!-- Vinculamos las hojas de estilo globales -->
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="landing_style.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&family=Playfair+Display:wght@700&display=swap"
+        rel="stylesheet">
+    <style>
+        /* Estilos específicos del layout del panel que no están en style.css */
+        body {
+            padding: 40px 20px;
+            display: flex;
+            justify-content: center;
+            font-family: var(--font-sans);
+        }
+
+        .admin-container {
+            max-width: 1000px;
+            width: 100%;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+        }
+
+        @media (max-width: 850px) {
+            .admin-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .editor-section {
+            padding: 40px;
+            border-right: 1px solid #eee;
+        }
+
+        .preview-section {
+            padding: 40px;
+            background-color: #fafafa;
+            display: flex;
+            flex-direction: column;
+        }
+
+        h1 {
+            font-family: var(--font-serif);
+            font-size: 24px;
+            margin-bottom: 30px;
+            color: #8e7d6d;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            font-size: 13px;
+            margin-bottom: 8px;
+            color: #8e7d6d;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        input,
+        textarea {
+            width: 100%;
+            padding: 12px 15px;
+            border-radius: 10px;
+            border: 1px solid #ddd;
+            font-family: var(--font-sans);
+            font-size: 15px;
+            box-sizing: border-box;
+            transition: border-color 0.3s;
+        }
+
+        textarea {
+            height: 180px;
+            resize: vertical;
+        }
+
+        .btn-send-campaign {
+            background: linear-gradient(135deg, #8e7d6d 0%, #a89585 100%);
+            color: white;
+            border: none;
+            padding: 16px;
+            border-radius: 30px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 20px;
+            box-shadow: 0 4px 15px rgba(142, 125, 109, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .btn-send-campaign:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(142, 125, 109, 0.4);
+        }
+
+        .preview-label {
+            font-size: 11px;
+            color: #999;
+            margin-bottom: 15px;
+            text-align: center;
+            letter-spacing: 1px;
+        }
+
+        /* Mockup del Email en la previsualización */
+        .email-mockup {
+            border: 1px solid #eee;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.03);
+            flex-grow: 1;
+        }
+
+        .mockup-header {
+            padding: 15px;
+            text-align: center;
+            border-bottom: 1px solid #f0e8e0;
+        }
+
+        .mockup-body {
+            padding: 25px;
+            text-align: left;
+        }
+
+        .mockup-title {
+            font-size: 20px;
+            color: #4a3f35;
+            margin-bottom: 15px;
+            font-family: var(--font-serif);
+        }
+
+        .mockup-text {
+            font-size: 14px;
+            line-height: 1.6;
+            color: #555;
+            white-space: pre-wrap;
+        }
+
+        .mockup-button {
+            display: inline-block;
+            background: #8e7d6d;
+            color: white;
+            padding: 10px 30px;
+            border-radius: 20px;
+            font-size: 13px;
+            text-decoration: none;
+            margin-top: 20px;
+        }
+
+        .success {
+            color: #27ae60;
+            font-weight: 600;
+        }
+
+        .error {
+            color: #e74c3c;
+            font-weight: 600;
+        }
+
+        .tag-info {
+            font-size: 11px;
+            color: #888;
+            margin-top: 5px;
+        }
+
+        #statusMsg {
+            margin-top: 15px;
+            font-size: 14px;
+            text-align: center;
+        }
+
+        .mockup-brand {
+            font-size: 14px;
+            color: #8e7d6d;
+            font-family: var(--font-serif);
+        }
+
+        .mockup-date {
+            font-size: 10px;
+            color: #aaa;
+            margin-bottom: 5px;
+        }
+
+        .info-note {
+            margin-top: 20px;
+            font-size: 12px;
+            color: #888;
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="admin-container">
+        <!-- SECCIÓN EDITOR -->
+        <div class="editor-section">
+            <h1>Panel Newsletter 🌿</h1>
+
+            <div class="form-group">
+                <label for="newsletterSubject">Asunto del Email</label>
+                <input type="text" id="newsletterSubject" placeholder="Ej: Tu medicina vocal de hoy...">
+            </div>
+
+            <div class="form-group">
+                <label for="newsletterTitle">Título Principal (H1)</label>
+                <input type="text" id="newsletterTitle" placeholder="Ej: El poder de tu vulnerabilidad">
+            </div>
+
+            <div class="form-group">
+                <label for="newsletterContent">Contenido del Mensaje</label>
+                <textarea id="newsletterContent" placeholder="Escribe aquí tu carta a la comunidad..."></textarea>
+                <div class="tag-info">Usa {{params.NOMBRE}} para personalizar.</div>
+            </div>
+
+            <div class="form-group">
+                <label for="newsletterCtaText">Texto del Botón</label>
+                <input type="text" id="newsletterCtaText" placeholder="Ej: Leer más en el blog">
+            </div>
+
+            <div class="form-group">
+                <label for="newsletterCtaLink">Link del Botón (URL)</label>
+                <input type="text" id="newsletterCtaLink" placeholder="https://...">
+            </div>
+
+            <button id="sendNewsletterBtn" class="btn-send-campaign">Lanzar Newsletter a todos 🚀</button>
+            <div id="statusMsg"></div>
+        </div>
+
+        <!-- SECCIÓN VISTA PREVIA -->
+        <div class="preview-section">
+            <div class="preview-label">VISTA PREVIA EN TIEMPO REAL</div>
+            <div class="email-mockup">
+                <div class="mockup-header">
+                    <div class="mockup-brand">DESPIERTA TU VOZ</div>
+                </div>
+                <div class="mockup-body">
+                    <div id="previewDate" class="mockup-date"></div>
+                    <div id="previewTitle" class="mockup-title">Título de la noticia</div>
+                    <div id="previewText" class="mockup-text">Hola {{NOMBRE}} 🌿<br><br>Aquí aparecerá el cuerpo de tu
+                        mensaje conforme vayas escribiendo...</div>
+                    <center>
+                        <div id="previewBtn" class="mockup-button">Acceder</div>
+                    </center>
+                </div>
+            </div>
+            <div class="info-note">
+                Esta newsletter se enviará a través de la plantilla #3 de Brevo.
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        // Sincronización de Vista Previa
+        const fields = ['Title', 'Content', 'CtaText'];
+        const updatePreview = () => {
+            document.getElementById('previewTitle').innerText = document.getElementById('newsletterTitle').value || 'Título de la noticia';
+            document.getElementById('previewText').innerHTML = 'Hola {{NOMBRE}} 🌿<br><br>' + (document.getElementById('newsletterContent').value || 'Aquí aparecerá tu mensaje...');
+            document.getElementById('previewBtn').innerText = document.getElementById('newsletterCtaText').value || 'Acceder';
+            document.getElementById('previewDate').innerText = new Date().toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' });
+        };
+
+        document.querySelectorAll('input, textarea').forEach(el => el.addEventListener('input', updatePreview));
+        updatePreview();
+
+        // Lógica de Envío
+        document.getElementById('sendNewsletterBtn').addEventListener('click', async () => {
+            const subject = document.getElementById('newsletterSubject').value;
+            const title = document.getElementById('newsletterTitle').value;
+            const content = document.getElementById('newsletterContent').value;
+            const ctaText = document.getElementById('newsletterCtaText').value;
+            const ctaLink = document.getElementById('newsletterCtaLink').value;
+
+            if (!subject || !content) {
+                alert('Por favor, completa al menos el Asunto y el Contenido.');
+                return;
+            }
+
+            if (!confirm('¿Estás seguro de que quieres enviar esta newsletter a TODA tu lista de suscriptores? Esta acción no se puede deshacer.')) return;
+
+            const btn = document.getElementById('sendNewsletterBtn');
+            const status = document.getElementById('statusMsg');
+
+            btn.disabled = true;
+            btn.innerText = 'Enviando campaña masiva...';
+            status.innerHTML = 'Conectando con el motor de envío...';
+
+            try {
+                // Llamada a nuestro servidor Node o Edge Function
+                const response = await fetch('/api/send-newsletter', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        subject, title, content, ctaText, ctaLink, templateId: 3
+                    })
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    status.innerHTML = '<span class="success">✅ ¡Campaña enviada con éxito! Revisa tu panel de Brevo para ver estadísticas.</span>';
+                    btn.innerText = 'Newsletter Enviada ✨';
+                } else {
+                    throw new Error(result.error || 'Error desconocido');
+                }
+            } catch (err) {
+                console.error(err);
+                status.innerHTML = `<span class="error">❌ Error: ${err.message}</span>`;
+                btn.disabled = false;
+                btn.innerText = 'Reintentar envío 🚀';
+            }
+        });
+    </script>
+</body>
+
+</html>
