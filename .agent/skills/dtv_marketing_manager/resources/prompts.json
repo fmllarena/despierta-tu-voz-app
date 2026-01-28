@@ -1,0 +1,83 @@
+{
+    "image_generation": {
+        "base_prompt": "Beige tones, warm studio, vocal coaching aesthetic, high-end photography, minimalist design, professional lighting, soft shadows, elegant composition",
+        "feed_post": {
+            "format": "1:1 square format, 1080x1080",
+            "additional": "Instagram feed optimized, text overlay space at top or bottom, clean composition"
+        },
+        "story": {
+            "format": "9:16 vertical format, 1080x1920",
+            "additional": "Instagram story optimized, safe zones for text, mobile-first design"
+        },
+        "variations": {
+            "filosofico": "contemplative mood, inspirational atmosphere, soft focus background",
+            "coaching": "dynamic energy, practice setting, instructional clarity",
+            "promocion": "vibrant energy, engaging composition, call-to-action friendly",
+            "choral_directors": "choir director hands in motion, expressive hand gestures, group of people rehearsing in background, sheet music, choral setting, no baton",
+            "vocal_teachers": "grand piano, close-up of sheet music, pedagogical setting, elegant classroom, professional laringe stylized background",
+            "singers_choristers": "studio microphone, music stand with sheet music, confident expression, vocal close-up, beige and minimalist aesthetic"
+        }
+    },
+    "copy_generation": {
+        "system_prompt": "Eres un copywriter experto en marketing de apps de desarrollo personal y vocal. Tu tono es cálido, profesional y empático. NUNCA compites con profesores de canto; la app es un COMPLEMENTO a la formación tradicional. Evita frases como 'mejor que un profesor', 'sustituye a las clases' o 'no necesitas maestro'. Enfócate en la práctica diaria, la accesibilidad y el apoyo comunitario. IMPORTANTE: NO incluyas hashtags en el texto; ya no se utilizan en nuestra estrategia.",
+        "feed_post": {
+            "max_length": 2200,
+            "structure": "Hook (1-2 líneas) + Desarrollo (3-5 líneas) + CTA (1 línea)",
+            "emoji_usage": "Moderado, 2-4 emojis relevantes",
+            "tone_guidelines": "Conversacional pero profesional, inspirador sin ser exagerado"
+        },
+        "story": {
+            "max_length": 150,
+            "structure": "Mensaje directo + CTA visual",
+            "emoji_usage": "Mínimo, 1-2 emojis",
+            "tone_guidelines": "Directo, impactante, accionable"
+        },
+        "templates": {
+            "filosofico_hook": [
+                "¿Alguna vez has sentido que tu voz no refleja quién realmente eres?",
+                "Tu voz es más que sonido. Es tu esencia.",
+                "Cada nota que cantas es un paso hacia tu verdadero yo."
+            ],
+            "coaching_hook": [
+                "Aquí va un ejercicio que transformará tu práctica vocal:",
+                "¿Sabías que este simple ejercicio puede cambiar tu técnica?",
+                "Prueba esto hoy y nota la diferencia:"
+            ],
+            "promocion_hook": [
+                "Miles de personas ya están transformando su voz con Despierta tu Voz",
+                "¿Listo para descubrir el potencial de tu voz?",
+                "Tu viaje vocal comienza aquí:"
+            ]
+        }
+    },
+    "hashtag_strategy": {
+        "branded": [
+            "#DespiertaTuVoz",
+            "#DTV",
+            "#AppDTV"
+        ],
+        "vocal_technique": [
+            "#TecnicaVocal",
+            "#CantoBien",
+            "#VozSana",
+            "#EjerciciosVocales"
+        ],
+        "personal_growth": [
+            "#Transformacion",
+            "#CrecimientoPersonal",
+            "#Desarrollo",
+            "#Mindfulness"
+        ],
+        "community": [
+            "#ComunidadVocal",
+            "#CantantesLatam",
+            "#AprendeACanta",
+            "#VocalCoach"
+        ],
+        "usage_rules": {
+            "total_per_post": "0 hashtags (Do not use)",
+            "branded_required": "None",
+            "mix": "None"
+        }
+    }
+}

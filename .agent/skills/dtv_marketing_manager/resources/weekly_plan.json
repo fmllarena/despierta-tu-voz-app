@@ -1,0 +1,197 @@
+{
+    "weekly_strategy": {
+        "monday": {
+            "type": "Filosófico",
+            "theme": "Reflexión y transformación",
+            "focus": "La voz como herramienta de cambio personal",
+            "tone": "Inspiracional, profundo, empático",
+            "cta": "Descubre más",
+            "cta_url": "https://despiertatuvoz.vercel.app",
+            "hashtags_priority": [
+                "transformacion",
+                "voz",
+                "crecimiento"
+            ],
+            "avoid_phrases": [
+                "mejor que un profesor",
+                "sustituye a las clases",
+                "no necesitas maestro"
+            ]
+        },
+        "tuesday": {
+            "type": "Coaching",
+            "theme": "Técnica vocal práctica",
+            "focus": "Ejercicio o tip técnico aplicable",
+            "tone": "Educativo, cercano, práctico",
+            "cta": "Prueba el ejercicio",
+            "cta_url": "https://despiertatuvoz.vercel.app",
+            "hashtags_priority": [
+                "tecnicavocal",
+                "ejercicios",
+                "practica"
+            ],
+            "avoid_phrases": [
+                "mejor que un profesor",
+                "sustituye a las clases",
+                "no necesitas maestro"
+            ]
+        },
+        "wednesday": {
+            "type": "Promoción",
+            "theme": "Beneficios de la app",
+            "focus": "Testimonios, transformaciones, features",
+            "tone": "Entusiasta, motivador, auténtico",
+            "cta": "Empieza gratis",
+            "cta_url": "https://despiertatuvoz.vercel.app",
+            "hashtags_priority": [
+                "despiertatuvoz",
+                "app",
+                "gratis"
+            ],
+            "avoid_phrases": [
+                "mejor que un profesor",
+                "sustituye a las clases",
+                "no necesitas maestro"
+            ]
+        },
+        "thursday": {
+            "type": "Coaching",
+            "theme": "Desafío o ejercicio guiado",
+            "focus": "Reto práctico para la comunidad",
+            "tone": "Motivador, desafiante, inclusivo",
+            "cta": "Únete al reto",
+            "cta_url": "https://despiertatuvoz.vercel.app",
+            "hashtags_priority": [
+                "reto",
+                "desafio",
+                "comunidad"
+            ],
+            "avoid_phrases": [
+                "mejor que un profesor",
+                "sustituye a las clases",
+                "no necesitas maestro"
+            ]
+        },
+        "friday": {
+            "type": "Filosófico",
+            "theme": "Inspiración para el fin de semana",
+            "focus": "Reflexión sobre el progreso semanal",
+            "tone": "Cálido, celebratorio, reflexivo",
+            "cta": "Reflexiona",
+            "cta_url": "https://despiertatuvoz.vercel.app",
+            "hashtags_priority": [
+                "reflexion",
+                "progreso",
+                "viernes"
+            ],
+            "avoid_phrases": [
+                "mejor que un profesor",
+                "sustituye a las clases",
+                "no necesitas maestro"
+            ]
+        },
+        "saturday": {
+            "type": "Promoción",
+            "theme": "Caso de éxito",
+            "focus": "Historia de transformación real",
+            "tone": "Inspirador, auténtico, emocional",
+            "cta": "Descubre tu voz",
+            "cta_url": "https://despiertatuvoz.vercel.app",
+            "hashtags_priority": [
+                "exito",
+                "transformacion",
+                "historia"
+            ],
+            "avoid_phrases": [
+                "mejor que un profesor",
+                "sustituye a las clases",
+                "no necesitas maestro"
+            ]
+        },
+        "sunday": {
+            "type": "Coaching",
+            "theme": "Preparación para la semana",
+            "focus": "Planificación de práctica vocal",
+            "tone": "Organizativo, motivador, práctico",
+            "cta": "Planifica tu práctica",
+            "cta_url": "https://despiertatuvoz.vercel.app",
+            "hashtags_priority": [
+                "planificacion",
+                "semana",
+                "organizacion"
+            ],
+            "avoid_phrases": [
+                "mejor que un profesor",
+                "sustituye a las clases",
+                "no necesitas maestro"
+            ]
+        }
+    },
+    "brand_guidelines": {
+        "voice": "Cálida, profesional, empática, sin competir con profesores de canto",
+        "values": [
+            "Complemento a la formación tradicional",
+            "Accesibilidad y democratización",
+            "Práctica diaria y constancia",
+            "Comunidad de apoyo"
+        ],
+        "positioning": "Herramienta de práctica diaria que complementa (no sustituye) la formación con profesores",
+        "visual_identity": {
+            "colors": [
+                "beige",
+                "warm tones",
+                "soft neutrals"
+            ],
+            "style": "Minimalist, elegant, professional",
+            "photography": "High-end, studio lighting, warm atmosphere"
+        }
+    },
+    "niche_targets": {
+        "choral_directors": {
+            "name": "Directores de Coro",
+            "focus": "Rendimiento Grupal",
+            "theme": "Psicología del grupo y empaste vocal",
+            "suggested_title": "¿Por qué tu cuerda de sopranos suena tensa? El factor emocional del empaste.",
+            "argument": "La tensión en un coro no siempre es técnica; a menudo es estrés acumulado o miedo al error.",
+            "solution": "Herramienta para uso en casa: llegar al ensayo con la garganta abierta y la mente enfocada. Mejora el sonido del grupo trabajando el individuo.",
+            "tone": "Técnico, profesional, cálido",
+            "keywords": [
+                "empaste",
+                "afinación colectiva",
+                "estado emocional",
+                "vocalistas"
+            ]
+        },
+        "vocal_teachers": {
+            "name": "Profesores de Técnica Vocal",
+            "focus": "Aliado Pedagógico",
+            "theme": "Gestión del bloqueo emocional en la pedagogía",
+            "suggested_title": "Cuando la técnica choca con el muro: El soporte emocional entre clase y clase.",
+            "argument": "Como profesores, a veces no nos da tiempo en 45 minutos a profundizar en los bloqueos personales del alumno.",
+            "solution": "Mentor IA como asistente: el profesor se encarga de laringe y apoyo; la app gestiona la frustración o miedo que bloquea tu enseñanza.",
+            "tone": "Técnico, experto, colaborativo",
+            "keywords": [
+                "pedagogía",
+                "laringe",
+                "apoyo",
+                "aducción",
+                "pasaje"
+            ]
+        },
+        "singers_choristers": {
+            "name": "Cantantes y Coralistas",
+            "focus": "Confianza",
+            "theme": "Miedo a destacar y tensión emocional",
+            "suggested_title": "¿Sientes que tu voz se esconde cuando cantas en grupo?",
+            "argument": "El miedo a destacar o a equivocarse aprieta la emisión.",
+            "solution": "Un espacio privado para ganar confianza antes de cada ensayo.",
+            "tone": "Empático, motivador, cálido",
+            "keywords": [
+                "resonancia",
+                "gestión del aire",
+                "confianza vocal",
+                "tensión"
+            ]
+        }
+    }
+}

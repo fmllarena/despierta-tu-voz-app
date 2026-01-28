@@ -17,7 +17,7 @@ begin
     new.id, 
     new.email, 
     coalesce(new.raw_user_meta_data->>'nombre', split_part(new.email, '@', 1)), 
-    'pro',
+    'pro',  -- Betatesters tienen acceso Pro por defecto
     'daily'
   );
   return new;

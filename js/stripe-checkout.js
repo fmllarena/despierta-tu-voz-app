@@ -312,7 +312,8 @@ async function ejecutarPago(planType, user) {
                     document.getElementById('promo-loading')?.remove();
 
                     if (data.success) {
-                        alert("✨ ¡Enhorabuena! Tu mes gratis ha sido activado. Ya tienes acceso a todas las funciones Pro.");
+                        const successMsg = data.message || "✨ ¡Enhorabuena! Tu promoción ha sido activada. Ya tienes acceso a todas las funciones Pro.";
+                        alert(successMsg);
                         sessionStorage.removeItem('dtv_promo_code');
                         window.location.href = "index.html";
                         return;
