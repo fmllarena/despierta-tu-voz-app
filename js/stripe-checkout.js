@@ -96,6 +96,11 @@ function setupLandingAuthListeners() {
         btnRegister.innerText = login ? "Entrar y Continuar" : "Registrarme y Continuar";
         toggleToLogin.style.display = login ? "none" : "inline";
         toggleToRegister.style.display = login ? "inline" : "none";
+
+        // Mostrar/Ocultar campo nombre
+        const nameGroup = document.getElementById('landingNameGroup');
+        if (nameGroup) nameGroup.style.display = login ? "none" : "block";
+
         // Mostrar link de olvido de pass solo en modo login
         const forgotWrap = document.getElementById('landingForgotPassWrap');
         if (forgotWrap) forgotWrap.style.display = login ? "block" : "none";
@@ -127,7 +132,21 @@ function setupLandingAuthListeners() {
             if (isLoginMode) {
                 result = await supabasePagos.auth.signInWithPassword({ email, password });
             } else {
-                result = await supabasePagos.auth.signUp({ email, password });
+                const nombre = document.getElementById('landingName').value.trim();
+                if (!nombre) {
+                    errorDiv.innerText = "Por favor, dinos tu nombre para el Mentor.";
+                    errorDiv.style.display = 'block';
+                    btnRegister.disabled = false;
+                    btnRegister.innerText = "Registrarme y Continuar";
+                    return;
+                }
+                result = await supabasePagos.auth.signUp({
+                    email,
+                    password,
+                    options: {
+                        data: { nombre: nombre }
+                    }
+                });
             }
 
             if (result.error) throw result.error;
