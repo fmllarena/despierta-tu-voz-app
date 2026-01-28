@@ -85,9 +85,20 @@ function setupLandingAuthListeners() {
     };
 
     // Forzamos el modo registro al abrir, independientemente de si los listeners ya existen
+    console.log("🛠️ Configurando Modal Auth: Forzando Modo Registro (setMode: false)");
     setMode(false);
 
-    if (!btnRegister || btnRegister.dataset.listenerSet) return;
+    // Aseguramos que el campo sea visible explícitamente por si acaso
+    const nameGroupFallback = document.getElementById('landingNameGroup');
+    if (nameGroupFallback) {
+        nameGroupFallback.style.setProperty('display', 'block', 'important');
+        console.log("✅ Campo NOMBRE forzado a block");
+    }
+
+    if (!btnRegister || btnRegister.dataset.listenerSet) {
+        console.log("ℹ️ Listeners ya configurados, omitiendo adjunción.");
+        return;
+    }
 
     if (toggleToLogin) toggleToLogin.addEventListener('click', () => setMode(true));
     if (toggleToRegister) toggleToRegister.addEventListener('click', () => setMode(false));
