@@ -95,11 +95,13 @@ serve(async (req) => {
         dateInact.setDate(dateInact.getDate() - 10);
         const isoInact = dateInact.toISOString();
 
+        // IMPORTANTE: Usar .or() para incluir usuarios con last_active_at NULL
+        // Para esos casos, usamos created_at como referencia
         const { data: usersInact } = await supabase
             .from('user_profiles')
-            .select('user_id, email, nombre, last_active_at')
+            .select('user_id, email, nombre, last_active_at, created_at')
             .eq('email_inactividad_10_enviado', false)
-            .lte('last_active_at', isoInact);
+            .or(`last_active_at.lte.${isoInact},and(last_active_at.is.null,created_at.lte.${isoInact})`);
 
         if (usersInact && usersInact.length > 0) {
             console.log(`[Job] Enviando Inactividad 10 a ${usersInact.length} usuarios...`);
@@ -111,6 +113,7 @@ serve(async (req) => {
                 }
             }
         }
+
 
         // --- 4. PROCESAR POST-VIAJE (5 días después de terminar M5) ---
         const datePost = new Date();

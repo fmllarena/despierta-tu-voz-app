@@ -82,16 +82,19 @@ function renderRoadmap() {
     const subscriptionTier = window.userProfile?.subscription_tier || 'free';
 
     MODULES_METADATA.forEach((mod, index) => {
-        // En Pro/Premium se desbloquean todos, en Free solo el primero
-        const isUnlocked = (subscriptionTier !== 'free' || mod.id === 1);
+        // El Diario de Alquimia (módulo especial) siempre está desbloqueado
+        const isUnlocked = mod.special ? true : (subscriptionTier !== 'free' || mod.id === 1);
         const isCompleted = mod.id <= lastHito;
 
         // Render Node
         const node = document.createElement('div');
-        node.className = `roadmap-node ${isUnlocked ? 'unlocked' : 'locked'} ${isCompleted ? 'completed' : ''}`;
+        node.className = `roadmap-node ${isUnlocked ? 'unlocked' : 'locked'} ${isCompleted ? 'completed' : ''} ${mod.special ? 'special-node' : ''}`;
 
         node.onclick = () => {
-            if (isUnlocked) {
+            if (mod.special) {
+                // Módulo especial: Diario de Alquimia
+                abrirDiarioAlquimia();
+            } else if (isUnlocked) {
                 if (isCompleted) {
                     abrirBitacora(mod);
                 } else {
@@ -102,12 +105,12 @@ function renderRoadmap() {
             }
         };
 
-        const statusIcon = isCompleted ? '✅' : (isUnlocked ? '▶' : '🔒');
+        const statusIcon = mod.special ? '📖' : (isCompleted ? '✅' : (isUnlocked ? '▶' : '🔒'));
 
         node.innerHTML = `
             <div class="node-icon">${mod.icon}</div>
             <div class="node-info">
-                <h3>Módulo ${mod.id}: ${mod.title}</h3>
+                <h3>${mod.special ? '' : `Módulo ${mod.id}: `}${mod.title}</h3>
                 <p>${mod.description}</p>
             </div>
             <div class="node-status">${statusIcon}</div>
@@ -237,6 +240,141 @@ function renderBitacora(mod, data) {
             // Buscamos el índice del módulo en la metadata para abrirlo
             const modIndex = MODULES_METADATA.findIndex(m => m.id === mod.id);
             openModule(modIndex);
+        }
+    };
+}
+
+async function abrirDiarioAlquimia() {
+    document.getElementById('viajeModal').style.display = 'none';
+    document.getElementById('moduloModal').style.display = 'flex';
+    renderLoading("Abriendo tu Diario de Alquimia...");
+
+    try {
+        // Obtener crónicas automáticas (resumen_diario)
+        const { data: cronicas, error: errorCronicas } = await cachedSupabase
+            .from('mensajes')
+            .select('texto, created_at')
+            .eq('alumno', cachedUser.id)
+            .eq('emisor', 'resumen_diario')
+            .order('created_at', { ascending: false });
+
+        if (errorCronicas) throw errorCronicas;
+
+        // Obtener notas personales
+        const { data: userData, error: errorUser } = await cachedSupabase
+            .from('user_profiles')
+            .select('notas_personales')
+            .eq('user_id', cachedUser.id)
+            .single();
+
+        if (errorUser) throw errorUser;
+
+        renderDiarioAlquimia(cronicas || [], userData?.notas_personales || []);
+    } catch (err) {
+        console.error("Error cargando Diario de Alquimia:", err);
+        alert("No se pudo cargar tu Diario. Inténtalo de nuevo.");
+        document.getElementById('moduloModal').style.display = 'none';
+        document.getElementById('viajeModal').style.display = 'flex';
+    }
+}
+
+function renderDiarioAlquimia(cronicas, notasPersonales) {
+    const container = document.getElementById('questionContainer');
+    document.getElementById('nextQBtn').style.display = 'none';
+    document.getElementById('prevQBtn').style.display = 'none';
+    document.getElementById('finishModuleBtn').style.display = 'none';
+
+    let contentHtml = `
+        <div class="diario-alquimia-view">
+            <div class="diario-header">
+                <span class="diario-icon">📖</span>
+                <h2>Tu Diario de Alquimia</h2>
+                <p>Aquí se guardan las huellas de tu transformación vocal y emocional.</p>
+            </div>
+            
+            <!-- Sección de Notas Personales -->
+            <div class="diario-section notas-section">
+                <h3>✍️ Tus Notas Personales</h3>
+                <p class="section-desc">Escribe aquí tus reflexiones, aprendizajes o cualquier cosa que quieras recordar de tu viaje.</p>
+                <textarea id="notasPersonalesInput" placeholder="Escribe tus notas aquí..." rows="6">${notasPersonales.join('\n\n---\n\n') || ''}</textarea>
+                <button id="guardarNotasBtn" class="journey-btn">💾 Guardar Notas</button>
+            </div>
+
+            <!-- Sección de Crónicas Automáticas -->
+            <div class="diario-section cronicas-section">
+                <h3>🌙 Crónicas de tus Sesiones</h3>
+                <p class="section-desc">Resúmenes automáticos generados por el Mentor después de cada sesión.</p>
+                <div class="cronicas-timeline">
+    `;
+
+    if (cronicas.length === 0) {
+        contentHtml += `<p class="empty-state">Aún no tienes crónicas. Sigue conversando con el Mentor para que se generen automáticamente.</p>`;
+    } else {
+        cronicas.forEach(cronica => {
+            const fecha = new Date(cronica.created_at);
+            const fechaFormateada = fecha.toLocaleDateString('es-ES', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+
+            contentHtml += `
+                <div class="cronica-entry">
+                    <div class="cronica-date">${fechaFormateada}</div>
+                    <div class="cronica-text">${cronica.texto}</div>
+                </div>
+            `;
+        });
+    }
+
+    contentHtml += `
+                </div>
+            </div>
+
+            <div class="diario-actions">
+                <button class="journey-btn secondary" onclick="document.querySelector('.close-modulo').click()">← Volver al Mapa</button>
+            </div>
+        </div>
+    `;
+
+    container.innerHTML = contentHtml;
+
+    // Event listener para guardar notas
+    document.getElementById('guardarNotasBtn').onclick = async () => {
+        const notasInput = document.getElementById('notasPersonalesInput');
+        const nuevasNotas = notasInput.value.trim();
+
+        if (!nuevasNotas) {
+            alert("Escribe algo antes de guardar.");
+            return;
+        }
+
+        const btn = document.getElementById('guardarNotasBtn');
+        btn.disabled = true;
+        btn.innerText = "Guardando...";
+
+        try {
+            // Crear array de notas (separadas por el delimitador)
+            const notasArray = nuevasNotas.split('\n\n---\n\n').filter(n => n.trim());
+
+            const { error } = await cachedSupabase
+                .from('user_profiles')
+                .update({ notas_personales: notasArray })
+                .eq('user_id', cachedUser.id);
+
+            if (error) throw error;
+
+            btn.innerText = "✅ Guardado";
+            setTimeout(() => {
+                btn.innerText = "💾 Guardar Notas";
+                btn.disabled = false;
+            }, 2000);
+        } catch (err) {
+            console.error("Error guardando notas:", err);
+            alert("Error al guardar tus notas. Inténtalo de nuevo.");
+            btn.innerText = "💾 Guardar Notas";
+            btn.disabled = false;
         }
     };
 }

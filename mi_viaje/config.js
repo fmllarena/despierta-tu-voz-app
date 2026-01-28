@@ -51,5 +51,12 @@ export const MODULES_METADATA = [
         title: "Alquimia Final y Propósito",
         description: "Transforma tu autoconocimiento en un Plan de Acción empoderador.",
         icon: "🦅"
+    },
+    {
+        id: 6,
+        title: "Diario de Alquimia",
+        description: "Tu evolución emocional y notas personales del viaje.",
+        icon: "📖",
+        special: true // Módulo especial de solo lectura/escritura
     }
 ];

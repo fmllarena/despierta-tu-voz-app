@@ -846,6 +846,174 @@ input {
     color: white;
 }
 
+/* --- DIARIO DE ALQUIMIA STYLES --- */
+.roadmap-node.special-node {
+    background: linear-gradient(135deg, #fff9e6 0%, #fdfaf7 100%);
+    border: 2px solid #d4af37;
+    grid-column: span 2;
+    max-width: 440px;
+    justify-self: center;
+}
+
+.roadmap-node.special-node:hover {
+    transform: scale(1.05);
+    border-color: #d4af37;
+    box-shadow: 0 10px 25px rgba(212, 175, 55, 0.3);
+}
+
+.diario-alquimia-view {
+    text-align: left;
+    padding: 5px;
+    animation: fadeInUp 0.5s ease;
+}
+
+.diario-header {
+    text-align: center;
+    margin-bottom: 30px;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 20px;
+}
+
+.diario-icon {
+    font-size: 3.5em;
+    display: block;
+    margin-bottom: 15px;
+}
+
+.diario-header h2 {
+    color: var(--color-acento);
+    font-size: 1.8em;
+    margin-bottom: 8px;
+}
+
+.diario-header p {
+    color: #888;
+    font-size: 0.95em;
+    font-style: italic;
+}
+
+.diario-section {
+    background: #fdfaf7;
+    border-radius: 15px;
+    padding: 25px;
+    margin-bottom: 25px;
+    border: 1px solid #f0f0f0;
+}
+
+.diario-section h3 {
+    margin: 0 0 10px 0;
+    color: var(--color-acento);
+    font-size: 1.3em;
+}
+
+.diario-section .section-desc {
+    color: #888;
+    font-size: 0.9em;
+    margin-bottom: 15px;
+    font-style: italic;
+}
+
+.notas-section {
+    border-left: 5px solid #d4af37;
+}
+
+.cronicas-section {
+    border-left: 5px solid var(--color-acento);
+}
+
+#notasPersonalesInput {
+    width: 100%;
+    min-height: 150px;
+    padding: 15px;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    font-family: 'Cambria', 'Georgia', serif;
+    font-size: 1em;
+    line-height: 1.6;
+    resize: vertical;
+    margin-bottom: 15px;
+    box-sizing: border-box;
+}
+
+#notasPersonalesInput:focus {
+    outline: none;
+    border-color: #d4af37;
+    box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.1);
+}
+
+#guardarNotasBtn {
+    width: 100%;
+    padding: 12px;
+    background: #d4af37;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 1em;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+#guardarNotasBtn:hover {
+    background: #c19b2e;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(212, 175, 55, 0.3);
+}
+
+#guardarNotasBtn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.cronicas-timeline {
+    max-height: 500px;
+    overflow-y: auto;
+    padding-right: 10px;
+}
+
+.cronica-entry {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+    border-left: 4px solid var(--color-acento);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    transition: all 0.3s ease;
+}
+
+.cronica-entry:hover {
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    transform: translateX(5px);
+}
+
+.cronica-date {
+    font-size: 0.85em;
+    color: #999;
+    text-transform: capitalize;
+    margin-bottom: 10px;
+    font-weight: bold;
+}
+
+.cronica-text {
+    font-size: 1em;
+    line-height: 1.7;
+    color: #444;
+    white-space: pre-wrap;
+}
+
+.empty-state {
+    text-align: center;
+    color: #aaa;
+    font-style: italic;
+    padding: 40px 20px;
+}
+
+.diario-actions {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    margin-top: 30px;
+}
+
 /* Modulo de Coaching (Preguntas) */
 .module-modal {
     display: none;
