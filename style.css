@@ -610,6 +610,7 @@ input {
     background: #fdfaf7;
     max-width: 800px;
     padding: 40px;
+    box-sizing: border-box;
 }
 
 .journey-header {
@@ -628,14 +629,13 @@ input {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
     gap: 12px;
-    /* Reduced gap */
     padding: 12px;
-    /* Reduced padding */
     width: 100%;
     max-width: 800px;
-    /* Slightly narrower to avoid edges */
     margin: 0 auto;
     box-sizing: border-box;
+    overflow-x: hidden;
+    /* Extra seguridad */
 }
 
 .roadmap-svg-layer {
@@ -1946,15 +1946,27 @@ input {
 
     /* Ajuste global de modales para móviles */
     .modal-content {
-        padding: 15px !important;
-        /* Slightly less padding */
-        width: 98% !important;
-        /* Maximize width */
+        padding: 20px 15px !important;
+        width: 95% !important;
+        max-width: 100vw !important;
+        max-height: 90vh !important;
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        margin: 10px auto !important;
+    }
+
+    /* Específico para el Viaje en móvil */
+    .journey-content {
+        padding: 30px 15px !important;
+    }
+
+    .roadmap-container {
+        padding: 10px 5px !important;
+        gap: 15px !important;
     }
 
     .session-group {
         padding: 12px !important;
-        /* Avoid internal overflow */
         margin-top: 15px !important;
     }
 
