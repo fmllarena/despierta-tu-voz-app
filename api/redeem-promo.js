@@ -41,7 +41,7 @@ module.exports = async function handler(req, res) {
 
             const { data, error } = await supabase
                 .from('user_profiles')
-                .select('subscription_tier')
+                .select('subscription_tier, promo_locked_price')
                 .eq('user_id', userId)
                 .single();
 
@@ -49,15 +49,48 @@ module.exports = async function handler(req, res) {
                 profile = data;
                 console.log(`✅ Perfil encontrado en intento ${attempts}`);
             } else if (attempts < maxAttempts) {
-                console.log(`⏳ Perfil no encontrado, esperando ${delayMs}ms...`);
+                console.log(`⏳ Perfil no encontrado (Intento ${attempts}), esperando ${delayMs}ms...`);
                 await new Promise(resolve => setTimeout(resolve, delayMs));
+            }
+        }
+
+        // --- REPARACIÓN PROACTIVA ---
+        if (!profile) {
+            console.log("⚠️ Perfil no encontrado tras reintentos. Verificando en Auth Admin...");
+            const { data: authData, error: authError } = await supabase.auth.admin.getUserById(userId);
+            const authUser = authData?.user;
+
+            if (authUser && !authError) {
+                console.log(`🛠️ Usuario hallado en Auth (${authUser.email}). Creando perfil manualmente...`);
+                const { data: newProfile, error: createError } = await supabase
+                    .from('user_profiles')
+                    .insert({
+                        user_id: userId,
+                        email: authUser.email,
+                        nombre: authUser.user_metadata?.nombre || authUser.email.split('@')[0],
+                        subscription_tier: 'pro',
+                        accepted_terms: true,
+                        trial_end_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+                        updated_at: new Date().toISOString()
+                    })
+                    .select('subscription_tier, promo_locked_price')
+                    .single();
+
+                if (!createError && newProfile) {
+                    profile = newProfile;
+                    console.log("✅ Perfil reparado y creado con éxito.");
+                } else {
+                    console.error("❌ Error reparando perfil:", createError);
+                }
+            } else {
+                console.error("❌ Usuario no encontrado en Auth Admin:", authError);
             }
         }
 
         if (!profile) {
             return res.status(404).json({
                 error: 'Usuario no encontrado',
-                details: 'El perfil aún no está disponible. Por favor, espera unos segundos e intenta de nuevo.'
+                details: 'El perfil no se pudo encontrar ni crear. Por favor, asegúrate de haber confirmado tu email o intenta entrar de nuevo.'
             });
         }
 
@@ -66,22 +99,23 @@ module.exports = async function handler(req, res) {
 
         // Verificar si ya tiene esta promo registrada
         if (profile.promo_locked_price === 9.90) {
+            console.log(`ℹ️ Usuario ${userId} ya tiene el precio blindado activo.`);
             return res.status(200).json({
                 success: true,
                 message: '¡Esta promoción ya está activa en tu cuenta! Disfrutas del precio blindado de 9,90€/mes.'
             });
         }
 
-        // Extender el trial 30 días más desde ahora (para dar tiempo a configurar pago)
+        // Extender el trial 30 días más desde ahora
         const newTrialEnd = new Date();
         newTrialEnd.setDate(newTrialEnd.getDate() + 30);
 
         const { error: updateError } = await supabase
             .from('user_profiles')
             .update({
-                subscription_tier: 'pro',  // Asegurar que sea Pro
-                promo_locked_price: 9.90,  // Precio blindado
-                trial_end_date: newTrialEnd.toISOString(),  // Extender trial
+                subscription_tier: 'pro',
+                promo_locked_price: 9.90,
+                trial_end_date: newTrialEnd.toISOString(),
                 updated_at: new Date().toISOString(),
                 mentor_notes: promoNote
             })
@@ -96,7 +130,7 @@ module.exports = async function handler(req, res) {
         });
 
     } catch (err) {
-        console.error('Error crítico:', err);
+        console.error('Error crítico en redeem-promo:', err);
         return res.status(500).json({
             error: 'Database Error',
             details: err.message
