@@ -131,7 +131,7 @@ async function processChat(req) {
 
         // SISTEMA DE MEMORIA HÍBRIDA (Cronología + Profundidad)
         const promises = [
-            supabase.from('user_profiles').select('nombre, historia_vocal, ultimo_resumen').eq('user_id', userId).maybeSingle(),
+            supabase.from('user_profiles').select('nombre, historia_vocal, ultimo_resumen, last_hito_completed').eq('user_id', userId).maybeSingle(),
             supabase.from('user_coaching_data').select('linea_vida_hitos, herencia_raices, roles_familiares, ritual_sanacion, plan_accion').eq('user_id', userId).maybeSingle(),
             // 1. Contexto Inmediato: Últimos 10 mensajes (Chat fluido)
             supabase.from('mensajes').select('texto, emisor, created_at').eq('alumno', userId).order('created_at', { ascending: false }).limit(10),
@@ -168,7 +168,10 @@ async function processChat(req) {
 
         console.log(`📊 [DEBUG Contexto] AlumnoID: ${userId.substring(0, 8)}... | Recientes: ${recentRes.data?.length || 0} | Crónicas: ${chronRes.data?.length || 0} | Profundos: ${deepRes.data?.length || 0} | Final: ${uniqueMessages.length} mensajes.`);
 
-        if (perfilRes.data) context += `\n--- SITUACIÓN ACTUAL SINTETIZADA (Perfil General) ---\n- Nombre: ${perfilRes.data.nombre}\n- Historia Vocal: ${perfilRes.data.historia_vocal}\n- Último Estado del Alumno: ${perfilRes.data.ultimo_resumen}\n`;
+        if (perfilRes.data) {
+            const hito = perfilRes.data.last_hito_completed || 0;
+            context += `\n--- SITUACIÓN ACTUAL SINTETIZADA (Perfil General) ---\n- Nombre: ${perfilRes.data.nombre}\n- Historia Vocal: ${perfilRes.data.historia_vocal}\n- Último Estado del Alumno: ${perfilRes.data.ultimo_resumen}\n- Progreso en "Mi Viaje": Módulo ${hito} completado de 5.\n`;
+        }
         if (viajeRes.data) context += `\n--- DATOS DE VIAJE/COACHING ---\n${JSON.stringify(viajeRes.data)}\n`;
 
         if (uniqueMessages.length > 0) {

@@ -43,66 +43,51 @@ export async function initJourney(supabaseClient, user) {
  */
 async function syncJourneyStatus(supabase, user) {
     try {
-        console.log("🔄 Sincronizando progreso del viaje para:", user.id);
+        console.log("🔄 Sincronizando progreso del viaje...");
 
-        // 1. Asegurar que tenemos el perfil cargado
-        if (!window.userProfile) {
-            console.log("⚠️ Perfil no encontrado en window.userProfile, recuperando...");
-            const { data: profile } = await supabase
-                .from('user_profiles')
-                .select('*')
-                .eq('user_id', user.id)
-                .single();
-            if (profile) window.userProfile = profile;
-        }
-
-        const lastHito = window.userProfile?.last_hito_completed || 0;
-        console.log(`- Hito actual en perfil: ${lastHito}`);
-
-        // 2. Pedir todas las columnas clave que indican fin de módulo
-        const { data, error } = await supabase
-            .from('user_coaching_data')
-            .select('linea_vida_hitos, herencia_raices, roles_familiares, ritual_sanacion, plan_accion')
+        // 1. Forzar recarga del perfil para tener el 'last_hito_completed' más fresco
+        const { data: profile } = await supabase
+            .from('user_profiles')
+            .select('last_hito_completed, subscription_tier')
             .eq('user_id', user.id)
-            .maybeSingle();
+            .single();
 
-        if (error) {
-            console.error("❌ Error recuperando datos de coaching:", error);
-            return;
+        if (profile) {
+            if (!window.userProfile) window.userProfile = {};
+            window.userProfile.last_hito_completed = profile.last_hito_completed;
+            window.userProfile.subscription_tier = profile.subscription_tier;
+            console.log(`- Hito en DB: ${profile.last_hito_completed}`);
         }
 
-        if (!data) {
-            console.log("ℹ️ No hay datos de coaching previos para este usuario.");
-            return;
-        }
+        // 2. Verificación de seguridad: ¿Hay datos reales que indiquen más progreso?
+        // Solo lo hacemos si el hito es menor a 5 para ahorrar recursos
+        if ((profile?.last_hito_completed || 0) < 5) {
+            const { data: coaching } = await supabase
+                .from('user_coaching_data')
+                .select('linea_vida_hitos, herencia_raices, roles_familiares, ritual_sanacion, plan_accion')
+                .eq('user_id', user.id)
+                .maybeSingle();
 
-        // 3. Detectar progreso real basado en datos existentes
-        let detectedHito = 0;
-        if (Array.isArray(data.linea_vida_hitos) && data.linea_vida_hitos.length > 0) detectedHito = 1;
-        if (Array.isArray(data.herencia_raices) && data.herencia_raices.length > 0) detectedHito = 2;
-        if (Array.isArray(data.roles_familiares) && data.roles_familiares.length > 0) detectedHito = 3;
-        if (Array.isArray(data.ritual_sanacion) && data.ritual_sanacion.length > 0) detectedHito = 4;
-        if (Array.isArray(data.plan_accion) && data.plan_accion.length > 0) detectedHito = 5;
+            if (coaching) {
+                let realHito = 0;
+                if (Array.isArray(coaching.linea_vida_hitos) && coaching.linea_vida_hitos.length > 0) realHito = 1;
+                if (Array.isArray(coaching.herencia_raices) && coaching.herencia_raices.length > 0) realHito = 2;
+                if (Array.isArray(coaching.roles_familiares) && coaching.roles_familiares.length > 0) realHito = 3;
+                if (Array.isArray(coaching.ritual_sanacion) && coaching.ritual_sanacion.length > 0) realHito = 4;
+                if (Array.isArray(coaching.plan_accion) && coaching.plan_accion.length > 0) realHito = 5;
 
-        console.log(`- Hito detectado en datos: ${detectedHito}`);
-
-        // 4. Si el hito detectado es mayor al que tenemos en el perfil, actualizamos
-        if (detectedHito > lastHito) {
-            console.log(`🚀 Actualizando hito a ${detectedHito}...`);
-            await supabase
-                .from('user_profiles')
-                .update({ last_hito_completed: detectedHito })
-                .eq('user_id', user.id);
-
-            if (window.userProfile) window.userProfile.last_hito_completed = detectedHito;
-            console.log("✅ Hito sincronizado con éxito.");
-        } else if (detectedHito < lastHito) {
-            // Caso raro: el perfil dice que hizo más de lo que hay en datos (quizás se borraron datos)
-            // No hacemos downgrade automático por seguridad, pero avisamos en consola
-            console.warn(`⚠️ Discrepancia: Perfil(${lastHito}) > Datos(${detectedHito}).`);
+                if (realHito > (profile?.last_hito_completed || 0)) {
+                    console.log(`🚀 Reparando last_hito_completed a ${realHito}...`);
+                    await supabase
+                        .from('user_profiles')
+                        .update({ last_hito_completed: realHito })
+                        .eq('user_id', user.id);
+                    window.userProfile.last_hito_completed = realHito;
+                }
+            }
         }
     } catch (e) {
-        console.error("❌ Error crítico en syncJourneyStatus:", e);
+        console.error("❌ Error en syncJourneyStatus:", e);
     }
 }
 
