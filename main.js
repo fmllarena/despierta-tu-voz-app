@@ -511,26 +511,10 @@ const authActions = {
 
                 console.log("Registro exitoso. El trigger de base de datos creará el perfil.");
                 ELEMENTS.authError.style.color = "#2ecc71"; // Verde esmeralda
-                ELEMENTS.authError.innerText = "¡Registro exitoso! Por favor, REVISA TU EMAIL para confirmar tu cuenta y poder entrar.";
+                ELEMENTS.authError.innerText = "¡Registro exitoso! Ya puedes iniciar sesión. Encontrarás los pasos para confirmar tu cuenta en tu mensaje de Bienvenida.";
 
                 // Limpiar campos
                 document.getElementById('authPassword').value = "";
-
-                // Enviar email de verificación para usuarios FREE (registro desde index.html)
-                try {
-                    await fetch('/api/send-verification-email', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            userId: data.user.id,
-                            email: email,
-                            nombre: nombre
-                        })
-                    });
-                    console.log("✅ Email de verificación enviado");
-                } catch (emailError) {
-                    console.error("Error enviando email de verificación:", emailError);
-                }
             }
         }
     },
