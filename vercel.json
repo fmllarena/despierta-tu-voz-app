@@ -1,12 +1,1 @@
-{
-  "version": 2,
-  "cleanUrls": true,
-  "functions": {
-    "api/**/*.js": {
-      "maxDuration": 300
-    }
-  },
-  "rewrites": [
-    { "source": "/(.*)", "destination": "/$1" }
-  ]
-}
+{ "version": 2, "functions": { "api/**/*.js": { "maxDuration": 300 } } }
