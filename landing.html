@@ -257,48 +257,47 @@
     <!-- MODAL LEGAL (LANDING) -->
     <div id="legalLandingModal" class="modal">
         <div class="modal-content">
-            <h2>Un viaje de confianza ✨</h2>
-            <p class="modal-intro">Antes de empezar tu transformación, es importante que estemos en la misma sintonía:
-            </p>
+            <h2>Compromiso y Privacidad ✨</h2>
 
-            <div class="legal-summary-grid">
-                <div class="legal-summary-item">
-                    <span class="legal-summary-icon">🔐</span>
-                    <h4>Privacidad</h4>
-                    <p>Tus datos son solo para tu proceso.</p>
+            <!-- Caja Dorada Promo (Visible solo si hay promo activa) -->
+            <div id="promoLegalBox" class="promo-golden-box" style="display: none;">
+                <h3><span class="legal-icon">🎁</span> ¡Bienvenido/a Miembro Fundador!</h3>
+                <div class="promo-feature">
+                    <span class="legal-icon">📅</span>
+                    <p><strong>30 Días Gratis:</strong> Disfruta de acceso total al Plan Pro sin ningún cargo hoy.</p>
                 </div>
-                <div class="legal-summary-item">
-                    <span class="legal-summary-icon">💎</span>
-                    <h4>Propiedad</h4>
-                    <p>La metodología es de Despierta tu Voz.</p>
+                <div class="promo-feature">
+                    <span class="legal-icon">🔒</span>
+                    <p><strong>Tarifa Blindada:</strong> Tu suscripción se mantendrá en 9,90€/mes para siempre.</p>
                 </div>
-                <div class="legal-summary-item">
-                    <span class="legal-summary-icon">🧘‍♂️</span>
-                    <h4>Acompañamiento</h4>
-                    <p>La IA es apoyo emocional y técnico.</p>
-                </div>
-                <div class="legal-summary-item" id="promoSummaryItem" style="display: none;">
-                    <span class="legal-summary-icon">🎁</span>
-                    <h4>Promo Activa</h4>
-                    <p>30 días GRATIS. Luego 9,90€ vitalicio.</p>
+                <div class="promo-feature">
+                    <span class="legal-icon">🍃</span>
+                    <p><strong>Sin Permanencia:</strong> Puedes cancelar tu suscripción en cualquier momento.</p>
                 </div>
             </div>
 
-            <button type="button" class="btn-toggle-legal"
-                onclick="document.getElementById('legalFullText').style.display = document.getElementById('legalFullText').style.display === 'none' ? 'block' : 'none'">
-                Ver detalles legales completos (+)
-            </button>
-
-            <div id="legalFullText" style="display: none;">
-                <div class="legal-scroll-area">
-                    <div class="legal-section">
-                        <p><strong>Propiedad Intelectual:</strong> Todos los contenidos de los 5 Módulos y la
-                            metodología de Despierta tu Voz son titularidad exclusiva de Despierta tu Voz.</p>
-                        <p><strong>Privacidad:</strong> No vendemos datos. El historial permite que la IA te reconozca.
-                        </p>
-                        <p><strong>Salud:</strong> El Mentor IA no sustituye consejo médico profesional.</p>
-                    </div>
+            <div class="legal-friendly-list">
+                <div class="legal-item">
+                    <span class="legal-icon">🔐</span>
+                    <p><strong>Privacidad Alquímica:</strong> Tus datos y conversaciones con el Mentor son privados. Los
+                        usamos únicamente para que la IA te reconozca y personalice tu viaje vocal en cada sesión.</p>
                 </div>
+                <div class="legal-item">
+                    <span class="legal-icon">💎</span>
+                    <p><strong>Propiedad Intelectual:</strong> El método de los 5 Módulos y las respuestas del Mentor
+                        son propiedad exclusiva de Despierta tu Voz. Se te concede una licencia para uso personal e
+                        intransferible.</p>
+                </div>
+                <div class="legal-item">
+                    <span class="legal-icon">🧘‍♂️</span>
+                    <p><strong>Acompañamiento, no Medicina:</strong> El Mentor IA es un apoyo emocional y técnico. En
+                        ningún caso sustituye el asesoramiento de un profesional médico o logopeda.</p>
+                </div>
+            </div>
+
+            <div class="legal-scroll-area-mini">
+                <p style="font-size: 0.8rem; color: #888; text-align: center;">Al confirmar, declaras haber leído y
+                    aceptado nuestros Términos y Condiciones generales.</p>
             </div>
 
             <div class="legal-checks">
@@ -350,9 +349,9 @@
                         btn.style.boxShadow = "0 0 20px rgba(142, 125, 109, 0.4)";
                     }
 
-                    // Mostrar info de promo también en el resumen legal
-                    const promoLegalItem = document.getElementById('promoSummaryItem');
-                    if (promoLegalItem) promoLegalItem.style.display = 'block';
+                    // Mostrar caja dorada de promo también en el resumen legal
+                    const promoLegalBox = document.getElementById('promoLegalBox');
+                    if (promoLegalBox) promoLegalBox.style.display = 'block';
                 }
 
                 // Ocultar botones de distracción
