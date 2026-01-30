@@ -571,6 +571,8 @@ h3 {
     border-radius: 25px;
     width: 90%;
     max-width: 500px;
+    max-height: 90vh;
+    overflow-y: auto;
     box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
     position: relative;
     animation: modalFadeIn 0.3s ease;
