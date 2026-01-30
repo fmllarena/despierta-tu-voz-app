@@ -249,16 +249,28 @@ async function llamarGemini(message, history, intent, extraData = {}) {
 
 async function inicializarSupabase() {
     if (supabase) return; // Evitar múltiples instancias
+    console.log("🔍 Iniciando inicialización de Supabase...");
     try {
         const response = await fetch('/api/config');
+        if (!response.ok) {
+            throw new Error(`El servidor respondió con error ${response.status} al pedir la configuración.`);
+        }
+
         const config = await response.json();
+        if (!config.url || !config.key) {
+            throw new Error("Configuración incompleta: SUPABASE_URL o SUPABASE_ANON_KEY no están definidas en Vercel.");
+        }
+
         if (window.supabase) {
             supabase = window.supabase.createClient(config.url, config.key);
-            console.log("Supabase inicializado correctamente.");
+            console.log("✅ Supabase inicializado correctamente.");
             setupAuthListener();
+        } else {
+            throw new Error("La librería global de Supabase no está cargada en el navegador.");
         }
     } catch (e) {
-        console.error("Error inicializando Supabase:", e);
+        console.error("❌ Error inicializando Supabase:", e);
+        window.supabaseInitError = e.message;
     }
 }
 
@@ -482,7 +494,10 @@ const authActions = {
 
         try {
             if (!supabase) await inicializarSupabase();
-            if (!supabase) throw new Error("No se pudo conectar con el servidor. Por favor, recarga la página.");
+            if (!supabase) {
+                const specError = window.supabaseInitError ? `: ${window.supabaseInitError}` : "";
+                throw new Error("No se pudo conectar con el servidor" + specError + ". Por favor, recarga la página.");
+            }
 
             console.log("Iniciando registro para:", email, "con nombre:", nombre);
             const { data, error } = await supabase.auth.signUp({
