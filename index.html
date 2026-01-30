@@ -24,22 +24,22 @@
             <p>Introduce tus datos para hablar con el Mentor</p>
 
             <input type="text" id="authName" placeholder="Tu nombre para el Mentor (solo la 1a vez)">
-            <input type="email" id="authEmail" placeholder="Tu correo electrÃ³nico">
-            <input type="password" id="authPassword" placeholder="Tu contraseÃ±a">
+            <input type="email" id="authEmail" placeholder="Tu correo electrónico">
+            <input type="password" id="authPassword" placeholder="Tu contraseña">
 
             <div class="auth-buttons">
                 <button id="loginBtn">Entrar</button>
                 <button id="signUpBtn" class="secondary">Registrarme</button>
             </div>
             <div class="auth-extra">
-                <a href="#" id="forgotPasswordLink">Â¿Has olvidado tu contraseÃ±a?</a>
+                <a href="#" id="forgotPasswordLink">¿Has olvidado tu contraseña?</a>
             </div>
 
-            <!-- SecciÃ³n oculta para resetear contraseÃ±a -->
+            <!-- Sección oculta para resetear contraseña -->
             <div id="resetPasswordContainer">
-                <p>Introduce tu nueva contraseÃ±a:</p>
-                <input type="password" id="newPassword" placeholder="Nueva contraseÃ±a">
-                <button id="updatePasswordBtn">Actualizar ContraseÃ±a</button>
+                <p>Introduce tu nueva contraseña:</p>
+                <input type="password" id="newPassword" placeholder="Nueva contraseña">
+                <button id="updatePasswordBtn">Actualizar Contraseña</button>
             </div>
 
             <p id="authError" class="error-msg"></p>
@@ -51,87 +51,87 @@
             <img src="logo-appDTV2.png" alt="Despierta tu Voz Logo" class="app-logo">
             <h2>Despierta tu Voz</h2>
         </div>
-        <p>ConexiÃ³n emocional y tÃ©cnica 24/7</p>
+        <p>Conexión emocional y técnica 24/7</p>
     </header>
 
     <div class="chat-container">
         <div class="chat-header">
             <div class="chat-header-top">
-                <span>SesiÃ³n con el Mentor</span>
+                <span>Sesión con el Mentor</span>
                 <div class="header-top-actions">
-                    <button id="logoutBtn" class="logout-btn" title="Cerrar SesiÃ³n">SALIR</button>
+                    <button id="logoutBtn" class="logout-btn" title="Cerrar Sesión">SALIR</button>
                     <button id="mainHelpBtn" class="help-modulo-btn">?</button>
                 </div>
             </div>
             <div id="mainHelpTooltip" class="help-tooltip">
-                <h5>ðŸ’¡ GuÃ­a de la Pantalla Principal</h5>
+                <h5>💡 Guía de la Pantalla Principal</h5>
                 <div class="help-item">
                     <span class="help-btn-tag"><img src="assets/icon_bienvenida.png" alt="Icono Bienvenida"></span>
-                    <div class="help-desc"><strong>Bienvenida</strong> â€“ Te da la oportunidad de volver a leer el
+                    <div class="help-desc"><strong>Bienvenida</strong> – Te da la oportunidad de volver a leer el
                         mensaje inicial de Bienvenida.</div>
                 </div>
                 <div class="help-item">
                     <span class="help-btn-tag"><img src="assets/icon_viaje.png" alt="Icono Mi Viaje"></span>
-                    <div class="help-desc"><strong>Mi Viaje</strong> â€“ Acceso a tu ruta de autoconocimiento dividida
+                    <div class="help-desc"><strong>Mi Viaje</strong> – Acceso a tu ruta de autoconocimiento dividida
                         en
-                        5 MÃ³dulos.</div>
+                        5 Módulos.</div>
                 </div>
                 <div class="help-item">
                     <span class="help-btn-tag"><img src="assets/icon_progreso.png" alt="Icono Mi Progreso"></span>
-                    <div class="help-desc"><strong>Mi Progreso</strong> â€“ AquÃ­ el Mentor registra tus logros y
-                        evoluciÃ³n
+                    <div class="help-desc"><strong>Mi Progreso</strong> – Aquí el Mentor registra tus logros y
+                        evolución
                         emocional.</div>
                 </div>
                 <div class="help-item">
                     <span class="help-btn-tag"><img src="assets/icon_emergencia.png" alt="Icono Emergencia"></span>
-                    <div class="help-desc"><strong>Emergencia</strong> â€“ Pulsa aquÃ­ si te sientes nervioso antes de
+                    <div class="help-desc"><strong>Emergencia</strong> – Pulsa aquí si te sientes nervioso antes de
                         cantar para recibir pautas inmediatas.</div>
                 </div>
                 <div class="help-item">
                     <span class="help-btn-tag"><img src="assets/icon_sesiones.png" alt="Icono Sesiones"></span>
-                    <div class="help-desc"><strong>Sesiones 1/1</strong> â€“ InformaciÃ³n sobre tus tutorÃ­as personales
+                    <div class="help-desc"><strong>Sesiones 1/1</strong> – Información sobre tus tutorías personales
                         y
                         reserva de espacio.</div>
                 </div>
                 <div class="help-item">
                     <span class="help-btn-tag"><img src="assets/icon_upgrade.png" alt="Icono Mejorar Plan"></span>
-                    <div class="help-desc"><strong>Mejorar Plan</strong> â€“ Sube de nivel para desbloquear mÃ¡s
+                    <div class="help-desc"><strong>Mejorar Plan</strong> – Sube de nivel para desbloquear más
                         funciones
                         y soporte del Mentor.</div>
                 </div>
                 <div class="help-item">
                     <span class="help-btn-tag"><img src="assets/icon_ajustes.png" alt="Icono Ajustes"></span>
-                    <div class="help-desc"><strong>Ajustes</strong> â€“ Personaliza el idioma, personalidad del Mentor y
+                    <div class="help-desc"><strong>Ajustes</strong> – Personaliza el idioma, personalidad del Mentor y
                         tus objetivos semanales.</div>
                 </div>
                 <div class="help-item">
                     <span class="help-btn-tag">
                         <div class="logout-tag">SALIR</div>
                     </span>
-                    <div class="help-desc"><strong>MUY IMPORTANTE</strong>. Haz clic aquÃ­ para cerrar tu sesiÃ³n y
-                        asegurar que se guarden todos los datos de la conversaciÃ³n.</div>
+                    <div class="help-desc"><strong>MUY IMPORTANTE</strong>. Haz clic aquí para cerrar tu sesión y
+                        asegurar que se guarden todos los datos de la conversación.</div>
                 </div>
                 <div class="help-item">
                     <span class="help-btn-tag">
                         <div class="text-tag">Caja</div>
                     </span>
-                    <div class="help-desc"><strong>Caja de texto</strong> â€“ Pregunta al Mentor tus dudas sobre
-                        tÃ©cnica,
+                    <div class="help-desc"><strong>Caja de texto</strong> – Pregunta al Mentor tus dudas sobre
+                        técnica,
                         partituras o emociones.</div>
                 </div>
                 <div class="help-item">
                     <span class="help-btn-tag">
-                        <div class="mic-tag">ðŸŽ¤</div>
+                        <div class="mic-tag">🎙️</div>
                     </span>
-                    <div class="help-desc"><strong>MicrÃ³fono</strong> â€“ Pulsa para hablar en lugar de escribir (el
-                        Mentor transcribirÃ¡ tus palabras).</div>
+                    <div class="help-desc"><strong>Micrófono</strong> – Pulsa para hablar en lugar de escribir (el
+                        Mentor transcribirá tus palabras).</div>
                 </div>
                 <div class="help-item">
                     <span class="help-btn-tag">
                         <div class="mic-tag"><img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg"
                                 style="width: 18px; height: 18px;" alt="WhatsApp Icon"></div>
                     </span>
-                    <div class="help-desc"><strong>Reportar Fallo</strong> â€“ Si ves algo extraÃ±o, pulsa el botÃ³n
+                    <div class="help-desc"><strong>Reportar Fallo</strong> – Si ves algo extraño, pulsa el botón
                         verde
                         de abajo para enviarme un WhatsApp.</div>
                 </div>
@@ -162,10 +162,10 @@
         </div>
         <div class="messages" id="chatBox"></div>
         <div class="input-area">
-            <input type="text" id="chatMentoriaInput" placeholder="Escribe aquÃ­ tu sentir o tu canciÃ³n..."
+            <input type="text" id="chatMentoriaInput" placeholder="Escribe aquí tu sentir o tu canción..."
                 autocomplete="off" spellcheck="false">
-            <button id="sendBtn">â–¶</button>
-            <button id="micBtn">ðŸŽ¤</button>
+            <button id="sendBtn">▶</button>
+            <button id="micBtn">🎙️</button>
         </div>
     </div>
     <div id="diarioModal" class="modal">
@@ -180,7 +180,7 @@
             <span class="close-modal close-sesion">&times;</span>
             <h2>Mis Sesiones 1/1</h2>
             <div id="sessionQuotaInfo" class="session-quota-info">
-                <!-- Se poblarÃ¡ con los minutos restantes -->
+                <!-- Se poblará con los minutos restantes -->
             </div>
 
             <div class="session-actions">
@@ -194,8 +194,8 @@
                 </div>
 
                 <div class="session-group extra">
-                    <h3>1 SesiÃ³n con el Mentor o 1 SesiÃ³n extra</h3>
-                    <p class="session-desc">Reserva aquÃ­ una sesiÃ³n 1/1 si eres del Plan Profundiza o extra si eres de
+                    <h3>1 Sesión con el Mentor o 1 Sesión extra</h3>
+                    <p class="session-desc">Reserva aquí una sesión 1/1 si eres del Plan Profundiza o extra si eres de
                         Transforma.</p>
                     <div class="booking-options">
                         <button id="buyExtra30Btn" class="btn-booking btn-extra">Comprar Extra 30 min</button>
@@ -232,16 +232,16 @@
             <span class="close-modal close-viaje">&times;</span>
             <div class="journey-header">
                 <h2>El viaje de mi vida</h2>
-                <p>Vamos allÃ¡ con tu Viaje de Vida personal. Cada paso de este mapa, cada mÃ³dulo, es una llave para
-                    abrir un cerrojo de tu voz. Respira, confÃ­a y comienza a transformar tu historia.</p>
+                <p>Vamos allá con tu Viaje de Vida personal. Cada paso de este mapa, cada módulo, es una llave para
+                    abrir un cerrojo de tu voz. Respira, confía y comienza a transformar tu historia.</p>
             </div>
             <div id="journeyRoadmap" class="roadmap-container">
-                <!-- Se poblarÃ¡ dinÃ¡micamente desde mi_viaje/main.js -->
+                <!-- Se poblará dinámicamente desde mi_viaje/main.js -->
             </div>
         </div>
     </div>
 
-    <!-- Modal de MÃ³dulo de Coaching -->
+    <!-- Modal de Módulo de Coaching -->
     <div id="moduloModal" class="modal module-modal">
         <div class="modal-content module-content">
             <span class="close-modal close-modulo">&times;</span>
@@ -251,7 +251,7 @@
                     <button id="prevQBtn" class="nav-btn">Anterior</button>
                     <button id="nextQBtn" class="nav-btn">Siguiente</button>
                     <button id="finishModuleBtn" class="nav-btn finish-btn">Finalizar
-                        MÃ³dulo</button>
+                        Módulo</button>
                 </div>
             </div>
         </div>
@@ -271,30 +271,30 @@
                 <h3>Respuesta del Mentor</h3>
                 <div class="slider-group">
                     <div class="slider-labels">
-                        <span>ðŸ§¬ TÃ©cnico</span>
+                        <span>🧪 Técnico</span>
                         <span>Enfoque</span>
-                        <span>ðŸ•¯ï¸ Emocional</span>
+                        <span>🧘‍♂️ Emocional</span>
                     </div>
                     <input type="range" id="focusSlider" min="0" max="1" step="0.1" value="0.5"
                         title="Enfoque del Mentor" placeholder="0.5">
                 </div>
                 <div class="slider-group">
                     <div class="slider-labels">
-                        <span>ðŸ§˜ Neutro</span>
+                        <span>🧘 Neutro</span>
                         <span>Personalidad</span>
-                        <span>ðŸ”¥ Motivador</span>
+                        <span>🔥 Motivador</span>
                     </div>
                     <input type="range" id="personalitySlider" min="0" max="1" step="0.1" value="0.5"
                         title="Personalidad del Mentor" placeholder="0.5">
                 </div>
                 <div class="slider-group">
                     <div class="slider-labels">
-                        <span>âš¡ Breve/Directo</span>
-                        <span>ExtensiÃ³n</span>
-                        <span>ðŸ“œ Detallado/Profundo</span>
+                        <span>⚡ Breve/Directo</span>
+                        <span>Extensión</span>
+                        <span>📜 Detallado/Profundo</span>
                     </div>
                     <input type="range" id="lengthSlider" min="0" max="1" step="0.1" value="0.5"
-                        title="ExtensiÃ³n de las respuestas" placeholder="0.5">
+                        title="Extensión de las respuestas" placeholder="0.5">
                 </div>
             </div>
 
@@ -303,28 +303,28 @@
                 <div class="setting-item">
                     <label for="languageSelect">Idioma del Mentor:</label>
                     <select id="languageSelect">
-                        <option value="es">EspaÃ±ol</option>
+                        <option value="es">Español</option>
                         <option value="en">English</option>
-                        <option value="fr">FranÃ§ais</option>
+                        <option value="fr">Français</option>
                         <option value="it">Italiano</option>
                         <option value="de">Deutsch</option>
-                        <option value="ca">CatalÃ </option>
+                        <option value="ca">Català</option>
                     </select>
                 </div>
                 <div class="setting-item">
                     <label for="weeklyGoalInput">Objetivo Semanal (Opcional):</label>
                     <textarea id="weeklyGoalInput"
-                        placeholder="Â¿En quÃ© te enfocas esta semana? (ej: Preparar mi audiciÃ³n)"></textarea>
+                        placeholder="¿En qué te enfocas esta semana? (ej: Preparar mi audición)"></textarea>
                 </div>
             </div>
 
             <div class="settings-actions">
                 <button id="clearHistoryBtn" class="danger-btn">Borrar Historial</button>
-                <a href="preferences.html" class="preferences-btn">Gestionar preferencias de email y cuenta ðŸŒ¿</a>
+                <a href="preferences.html" class="preferences-btn">Gestionar preferencias de email y cuenta 🌿</a>
                 <button id="saveSettingsBtn" class="save-btn">Guardar Cambios</button>
-                <p class="danger-hint"><strong>âš ï¸ ADVERTENCIA:</strong> Al borrar el historial se eliminarÃ¡n todas
+                <p class="danger-hint"><strong>⚠️ ADVERTENCIA:</strong> Al borrar el historial se eliminarán todas
                     tus
-                    conversaciones anteriores con el Mentor, no solo las de esta sesiÃ³n.</p>
+                    conversaciones anteriores con el Mentor, no solo las de esta sesión.</p>
             </div>
         </div>
     </div>
@@ -333,77 +333,77 @@
     <div id="legalModal" class="modal">
         <div class="modal-content legal-modal-content">
             <h2>Compromiso y Privacidad</h2>
-            <p class="legal-intro">Al crear tu cuenta, te unes a este viaje de transformaciÃ³n. Para proteger tu
-                privacidad y la esencia de nuestra metodologÃ­a, te pedimos que aceptes lo siguiente:</p>
+            <p class="legal-intro">Al crear tu cuenta, te unes a este viaje de transformación. Para proteger tu
+                privacidad y la esencia de nuestra metodología, te pedimos que aceptes lo siguiente:</p>
 
             <div class="legal-scroll-area">
                 <div class="legal-section">
-                    <h3>Propiedad del Contenido y MetodologÃ­a</h3>
+                    <h3>Propiedad del Contenido y Metodología</h3>
                     <p>El usuario reconoce y acepta que todos los derechos de propiedad intelectual e industrial sobre
-                        los contenidos de la aplicaciÃ³n Despierta tu Voz (incluyendo, de forma enunciativa pero no
-                        limitativa: el nombre de la aplicaciÃ³n, logotipos, cÃ³digo fuente, interfaz de usuario, asÃ­
+                        los contenidos de la aplicación Despierta tu Voz (incluyendo, de forma enunciativa pero no
+                        limitativa: el nombre de la aplicación, logotipos, código fuente, interfaz de usuario, así
                         como
-                        los textos, guiones y estructura de los 5 MÃ³dulos de SanaciÃ³n Vocal, ejercicios de "Mi Viaje"
+                        los textos, guiones y estructura de los 5 Módulos de Sanación Vocal, ejercicios de "Mi Viaje"
                         y
                         las respuestas generadas por el Mentor Vocal IA) son titularidad exclusiva de Despierta tu Voz.
                     </p>
 
                     <h3>Licencia de Uso Personal</h3>
                     <p>Se concede al usuario una licencia de uso personal, no exclusiva e intransferible, para acceder y
-                        utilizar el contenido con fines de autodescubrimiento y formaciÃ³n personal. Queda estrictamente
-                        prohibida la reproducciÃ³n, distribuciÃ³n, comunicaciÃ³n pÃºblica, transformaciÃ³n o cualquier
+                        utilizar el contenido con fines de autodescubrimiento y formación personal. Queda estrictamente
+                        prohibida la reproducción, distribución, comunicación pública, transformación o cualquier
                         otra
-                        forma de explotaciÃ³n de estos contenidos para fines comerciales o de formaciÃ³n a terceros sin
+                        forma de explotación de estos contenidos para fines comerciales o de formación a terceros sin
                         el
                         consentimiento expreso y por escrito del titular.</p>
 
-                    <h3>ProtecciÃ³n de la Alquimia Vocal</h3>
-                    <p>La estructura especÃ­fica del viaje (El Espejo del pasado, RaÃ­ces, Personaje, Altar y
-                        PropÃ³sito)
-                        constituye una obra original protegida por la Ley de Propiedad Intelectual espaÃ±ola. El uso
-                        indebido de esta metodologÃ­a fuera del entorno de la aplicaciÃ³n podrÃ¡ dar lugar a las
+                    <h3>Protección de la Alquimia Vocal</h3>
+                    <p>La estructura específica del viaje (El Espejo del pasado, Raíces, Personaje, Altar y
+                        Propósito)
+                        constituye una obra original protegida por la Ley de Propiedad Intelectual española. El uso
+                        indebido de esta metodología fuera del entorno de la aplicación podrá dar lugar a las
                         acciones
                         legales correspondientes.</p>
 
                     <div class="privacy-notice-box">
                         <p><strong>Al aceptar, consientes el tratamiento de los datos que compartas con el Mentor IA
-                                para la personalizaciÃ³n de tu proceso de aprendizaje y desbloqueo vocal.</strong></p>
+                                para la personalización de tu proceso de aprendizaje y desbloqueo vocal.</strong></p>
                     </div>
 
                     <div class="promo-terms-box"
-                        style="background: rgba(var(--color-acento-rgb), 0.1); border: 1px solid var(--color-acento); padding: 15px; border-radius: 10px; margin: 20px 0;">
-                        <h3 style="margin-top: 0; color: var(--color-acento);">TÃ©rminos de la PromociÃ³n "Miembro Promo
+                        style="background: rgba(142, 125, 109, 0.1); border: 1px solid #8e7d6d; padding: 15px; border-radius: 10px; margin: 20px 0;">
+                        <h3 style="margin-top: 0; color: #8e7d6d;">Términos de la Promoción "Miembro Promo
                             Inicial"</h3>
-                        <p><strong>1. Periodo de Prueba:</strong> Al activar el cÃ³digo <strong>PROMO1MES</strong>,
-                            disfrutarÃ¡s de acceso total gratuito al Plan Pro durante 30 dÃ­as naturales. Sin compromiso
+                        <p><strong>1. Periodo de Prueba:</strong> Al activar el código <strong>PROMO1MES</strong>,
+                            disfrutarás de acceso total gratuito al Plan Pro durante 30 días naturales. Sin compromiso
                             de permanencia.</p>
-                        <p><strong>2. GarantÃ­a de Precio Blindado:</strong> Tu tarifa se fija en
-                            <strong>9,90â‚¬/mes</strong> (IVA incluido) de forma vitalicia mientras mantengas tu
-                            suscripciÃ³n activa (PVP oficial: 19,90â‚¬).
+                        <p><strong>2. Garantía de Precio Blindado:</strong> Tu tarifa se fija en
+                            <strong>9,90€/mes</strong> (IVA incluido) de forma vitalicia mientras mantengas tu
+                            suscripción activa (PVP oficial: 19,90€).
                         </p>
-                        <p><strong>3. RenovaciÃ³n:</strong> Finalizado el mes gratuito, podrÃ¡s mantener este precio
-                            exclusivo al activar tu suscripciÃ³n.</p>
+                        <p><strong>3. Renovación:</strong> Finalizado el mes gratuito, podrás mantener este precio
+                            exclusivo al activar tu suscripción.</p>
                     </div>
 
-                    <h3>PolÃ­tica de Privacidad y ProtecciÃ³n de Datos</h3>
-                    <p><strong>1. Â¿QuiÃ©n cuida de tus datos?</strong><br>
-                        El responsable de tus datos es Despierta tu voz. Tratamos tu informaciÃ³n con el Ãºnico fin de
-                        proporcionarte la experiencia de mentorÃ­a vocal personalizada que buscas.</p>
+                    <h3>Política de Privacidad y Protección de Datos</h3>
+                    <p><strong>1. ¿Quién cuida de tus datos?</strong><br>
+                        El responsable de tus datos es Despierta tu voz. Tratamos tu información con el único fin de
+                        proporcionarte la experiencia de mentoría vocal personalizada que buscas.</p>
 
                     <p><strong>2. Tu privacidad con la IA (El Mentor Vocal):</strong><br>
                         - <strong>Privacidad de las charlas:</strong> Tus conversaciones con el Mentor son privadas. No
                         vendemos tus datos a terceros ni los usamos para publicidad.<br>
                         - <strong>Uso del historial:</strong> En el Plan Pro/Premium, almacenamos el historial de tus
-                        charlas y los datos de tus MÃ³dulos para que la IA pueda tener "memoria" y ofrecerte un
-                        acompaÃ±amiento coherente.<br>
+                        charlas y los datos de tus Módulos para que la IA pueda tener "memoria" y ofrecerte un
+                        acompañamiento coherente.<br>
                         - <strong>Entrenamiento:</strong> Los datos se procesan de forma anonimizada para mejorar la
-                        precisiÃ³n de las respuestas del Mentor, siempre bajo estÃ¡ndares de seguridad de cifrado.</p>
+                        precisión de las respuestas del Mentor, siempre bajo estándares de seguridad de cifrado.</p>
 
-                    <p><strong>3. Â¿QuÃ© datos recogemos?</strong><br>
+                    <p><strong>3. ¿Qué datos recogemos?</strong><br>
                         - Datos de registro (Nombre y email).<br>
-                        - Datos de uso (MÃ³dulos completados y progreso en "Mi Viaje").<br>
-                        - Datos de pago (Gestionados de forma segura a travÃ©s de Stripe, nosotros nunca vemos ni
-                        almacenamos tu nÃºmero de tarjeta).</p>
+                        - Datos de uso (Módulos completados y progreso en "Mi Viaje").<br>
+                        - Datos de pago (Gestionados de forma segura a través de Stripe, nosotros nunca vemos ni
+                        almacenamos tu número de tarjeta).</p>
 
                     <p><strong>4. Tus derechos:</strong><br>
                         En cualquier momento puedes escribirnos a app-mentor@despiertatuvoz.com para solicitar el acceso
@@ -415,12 +415,12 @@
             <div class="legal-checks">
                 <label class="check-item">
                     <input type="checkbox" id="checkTerms">
-                    <span>He leÃ­do y acepto los TÃ©rminos y Condiciones y la PolÃ­tica de Privacidad.</span>
+                    <span>He leído y acepto los Términos y Condiciones y la Política de Privacidad.</span>
                 </label>
                 <label class="check-item">
                     <input type="checkbox" id="checkMedical">
-                    <span>Entiendo que el Mentor Vocal IA es una herramienta de acompaÃ±amiento personal y no sustituye
-                        el asesoramiento mÃ©dico o terapÃ©utico profesional.</span>
+                    <span>Entiendo que el Mentor Vocal IA es una herramienta de acompañamiento personal y no sustituye
+                        el asesoramiento médico o terapéutico profesional.</span>
                 </label>
             </div>
 
@@ -432,33 +432,33 @@
     </div>
 
     <footer class="app-footer">
-        <p>Â© 2026 Despierta tu Voz. Todos los derechos reservados.</p>
+        <p>© 2026 Despierta tu Voz. Todos los derechos reservados.</p>
     </footer>
 
     <div class="whatsapp-float support-bubble-text" id="supportBubble" title="Asistencia">
-        <div class="whatsapp-tooltip">Â¿Necesitas ayuda? ðŸŒ¿</div>
+        <div class="whatsapp-tooltip">¿Necesitas ayuda? 🌿</div>
         <span class="support-label">Asistencia</span>
     </div>
 
-    <!-- Modal de Soporte HÃ­brido -->
+    <!-- Modal de Soporte Híbrido -->
     <div id="supportModal" class="modal support-modal">
         <div class="modal-content support-modal-content">
             <span class="close-modal close-support">&times;</span>
             <div class="support-header">
-                <h3>Asistente TÃ©cnico</h3>
+                <h3>Asistente Técnico</h3>
                 <p>Resuelvo tus dudas sobre el acceso o el funcionamiento de la app al instante.</p>
             </div>
             <div id="supportChatBox" class="messages support-messages">
-                <div class="message ia">Â¡Hola! âœ¨ Soy tu asistente tÃ©cnico. Â¿Tienes alguna duda con el
-                    funcionamiento de la app? CuÃ©ntame y te ayudo.</div>
+                <div class="message ia">¡Hola! ✨ Soy tu asistente técnico. ¿Tienes alguna duda con el
+                    funcionamiento de la app? Cuéntame y te ayudo.</div>
             </div>
             <div class="support-input-area">
                 <input type="text" id="supportInput" placeholder="Escribe tu duda..." autocomplete="off">
-                <button id="sendSupportBtn">â–¶</button>
+                <button id="sendSupportBtn">▶</button>
             </div>
             <div id="whatsappSupportLink" class="whatsapp-fallback" style="display: none;">
                 <p>Si prefieres hablar con una persona:</p>
-                <a href="https://wa.me/34644233393?text=Hola,%20estoy%20usando%20la%20App%20y%20necesito%20ayuda%20tÃ©cnica..."
+                <a href="https://wa.me/34644233393?text=Hola,%20estoy%20usando%20la%20App%20y%20necesito%20ayuda%20ténica..."
                     target="_blank" rel="noopener" class="btn-whatsapp-direct">
                     <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" alt="WhatsApp">
                     Chatear por WhatsApp
@@ -470,8 +470,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="js/stripe-checkout.js"></script>
-    <script type="module" src="main.js?v=5.3"></script>
+    <script type="module" src="main.js?v=5.4"></script>
 </body>
-
 
 </html>

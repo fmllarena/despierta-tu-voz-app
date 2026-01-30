@@ -468,7 +468,16 @@ const authActions = {
         const nombre = document.getElementById('authName').value;
         const email = document.getElementById('authEmail').value;
         const password = document.getElementById('authPassword').value;
-        if (!email || !password || !nombre) return ELEMENTS.authError.innerText = "Completa todos los campos.";
+        if (!email || !password || !nombre) {
+            ELEMENTS.authError.style.color = "red";
+            return ELEMENTS.authError.innerText = "Completa todos los campos.";
+        }
+
+        const signUpBtn = document.getElementById('signUpBtn');
+        const loginBtn = document.getElementById('loginBtn');
+        signUpBtn.disabled = true;
+        loginBtn.disabled = true;
+        signUpBtn.innerText = "Registrando...";
 
         console.log("Iniciando registro para:", email, "con nombre:", nombre);
         const { data, error } = await supabase.auth.signUp({
@@ -479,18 +488,33 @@ const authActions = {
                 emailRedirectTo: window.location.origin + '/index.html'
             }
         });
+
         console.log("Respuesta de Auth:", { data, error });
+
         if (error) {
+            ELEMENTS.authError.style.color = "red";
             ELEMENTS.authError.innerText = "Error: " + error.message;
+            signUpBtn.disabled = false;
+            loginBtn.disabled = false;
+            signUpBtn.innerText = "Registrarme";
         } else {
             if (data?.user) {
                 // Verificar si el usuario ya existe (identities vacío = ya registrado)
                 if (data.user.identities && data.user.identities.length === 0) {
+                    ELEMENTS.authError.style.color = "red";
                     ELEMENTS.authError.innerText = "Este correo ya está registrado. Por favor, inicia sesión.";
+                    signUpBtn.disabled = false;
+                    loginBtn.disabled = false;
+                    signUpBtn.innerText = "Registrarme";
                     return;
                 }
 
                 console.log("Registro exitoso. El trigger de base de datos creará el perfil.");
+                ELEMENTS.authError.style.color = "#2ecc71"; // Verde esmeralda
+                ELEMENTS.authError.innerText = "¡Registro exitoso! Por favor, REVISA TU EMAIL para confirmar tu cuenta y poder entrar.";
+
+                // Limpiar campos
+                document.getElementById('authPassword').value = "";
 
                 // Enviar email de verificación para usuarios FREE (registro desde index.html)
                 try {
@@ -506,12 +530,7 @@ const authActions = {
                     console.log("✅ Email de verificación enviado");
                 } catch (emailError) {
                     console.error("Error enviando email de verificación:", emailError);
-                    // No bloqueamos el registro si falla el email
                 }
-
-                // Si la confirmación de email está desactivada, el usuario ya está logueado
-                // No mostramos mensaje de confirmación, simplemente continuamos
-                // La UI se actualizará automáticamente por el listener de auth
             }
         }
     },
