@@ -1320,8 +1320,8 @@ const SESIONES = {
     links: {
         normal30: "https://cal.com/fernando-martinez-drmyul/30min",
         normal60: "https://cal.com/fernando-martinez-drmyul/sesion-de-1-h",
-        extra30: "#", // Placeholder
-        extra60: "#"  // Placeholder
+        extra30: "https://cal.com/fernando-martinez-drmyul/30min",
+        extra60: "https://cal.com/fernando-martinez-drmyul/sesion-de-1-h"
     },
 
     abrirModal: () => {
@@ -1369,15 +1369,9 @@ const SESIONES = {
     },
 
     comprarExtra: (duracion) => {
-        const tier = userProfile?.subscription_tier || 'free';
-        const planKey = `extra_${duracion}_${tier}`;
-        console.log("Iniciando compra extra:", planKey);
-
-        if (window.iniciarPago) {
-            window.iniciarPago(planKey);
-        } else {
-            alert("El sistema de pagos no está listo. Por favor, recarga la página.");
-        }
+        // Redirigimos directamente a Cal.com para que el usuario reserve y pague allí si es necesario
+        console.log(`🚀 Redirigiendo a Cal.com para sesión extra de ${duracion} min...`);
+        SESIONES.reservar(`extra${duracion}`);
     },
 
     reservar: (tipo) => {
