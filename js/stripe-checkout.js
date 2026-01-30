@@ -207,7 +207,7 @@ function setupLandingLegalListeners(user) {
 
     btnConfirm.addEventListener('click', async () => {
         btnConfirm.disabled = true;
-        btnConfirm.innerText = "Iniciando...";
+        btnConfirm.innerText = "Conectando con pasarela segura... 🛡️";
 
         try {
             // Actualizar perfil
