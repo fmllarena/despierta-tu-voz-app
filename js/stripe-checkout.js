@@ -125,11 +125,7 @@ function setupLandingAuthListeners() {
             } else {
                 const nombre = document.getElementById('landingName').value.trim();
                 if (!nombre) {
-                    errorDiv.innerText = "Por favor, dinos tu nombre para el Mentor.";
-                    errorDiv.style.display = 'block';
-                    btnRegister.disabled = false;
-                    btnRegister.innerText = "Registrarme y Continuar";
-                    return;
+                    throw new Error("Por favor, dinos tu nombre para el Mentor.");
                 }
                 result = await supabasePagos.auth.signUp({
                     email,
@@ -146,10 +142,7 @@ function setupLandingAuthListeners() {
             if (result.data.user) {
                 const user = result.data.user;
                 if (!isLoginMode && user.identities && user.identities.length === 0) {
-                    errorDiv.innerText = "Este correo ya está registrado. Por favor, selecciona 'Inicia sesión'.";
-                    errorDiv.style.display = 'block';
-                    btnRegister.disabled = false;
-                    btnRegister.innerText = "Registrarme y Continuar";
+                    throw new Error("Este correo ya está registrado. Por favor, selecciona 'Inicia sesión'.");
                 } else {
                     document.getElementById('authLandingModal').style.display = 'none';
                     const legalModal = document.getElementById('legalLandingModal');
@@ -162,6 +155,7 @@ function setupLandingAuthListeners() {
         } catch (e) {
             errorDiv.innerText = e.message || "Error al procesar el acceso.";
             errorDiv.style.display = 'block';
+        } finally {
             btnRegister.disabled = false;
             btnRegister.innerText = isLoginMode ? "Entrar y Continuar" : "Registrarme y Continuar";
         }

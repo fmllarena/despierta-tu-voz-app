@@ -478,35 +478,28 @@ const authActions = {
         signUpBtn.disabled = true;
         loginBtn.disabled = true;
         signUpBtn.innerText = "Registrando...";
+        ELEMENTS.authError.innerText = "";
 
-        console.log("Iniciando registro para:", email, "con nombre:", nombre);
-        const { data, error } = await supabase.auth.signUp({
-            email,
-            password,
-            options: {
-                data: { nombre: nombre },
-                emailRedirectTo: window.location.origin + '/index.html'
-            }
-        });
+        try {
+            if (!supabase) await inicializarSupabase();
+            if (!supabase) throw new Error("No se pudo conectar con el servidor. Por favor, recarga la página.");
 
-        console.log("Respuesta de Auth:", { data, error });
+            console.log("Iniciando registro para:", email, "con nombre:", nombre);
+            const { data, error } = await supabase.auth.signUp({
+                email,
+                password,
+                options: {
+                    data: { nombre: nombre },
+                    emailRedirectTo: window.location.origin + '/index.html'
+                }
+            });
 
-        if (error) {
-            ELEMENTS.authError.style.color = "red";
-            ELEMENTS.authError.innerText = "Error: " + error.message;
-            signUpBtn.disabled = false;
-            loginBtn.disabled = false;
-            signUpBtn.innerText = "Registrarme";
-        } else {
+            if (error) throw error;
+
             if (data?.user) {
                 // Verificar si el usuario ya existe (identities vacío = ya registrado)
                 if (data.user.identities && data.user.identities.length === 0) {
-                    ELEMENTS.authError.style.color = "red";
-                    ELEMENTS.authError.innerText = "Este correo ya está registrado. Por favor, inicia sesión.";
-                    signUpBtn.disabled = false;
-                    loginBtn.disabled = false;
-                    signUpBtn.innerText = "Registrarme";
-                    return;
+                    throw new Error("Este correo ya está registrado. Por favor, inicia sesión.");
                 }
 
                 console.log("Registro exitoso. El trigger de base de datos creará el perfil.");
@@ -516,15 +509,44 @@ const authActions = {
                 // Limpiar campos
                 document.getElementById('authPassword').value = "";
             }
+        } catch (error) {
+            console.error("Error en registro:", error);
+            ELEMENTS.authError.style.color = "red";
+            ELEMENTS.authError.innerText = "Error: " + error.message;
+        } finally {
+            signUpBtn.disabled = false;
+            loginBtn.disabled = false;
+            signUpBtn.innerText = "Registrarme";
         }
     },
     async login() {
         const email = document.getElementById('authEmail').value;
         const password = document.getElementById('authPassword').value;
-        if (!email || !password) return ELEMENTS.authError.innerText = "Completa los campos.";
+        if (!email || !password) {
+            ELEMENTS.authError.style.color = "red";
+            return ELEMENTS.authError.innerText = "Completa los campos.";
+        }
 
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) ELEMENTS.authError.innerText = "Error: " + error.message;
+        const loginBtn = document.getElementById('loginBtn');
+        const signUpBtn = document.getElementById('signUpBtn');
+        loginBtn.disabled = true;
+        signUpBtn.disabled = true;
+        loginBtn.innerText = "Entrando...";
+        ELEMENTS.authError.innerText = "";
+
+        try {
+            if (!supabase) await inicializarSupabase();
+            const { error } = await supabase.auth.signInWithPassword({ email, password });
+            if (error) throw error;
+        } catch (error) {
+            console.error("Error en login:", error);
+            ELEMENTS.authError.style.color = "red";
+            ELEMENTS.authError.innerText = "Error: " + error.message;
+        } finally {
+            loginBtn.disabled = false;
+            signUpBtn.disabled = false;
+            loginBtn.innerText = "Entrar";
+        }
     },
     async resetPassword() {
         const email = document.getElementById('authEmail').value;
