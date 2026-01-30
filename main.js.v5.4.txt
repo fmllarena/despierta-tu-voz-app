@@ -1,0 +1,3 @@
+// Forzar recarga de versión en Vercel - Cache Busting 5.4 🚀
+// Última corrección: Eliminado alert persistente de confirmación de correo.
+// También se eliminó la columna updated_at de las llamadas a user_profiles.
