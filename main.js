@@ -1426,20 +1426,43 @@ async function checkPaymentStatus() {
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get('payment') === 'success') {
         const sessionId = urlParams.get('session_id');
+        const planType = urlParams.get('plan');
 
         // Limpiamos la URL sin recargar para una experiencia más limpia
         window.history.replaceState({}, document.title, window.location.pathname);
 
-        if (sessionId) {
+        // Detectar si es una sesión extra
+        const isExtraSession = planType && planType.startsWith('extra_');
+
+        if (sessionId && !isExtraSession) {
             // Caso Actualización de Plan (Suscripción)
             alert("¡Tu plan se ha actualizado con éxito! Bienvenido a tu nuevo nivel de transformación.");
             // Recargamos el perfil para aplicar cambios de UI (tier)
             const { data: { user } } = await supabase.auth.getUser();
             if (user) await cargarPerfil(user);
-        } else {
-            // Caso Sesión Extra (Pago único)
-            // Nota: En la API configuramos el redirect directo a Cal.com o de vuelta aquí
-            alert("¡Sesión extra adquirida con éxito! Haz clic en 'Reservar' para elegir tu horario.");
+        } else if (isExtraSession) {
+            // Caso Sesión Extra (Pago único) - Abrir Cal.com automáticamente
+            const duracion = planType.includes('30') ? '30' : '60';
+            const tier = planType.includes('premium') ? 'premium' : 'pro';
+
+            // Determinar el enlace correcto de Cal.com
+            let calLink = '';
+            if (duracion === '30') {
+                calLink = SESIONES.links.normal30;
+            } else {
+                calLink = SESIONES.links.normal60;
+            }
+
+            // Construir URL con datos del usuario
+            const finalUrl = `${calLink}?email=${encodeURIComponent(userProfile.email)}&name=${encodeURIComponent(userProfile.nombre || "")}`;
+
+            // Abrir Cal.com en nueva pestaña
+            window.open(finalUrl, '_blank');
+
+            // Mostrar mensaje de confirmación
+            alert(`✅ ¡Pago confirmado! Se ha abierto el calendario para que reserves tu sesión de ${duracion} minutos.\n\nSi no se abrió automáticamente, haz clic en "Reservar" en el modal de Sesiones 1/1.`);
+
+            // Abrir el modal de sesiones para que vea su cuota actualizada
             SESIONES.abrirModal();
         }
     } else if (urlParams.get('payment') === 'cancel') {
