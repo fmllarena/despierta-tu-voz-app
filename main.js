@@ -1405,7 +1405,13 @@ window.addEventListener('click', e => {
     if (e.target.id === 'diarioModal') document.getElementById('diarioModal').style.display = 'none';
 });
 
-document.querySelector('.close-modal')?.addEventListener('click', () => document.getElementById('diarioModal').style.display = 'none');
+// Cerrar modales genéricos al pulsar la X
+document.querySelectorAll('.close-modal').forEach(btn => {
+    btn.addEventListener('click', () => {
+        const modal = btn.closest('.modal');
+        if (modal) modal.style.display = 'none';
+    });
+});
 
 // --- INICIALIZACIÓN Y ESTADOS DE PAGO ---
 async function checkPaymentStatus() {

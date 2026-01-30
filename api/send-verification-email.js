@@ -49,7 +49,7 @@ export default async function handler(req, res) {
                     email: 'app-mentor@despiertatuvoz.com'
                 },
                 to: [{ email, name: nombre }],
-                templateId: parseInt(process.env.BREVO_TEMPLATE_BIENVENIDA_GRATIS || '8'), // ID de la plantilla en Brevo
+                templateId: parseInt(process.env.BREVO_TEMPLATE_BIENVENIDA_GRATIS || '5'), // ID de la plantilla en Brevo (#5 Bienvenida Pro)
                 params: {
                     NOMBRE: nombre,
                     VERIFICATION_LINK: verificationLink
