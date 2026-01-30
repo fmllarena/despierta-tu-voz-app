@@ -1,6 +1,6 @@
 const Stripe = require('stripe');
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+const stripe = new Stripe((process.env.STRIPE_SECRET_KEY || "").trim());
 
 module.exports = async function handler(req, res) {
     if (req.method !== 'POST') {
@@ -14,31 +14,33 @@ module.exports = async function handler(req, res) {
             return res.status(400).json({ error: 'Faltan datos obligatorios (planType, userId)' });
         }
 
-        // Mapeamos el slug del plan al Price ID real
+        // Mapeamos el slug del plan al Price ID real (con .trim() por seguridad)
         let stripePriceId = "";
         let mode = "subscription";
 
         if (planType === 'pro') {
-            stripePriceId = process.env.STRIPE_PRICE_PRO;
+            stripePriceId = (process.env.STRIPE_PRICE_PRO || "").trim();
         } else if (planType === 'premium') {
-            stripePriceId = process.env.STRIPE_PRICE_PREMIUM;
+            stripePriceId = (process.env.STRIPE_PRICE_PREMIUM || "").trim();
         } else if (planType === 'extra_30_pro') {
-            stripePriceId = process.env.STRIPE_PRICE_EXTRA_30_PRO;
+            stripePriceId = (process.env.STRIPE_PRICE_EXTRA_30_PRO || "").trim();
             mode = "payment";
         } else if (planType === 'extra_60_pro') {
-            stripePriceId = process.env.STRIPE_PRICE_EXTRA_60_PRO;
+            stripePriceId = (process.env.STRIPE_PRICE_EXTRA_60_PRO || "").trim();
             mode = "payment";
         } else if (planType === 'extra_30_premium') {
-            stripePriceId = process.env.STRIPE_PRICE_EXTRA_30_PREMIUM;
+            stripePriceId = (process.env.STRIPE_PRICE_EXTRA_30_PREMIUM || "").trim();
             mode = "payment";
         } else if (planType === 'extra_60_premium') {
-            stripePriceId = process.env.STRIPE_PRICE_EXTRA_60_PREMIUM;
+            stripePriceId = (process.env.STRIPE_PRICE_EXTRA_60_PREMIUM || "").trim();
             mode = "payment";
         }
 
         if (!stripePriceId) {
-            return res.status(400).json({ error: 'ID de precio no configurado para este tipo de sesión/plan' });
+            return res.status(400).json({ error: `ID de precio no configurado para el plan: ${planType}` });
         }
+
+        console.log(`🚀 Iniciando checkout con precio: ${stripePriceId} (Key starts with: ${process.env.STRIPE_SECRET_KEY ? process.env.STRIPE_SECRET_KEY.substring(0, 7) : 'NONE'})`);
 
         // Creamos la sesión de Checkout
         const session = await stripe.checkout.sessions.create({
