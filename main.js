@@ -290,23 +290,29 @@ function setupAuthListener() {
         }
 
         // Solo actuar si el usuario realmente ha cambiado para evitar borrados accidentales
-        const userWasLoggedIn = !!userProfile;
-        const userIsLoggedIn = !!user;
+        const currentUserProfileId = userProfile ? (userProfile.user_id || userProfile.id) : null;
+        const newUserIsDifferent = user && (!userProfile || user.id !== currentUserProfileId);
 
         if (event === 'SIGNED_OUT') {
+            console.log("🚪 Usuario cerró sesión.");
             userProfile = null;
             window.userProfile = null;
             isRecoveringPassword = false;
             updateUI(null);
-        } else if (user && !userWasLoggedIn) {
-            console.log("✅ Usuario detectado, cargando UI y perfil...");
+        } else if (user && newUserIsDifferent) {
+            // Solo cargamos perfil si es un usuario nuevo o diferente del actual
+            console.log("✅ Nuevo usuario detectado o sesión iniciada, cargando perfil...");
             updateUI(user);
             cargarPerfil(user);
-        } else if (event === 'SIGNED_IN' && user) {
-            // Asegurar que siempre se carga el perfil en SIGNED_IN (registro o login)
-            console.log("✅ SIGNED_IN detectado, forzando carga de perfil...");
+        } else if (event === 'SIGNED_IN' && user && !userProfile) {
+            // Caso de login explícito cuando no había perfil cargado
+            console.log("✅ SIGNED_IN detectado, procediendo con carga inicial...");
             updateUI(user);
             cargarPerfil(user);
+        } else if (user) {
+            // Si el usuario ya estaba cargado y es el mismo, solo nos aseguramos de que la UI sea correcta 
+            // pero SIN borrar el chat (no llamamos a cargarPerfil ni saludarUsuario)
+            updateUI(user);
         }
     });
 }
