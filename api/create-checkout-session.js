@@ -23,16 +23,16 @@ module.exports = async function handler(req, res) {
         } else if (planType === 'premium') {
             stripePriceId = process.env.STRIPE_PRICE_PREMIUM;
         } else if (planType === 'extra_30_pro') {
-            stripePriceId = "price_1SnwBnHys1jlC29icNTshsmg";
+            stripePriceId = process.env.STRIPE_PRICE_EXTRA_30_PRO;
             mode = "payment";
         } else if (planType === 'extra_60_pro') {
-            stripePriceId = "price_1SnwA8Hys1jlC29iNUeDFTok";
+            stripePriceId = process.env.STRIPE_PRICE_EXTRA_60_PRO;
             mode = "payment";
         } else if (planType === 'extra_30_premium') {
-            stripePriceId = "price_1Snw2vHys1jlC29iPQEhHlVF";
+            stripePriceId = process.env.STRIPE_PRICE_EXTRA_30_PREMIUM;
             mode = "payment";
         } else if (planType === 'extra_60_premium') {
-            stripePriceId = "price_1Snw1WHys1jlC29ilCZ0A5NK";
+            stripePriceId = process.env.STRIPE_PRICE_EXTRA_60_PREMIUM;
             mode = "payment";
         }
 
