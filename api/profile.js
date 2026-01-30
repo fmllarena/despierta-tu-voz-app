@@ -55,12 +55,10 @@ module.exports = async function handler(req, res) {
             trialEnd = null;
             console.log(`✨ Usuario veterano ACTIVO detectado (${authUser.email}). Asignando PRO permanente.`);
         } else {
-            // Es usuario nuevo o inactivo: Trial de 30 días
-            tier = 'pro';
-            const date = new Date();
-            date.setDate(date.getDate() + 30);
-            trialEnd = date.toISOString();
-            console.log(`🌱 Usuario nuevo/inactivo detectado (${authUser.email}). Asignando Trial de 30 días.`);
+            // Es usuario nuevo o inactivo: Plan FREE por defecto
+            tier = 'free';
+            trialEnd = null;
+            console.log(`🌱 Usuario nuevo detectado (${authUser.email}). Asignando plan FREE.`);
         }
 
         const { data: newProfile, error: createError } = await supabase

@@ -1320,8 +1320,8 @@ const SESIONES = {
     links: {
         normal30: "https://cal.com/fernando-martinez-drmyul/30min",
         normal60: "https://cal.com/fernando-martinez-drmyul/sesion-de-1-h",
-        extra30: "https://cal.com/fernando-martinez-drmyul/30min",
-        extra60: "https://cal.com/fernando-martinez-drmyul/sesion-de-1-h"
+        extra30: "#", // Placeholder (se gestiona tras pago)
+        extra60: "#"  // Placeholder (se gestiona tras pago)
     },
 
     abrirModal: () => {
@@ -1369,9 +1369,23 @@ const SESIONES = {
     },
 
     comprarExtra: (duracion) => {
-        // Redirigimos directamente a Cal.com para que el usuario reserve y pague allí si es necesario
-        console.log(`🚀 Redirigiendo a Cal.com para sesión extra de ${duracion} min...`);
-        SESIONES.reservar(`extra${duracion}`);
+        const tier = userProfile?.subscription_tier || 'free';
+        // Los usuarios FREE deben primero pasar a PRO/Premium antes de comprar extras
+        // o si permites comprar extra a un free, el planKey debe existir en Stripe
+        if (tier === 'free') {
+            alert("Las sesiones con el Mentor están reservadas para alumnos de los planes Profundiza (PRO) o Transforma. ¡Mejora tu plan para empezar!");
+            ELEMENTS.upgradeModal.style.display = 'flex';
+            return;
+        }
+
+        const planKey = `extra_${duracion}_${tier}`;
+        console.log("Iniciando compra extra a través de Stripe:", planKey);
+
+        if (window.iniciarPago) {
+            window.iniciarPago(planKey);
+        } else {
+            alert("El sistema de pagos no está listo. Por favor, recarga la página.");
+        }
     },
 
     reservar: (tipo) => {
