@@ -347,6 +347,35 @@ header p {
     background: #7a6b5d;
 }
 
+.audio-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.audio-loop-btn {
+    background: none;
+    border: none;
+    font-size: 1.1em;
+    cursor: pointer;
+    opacity: 0.3;
+    transition: all 0.3s ease;
+    filter: grayscale(1);
+    padding: 0;
+    line-height: 1;
+}
+
+.audio-loop-btn.active {
+    opacity: 1;
+    filter: grayscale(0);
+    transform: scale(1.1);
+}
+
+.audio-loop-btn:hover {
+    opacity: 0.7;
+}
+
+
 
 #msg-bienvenida {
     background: #3E3E3E;

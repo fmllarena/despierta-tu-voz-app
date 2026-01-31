@@ -923,7 +923,10 @@ const MODULOS = {
                                 <strong>${audio.title}</strong>
                                 <span>${audio.desc}</span>
                             </div>
-                            <button class="audio-play-btn" onclick="reproducirAudioBotiquin('${audio.file}', this)">▶</button>
+                            <div class="audio-controls">
+                                <button class="audio-loop-btn active" onclick="toggleLoop(this)" title="Repetir infinitamente">🔄</button>
+                                <button class="audio-play-btn" onclick="reproducirAudioBotiquin('${audio.file}', this)">▶</button>
+                            </div>
                         `;
                         audioSection.appendChild(audioItem);
                     });
@@ -1919,8 +1922,12 @@ let currentAudio = null;
 let currentAudioBtn = null;
 
 function reproducirAudioBotiquin(file, btn) {
+    const loopBtn = btn.parentElement.querySelector('.audio-loop-btn');
+    const isLooping = loopBtn ? loopBtn.classList.contains('active') : true;
+
     if (currentAudio && currentAudio.src.includes(file)) {
         if (currentAudio.paused) {
+            currentAudio.loop = isLooping;
             currentAudio.play();
             btn.innerHTML = '⏸';
         } else {
@@ -1936,13 +1943,23 @@ function reproducirAudioBotiquin(file, btn) {
     }
 
     currentAudio = new Audio(file);
+    currentAudio.loop = isLooping;
     currentAudioBtn = btn;
     currentAudio.play();
     btn.innerHTML = '⏸';
 
     currentAudio.onended = () => {
-        btn.innerHTML = '▶';
-        currentAudio = null;
-        currentAudioBtn = null;
+        if (!currentAudio.loop) {
+            btn.innerHTML = '▶';
+            currentAudio = null;
+            currentAudioBtn = null;
+        }
     };
+}
+
+function toggleLoop(btn) {
+    btn.classList.toggle('active');
+    if (currentAudio && currentAudioBtn === btn.parentElement.querySelector('.audio-play-btn')) {
+        currentAudio.loop = btn.classList.contains('active');
+    }
 }
