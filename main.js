@@ -701,7 +701,6 @@ async function sendMessage() {
     } finally {
         ELEMENTS.chatInput.disabled = false;
         ELEMENTS.sendBtn.disabled = false;
-        ELEMENTS.chatInput.focus();
     }
 }
 
