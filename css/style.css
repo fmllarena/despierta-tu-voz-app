@@ -289,10 +289,13 @@ header p {
     border-top: 1px solid #eee;
     display: flex;
     gap: 10px;
+    align-items: flex-end;
+    /* Asegura que los botones se queden abajo si el textarea crece */
 }
 
 input,
 textarea {
+    box-sizing: border-box;
     flex: 1;
     border: 1px solid #ddd;
     padding: 12px 15px;
@@ -319,6 +322,12 @@ textarea#chatMentoriaInput {
     cursor: pointer;
     color: var(--color-acento);
     font-size: 1.2em;
+    flex-shrink: 0;
+    width: 32px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 #micBtn {
@@ -329,6 +338,7 @@ textarea#chatMentoriaInput {
     height: 40px;
     cursor: pointer;
     transition: all 0.3s ease;
+    flex-shrink: 0;
 }
 
 #micBtn:hover {
@@ -2950,5 +2960,16 @@ textarea#chatMentoriaInput {
 
     .banner-btn {
         flex-grow: 1;
+    }
+
+    /* Ajustes para Chat en móvil estrecho */
+    .input-area {
+        padding: 10px 12px;
+        gap: 8px;
+    }
+
+    textarea#chatMentoriaInput {
+        padding: 10px 12px;
+        font-size: 0.95em;
     }
 }
