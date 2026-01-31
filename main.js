@@ -747,7 +747,8 @@ function appendMessage(text, type, id = null) {
     if (!ELEMENTS.chatBox) return;
     const div = document.createElement('div');
     div.className = `message ${type}`;
-    if (id) div.id = id;
+    // Si no es IA, asignamos el ID directamente al div
+    if (!type.startsWith('ia') && id) div.id = id;
 
     if (type.startsWith('ia')) {
         div.innerHTML = window.marked ? window.marked.parse(text) : text;
@@ -763,17 +764,27 @@ function appendMessage(text, type, id = null) {
             };
             div.appendChild(logoutBtn);
         }
+
+        // Crear contenedor para Mensaje + Avatar
+        const container = document.createElement('div');
+        container.className = 'ia-container';
+        if (id) container.id = id; // El ID va al contenedor para poder borrarlo todo junto (ej: msg-thinking)
+
+        const avatar = document.createElement('div');
+        avatar.className = 'ia-avatar';
+        avatar.innerHTML = `<img src="assets/foto-avatar.PNG" alt="Mentor">`;
+
+        container.appendChild(avatar);
+        container.appendChild(div);
+
+        ELEMENTS.chatBox.appendChild(container);
+
+        // Desplazar el chat
+        container.scrollIntoView({ behavior: 'smooth', block: 'start' });
     } else {
         div.innerText = text;
         div.style.whiteSpace = "pre-wrap";
-    }
-
-    ELEMENTS.chatBox.appendChild(div);
-
-    // Desplazar el chat: siempre queremos que la última respuesta de la IA sea visible desde su inicio
-    if (type.startsWith('ia')) {
-        div.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    } else {
+        ELEMENTS.chatBox.appendChild(div);
         ELEMENTS.chatBox.scrollTop = ELEMENTS.chatBox.scrollHeight;
     }
 }
@@ -1087,10 +1098,19 @@ const AJUSTES = {
         const tier = userProfile.subscription_tier || 'free';
         ELEMENTS.settingsUserTier.innerText = `PLAN ${TIER_NAMES[tier] || tier.toUpperCase()}`;
 
-        // Cargar valores actuales
-        ELEMENTS.focusSlider.value = userProfile.mentor_focus ?? 0.5;
-        ELEMENTS.personalitySlider.value = userProfile.mentor_personality ?? 0.5;
-        ELEMENTS.lengthSlider.value = userProfile.mentor_length ?? 0.5;
+        // Cargar valores actuales (Migración suave: si son <= 1, multiplicamos por 10 para el nuevo rango 1-10)
+        let focusVal = userProfile.mentor_focus ?? 5;
+        if (focusVal <= 1 && focusVal > 0) focusVal *= 10;
+        ELEMENTS.focusSlider.value = focusVal;
+
+        let personalityVal = userProfile.mentor_personality ?? 5;
+        if (personalityVal <= 1 && personalityVal > 0) personalityVal *= 10;
+        ELEMENTS.personalitySlider.value = personalityVal;
+
+        let lengthVal = userProfile.mentor_length ?? 5;
+        if (lengthVal <= 1 && lengthVal > 0) lengthVal *= 10;
+        ELEMENTS.lengthSlider.value = lengthVal;
+
         ELEMENTS.languageSelect.value = userProfile.mentor_language || 'es';
         ELEMENTS.weeklyGoalInput.value = userProfile.weekly_goal || '';
 
@@ -1108,11 +1128,11 @@ const AJUSTES = {
 
         try {
             const updates = {
-                mentor_focus: parseFloat(ELEMENTS.focusSlider.value),
-                mentor_personality: parseFloat(ELEMENTS.personalitySlider.value),
-                mentor_length: parseFloat(ELEMENTS.lengthSlider.value),
+                mentor_focus: parseInt(ELEMENTS.focusSlider.value),
+                mentor_personality: parseInt(ELEMENTS.personalitySlider.value),
+                mentor_length: parseInt(ELEMENTS.lengthSlider.value),
                 mentor_language: ELEMENTS.languageSelect.value,
-                weekly_goal: ELEMENTS.weeklyGoalInput.value.trim()
+                weekly_goal: ELEMENTS.weeklyGoalInput.value.trim() // Usamos la misma columna para el Trato Preferido
             };
 
             const { error } = await supabase

@@ -18,13 +18,14 @@ ADN DE VOZ (Estilo Fernando Martínez):
 4. PRUDENCIA EMOCIONAL: No menciones "creencias limitantes" o bloqueos profundos de entrada. Crea un espacio seguro primero.
 
 REGLAS DE ORO:
-- HONESTIDAD MUSICAL: Si mencionan una canción, autor o pieza que no conozcas con certeza, NO INVENTES ni deduzcas por el título. Di simplemente: "No conozco esa canción todavía, ¿te gustaría compartirme la letra o contarme qué sientes al cantarla?". Sé honesto y directo, sin excesos poéticos en este punto.
+- HONESTIDAD MUSICAL: Si mencionan una canción, autor o pieza que no conozcas con certeza absoluta, o si te preguntan detalles técnicos específicos (tonalidad, matices de la partitura, tempo, etc.), NO INVENTES ni deduzcas. Di simplemente: "No dispongo de esa información técnica ahora mismo" o "No conozco ese detalle de la pieza, ¿te gustaría contarme qué sientes tú al cantarla o qué indica tu partitura?". Es preferible la sinceridad a la invención. Sin excesos poéticos en este punto.
 - EQUILIBRIO DE ESTILO: Sé humano y cálido, pero evita ser "demasiado cortés" o excesivamente empalagoso. La profundidad no requiere de un lenguaje barroco.
 - CIERRE: Solo si el usuario se despide de forma explícita y definitiva, di EXACTAMENTE: "Recuerda cerrar sesión para que nuestro encuentro de hoy quede guardado en tu diario de alquimia. ¡Hasta pronto!". REGLA CRÍTICA: La duración de la sesión NO es un motivo para despedirse. Mantén la conversación abierta mientras el alumno quiera seguir explorando. No confundas un "gracias" o un "entendido" con un cierre.
 - PROGRESO: No menciones niveles numéricos salvo que sean > 6/10 y solo de forma sutil.
-- VIAJE: Revisa el "Progreso en Mi Viaje" en el contexto. 1. Si el progreso es < 5: Informa casualmente que "Mi Viaje" es una herramienta para conocer mejor su trayectoria de vida y acompañarle con más profundidad. Mencionarlo SOLO una vez. No repertirse. 2. Si el progreso es = 5: PROHIBIDO mencionarlo o pedir que anote nada.
+- VIAJE: Revisa el "Progreso en Mi Viaje" en el contexto. 1. Si el progreso es = 0 (no ha empezado): Informa casualmente que "Mi Viaje" es una herramienta para conocer mejor su trayectoria de vida y poder acompañarle con más profundidad. Menciónalo SOLO una vez. No seas repetitivo. 2. Si el progreso es >= 1: PROHIBIDO mencionarlo o pedir que anote nada. Ya ha comenzado su camino y no necesita recordatorios.
 - MEMORIA: Usa la "SITUACIÓN ACTUAL" y "CRONOLOGÍA" para reconocer el camino recorrido. No pidas al alumno que se repita.
-- TONO IA (CLAUDE/LLAMA): Evita el lenguaje corporativo, las listas numeradas excesivas o un tono autoritario/frío. Sé suave, profundo y humano. Usa un lenguaje evocador, no técnico.`,
+- TONO IA (CLAUDE/LLAMA): Evita el lenguaje corporativo, las listas numeradas excesivas o un tono autoritario/frío. Sé suave, profundo y humano. Usa un lenguaje evocador, no técnico.
+- PERSONALIZACIÓN: Revisa las "PREFERENCIAS DEL ALUMNO" en el contexto. Ajusta tu enfoque (técnico vs emocional), personalidad (neutro vs motivador) y extensión (breve vs detallado) según los valores 1-10 indicados. Si existe un "Trato Preferido", síguelo estrictamente (ej: tutear, lenguaje poético, etc.).`,
 
     alchemy_analysis: `[SISTEMA: ANÁLISIS FINAL DE ALQUIMIA]
 Tarea: Genera una reflexión profunda y poética del Mentor sobre el módulo completado.
@@ -134,7 +135,7 @@ async function processChat(req) {
 
         // SISTEMA DE MEMORIA HÍBRIDA (Cronología + Profundidad)
         const promises = [
-            supabase.from('user_profiles').select('nombre, historia_vocal, ultimo_resumen, last_hito_completed').eq('user_id', userId).maybeSingle(),
+            supabase.from('user_profiles').select('nombre, historia_vocal, ultimo_resumen, last_hito_completed, mentor_focus, mentor_personality, mentor_length, mentor_language, weekly_goal').eq('user_id', userId).maybeSingle(),
             supabase.from('user_coaching_data').select('linea_vida_hitos, herencia_raices, roles_familiares, ritual_sanacion, plan_accion').eq('user_id', userId).maybeSingle(),
             // 1. Contexto Inmediato: Últimos 10 mensajes (Chat fluido)
             supabase.from('mensajes').select('texto, emisor, created_at').eq('alumno', userId).order('created_at', { ascending: false }).limit(10),
@@ -172,8 +173,19 @@ async function processChat(req) {
         console.log(`📊 [DEBUG Contexto] AlumnoID: ${userId.substring(0, 8)}... | Recientes: ${recentRes.data?.length || 0} | Crónicas: ${chronRes.data?.length || 0} | Profundos: ${deepRes.data?.length || 0} | Final: ${uniqueMessages.length} mensajes.`);
 
         if (perfilRes.data) {
-            const hito = perfilRes.data.last_hito_completed || 0;
-            context += `\n--- SITUACIÓN ACTUAL SINTETIZADA (Perfil General) ---\n- Nombre: ${perfilRes.data.nombre}\n- Historia Vocal: ${perfilRes.data.historia_vocal}\n- Último Estado del Alumno: ${perfilRes.data.ultimo_resumen}\n- Progreso en "Mi Viaje": Módulo ${hito} completado de 5.\n`;
+            const p = perfilRes.data;
+            const hito = p.last_hito_completed || 0;
+            context += `\n--- SITUACIÓN ACTUAL SINTETIZADA (Perfil General) ---\n- Nombre: ${p.nombre}\n- Historia Vocal: ${p.historia_vocal}\n- Último Estado: ${p.ultimo_resumen}\n- Mi Viaje: Módulo ${hito}/5 completado.\n`;
+
+            // Inyectar preferencias
+            context += `\n--- PREFERENCIAS DEL ALUMNO ---\n`;
+            context += `- Enfoque solicitado (1=Técnico, 10=Emocional): ${p.mentor_focus || 5}/10\n`;
+            context += `- Personalidad (1=Neutro/Calmo, 10=Motivador/Fuego): ${p.mentor_personality || 5}/10\n`;
+            context += `- Extensión respuesta (1=Breve/Directo, 10=Profundo/Largo): ${p.mentor_length || 5}/10\n`;
+            context += `- Idioma preferido: ${p.mentor_language || 'es'}\n`;
+            if (p.weekly_goal) {
+                context += `- Trato Preferido del alumno: ${p.weekly_goal}\n`;
+            }
         }
         if (viajeRes.data) context += `\n--- DATOS DE VIAJE/COACHING ---\n${JSON.stringify(viajeRes.data)}\n`;
 
