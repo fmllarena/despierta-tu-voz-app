@@ -235,6 +235,38 @@ function setupLandingLegalListeners(user) {
 }
 
 async function ejecutarPago(planType, user) {
+    const promoCode = sessionStorage.getItem('dtv_promo_code');
+
+    // CASO ESPECIAL: PROMO1MES (1 Mes Gratis Sin Tarjeta)
+    // No pasamos por Stripe, activamos directamente
+    if (promoCode === 'PROMO1MES' && planType === 'pro') {
+        try {
+            console.log("🎁 Activando PROMO1MES sin tarjeta...");
+            const response = await fetch('/api/redeem-promo', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    code: promoCode,
+                    userId: user.id
+                }),
+            });
+
+            const result = await response.json();
+            if (result.success) {
+                // Redirigir directamente al chat con éxito
+                window.location.href = '/index.html?payment=success&plan=pro&promo=active';
+            } else {
+                alert("Error al activar la promoción: " + (result.error || "Desconocido"));
+            }
+            return;
+        } catch (e) {
+            console.error("Error en activación promo:", e);
+            alert("Error de red al intentar activar tu promoción.");
+            return;
+        }
+    }
+
+    // FLUJO NORMAL: Stripe Checkout
     try {
         const response = await fetch('/api/create-checkout-session', {
             method: 'POST',
@@ -243,7 +275,7 @@ async function ejecutarPago(planType, user) {
                 priceId: planType,
                 userId: user.id,
                 userEmail: user.email,
-                promoCode: sessionStorage.getItem('dtv_promo_code')
+                promoCode: promoCode
             }),
         });
 

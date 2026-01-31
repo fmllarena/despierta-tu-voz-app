@@ -41,7 +41,7 @@ module.exports = async function handler(req, res) {
 
             const { data, error } = await supabase
                 .from('user_profiles')
-                .select('subscription_tier, promo_locked_price')
+                .select('subscription_tier, promo_locked_price, email, nombre')
                 .eq('user_id', userId)
                 .single();
 
@@ -120,6 +120,33 @@ module.exports = async function handler(req, res) {
             .eq('user_id', userId);
 
         if (updateError) throw updateError;
+
+        // 4. Enviar email de bienvenida (Opcional pero recomendado por el usuario)
+        if (process.env.BREVO_API_KEY) {
+            try {
+                await fetch('https://api.brevo.com/v3/smtp/email', {
+                    method: 'POST',
+                    headers: {
+                        'accept': 'application/json',
+                        'api-key': process.env.BREVO_API_KEY,
+                        'content-type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        sender: { name: 'Fernando - Despierta tu Voz', email: 'app-mentor@despiertatuvoz.com' },
+                        to: [{ email: profile.email, name: profile.nombre }],
+                        templateId: parseInt(process.env.BREVO_TEMPLATE_BIENVENIDA_PRO || '5'),
+                        params: {
+                            NOMBRE: profile.nombre || (profile.email ? profile.email.split('@')[0] : "viajero/a"),
+                            PROMO_CODE: normalizedCode
+                        }
+                    })
+                });
+                console.log(`📧 Email de bienvenida enviado a ${profile.email}`);
+            } catch (emailErr) {
+                console.error("⚠️ Error enviando email de bienvenida:", emailErr);
+                // No bloqueamos el éxito global por un error de mail
+            }
+        }
 
         console.log(`✅ Promo ${normalizedCode} registrada para userId: ${userId} con precio blindado 9.90€`);
         return res.status(200).json({
