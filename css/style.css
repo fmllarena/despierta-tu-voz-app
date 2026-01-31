@@ -224,10 +224,12 @@ header p {
 .ia-container {
     display: flex;
     align-items: flex-start;
-    gap: 10px;
+    gap: 12px;
     align-self: flex-start;
     max-width: 85%;
     margin-bottom: 5px;
+    padding-top: 4px;
+    /* Espacio para que la aureola no se corte arriba */
 }
 
 .ia-container .message {
@@ -244,7 +246,10 @@ header p {
     border: 2px solid white;
     box-shadow: 0 0 0 2px var(--color-acento);
     background: white;
-    margin-top: 2px;
+    margin-top: 0;
+    /* Ya compensado por el padding-top del contenedor */
+    margin-left: 2px;
+    /* Espacio para la aureola lateral */
 }
 
 .ia-avatar img {
