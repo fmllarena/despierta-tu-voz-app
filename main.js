@@ -645,6 +645,7 @@ async function sendMessage() {
     await guardarMensajeDB(text, 'user'); // Asegurar el guardado antes de continuar
 
     ELEMENTS.chatInput.value = '';
+    ELEMENTS.chatInput.style.height = 'auto'; // Reset height after sending
     ELEMENTS.chatInput.disabled = true;
     ELEMENTS.sendBtn.disabled = true;
 
@@ -793,6 +794,20 @@ if (ELEMENTS.chatInput) {
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
             sendMessage();
+        }
+    });
+
+    // Auto-resize para el textarea (Estilo Whatsapp)
+    ELEMENTS.chatInput.addEventListener('input', function () {
+        this.style.height = 'auto';
+        const newHeight = Math.min(this.scrollHeight, 120); // Máximo 120px (aprox 4-5 lineas)
+        this.style.height = newHeight + 'px';
+
+        // Activar scrollbar si supera el max-height
+        if (this.scrollHeight > 120) {
+            this.style.overflowY = 'auto';
+        } else {
+            this.style.overflowY = 'hidden';
         }
     });
 

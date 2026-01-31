@@ -291,12 +291,26 @@ header p {
     gap: 10px;
 }
 
-input {
+input,
+textarea {
     flex: 1;
     border: 1px solid #ddd;
-    padding: 10px;
-    border-radius: 25px;
+    padding: 12px 15px;
+    border-radius: 20px;
     outline: none;
+    font-family: inherit;
+    font-size: 1em;
+    resize: none;
+    line-height: 1.4;
+    max-height: 120px;
+    /* Aproximadamente 4-5 líneas */
+    transition: height 0.1s ease;
+    background: white;
+}
+
+textarea#chatMentoriaInput {
+    overflow-y: hidden;
+    /* Se activará vía JS si supera max-height */
 }
 
 #sendBtn {
