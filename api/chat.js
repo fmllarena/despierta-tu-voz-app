@@ -20,7 +20,7 @@ ADN DE VOZ (Estilo Fernando Martínez):
 REGLAS DE ORO:
 - HONESTIDAD MUSICAL: Si mencionan una canción, autor o pieza que no conozcas con certeza, NO INVENTES ni deduzcas por el título. Di simplemente: "No conozco esa canción todavía, ¿te gustaría compartirme la letra o contarme qué sientes al cantarla?". Sé honesto y directo, sin excesos poéticos en este punto.
 - EQUILIBRIO DE ESTILO: Sé humano y cálido, pero evita ser "demasiado cortés" o excesivamente empalagoso. La profundidad no requiere de un lenguaje barroco.
-- CIERRE: Si se despiden claramente, di EXACTAMENTE: "Recuerda cerrar sesión para que nuestro encuentro de hoy quede guardado en tu diario de alquimia. ¡Hasta pronto!". No confundas un "gracias" con un cierre.
+- CIERRE: Solo si el usuario se despide de forma explícita y definitiva, di EXACTAMENTE: "Recuerda cerrar sesión para que nuestro encuentro de hoy quede guardado en tu diario de alquimia. ¡Hasta pronto!". REGLA CRÍTICA: La duración de la sesión NO es un motivo para despedirse. Mantén la conversación abierta mientras el alumno quiera seguir explorando. No confundas un "gracias" o un "entendido" con un cierre.
 - PROGRESO: No menciones niveles numéricos salvo que sean > 6/10 y solo de forma sutil.
 - VIAJE: Revisa el "Progreso en Mi Viaje" en el contexto. 1. Si el progreso es < 5: Informa casualmente que "Mi Viaje" es una herramienta para conocer mejor su trayectoria de vida y acompañarle con más profundidad. No seas repetitivo, menciónalo solo una vez. 2. Si el progreso es = 5: PROHIBIDO mencionarlo o pedir que anote nada.
 - MEMORIA: Usa la "SITUACIÓN ACTUAL" y "CRONOLOGÍA" para reconocer el camino recorrido. No pidas al alumno que se repita.
@@ -106,7 +106,7 @@ module.exports = async function handler(req, res) {
 };
 
 async function processChat(req) {
-    const { intent, message, history = [], userId, mentorPassword = "" } = req.body;
+    const { intent, message, history = [], userId, mentorPassword = "", blogLibrary = [], canRecommend = false } = req.body;
     if (intent === 'warmup') return { text: "OK" };
     if (!intent || !SYSTEM_PROMPTS[intent]) throw new Error("Intento no válido");
 
@@ -183,6 +183,22 @@ async function processChat(req) {
                 context += `[${new Date(r.created_at).toLocaleDateString()}] ${prefix}: ${r.texto}\n`;
             });
             console.log("📝 Contexto de memoria (Crónicas y Chat) inyectado satisfactoriamente.");
+        }
+
+        // --- SISTEMA DE RECOMENDACIONES DE BIBLIOTECA (Blog Fernando) ---
+        if (canRecommend && blogLibrary.length > 0) {
+            context += `\n[BIBLIOTECA DE ARTÍCULOS DE FERNANDO]\n`;
+            context += `- Tienes permiso para integrar recomendaciones de la biblioteca si el flujo de la conversación lo permite de forma natural.\n`;
+            context += `- Solo recomienda si aporta valor real al momento presente del alumno.\n`;
+
+            // Limitamos a los primeros 20 títulos para no saturar el prompt
+            const titles = blogLibrary.slice(0, 20).map(post => `- ${post.title}: ${post.url}`).join('\n');
+            context += `ARTÍCULOS DISPONIBLES:\n${titles}\n`;
+            context += `\nInstrucción de estilo: Si recomiendas un link, hazlo con calidez, citando que es un artículo de Fernando.\n`;
+        } else if (canRecommend) {
+            context += `\n- Tienes permiso para recomendar lecturas, pero la biblioteca no está disponible ahora. No inventes links.\n`;
+        } else {
+            context += `\n- Prioriza por ahora el diálogo directo y la escucha activa antes de recurrir a lecturas externas o artículos.\n`;
         }
     }
 

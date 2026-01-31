@@ -690,7 +690,6 @@ async function sendMessage() {
             }
         } else {
             console.warn("Recibida respuesta vacía de Gemini.");
-            appendMessage("Lo siento, no he podido procesar eso bien. ¿Podrías repetirlo de otra forma?", 'ia');
         }
     } catch (e) {
         document.getElementById('msg-thinking')?.remove();
