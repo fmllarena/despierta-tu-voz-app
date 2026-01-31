@@ -8,6 +8,12 @@ const MENSAJE_BIENVENIDA = `<p>Hola, ¡qué alegría que estés aquí! Soy tu Me
 
 const FRASES_PENSAR = ["Procesando la respuesta..."];
 
+const AUDIOS_BOTIQUIN = [
+    { id: 'relajacion', title: 'Relajación Profunda', file: 'assets/audios/relajacion.mp3', desc: 'Para calmar el sistema nervioso.' },
+    { id: 'calentamiento', title: 'Calentamiento Express', file: 'assets/audios/calentamiento.mp3', desc: 'Prepara tu voz rápidamente.' },
+    { id: 'foco', title: 'Foco y Presencia', file: 'assets/audios/foco.mp3', desc: 'Vuelve al aquí y ahora.' }
+];
+
 // --- FILTRO DE PRUDENCIA: Sesiones y Tiempo ---
 if (!sessionStorage.getItem('dtv_session_start')) {
     sessionStorage.setItem('dtv_session_start', Date.now());
@@ -899,7 +905,31 @@ const MODULOS = {
             // Eliminar mensaje de espera
             document.getElementById('msg-botiquin-thinking')?.remove();
 
-            if (resp) appendMessage(resp, 'ia-botiquin', 'msg-botiquin');
+            if (resp) {
+                appendMessage(resp, 'ia-botiquin', 'msg-botiquin');
+
+                // Añadir lista de audios al mensaje del botiquín
+                const msgBotiquin = document.getElementById('msg-botiquin');
+                if (msgBotiquin) {
+                    const audioSection = document.createElement('div');
+                    audioSection.className = 'botiquin-audios';
+                    audioSection.innerHTML = `<h4>✨ Recursos de Alquimia Sonora</h4>`;
+
+                    AUDIOS_BOTIQUIN.forEach(audio => {
+                        const audioItem = document.createElement('div');
+                        audioItem.className = 'audio-item';
+                        audioItem.innerHTML = `
+                            <div class="audio-info">
+                                <strong>${audio.title}</strong>
+                                <span>${audio.desc}</span>
+                            </div>
+                            <button class="audio-play-btn" onclick="reproducirAudioBotiquin('${audio.file}', this)">▶</button>
+                        `;
+                        audioSection.appendChild(audioItem);
+                    });
+                    msgBotiquin.appendChild(audioSection);
+                }
+            }
         } catch (e) {
             console.error(e);
             document.getElementById('msg-botiquin-thinking')?.remove();
@@ -1883,3 +1913,36 @@ const EMAIL_VERIFICATION = {
 
 // Inicializar verificación de email
 EMAIL_VERIFICATION.init();
+
+// --- SISTEMA DE REPRODUCCIÓN AUDIO BOTIQUÍN ---
+let currentAudio = null;
+let currentAudioBtn = null;
+
+function reproducirAudioBotiquin(file, btn) {
+    if (currentAudio && currentAudio.src.includes(file)) {
+        if (currentAudio.paused) {
+            currentAudio.play();
+            btn.innerHTML = '⏸';
+        } else {
+            currentAudio.pause();
+            btn.innerHTML = '▶';
+        }
+        return;
+    }
+
+    if (currentAudio) {
+        currentAudio.pause();
+        if (currentAudioBtn) currentAudioBtn.innerHTML = '▶';
+    }
+
+    currentAudio = new Audio(file);
+    currentAudioBtn = btn;
+    currentAudio.play();
+    btn.innerHTML = '⏸';
+
+    currentAudio.onended = () => {
+        btn.innerHTML = '▶';
+        currentAudio = null;
+        currentAudioBtn = null;
+    };
+}

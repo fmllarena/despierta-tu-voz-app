@@ -278,6 +278,76 @@ header p {
     }
 }
 
+/* --- BOTIQUÍN AUDIOS --- */
+.botiquin-audios {
+    margin-top: 20px;
+    padding-top: 15px;
+    border-top: 1px dashed rgba(142, 125, 109, 0.3);
+}
+
+.botiquin-audios h4 {
+    font-size: 0.9em;
+    color: var(--color-acento);
+    margin: 0 0 12px 0;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.audio-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: white;
+    padding: 10px 15px;
+    border-radius: 12px;
+    margin-bottom: 8px;
+    border: 1px solid #f0f0f0;
+    transition: all 0.2s ease;
+}
+
+.audio-item:hover {
+    border-color: var(--color-acento);
+    transform: translateY(-1px);
+}
+
+.audio-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.audio-info strong {
+    font-size: 0.9em;
+    color: #444;
+}
+
+.audio-info span {
+    font-size: 0.75em;
+    color: #888;
+}
+
+.audio-play-btn {
+    background: var(--color-acento);
+    color: white;
+    border: none;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8em;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+.audio-play-btn:hover {
+    transform: scale(1.1);
+    background: #7a6b5d;
+}
+
+
 #msg-bienvenida {
     background: #3E3E3E;
     color: white;
