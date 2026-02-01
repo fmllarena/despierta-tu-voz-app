@@ -1980,6 +1980,11 @@ function reproducirAudioBotiquin(file, btn) {
     };
 }
 
+// Exportar al ámbito global para poder ser llamadas desde onclick
+window.reproducirAudioBotiquin = reproducirAudioBotiquin;
+window.toggleLoop = toggleLoop;
+
+
 function toggleLoop(btn) {
     btn.classList.toggle('active');
     if (currentAudio && currentAudioBtn === btn.parentElement.querySelector('.audio-play-btn')) {
