@@ -767,11 +767,11 @@ function appendMessage(text, type, id = null) {
             div.appendChild(logoutBtn);
         }
 
-        // Si es Botiquín, no ponemos avatar
-        if (type === 'ia-botiquin') {
+        // Si es Botiquín o estado de carga (thinking), no ponemos avatar para limpiar la interfaz
+        if (type === 'ia-botiquin' || type.includes('thinking')) {
             if (id) div.id = id;
             ELEMENTS.chatBox.appendChild(div);
-            // Pequeño retardo para asegurar que el scroll se haga una vez inyectado el contenido extra (audios)
+            // Pequeño retardo para asegurar el scroll correcto
             setTimeout(() => {
                 div.scrollIntoView({ behavior: 'smooth', block: 'start' });
             }, 100);
