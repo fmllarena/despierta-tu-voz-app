@@ -401,9 +401,6 @@ async function cargarHistorialDesdeDB(userId) {
         mensajes.reverse().forEach(msg => {
             const role = msg.emisor === 'ia' ? 'model' : 'user';
             chatHistory.push({ role: role, parts: [{ text: msg.texto }] });
-
-            // Recuperamos la visualización de los últimos mensajes para que el usuario no sienta que ha perdido el chat
-            appendMessage(msg.texto, msg.emisor === 'ia' ? 'ia' : 'user');
         });
 
         // Historial recuperado para contexto de IA
@@ -475,12 +472,6 @@ window.addEventListener('load', () => {
 
 async function saludarUsuario(user, perfil) {
     if (!ELEMENTS.chatBox) return;
-
-    // Si ya hay mensajes cargados (porque hemos restaurado el historial), no borramos ni saludamos de nuevo
-    if (ELEMENTS.chatBox.children.length > 0) {
-        console.log("Chat restaurado, saltando saludo inicial.");
-        return;
-    }
 
     ELEMENTS.chatBox.innerHTML = "";
 
