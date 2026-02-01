@@ -7,7 +7,8 @@ let isRecoveringPassword = false;
 const MENSAJE_BIENVENIDA = `<p>Hola, ¡qué alegría que estés aquí! Soy tu Mentor Vocal.</p><br><p>Mi misión es acompañarte a descubrir todo el potencial de tu voz, desde la técnica hasta lo que sientes al cantar. Para empezar con buen pie... ¿hay algo específico que te haya traído hoy aquí o algún bloqueo que te gustaría trabajar conmigo?</p>`;
 
 const AUDIOS_BOTIQUIN = [
-    { id: 'relajacion', title: 'Relajación Profunda', file: 'assets/audios/relajacion.mp3', desc: 'Para calmar el sistema nervioso.' }
+    { id: 'relajacion432', title: 'Relajación 432Hz', file: 'assets/audios/relajacion432.mp3', desc: 'Frecuencia de la naturaleza para calma profunda.' },
+    { id: 'relajacion528', title: 'Relajación 528Hz', file: 'assets/audios/relajacion528.mp3', desc: 'Frecuencia de la transformación y reparación (ADN).' }
 ];
 
 // --- FILTRO DE PRUDENCIA: Sesiones y Tiempo ---
@@ -927,26 +928,27 @@ const MODULOS = {
                     </div>
                 `;
 
-                // Añadir lista de audios al mensaje del botiquín
+                // Añadir lista de audios al mensaje del botiquín con menú desplegable
                 const audioSection = document.createElement('div');
                 audioSection.className = 'botiquin-audios';
                 audioSection.innerHTML = `<h4>✨ Recursos de Alquimia Sonora</h4>`;
 
-                AUDIOS_BOTIQUIN.forEach(audio => {
-                    const audioItem = document.createElement('div');
-                    audioItem.className = 'audio-item';
-                    audioItem.innerHTML = `
-                        <div class="audio-info">
-                            <strong>${audio.title}</strong>
-                            <span>${audio.desc}</span>
-                        </div>
-                        <div class="audio-controls">
-                            <button class="audio-loop-btn active" onclick="toggleLoop(this)" title="Repetir infinitamente">🔄</button>
-                            <button class="audio-play-btn" onclick="reproducirAudioBotiquin('${audio.file}', this)">▶</button>
-                        </div>
-                    `;
-                    audioSection.appendChild(audioItem);
-                });
+                const audioItem = document.createElement('div');
+                audioItem.className = 'audio-item';
+                audioItem.innerHTML = `
+                <div class="audio-info">
+                    <strong>Relajación Alquímica</strong>
+                    <span>Elige la frecuencia que necesites hoy.</span>
+                </div>
+                <div class="audio-controls" style="display: flex; align-items: center; gap: 8px;">
+                    <select id="freqSelector" class="audio-select" onchange="if(currentAudio) { currentAudio.pause(); currentAudio=null; if(currentAudioBtn) currentAudioBtn.innerHTML='▶'; }" style="padding: 5px; border-radius: 8px; border: 1px solid #ccc; font-family: inherit; font-size: 0.9em; cursor: pointer;">
+                        ${AUDIOS_BOTIQUIN.map(audio => `<option value="${audio.file}" title="${audio.desc}">${audio.title}</option>`).join('')}
+                    </select>
+                    <button class="audio-loop-btn active" onclick="toggleLoop(this)" title="Repetir infinitamente">🔄</button>
+                    <button class="audio-play-btn" onclick="reproducirAudioBotiquin(document.getElementById('freqSelector').value, this)">▶</button>
+                </div>
+            `;
+                audioSection.appendChild(audioItem);
                 ELEMENTS.botiquinContent.appendChild(audioSection);
             }
         } catch (e) {
