@@ -8,7 +8,8 @@ const MENSAJE_BIENVENIDA = `<p>Hola, ¡qué alegría que estés aquí! Soy tu Me
 
 const AUDIOS_BOTIQUIN = [
     { id: 'relajacion432', title: 'Relajación 432Hz', file: 'assets/audios/relajacion432.mp3', desc: 'Frecuencia de la naturaleza para calma profunda.' },
-    { id: 'relajacion528', title: 'Relajación 528Hz', file: 'assets/audios/relajacion528.mp3', desc: 'Frecuencia de la transformación y reparación (ADN).' }
+    { id: 'relajacion528', title: 'Relajación 528Hz', file: 'assets/audios/relajacion528.mp3', desc: 'Frecuencia de la transformación y reparación (ADN).' },
+    { id: 'relajacion-animacion', title: 'Relajarse y animarse', file: 'assets/audios/relajacion-animacion.mp3', desc: 'Equilibrio entre calma y energía.' }
 ];
 
 // --- FILTRO DE PRUDENCIA: Sesiones y Tiempo ---
@@ -937,18 +938,20 @@ const MODULOS = {
                 audioSection.innerHTML = `<h4>✨ Recursos de Alquimia Sonora</h4>`;
 
                 const audioItem = document.createElement('div');
-                audioItem.className = 'audio-item';
+                audioItem.className = 'audio-item-stacked';
                 audioItem.innerHTML = `
                 <div class="audio-info">
                     <strong>Relajación Alquímica</strong>
                     <span>Elige la frecuencia que necesites hoy.</span>
                 </div>
-                <div class="audio-controls" style="display: flex; align-items: center; gap: 8px;">
-                    <select id="freqSelector" class="audio-select" onchange="if(currentAudio) { currentAudio.pause(); currentAudio=null; if(currentAudioBtn) currentAudioBtn.innerHTML='▶'; }" style="padding: 5px; border-radius: 8px; border: 1px solid #ccc; font-family: inherit; font-size: 0.9em; cursor: pointer;">
+                <div class="audio-controls-stacked">
+                    <select id="freqSelector" class="audio-select" onchange="if(currentAudio) { currentAudio.pause(); currentAudio=null; if(currentAudioBtn) currentAudioBtn.innerHTML='▶'; }">
                         ${AUDIOS_BOTIQUIN.map(audio => `<option value="${audio.file}" title="${audio.desc}">${audio.title}</option>`).join('')}
                     </select>
-                    <button class="audio-loop-btn active" onclick="toggleLoop(this)" title="Repetir infinitamente">🔄</button>
-                    <button class="audio-play-btn" onclick="reproducirAudioBotiquin(document.getElementById('freqSelector').value, this)">▶</button>
+                    <div class="audio-actions">
+                        <button class="audio-loop-btn active" onclick="toggleLoop(this)" title="Repetir infinitamente">🔄 Bucle</button>
+                        <button class="audio-play-btn" onclick="reproducirAudioBotiquin(document.getElementById('freqSelector').value, this)">▶ Reproducir</button>
+                    </div>
                 </div>
             `;
                 audioSection.appendChild(audioItem);
