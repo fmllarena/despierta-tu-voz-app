@@ -7,7 +7,7 @@ let isRecoveringPassword = false;
 const MENSAJE_BIENVENIDA = `<p>Hola, ¡qué alegría que estés aquí! Soy tu Mentor Vocal.</p><br><p>Mi misión es acompañarte a descubrir todo el potencial de tu voz, desde la técnica hasta lo que sientes al cantar. Para empezar con buen pie... ¿hay algo específico que te haya traído hoy aquí o algún bloqueo que te gustaría trabajar conmigo?</p>`;
 
 const AUDIOS_BOTIQUIN = [
-    { id: 'relajacion', title: 'Relajación Profunda', file: './assets/audios/relajacion.mp3', desc: 'Para calmar el sistema nervioso.' }
+    { id: 'relajacion', title: 'Relajación Profunda', file: 'assets/audios/relajacion.mp3', desc: 'Para calmar el sistema nervioso.' }
 ];
 
 // --- FILTRO DE PRUDENCIA: Sesiones y Tiempo ---
@@ -1932,7 +1932,9 @@ function reproducirAudioBotiquin(file, btn) {
     const loopBtn = btn.parentElement.querySelector('.audio-loop-btn');
     const isLooping = loopBtn ? loopBtn.classList.contains('active') : true;
 
-    if (currentAudio && currentAudio.src.includes(file.replace('./', ''))) {
+    // Usamos el nombre del archivo para la comparación, evitando problemas con rutas relativas/absolutas
+    const fileName = file.split('/').pop();
+    if (currentAudio && currentAudio.src.includes(fileName)) {
         if (currentAudio.paused) {
             currentAudio.loop = isLooping;
             currentAudio.play().catch(e => console.error("Error play:", e));
