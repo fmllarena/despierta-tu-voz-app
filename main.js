@@ -136,6 +136,9 @@ const ELEMENTS = {
     sendSupportBtn: document.getElementById('sendSupportBtn'),
     whatsappSupportLink: document.getElementById('whatsappSupportLink'),
     closeSupport: document.querySelector('.close-support'),
+    // Botiquín Modal
+    botiquinModal: document.getElementById('botiquinModal'),
+    botiquinContent: document.getElementById('botiquinContent'),
     closeBotiquin: document.querySelector('.close-botiquin'),
     // Preferencias Modal
     openPreferencesBtn: document.getElementById('openPreferencesBtn'),
