@@ -3107,3 +3107,62 @@ textarea#chatMentoriaInput {
         font-size: 0.95em;
     }
 }
+
+/* Botiquín Modal Específico */
+.botiquin-modal-content {
+    max-width: 550px;
+    background: #fdf2f2;
+    border: 1px solid #f9dcdc;
+    border-radius: 20px;
+    padding: 30px;
+}
+
+.botiquin-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 25px;
+    text-align: center;
+}
+
+.botiquin-icon-title {
+    width: 60px;
+    height: 60px;
+}
+
+.botiquin-body {
+    font-size: 1.05em;
+    line-height: 1.6;
+    color: #444;
+}
+
+.botiquin-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 30px;
+    gap: 15px;
+}
+
+.botiquin-response {
+    background: white;
+    padding: 25px;
+    border-radius: 18px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    margin-bottom: 20px;
+    border-left: 4px solid var(--color-acento);
+}
+
+.botiquin-audios {
+    margin-top: 25px;
+    border-top: 1px dashed rgba(142, 125, 109, 0.3);
+    padding-top: 20px;
+}
+
+.botiquin-audios h4 {
+    color: var(--color-acento);
+    margin-bottom: 15px;
+    font-size: 1.1em;
+    text-align: center;
+}

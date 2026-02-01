@@ -134,7 +134,11 @@ const ELEMENTS = {
     supportInput: document.getElementById('supportInput'),
     sendSupportBtn: document.getElementById('sendSupportBtn'),
     whatsappSupportLink: document.getElementById('whatsappSupportLink'),
-    closeSupport: document.querySelector('.close-support')
+    closeSupport: document.querySelector('.close-support'),
+    // Botiquín Modal
+    botiquinModal: document.getElementById('botiquinModal'),
+    botiquinContent: document.getElementById('botiquinContent'),
+    closeBotiquin: document.querySelector('.close-botiquin')
 };
 
 const SOPORTE = {
@@ -893,57 +897,56 @@ if (ELEMENTS.navButtons.logout) {
 const MODULOS = {
     async abrirBotiquin() {
         const btn = ELEMENTS.navButtons.botiquin;
-        document.getElementById('msg-bienvenida')?.remove();
-
-        const existing = document.getElementById('msg-botiquin');
-        if (existing) return existing.remove();
-
         btn.disabled = true;
-        // No cambiamos el texto para no borrar el icono
 
-        // Mensaje de espera parpadeante
-        appendMessage("Preparando tu botiquín...", 'ia thinking', 'msg-botiquin-thinking');
+        // Abrir modal inmediatamente con estado de carga
+        ELEMENTS.botiquinModal.style.display = 'flex';
+        ELEMENTS.botiquinContent.innerHTML = `
+            <div class="botiquin-loading">
+                <div class="ia thinking" style="padding: 15px; border-radius: 20px;">Preparando tu botiquín...</div>
+            </div>
+        `;
 
         try {
             const { data: { user } } = await supabase.auth.getUser();
             const prompt = `[MODO EMERGENCIA] Audición/presentación inminente. Basado en mi perfil, dame: 1. Ejercicio 2min, 2. Consejo técnico, 3. Frase poder. REGLA ESTRICTA: NO incluyas links a YouTube ni menciones a "cerrar sesión" o despedidas finales. Enfócate solo en la ayuda inmediata.`;
             const resp = await llamarGemini(prompt, [], "mentor_chat", { userId: user?.id });
 
-            // Eliminar mensaje de espera
-            document.getElementById('msg-botiquin-thinking')?.remove();
-
             if (resp) {
-                appendMessage(resp, 'ia-botiquin', 'msg-botiquin');
+                // Parseamos markdown si está disponible
+                const htmlResp = window.marked ? window.marked.parse(resp) : resp.replace(/\n/g, '<br>');
+
+                ELEMENTS.botiquinContent.innerHTML = `
+                    <div class="botiquin-response">
+                        ${htmlResp}
+                    </div>
+                `;
 
                 // Añadir lista de audios al mensaje del botiquín
-                const msgBotiquin = document.getElementById('msg-botiquin');
-                if (msgBotiquin) {
-                    const audioSection = document.createElement('div');
-                    audioSection.className = 'botiquin-audios';
-                    audioSection.innerHTML = `<h4>✨ Recursos de Alquimia Sonora</h4>`;
+                const audioSection = document.createElement('div');
+                audioSection.className = 'botiquin-audios';
+                audioSection.innerHTML = `<h4>✨ Recursos de Alquimia Sonora</h4>`;
 
-                    AUDIOS_BOTIQUIN.forEach(audio => {
-                        const audioItem = document.createElement('div');
-                        audioItem.className = 'audio-item';
-                        audioItem.innerHTML = `
-                            <div class="audio-info">
-                                <strong>${audio.title}</strong>
-                                <span>${audio.desc}</span>
-                            </div>
-                            <div class="audio-controls">
-                                <button class="audio-loop-btn active" onclick="toggleLoop(this)" title="Repetir infinitamente">🔄</button>
-                                <button class="audio-play-btn" onclick="reproducirAudioBotiquin('${audio.file}', this)">▶</button>
-                            </div>
-                        `;
-                        audioSection.appendChild(audioItem);
-                    });
-                    msgBotiquin.appendChild(audioSection);
-                }
+                AUDIOS_BOTIQUIN.forEach(audio => {
+                    const audioItem = document.createElement('div');
+                    audioItem.className = 'audio-item';
+                    audioItem.innerHTML = `
+                        <div class="audio-info">
+                            <strong>${audio.title}</strong>
+                            <span>${audio.desc}</span>
+                        </div>
+                        <div class="audio-controls">
+                            <button class="audio-loop-btn active" onclick="toggleLoop(this)" title="Repetir infinitamente">🔄</button>
+                            <button class="audio-play-btn" onclick="reproducirAudioBotiquin('${audio.file}', this)">▶</button>
+                        </div>
+                    `;
+                    audioSection.appendChild(audioItem);
+                });
+                ELEMENTS.botiquinContent.appendChild(audioSection);
             }
         } catch (e) {
             console.error(e);
-            document.getElementById('msg-botiquin-thinking')?.remove();
-            appendMessage("Error al preparar el botiquín. Inténtalo de nuevo.", 'ia');
+            ELEMENTS.botiquinContent.innerHTML = `<p class="error-msg">Error al preparar el botiquín. Inténtalo de nuevo.</p>`;
         } finally {
             btn.disabled = false;
         }
@@ -1381,6 +1384,7 @@ function b64toBlob(b64, type = '', sliceSize = 512) {
 
 // Event Listeners
 ELEMENTS.navButtons.botiquin?.addEventListener('click', () => MODULOS.abrirBotiquin());
+ELEMENTS.closeBotiquin?.addEventListener('click', () => ELEMENTS.botiquinModal.style.display = 'none');
 ELEMENTS.navButtons.bienvenida?.addEventListener('click', () => MODULOS.toggleBienvenida());
 ELEMENTS.navButtons.progreso?.addEventListener('click', () => MODULOS.toggleProgreso());
 ELEMENTS.navButtons.viaje?.addEventListener('click', async () => {
@@ -1489,6 +1493,7 @@ ELEMENTS.buyExtra60Btn?.addEventListener('click', () => SESIONES.comprarExtra('6
 
 window.addEventListener('click', e => {
     if (e.target === ELEMENTS.sesionModal) ELEMENTS.sesionModal.style.display = 'none';
+    if (e.target === ELEMENTS.botiquinModal) ELEMENTS.botiquinModal.style.display = 'none';
     if (e.target.id === 'diarioModal') document.getElementById('diarioModal').style.display = 'none';
 });
 
