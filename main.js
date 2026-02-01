@@ -135,10 +135,16 @@ const ELEMENTS = {
     sendSupportBtn: document.getElementById('sendSupportBtn'),
     whatsappSupportLink: document.getElementById('whatsappSupportLink'),
     closeSupport: document.querySelector('.close-support'),
-    // Botiquín Modal
-    botiquinModal: document.getElementById('botiquinModal'),
-    botiquinContent: document.getElementById('botiquinContent'),
-    closeBotiquin: document.querySelector('.close-botiquin')
+    closeBotiquin: document.querySelector('.close-botiquin'),
+    // Preferencias Modal
+    openPreferencesBtn: document.getElementById('openPreferencesBtn'),
+    preferencesModal: document.getElementById('preferencesModal'),
+    closePreferences: document.querySelector('.close-preferences'),
+    marketingToggle: document.getElementById('marketingToggle'),
+    lifecycleToggle: document.getElementById('lifecycleToggle'),
+    savePreferencesBtn: document.getElementById('savePreferencesBtn'),
+    prefStatusMessage: document.getElementById('prefStatusMessage'),
+    deleteAccountBtn: document.getElementById('deleteAccountBtn')
 };
 
 const SOPORTE = {
@@ -1300,6 +1306,96 @@ window.mostrarModalLegal = LEGAL.abrirModal;
 // Getter para que stripe-checkout.js vea el estado actual
 window.getAcceptedTermsStatus = () => userProfile?.accepted_terms || false;
 
+// --- PREFERENCIAS DE EMAIL Y CUENTA ---
+
+const PREFERENCIAS = {
+    abrirModal: () => {
+        if (!userProfile) return alert("Inicia sesión para gestionar tus preferencias.");
+
+        // Cargar estado actual
+        ELEMENTS.marketingToggle.checked = userProfile.consent_marketing !== false;
+        ELEMENTS.lifecycleToggle.checked = userProfile.consent_lifecycle !== false;
+        ELEMENTS.prefStatusMessage.style.display = 'none';
+
+        ELEMENTS.preferencesModal.style.display = 'flex';
+    },
+
+    cerrarModal: () => {
+        ELEMENTS.preferencesModal.style.display = 'none';
+    },
+
+    guardar: async () => {
+        const btn = ELEMENTS.savePreferencesBtn;
+        btn.disabled = true;
+        btn.innerText = "Guardando...";
+
+        try {
+            const updates = {
+                consent_marketing: ELEMENTS.marketingToggle.checked,
+                consent_lifecycle: ELEMENTS.lifecycleToggle.checked,
+                last_active_at: new Date().toISOString()
+            };
+
+            const { error } = await supabase
+                .from('user_profiles')
+                .update(updates)
+                .eq('user_id', userProfile.user_id);
+
+            if (error) throw error;
+
+            Object.assign(userProfile, updates);
+            PREFERENCIAS.showStatus("Preferencias guardadas. ✨", "success");
+            setTimeout(() => PREFERENCIAS.cerrarModal(), 1500);
+        } catch (e) {
+            console.error(e);
+            PREFERENCIAS.showStatus("Error al guardar.", "error");
+        } finally {
+            btn.disabled = false;
+            btn.innerText = "Guardar Preferencias";
+        }
+    },
+
+    showStatus: (text, type) => {
+        const msg = ELEMENTS.prefStatusMessage;
+        msg.innerText = text;
+        msg.className = type === 'success' ? 'status-success' : 'status-error';
+        msg.style.display = 'block';
+    },
+
+    borrarCuenta: async () => {
+        const confirmDelete = confirm("¿Estás COMPLETAMENTE seguro? Esta acción es IRREVERSIBLE, se borrarán todos tus datos y progreso para siempre. 🌿");
+        if (!confirmDelete) return;
+
+        ELEMENTS.deleteAccountBtn.disabled = true;
+        PREFERENCIAS.showStatus("Procesando baja definitiva...", "success");
+
+        try {
+            const { data: { session } } = await supabase.auth.getSession();
+            const { error } = await supabase.functions.invoke('delete-user-account', {
+                headers: { Authorization: `Bearer ${session.access_token}` }
+            });
+
+            if (error) throw error;
+
+            PREFERENCIAS.showStatus("Cuenta eliminada. Te deseamos lo mejor. ✨", "success");
+            setTimeout(async () => {
+                await supabase.auth.signOut();
+                location.reload();
+            }, 3000);
+        } catch (e) {
+            console.error(e);
+            PREFERENCIAS.showStatus("Error en la eliminación. Contacta con soporte.", "error");
+            ELEMENTS.deleteAccountBtn.disabled = false;
+        }
+    }
+};
+
+// Event Listeners Preferencias
+ELEMENTS.openPreferencesBtn?.addEventListener('click', () => PREFERENCIAS.abrirModal());
+ELEMENTS.closePreferences?.addEventListener('click', () => PREFERENCIAS.cerrarModal());
+ELEMENTS.savePreferencesBtn?.addEventListener('click', () => PREFERENCIAS.guardar());
+ELEMENTS.deleteAccountBtn?.addEventListener('click', () => PREFERENCIAS.borrarCuenta());
+
 // Event Listeners Ajustes
 ELEMENTS.ajustesBtn?.addEventListener('click', () => AJUSTES.abrirModal());
 ELEMENTS.closeSettings?.addEventListener('click', () => AJUSTES.cerrarModal());
@@ -1493,6 +1589,7 @@ ELEMENTS.buyExtra60Btn?.addEventListener('click', () => SESIONES.comprarExtra('6
 window.addEventListener('click', e => {
     if (e.target === ELEMENTS.sesionModal) ELEMENTS.sesionModal.style.display = 'none';
     if (e.target === ELEMENTS.botiquinModal) ELEMENTS.botiquinModal.style.display = 'none';
+    if (e.target === ELEMENTS.preferencesModal) ELEMENTS.preferencesModal.style.display = 'none';
     if (e.target.id === 'diarioModal') document.getElementById('diarioModal').style.display = 'none';
 });
 

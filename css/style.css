@@ -3166,3 +3166,108 @@ textarea#chatMentoriaInput {
     font-size: 1.1em;
     text-align: center;
 }
+
+/* Preferencias Modal Específico */
+.preferences-modal-content {
+    max-width: 500px;
+    background: white;
+    padding: 30px;
+}
+
+.preferences-body {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.preference-option {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 15px;
+    background: #fdfaf7;
+    border-radius: 12px;
+    text-align: left;
+}
+
+.option-main {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
+}
+
+.option-text h3 {
+    margin: 0;
+    font-size: 1em;
+    color: #2c3e50;
+}
+
+.option-text p {
+    margin: 3px 0 0 0;
+    font-size: 0.85em;
+    color: #777;
+}
+
+/* Switch Styles */
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 44px;
+    height: 24px;
+    margin-left: 10px;
+}
+
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: .4s;
+    border-radius: 24px;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+}
+
+input:checked+.slider {
+    background-color: var(--color-acento);
+}
+
+input:checked+.slider:before {
+    transform: translateX(20px);
+}
+
+#prefStatusMessage {
+    padding: 12px;
+    border-radius: 8px;
+    font-size: 0.9em;
+}
+
+.status-success {
+    background: #d4edda;
+    color: #155724;
+}
+
+.status-error {
+    background: #f8d7da;
+    color: #721c24;
+}

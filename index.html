@@ -320,8 +320,8 @@
 
             <div class="settings-actions">
                 <button id="clearHistoryBtn" class="danger-btn">Borrar Historial</button>
-                <a href="preferences.html" target="_blank" class="preferences-btn">Gestionar preferencias de email y
-                    cuenta 🌿</a>
+                <button id="openPreferencesBtn" class="secondary-btn">Gestionar preferencias de email y cuenta
+                    🌿</button>
                 <button id="saveSettingsBtn" class="save-btn">Guardar Cambios</button>
                 <p class="danger-hint"><strong>⚠️ ADVERTENCIA:</strong> Al borrar el historial se eliminarán todas
                     tus
@@ -441,6 +441,74 @@
             <div class="legal-actions">
                 <button id="cancelLegalBtn" class="cancel-btn">Cancelar</button>
                 <button id="confirmLegalBtn" class="save-btn" disabled>Confirmar y Seguir</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Preferencias de Email y Cuenta -->
+    <div id="preferencesModal" class="modal">
+        <div class="modal-content preferences-modal-content">
+            <span class="close-modal close-preferences">&times;</span>
+            <div class="preferences-header" style="text-align: center; margin-bottom: 25px;">
+                <h2 style="color: var(--color-acento); margin-bottom: 10px;">Gestiona tu conexión 🌿</h2>
+                <p style="font-size: 0.9em; color: #666;">Elige qué tipo de mensajes quieres recibir de nosotros.</p>
+            </div>
+            <div class="preferences-body">
+                <div class="preference-option">
+                    <div class="option-main">
+                        <div class="option-icon"><img src="assets/icon_bienvenida.png" alt="Inspiración"
+                                style="width: 30px;"></div>
+                        <div class="option-text">
+                            <h3>Inspiración y Comunidad</h3>
+                            <p>Chispas de inspiración y novedades para tu voz.</p>
+                        </div>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" id="marketingToggle" checked
+                            title="Consentimiento de Inspiración y Comunidad">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <div class="preference-option">
+                    <div class="option-main">
+                        <div class="option-icon"><img src="assets/icon_viaje.png" alt="Acompañamiento"
+                                style="width: 30px;"></div>
+                        <div class="option-text">
+                            <h3>Acompañamiento en el Viaje</h3>
+                            <p>Guía y celebración de tus avances en los módulos.</p>
+                        </div>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" id="lifecycleToggle" checked
+                            title="Consentimiento de Acompañamiento en el Viaje">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <div class="preference-option disabled" style="opacity: 0.6;">
+                    <div class="option-main">
+                        <div class="option-icon"><img src="assets/icon_ajustes.png" alt="Técnico" style="width: 30px;">
+                        </div>
+                        <div class="option-text">
+                            <h3>Solo lo imprescindible</h3>
+                            <p>Comunicaciones técnicas y administrativas necesarias.</p>
+                        </div>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" checked disabled title="Comunicaciones administrativas obligatorias">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <div id="prefStatusMessage" style="margin-top: 15px; text-align: center; display: none;"></div>
+                <button id="savePreferencesBtn" class="save-btn" style="width: 100%; margin-top: 25px;">Guardar
+                    Preferencias</button>
+                <div class="account-deletion-section"
+                    style="margin-top: 35px; border-top: 1px dashed #ddd; padding-top: 20px; text-align: center;">
+                    <p style="font-size: 0.8em; color: #888; margin-bottom: 12px;">¿Deseas cerrar tu bitácora por
+                        completo?</p>
+                    <button id="deleteAccountBtn" class="danger-btn"
+                        style="font-size: 0.8em; padding: 6px 15px; border: 1px solid #e74c3c; background: transparent; color: #e74c3c; border-radius: 20px; cursor: pointer;">Eliminar
+                        mi cuenta y datos</button>
+                </div>
             </div>
         </div>
     </div>
