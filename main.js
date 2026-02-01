@@ -942,15 +942,15 @@ const MODULOS = {
                 audioItem.innerHTML = `
                 <div class="audio-info">
                     <strong>Relajación Alquímica</strong>
-                    <span>Elige la frecuencia que necesites hoy.</span>
+                    <span>Elige la frecuencia que necesites oír.</span>
                 </div>
                 <div class="audio-controls-stacked">
                     <select id="freqSelector" class="audio-select" onchange="if(currentAudio) { currentAudio.pause(); currentAudio=null; if(currentAudioBtn) currentAudioBtn.innerHTML='▶'; }">
                         ${AUDIOS_BOTIQUIN.map(audio => `<option value="${audio.file}" title="${audio.desc}">${audio.title}</option>`).join('')}
                     </select>
                     <div class="audio-actions">
-                        <button class="audio-loop-btn active" onclick="toggleLoop(this)" title="Repetir infinitamente">🔄 Bucle</button>
-                        <button class="audio-play-btn" onclick="reproducirAudioBotiquin(document.getElementById('freqSelector').value, this)">▶ Reproducir</button>
+                        <button class="audio-loop-btn active" onclick="toggleLoop(this)" title="Repetir infinitamente">🔄</button>
+                        <button class="audio-play-btn" onclick="reproducirAudioBotiquin(document.getElementById('freqSelector').value, this)">▶</button>
                     </div>
                 </div>
             `;

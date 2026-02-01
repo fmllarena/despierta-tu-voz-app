@@ -3235,16 +3235,17 @@ textarea#chatMentoriaInput {
 }
 
 .audio-loop-btn {
-    flex: 1;
-    background: #f5f5f5;
-    color: #666;
-    border: 1px solid #ddd !important;
+    flex: 0 0 50px;
+    background: #fdfaf7;
+    color: #8e7d6d;
+    border: 1px solid #eee !important;
 }
 
 .audio-loop-btn.active {
-    background: #eef7ff;
-    color: #3498db;
-    border-color: #3498db !important;
+    background: #fdfaf7;
+    color: #8e7d6d;
+    border-color: var(--color-acento) !important;
+    box-shadow: inset 0 0 5px rgba(142, 125, 109, 0.2);
 }
 
 .audio-play-btn {
