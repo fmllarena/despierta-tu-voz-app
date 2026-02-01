@@ -283,6 +283,7 @@ header p {
     margin-top: 20px;
     padding-top: 15px;
     border-top: 1px dashed rgba(142, 125, 109, 0.3);
+    width: 100%;
 }
 
 .botiquin-audios h4 {
@@ -400,8 +401,7 @@ header p {
     background: #fdf2f2 !important;
     border: 1px solid #f9dcdc !important;
     position: relative;
-    padding-top: 35px !important;
-    /* Espacio para el botón 'Oír ejercicio' */
+    padding-top: 15px !important;
 }
 
 .ia p {

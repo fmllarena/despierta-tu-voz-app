@@ -9,9 +9,7 @@ const MENSAJE_BIENVENIDA = `<p>Hola, ¡qué alegría que estés aquí! Soy tu Me
 const FRASES_PENSAR = ["Procesando la respuesta..."];
 
 const AUDIOS_BOTIQUIN = [
-    { id: 'relajacion', title: 'Relajación Profunda', file: 'assets/audios/relajacion.mp3', desc: 'Para calmar el sistema nervioso.' },
-    { id: 'calentamiento', title: 'Calentamiento Express', file: 'assets/audios/calentamiento.mp3', desc: 'Prepara tu voz rápidamente.' },
-    { id: 'foco', title: 'Foco y Presencia', file: 'assets/audios/foco.mp3', desc: 'Vuelve al aquí y ahora.' }
+    { id: 'relajacion', title: 'Relajación Profunda', file: './assets/audios/relajacion.mp3', desc: 'Para calmar el sistema nervioso.' }
 ];
 
 // --- FILTRO DE PRUDENCIA: Sesiones y Tiempo ---
@@ -771,10 +769,21 @@ function appendMessage(text, type, id = null) {
             div.appendChild(logoutBtn);
         }
 
-        // Crear contenedor para Mensaje + Avatar
+        // Si es Botiquín, no ponemos avatar
+        if (type === 'ia-botiquin') {
+            if (id) div.id = id;
+            ELEMENTS.chatBox.appendChild(div);
+            // Pequeño retardo para asegurar que el scroll se haga una vez inyectado el contenido extra (audios)
+            setTimeout(() => {
+                div.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 100);
+            return;
+        }
+
+        // Crear contenedor para Mensaje + Avatar (resto de mensajes IA)
         const container = document.createElement('div');
         container.className = 'ia-container';
-        if (id) container.id = id; // El ID va al contenedor para poder borrarlo todo junto (ej: msg-thinking)
+        if (id) container.id = id;
 
         const avatar = document.createElement('div');
         avatar.className = 'ia-avatar';
@@ -1925,10 +1934,10 @@ function reproducirAudioBotiquin(file, btn) {
     const loopBtn = btn.parentElement.querySelector('.audio-loop-btn');
     const isLooping = loopBtn ? loopBtn.classList.contains('active') : true;
 
-    if (currentAudio && currentAudio.src.includes(file)) {
+    if (currentAudio && currentAudio.src.includes(file.replace('./', ''))) {
         if (currentAudio.paused) {
             currentAudio.loop = isLooping;
-            currentAudio.play();
+            currentAudio.play().catch(e => console.error("Error play:", e));
             btn.innerHTML = '⏸';
         } else {
             currentAudio.pause();
@@ -1942,11 +1951,20 @@ function reproducirAudioBotiquin(file, btn) {
         if (currentAudioBtn) currentAudioBtn.innerHTML = '▶';
     }
 
+    console.log("🔊 Intentando reproducir:", file);
     currentAudio = new Audio(file);
     currentAudio.loop = isLooping;
     currentAudioBtn = btn;
-    currentAudio.play();
-    btn.innerHTML = '⏸';
+
+    currentAudio.play()
+        .then(() => {
+            btn.innerHTML = '⏸';
+        })
+        .catch(err => {
+            console.error("Error reproduciendo archivo:", err);
+            btn.innerHTML = '❌';
+            setTimeout(() => btn.innerHTML = '▶', 2000);
+        });
 
     currentAudio.onended = () => {
         if (!currentAudio.loop) {
@@ -1954,6 +1972,11 @@ function reproducirAudioBotiquin(file, btn) {
             currentAudio = null;
             currentAudioBtn = null;
         }
+    };
+
+    currentAudio.onerror = (e) => {
+        console.error("Error cargando audio:", e);
+        btn.innerHTML = '⚠️';
     };
 }
 
