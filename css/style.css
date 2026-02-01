@@ -2410,6 +2410,17 @@ textarea#chatMentoriaInput {
     color: white;
 }
 
+.preferences-btn {
+    background: #f0f0f0;
+    color: #555;
+    border: 1px solid #ddd;
+}
+
+.preferences-btn:hover {
+    background: #e8e8e8;
+    transform: translateY(-2px);
+}
+
 .danger-zone {
     display: contents;
 }

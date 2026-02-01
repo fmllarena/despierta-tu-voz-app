@@ -139,8 +139,13 @@ async function processChat(req) {
         const promises = [
             supabase.from('user_profiles').select('nombre, historia_vocal, ultimo_resumen, last_hito_completed, mentor_focus, mentor_personality, mentor_length, mentor_language, weekly_goal').eq('user_id', userId).maybeSingle(),
             supabase.from('user_coaching_data').select('linea_vida_hitos, herencia_raices, roles_familiares, ritual_sanacion, plan_accion').eq('user_id', userId).maybeSingle(),
-            // 1. Contexto Inmediato: Últimos 10 mensajes (Chat fluido)
-            supabase.from('mensajes').select('texto, emisor, created_at').eq('alumno', userId).order('created_at', { ascending: false }).limit(10),
+            // 1. Contexto Inmediato: Mensajes de los últimos 2 días (máx 50 para estabilidad)
+            supabase.from('mensajes')
+                .select('texto, emisor, created_at')
+                .eq('alumno', userId)
+                .gte('created_at', new Date(Date.now() - 48 * 3600 * 1000).toISOString())
+                .order('created_at', { ascending: false })
+                .limit(50),
             // 2. Contexto Evolutivo: Las últimas 10 Crónicas de Alquimia (Memoria a largo plazo)
             supabase.from('mensajes').select('texto, emisor, created_at').eq('alumno', userId).eq('emisor', 'resumen_diario').order('created_at', { ascending: false }).limit(10)
         ];
