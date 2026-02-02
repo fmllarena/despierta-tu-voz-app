@@ -18,7 +18,11 @@ const ELEMENTS = {
     mentorNotes: document.getElementById('mentorNotes'),
     saveNotesBtn: document.getElementById('saveNotesBtn'),
     customQuery: document.getElementById('customQuery'),
-    debugInfo: document.getElementById('debugInfo')
+    debugInfo: document.getElementById('debugInfo'),
+    // Elementos del nuevo Chat Consultivo
+    advisorChatBox: document.getElementById('advisorChatBox'),
+    advisorInput: document.getElementById('advisorInput'),
+    sendAdvisorBtn: document.getElementById('sendAdvisorBtn')
 };
 
 async function init() {
@@ -48,6 +52,11 @@ async function init() {
         ELEMENTS.generateBtn.onclick = generateBriefing;
         ELEMENTS.saveNotesBtn.onclick = saveNotes;
         if (ELEMENTS.reloadStudentsBtn) ELEMENTS.reloadStudentsBtn.onclick = cargarListaAlumnos;
+
+        // Listeners del Chat Consultivo
+        ELEMENTS.sendAdvisorBtn.onclick = consultarAsesor;
+        ELEMENTS.advisorInput.onkeypress = (e) => { if (e.key === 'Enter') consultarAsesor(); };
+
         await cargarListaAlumnos();
     } catch (e) {
         console.error("Error inicializando dashboard:", e);
@@ -145,7 +154,11 @@ async function generateBriefing() {
             throw new Error(briefingData.error);
         }
 
-        ELEMENTS.reportContent.innerText = briefingData.text;
+        if (window.marked) {
+            ELEMENTS.reportContent.innerHTML = window.marked.parse(briefingData.text);
+        } else {
+            ELEMENTS.reportContent.innerText = briefingData.text;
+        }
         ELEMENTS.reportContainer.style.display = 'block';
 
     } catch (e) {
@@ -154,17 +167,80 @@ async function generateBriefing() {
         ELEMENTS.loading.innerHTML = `<p style="color: #e74c3c;">❌ Error: ${e.message}</p>`;
     } finally {
         ELEMENTS.generateBtn.disabled = false;
-        // Solo ocultamos el loading si hay un reporte o si hubo error definitivo
         if (ELEMENTS.reportContainer.style.display === 'block' || ELEMENTS.loading.innerHTML.includes('❌')) {
             ELEMENTS.loading.style.display = 'none';
         }
-        // Restaurar texto original para la próxima vez
         setTimeout(() => {
             if (ELEMENTS.loading.style.display === 'none') {
                 ELEMENTS.loading.innerHTML = '<p>🔮 Conectando con la sabiduría del Mentor... Analizando historial...</p>';
             }
         }, 3000);
     }
+}
+
+async function consultarAsesor() {
+    const query = ELEMENTS.advisorInput.value.trim();
+    const pass = ELEMENTS.mentorPass.value.trim();
+
+    if (!query) return;
+    if (!currentStudentId) return alert("Primero debes generar el informe de un alumno para tener contexto.");
+    if (!pass) return alert("Introduce tu clave de mentor para consultar al asesor.");
+
+    // Añadir mensaje del mentor a la UI
+    appendChatMessage('mentor', query);
+    ELEMENTS.advisorInput.value = "";
+    ELEMENTS.advisorInput.disabled = true;
+
+    // Indicador de "pensando" en el chat
+    const thinkingId = 'thinking-' + Date.now();
+    const thinkingDiv = document.createElement('div');
+    thinkingDiv.id = thinkingId;
+    thinkingDiv.className = 'chat-msg ia';
+    thinkingDiv.innerText = "Analizando historial...";
+    ELEMENTS.advisorChatBox.appendChild(thinkingDiv);
+    ELEMENTS.advisorChatBox.scrollTop = ELEMENTS.advisorChatBox.scrollHeight;
+
+    try {
+        const response = await fetch('/api/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                intent: 'mentor_advisor',
+                message: query,
+                userId: currentStudentId,
+                mentorPassword: pass
+            })
+        });
+
+        const data = await response.json();
+        document.getElementById(thinkingId)?.remove();
+
+        if (data.error) throw new Error(data.error);
+
+        appendChatMessage('ia', data.text);
+
+    } catch (e) {
+        console.error("Error consulta asesor:", e);
+        document.getElementById(thinkingId)?.remove();
+        appendChatMessage('ia', "❌ Error: " + e.message);
+    } finally {
+        ELEMENTS.advisorInput.disabled = false;
+        ELEMENTS.advisorInput.focus();
+    }
+}
+
+function appendChatMessage(role, text) {
+    const msgDiv = document.createElement('div');
+    msgDiv.className = `chat-msg ${role}`;
+
+    if (role === 'ia' && window.marked) {
+        msgDiv.innerHTML = window.marked.parse(text);
+    } else {
+        msgDiv.innerText = text;
+    }
+
+    ELEMENTS.advisorChatBox.appendChild(msgDiv);
+    ELEMENTS.advisorChatBox.scrollTop = ELEMENTS.advisorChatBox.scrollHeight;
 }
 
 async function saveNotes() {
