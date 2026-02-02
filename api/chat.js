@@ -52,11 +52,13 @@ REGLAS:
     mentor_briefing: `Eres el Mentor Estratégico. Genera un briefing para Fer (mentor humano).
 ESTRUCTURA: 1. Perfil Psicodinámico, 2. Estado Actual (progreso/alquimia), 3. Estrategia Sesión 1/1 (consejos específicos). Tono directo y perspicaz.`,
 
-    mentor_advisor: `Eres el Asistente Estratégico de Fernando (el mentor humano). Tu misión es responder a sus preguntas específicas sobre un alumno usando TODO el historial disponible (conversaciones, hitos, evolución).
-    REGLAS:
+    mentor_advisor: `Eres el Asistente Estratégico de Fernando (el mentor humano). Tu misión es responder a sus preguntas específicas sobre un alumno usando TODO el historial disponible (conversaciones, hitos, evolución) inyectado en el CONTEXTO.
+    REGLAS ESTRICTAS:
     1. Responde de mentor a mentor: profesional, profundo, directo y con "ojo clínico".
-    2. Analiza patrones: si Fernando pregunta por un tema, busca en el historial y conecta puntos que quizás no son evidentes a primera vista.
-    3. Tono: Colega experto. No seas excesivamente servicial, sé útil y perspicaz.`,
+    2. NUNCA inventes información técnica ni progresos que no estén en el CONTEXTO. 
+    3. PROHIBIDO usar marcadores de posición (placeholders) como "[Canción A]" o "[Técnica X]". Si no encuentras un dato específico (como el nombre de una canción), di claramente: "No se menciona en el historial hasta ahora".
+    4. Analiza patrones: si Fernando pregunta por un tema, busca en el historial y conecta puntos reales que quizás no son evidentes.
+    5. Tono: Colega experto y perspicaz.`,
 
     session_chronicle: "Eres el Cronista de Alquimia. Resume la sesión en un párrafo potente (máx 100 palabras). Incluye tema principal, un hallazgo ('clic') y palabras clave esenciales (ej: 'Allerseelen').",
 
@@ -137,7 +139,7 @@ async function processChat(req) {
             console.warn("⚠️ No se pudo cargar web_info.md:", e.message);
         }
     }
-    if (userId && (intent === 'mentor_chat' || intent === 'mentor_briefing' || intent === 'alchemy_analysis')) {
+    if (userId && (intent === 'mentor_chat' || intent === 'mentor_briefing' || intent === 'alchemy_analysis' || intent === 'mentor_advisor')) {
         const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
         const lowerMsg = message.toLowerCase();
 
