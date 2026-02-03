@@ -143,25 +143,56 @@ async function processChat(req) {
         const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
         const lowerMsg = message.toLowerCase();
 
-        // SISTEMA DE MEMORIA HÍBRIDA (Cronología + Profundidad)
+        // 1. PRIMERO: Obtener el tier del usuario para decidir qué datos cargar
+        const { data: tierData } = await supabase
+            .from('user_profiles')
+            .select('subscription_tier')
+            .eq('user_id', userId)
+            .maybeSingle();
+
+        const userTier = tierData?.subscription_tier || 'free';
+        const hasPremiumMemory = userTier === 'pro' || userTier === 'premium';
+
+        console.log(`🔍 [TIER CHECK] Usuario: ${userId.substring(0, 8)}... | Tier: ${userTier} | Memoria Activa: ${hasPremiumMemory}`);
+
+        // 2. SISTEMA DE MEMORIA HÍBRIDA (Solo para Pro/Premium)
         const promises = [
+            // Perfil básico (todos los usuarios)
             supabase.from('user_profiles').select('nombre, historia_vocal, ultimo_resumen, last_hito_completed, mentor_focus, mentor_personality, mentor_length, mentor_language, weekly_goal').eq('user_id', userId).maybeSingle(),
-            supabase.from('user_coaching_data').select('linea_vida_hitos, herencia_raices, roles_familiares, ritual_sanacion, plan_accion').eq('user_id', userId).maybeSingle(),
-            // 1. Contexto Inmediato: Mensajes de los últimos 2 días (máx 50 para estabilidad)
-            supabase.from('mensajes')
-                .select('texto, emisor, created_at')
-                .eq('alumno', userId)
-                .gte('created_at', new Date(Date.now() - 48 * 3600 * 1000).toISOString())
-                .order('created_at', { ascending: false })
-                .limit(50),
-            // 2. Contexto Evolutivo: Las últimas 10 Crónicas de Alquimia (Memoria a largo plazo)
-            supabase.from('mensajes').select('texto, emisor, created_at').eq('alumno', userId).eq('emisor', 'resumen_diario').order('created_at', { ascending: false }).limit(10)
+            // Datos de coaching/viaje (todos los usuarios - incluye Módulo 1)
+            supabase.from('user_coaching_data').select('linea_vida_hitos, herencia_raices, roles_familiares, ritual_sanacion, plan_accion').eq('user_id', userId).maybeSingle()
         ];
 
-        // 2. Si detectamos intención de memoria o palabras específicas, buscamos profundo
+        // Solo usuarios Pro/Premium tienen acceso a la tabla mensajes (memoria de conversaciones)
+        if (hasPremiumMemory) {
+            // Contexto Inmediato: Mensajes de los últimos 2 días (máx 50)
+            promises.push(
+                supabase.from('mensajes')
+                    .select('texto, emisor, created_at')
+                    .eq('alumno', userId)
+                    .gte('created_at', new Date(Date.now() - 48 * 3600 * 1000).toISOString())
+                    .order('created_at', { ascending: false })
+                    .limit(50)
+            );
+            // Contexto Evolutivo: Las últimas 10 Crónicas de Alquimia
+            promises.push(
+                supabase.from('mensajes')
+                    .select('texto, emisor, created_at')
+                    .eq('alumno', userId)
+                    .eq('emisor', 'resumen_diario')
+                    .order('created_at', { ascending: false })
+                    .limit(10)
+            );
+        } else {
+            // Usuarios Free: No tienen acceso a la memoria de conversaciones
+            promises.push(Promise.resolve({ data: [] }));
+            promises.push(Promise.resolve({ data: [] }));
+        }
+
+        // Búsqueda profunda de memoria (solo Pro/Premium)
         const triggersMemory = ["recordar", "hablamos", "dijiste", "comentamos", "anterior", "pasado", "memoria", "acuerdas", "acodar", "sabes", "sabías", "allerseelen"].some(t => lowerMsg.includes(t));
 
-        if (triggersMemory) {
+        if (hasPremiumMemory && triggersMemory) {
             const noise = ["acuerdas", "hablamos", "dijiste", "comentamos", "anterior", "pasado", "memoria", "sobre", "puedes", "recordar", "sabes", "quiero", "tema", "algo", "sabías", "acordarte"];
             const keywords = message.toLowerCase().replace(/[?,.;!]/g, "").split(" ")
                 .filter(w => w.length > 3 && !noise.includes(w))
@@ -180,17 +211,17 @@ async function processChat(req) {
 
         const [perfilRes, viajeRes, recentRes, chronRes, deepRes] = await Promise.all(promises);
 
-        // Unificar y deduplicar mensajes
+        // Unificar y deduplicar mensajes (solo si hay datos - Pro/Premium)
         let allMessages = [...(recentRes.data || []), ...(chronRes.data || []), ...(deepRes.data || [])];
         const uniqueMessages = Array.from(new Map(allMessages.map(m => [`${m.created_at}_${m.texto.substring(0, 30)}`, m])).values());
         uniqueMessages.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
 
-        console.log(`📊 [DEBUG Contexto] AlumnoID: ${userId.substring(0, 8)}... | Recientes: ${recentRes.data?.length || 0} | Crónicas: ${chronRes.data?.length || 0} | Profundos: ${deepRes.data?.length || 0} | Final: ${uniqueMessages.length} mensajes.`);
+        console.log(`📊 [DEBUG Contexto] AlumnoID: ${userId.substring(0, 8)}... | Tier: ${userTier} | Recientes: ${recentRes.data?.length || 0} | Crónicas: ${chronRes.data?.length || 0} | Profundos: ${deepRes.data?.length || 0} | Final: ${uniqueMessages.length} mensajes.`);
 
         if (perfilRes.data) {
             const p = perfilRes.data;
             const hito = p.last_hito_completed || 0;
-            context += `\n--- SITUACIÓN ACTUAL SINTETIZADA (Perfil General) ---\n- Nombre: ${p.nombre}\n- Historia Vocal: ${p.historia_vocal}\n- Último Estado: ${p.ultimo_resumen}\n- Mi Viaje: Módulo ${hito}/5 completado.\n`;
+            context += `\n--- SITUACIÓN ACTUAL SINTETIZADA (Perfil General) ---\n- Nombre: ${p.nombre}\n- Historia Vocal: ${p.historia_vocal}\n- Último Estado: ${p.ultimo_resumen}\n- Mi Viaje: Módulo ${hito}/5 completado.\n- Nivel de Suscripción: ${userTier.toUpperCase()}\n`;
 
             // Inyectar preferencias
             context += `\n--- PREFERENCIAS DEL ALUMNO ---\n`;
@@ -204,6 +235,7 @@ async function processChat(req) {
         }
         if (viajeRes.data) context += `\n--- DATOS DE VIAJE/COACHING ---\n${JSON.stringify(viajeRes.data)}\n`;
 
+        // Solo mostrar cronología si hay mensajes (usuarios Pro/Premium con historial)
         if (uniqueMessages.length > 0) {
             context += `\n--- CRONOLOGÍA DE EVOLUCIÓN (Diario de Alquimia - Sesiones Pasadas) ---\n`;
             uniqueMessages.forEach(r => {
@@ -211,7 +243,11 @@ async function processChat(req) {
                 context += `[${new Date(r.created_at).toLocaleDateString()}] ${prefix}: ${r.texto}\n`;
             });
             console.log("📝 Contexto de memoria (Crónicas y Chat) inyectado satisfactoriamente.");
+        } else if (!hasPremiumMemory) {
+            // Mensaje especial para usuarios Free
+            context += `\n[NOTA INTERNA: Este usuario tiene el plan GRATIS. No dispone de memoria de conversaciones anteriores. Trata cada sesión como un nuevo encuentro, aunque puedes acceder a sus datos de coaching/viaje si los ha completado.]\n`;
         }
+
 
         // --- SISTEMA DE RECOMENDACIONES DE BIBLIOTECA (Blog Fernando) ---
         if (canRecommend && blogLibrary.length > 0) {
