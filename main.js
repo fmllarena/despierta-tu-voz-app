@@ -141,6 +141,7 @@ const ELEMENTS = {
     inspiracionModal: document.getElementById('inspiracionModal'),
     inspiracionFrase: document.querySelector('.inspiracion-frase'),
     inspiracionAutor: document.querySelector('.inspiracion-autor'),
+    closeInspiracion: document.getElementById('closeInspiracion'),
     // Botiquín Modal
     botiquinModal: document.getElementById('botiquinModal'),
     botiquinContent: document.getElementById('botiquinContent'),
@@ -442,24 +443,24 @@ function updateUI(user) {
         }
 
         // El perfil puede tardar un poco en cargar, usamos el tier del perfil si existe
-        const tier = (userProfile?.subscription_tier || 'free').toLowerCase();
+        const tier = (userProfile?.subscription_tier || 'free').toLowerCase().trim();
         console.log("🛠️ Debug UI - User:", user.email, "Tier Detectado:", tier);
 
         if (tier === 'premium' || tier === 'transforma') {
             if (ELEMENTS.upgradeBtn) ELEMENTS.upgradeBtn.style.display = 'none';
-            if (ELEMENTS.sesionBtn) ELEMENTS.sesionBtn.style.display = 'block';
+            if (ELEMENTS.sesionBtn) ELEMENTS.sesionBtn.style.display = 'flex'; // Usar flex si es icon-nav-btn
             console.log("✅ Mostrando botón de sesiones (Premium)");
-        } else if (tier === 'pro' || tier === 'profundiza') {
+        } else if (tier === 'pro' || tier === 'profundiza' || tier === 'miembro promo inicial') {
             if (ELEMENTS.upgradeBtn) {
                 ELEMENTS.upgradeBtn.title = "Mejorar a Transforma";
-                ELEMENTS.upgradeBtn.style.display = 'block';
+                ELEMENTS.upgradeBtn.style.display = 'flex';
             }
-            if (ELEMENTS.sesionBtn) ELEMENTS.sesionBtn.style.display = 'block';
-            console.log("✅ Mostrando botón de sesiones (Pro)");
+            if (ELEMENTS.sesionBtn) ELEMENTS.sesionBtn.style.display = 'flex';
+            console.log("✅ Mostrando botón de sesiones (Pro/Promo)");
         } else {
             if (ELEMENTS.upgradeBtn) {
                 ELEMENTS.upgradeBtn.title = "Mejorar Plan";
-                ELEMENTS.upgradeBtn.style.display = 'block';
+                ELEMENTS.upgradeBtn.style.display = 'flex';
             }
             if (ELEMENTS.sesionBtn) ELEMENTS.sesionBtn.style.display = 'none';
             console.log("ℹ️ Escondiendo botón de sesiones (Free)");
@@ -1291,23 +1292,33 @@ const AJUSTES = {
         btn.innerText = "Guardando...";
 
         try {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) throw new Error("Debes iniciar sesión.");
+
             const updates = {
                 mentor_focus: parseInt(ELEMENTS.focusSlider.value),
                 mentor_personality: parseInt(ELEMENTS.personalitySlider.value),
                 mentor_length: parseInt(ELEMENTS.lengthSlider.value),
                 mentor_language: ELEMENTS.languageSelect.value,
-                weekly_goal: ELEMENTS.weeklyGoalInput.value.trim() // Usamos la misma columna para el Trato Preferido
+                weekly_goal: ELEMENTS.weeklyGoalInput.value.trim()
             };
 
-            const { error } = await supabase
+            const { data: updatedProfile, error } = await supabase
                 .from('user_profiles')
                 .update(updates)
-                .eq('user_id', userProfile.user_id);
+                .eq('user_id', user.id)
+                .select()
+                .single();
 
             if (error) throw error;
 
-            // Actualizar perfil local
-            Object.assign(userProfile, updates);
+            // Actualizar perfil local obligatoriamente con la respuesta del servidor
+            if (updatedProfile) {
+                userProfile = updatedProfile;
+                window.userProfile = updatedProfile;
+            }
+
+            console.log("✅ Ajustes guardados y perfil local sincronizado:", updates);
             alert("Ajustes guardados correctamente.");
             AJUSTES.cerrarModal();
         } catch (e) {
@@ -1697,6 +1708,7 @@ const SESIONES = {
 // Event Listeners Sesiones
 ELEMENTS.sesionBtn?.addEventListener('click', () => SESIONES.abrirModal());
 ELEMENTS.closeSesion?.addEventListener('click', () => ELEMENTS.sesionModal.style.display = 'none');
+ELEMENTS.closeInspiracion?.addEventListener('click', () => ELEMENTS.inspiracionModal.style.display = 'none');
 ELEMENTS.book30Btn?.addEventListener('click', () => SESIONES.reservar('normal30'));
 ELEMENTS.book60Btn?.addEventListener('click', () => SESIONES.reservar('normal60'));
 ELEMENTS.buyExtra30Btn?.addEventListener('click', () => SESIONES.comprarExtra('30'));

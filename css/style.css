@@ -599,6 +599,14 @@ textarea#chatMentoriaInput {
     .user {
         max-width: 85%;
     }
+
+    /* Aumentar área de clic para botones de cierre en móvil */
+    .close-modal {
+        padding: 15px;
+        right: 10px;
+        top: 5px;
+        z-index: 10;
+    }
 }
 
 .logout-btn {
