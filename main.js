@@ -442,20 +442,27 @@ function updateUI(user) {
         }
 
         // El perfil puede tardar un poco en cargar, usamos el tier del perfil si existe
-        const tier = userProfile?.subscription_tier || 'free';
-        console.log("Actualizando UI para Tier:", tier);
+        const tier = (userProfile?.subscription_tier || 'free').toLowerCase();
+        console.log("🛠️ Debug UI - User:", user.email, "Tier Detectado:", tier);
 
-        if (tier === 'premium') {
-            ELEMENTS.upgradeBtn.style.display = 'none';
-            ELEMENTS.sesionBtn.style.display = 'block';
-        } else if (tier === 'pro') {
-            ELEMENTS.upgradeBtn.title = "Mejorar a Transforma";
-            ELEMENTS.upgradeBtn.style.display = 'block';
-            ELEMENTS.sesionBtn.style.display = 'block';
+        if (tier === 'premium' || tier === 'transforma') {
+            if (ELEMENTS.upgradeBtn) ELEMENTS.upgradeBtn.style.display = 'none';
+            if (ELEMENTS.sesionBtn) ELEMENTS.sesionBtn.style.display = 'block';
+            console.log("✅ Mostrando botón de sesiones (Premium)");
+        } else if (tier === 'pro' || tier === 'profundiza') {
+            if (ELEMENTS.upgradeBtn) {
+                ELEMENTS.upgradeBtn.title = "Mejorar a Transforma";
+                ELEMENTS.upgradeBtn.style.display = 'block';
+            }
+            if (ELEMENTS.sesionBtn) ELEMENTS.sesionBtn.style.display = 'block';
+            console.log("✅ Mostrando botón de sesiones (Pro)");
         } else {
-            ELEMENTS.upgradeBtn.title = "Mejorar Plan";
-            ELEMENTS.upgradeBtn.style.display = 'block';
-            ELEMENTS.sesionBtn.style.display = 'none';
+            if (ELEMENTS.upgradeBtn) {
+                ELEMENTS.upgradeBtn.title = "Mejorar Plan";
+                ELEMENTS.upgradeBtn.style.display = 'block';
+            }
+            if (ELEMENTS.sesionBtn) ELEMENTS.sesionBtn.style.display = 'none';
+            console.log("ℹ️ Escondiendo botón de sesiones (Free)");
         }
         if (ELEMENTS.ajustesBtn) ELEMENTS.ajustesBtn.style.display = 'block';
         if (ELEMENTS.supportBubble) ELEMENTS.supportBubble.style.display = 'flex';
@@ -985,11 +992,17 @@ const MODULOS = {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
 
-        const { data: perfil } = await supabase.from('user_profiles').select('tier, ultimo_resumen, nombre').eq('user_id', user.id).single();
+        // Intentar usar el perfil global primero para mayor velocidad
+        let perfil = window.userProfile;
+        if (!perfil) {
+            const { data } = await supabase.from('user_profiles').select('*').eq('user_id', user.id).single();
+            perfil = data;
+        }
 
         let frase, autor;
+        const tier = perfil?.subscription_tier || 'free';
 
-        if (perfil?.tier === 'free') {
+        if (tier === 'free') {
             // Frases de músicos famosos para tier free
             const frasesMusicos = [
                 { frase: "La música puede cambiar el mundo porque puede cambiar a las personas.", autor: "Bono" },
@@ -1016,25 +1029,34 @@ const MODULOS = {
             // Para pro/premium: frase personalizada basada en su historial
             try {
                 const nombre = perfil?.nombre || "viajero/a";
-                const resumen = perfil?.ultimo_resumen || "alguien que está comenzando su viaje vocal";
+                const contexto = `
+Resumen: ${perfil?.ultimo_resumen || "Iniciando transformación vocal"}
+Desafíos: ${perfil?.creencias || "Trabajando en la liberación de la voz"}
+Nivel: ${perfil?.nivel_alquimia || 1}/10
+Logros: ${perfil?.creencias_transmutadas || "Camino de autodescubrimiento"}
+                `.trim();
 
-                const prompt = `Basándote en este perfil de usuario: "${resumen}", genera UNA SOLA frase inspiradora y motivadora personalizada (máximo 25 palabras) que le ayude hoy en su camino vocal. La frase debe ser directa, poderosa y conectar con su historia. NO incluyas comillas. Responde SOLO con la frase, nada más.`;
+                const prompt = `Eres el mentor vocal de ${nombre}. Basándote en su perfil:
+${contexto}
+
+Genera UNA sola frase inspiradora (máximo 15 palabras) que conecte DIRECTAMENTE con su historia o logros. 
+REGLA DE ORO: No seas genérico. Menciona algo que se parezca a lo que ha trabajado.
+NO incluyas comillas. Responde solo con la frase.`;
 
                 const respuesta = await llamarGemini(prompt, [], "inspiracion_dia", { userId: user.id });
-                frase = respuesta.trim().replace(/^["']|["']$/g, ''); // Eliminar comillas si las hay
+                frase = respuesta.trim().replace(/^["']|["']$/g, '');
                 autor = `Tu Mentor, para ${nombre}`;
             } catch (e) {
-                console.error("Error generando frase personalizada:", e);
-                // Fallback a frase genérica
-                frase = "Hoy es el día perfecto para dar un paso más en tu transformación vocal.";
+                console.error("Error frases:", e);
+                frase = "Tu voz es el eco de tu alma; hoy, permítele resonar con toda su verdad.";
                 autor = "Tu Mentor";
             }
         }
 
         // Mostrar en el modal
-        ELEMENTS.inspiracionFrase.textContent = frase;
-        ELEMENTS.inspiracionAutor.textContent = `— ${autor}`;
-        ELEMENTS.inspiracionModal.style.display = 'flex';
+        if (ELEMENTS.inspiracionFrase) ELEMENTS.inspiracionFrase.textContent = frase;
+        if (ELEMENTS.inspiracionAutor) ELEMENTS.inspiracionAutor.textContent = `— ${autor}`;
+        if (ELEMENTS.inspiracionModal) ELEMENTS.inspiracionModal.style.display = 'flex';
     },
 
     async toggleProgreso() {
