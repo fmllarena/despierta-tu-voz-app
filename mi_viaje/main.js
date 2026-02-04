@@ -341,7 +341,12 @@ function renderDiarioAlquimia(cronicas, notasPersonales) {
     `;
 
     if (cronicas.length === 0) {
-        contentHtml += `<p class="empty-state">Aún no tienes crónicas. Sigue conversando con el Mentor para que se generen automáticamente.</p>`;
+        const tier = (window.userProfile?.subscription_tier || 'free').toLowerCase();
+        if (tier === 'free') {
+            contentHtml += `<p class="empty-state">Cambia de Plan si quieres ver aquí los resúmenes de tus sesiones con el Mentor.</p>`;
+        } else {
+            contentHtml += `<p class="empty-state">Aún no tienes crónicas. Sigue conversando con el Mentor para que se generen automáticamente.</p>`;
+        }
     } else {
         cronicas.forEach(cronica => {
             const fecha = new Date(cronica.created_at);
