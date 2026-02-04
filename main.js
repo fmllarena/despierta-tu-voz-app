@@ -154,8 +154,32 @@ const ELEMENTS = {
     lifecycleToggle: document.getElementById('lifecycleToggle'),
     savePreferencesBtn: document.getElementById('savePreferencesBtn'),
     prefStatusMessage: document.getElementById('prefStatusMessage'),
-    deleteAccountBtn: document.getElementById('deleteAccountBtn')
+    deleteAccountBtn: document.getElementById('deleteAccountBtn'),
+    // Alert Custom
+    customAlert: document.getElementById('customAlert'),
+    alertMessage: document.getElementById('alertMessage'),
+    alertConfirmBtn: document.getElementById('alertConfirmBtn')
 };
+
+// --- UTILIDAD DE ALERTA PERSONALIZADA ---
+window.alertCustom = function (mensaje) {
+    if (!ELEMENTS.customAlert || !ELEMENTS.alertMessage) {
+        console.warn("CustomAlert no encontrado, usando alert nativo.");
+        alert(mensaje);
+        return;
+    }
+    ELEMENTS.alertMessage.innerText = mensaje;
+    ELEMENTS.customAlert.style.display = 'flex';
+};
+
+// Cerrar alerta con el botón
+ELEMENTS.alertConfirmBtn?.addEventListener('click', () => {
+    ELEMENTS.customAlert.style.display = 'none';
+});
+// Cerrar alerta al hacer clic fuera
+window.addEventListener('click', e => {
+    if (e.target === ELEMENTS.customAlert) ELEMENTS.customAlert.style.display = 'none';
+});
 
 const SOPORTE = {
     history: [],
@@ -1263,18 +1287,10 @@ const AJUSTES = {
         const tier = userProfile.subscription_tier || 'free';
         ELEMENTS.settingsUserTier.innerText = `PLAN ${TIER_NAMES[tier] || tier.toUpperCase()}`;
 
-        // Cargar valores actuales (Migración suave: si son <= 1, multiplicamos por 10 para el nuevo rango 1-10)
-        let focusVal = userProfile.mentor_focus ?? 5;
-        if (focusVal <= 1 && focusVal > 0) focusVal *= 10;
-        ELEMENTS.focusSlider.value = focusVal;
-
-        let personalityVal = userProfile.mentor_personality ?? 5;
-        if (personalityVal <= 1 && personalityVal > 0) personalityVal *= 10;
-        ELEMENTS.personalitySlider.value = personalityVal;
-
-        let lengthVal = userProfile.mentor_length ?? 5;
-        if (lengthVal <= 1 && lengthVal > 0) lengthVal *= 10;
-        ELEMENTS.lengthSlider.value = lengthVal;
+        // Cargar valores actuales tal cual están en la DB
+        ELEMENTS.focusSlider.value = userProfile.mentor_focus ?? 5;
+        ELEMENTS.personalitySlider.value = userProfile.mentor_personality ?? 5;
+        ELEMENTS.lengthSlider.value = userProfile.mentor_length ?? 5;
 
         ELEMENTS.languageSelect.value = userProfile.mentor_language || 'es';
         ELEMENTS.weeklyGoalInput.value = userProfile.weekly_goal || '';
@@ -1319,11 +1335,11 @@ const AJUSTES = {
             }
 
             console.log("✅ Ajustes guardados y perfil local sincronizado:", updates);
-            alert("Ajustes guardados correctamente.");
+            alertCustom("Ajustes guardados correctamente.");
             AJUSTES.cerrarModal();
         } catch (e) {
             console.error("Error guardando ajustes:", e);
-            alert("Error al guardar: " + e.message);
+            alertCustom("Error al guardar: " + e.message);
         } finally {
             btn.disabled = false;
             btn.innerText = "Guardar Cambios";
