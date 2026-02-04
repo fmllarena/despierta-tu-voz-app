@@ -90,7 +90,7 @@ const ELEMENTS = {
     mainHelpTooltip: document.getElementById('mainHelpTooltip'),
     headerButtons: document.querySelector('.header-buttons'),
     navButtons: {
-        bienvenida: document.getElementById('bienvenidaBtn'),
+        inspiracion: document.getElementById('inspiracionBtn'),
         viaje: document.getElementById('viajeBtn'),
         progreso: document.getElementById('progresoBtn'),
         botiquin: document.getElementById('botiquinBtn'),
@@ -137,6 +137,10 @@ const ELEMENTS = {
     sendSupportBtn: document.getElementById('sendSupportBtn'),
     whatsappSupportLink: document.getElementById('whatsappSupportLink'),
     closeSupport: document.querySelector('.close-support'),
+    // Modal de Inspiración
+    inspiracionModal: document.getElementById('inspiracionModal'),
+    inspiracionFrase: document.querySelector('.inspiracion-frase'),
+    inspiracionAutor: document.querySelector('.inspiracion-autor'),
     // Botiquín Modal
     botiquinModal: document.getElementById('botiquinModal'),
     botiquinContent: document.getElementById('botiquinContent'),
@@ -976,6 +980,63 @@ const MODULOS = {
 
         appendMessage(saludo, 'ia', 'msg-bienvenida');
     },
+
+    async mostrarInspiracion() {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        const { data: perfil } = await supabase.from('user_profiles').select('tier, ultimo_resumen, nombre').eq('user_id', user.id).single();
+
+        let frase, autor;
+
+        if (perfil?.tier === 'free') {
+            // Frases de músicos famosos para tier free
+            const frasesMusicos = [
+                { frase: "La música puede cambiar el mundo porque puede cambiar a las personas.", autor: "Bono" },
+                { frase: "La música es el lenguaje del espíritu. Abre el secreto de la vida trayendo paz, aboliendo conflictos.", autor: "Kahlil Gibran" },
+                { frase: "Sin música, la vida sería un error.", autor: "Friedrich Nietzsche" },
+                { frase: "La música es la aritmética de los sonidos, como la óptica es la geometría de la luz.", autor: "Claude Debussy" },
+                { frase: "Donde las palabras fallan, la música habla.", autor: "Hans Christian Andersen" },
+                { frase: "La música es el arte más directo, entra por el oído y va al corazón.", autor: "Magdalena Martínez" },
+                { frase: "La voz humana es el instrumento más bello de todos, pero es el más difícil de tocar.", autor: "Richard Strauss" },
+                { frase: "Cantar es como celebrar el oxígeno.", autor: "Björk" },
+                { frase: "La música es el corazón de la vida. Por ella habla el amor; sin ella no hay bien posible y con ella todo es hermoso.", autor: "Franz Liszt" },
+                { frase: "Tu voz es tu identidad. Cuídala, trabájala, y nunca dejes de creer en su poder.", autor: "Renée Fleming" },
+                { frase: "El canto es una celebración de la existencia.", autor: "Luciano Pavarotti" },
+                { frase: "La música es el verdadero lenguaje universal.", autor: "Carl Maria von Weber" },
+                { frase: "Cantar es rezar dos veces.", autor: "San Agustín" },
+                { frase: "La música es la poesía del aire.", autor: "Jean Paul Richter" },
+                { frase: "No cantes para vivir, vive para cantar.", autor: "Plácido Domingo" }
+            ];
+
+            const fraseAleatoria = frasesMusicos[Math.floor(Math.random() * frasesMusicos.length)];
+            frase = fraseAleatoria.frase;
+            autor = fraseAleatoria.autor;
+        } else {
+            // Para pro/premium: frase personalizada basada en su historial
+            try {
+                const nombre = perfil?.nombre || "viajero/a";
+                const resumen = perfil?.ultimo_resumen || "alguien que está comenzando su viaje vocal";
+
+                const prompt = `Basándote en este perfil de usuario: "${resumen}", genera UNA SOLA frase inspiradora y motivadora personalizada (máximo 25 palabras) que le ayude hoy en su camino vocal. La frase debe ser directa, poderosa y conectar con su historia. NO incluyas comillas. Responde SOLO con la frase, nada más.`;
+
+                const respuesta = await llamarGemini(prompt, [], "inspiracion_dia", { userId: user.id });
+                frase = respuesta.trim().replace(/^["']|["']$/g, ''); // Eliminar comillas si las hay
+                autor = `Tu Mentor, para ${nombre}`;
+            } catch (e) {
+                console.error("Error generando frase personalizada:", e);
+                // Fallback a frase genérica
+                frase = "Hoy es el día perfecto para dar un paso más en tu transformación vocal.";
+                autor = "Tu Mentor";
+            }
+        }
+
+        // Mostrar en el modal
+        ELEMENTS.inspiracionFrase.textContent = frase;
+        ELEMENTS.inspiracionAutor.textContent = `— ${autor}`;
+        ELEMENTS.inspiracionModal.style.display = 'flex';
+    },
+
     async toggleProgreso() {
         ['msg-botiquin', 'msg-bienvenida'].forEach(id => document.getElementById(id)?.remove());
         const modal = document.getElementById('diarioModal');
@@ -1488,7 +1549,7 @@ function b64toBlob(b64, type = '', sliceSize = 512) {
 // Event Listeners
 ELEMENTS.navButtons.botiquin?.addEventListener('click', () => MODULOS.abrirBotiquin());
 ELEMENTS.closeBotiquin?.addEventListener('click', () => ELEMENTS.botiquinModal.style.display = 'none');
-ELEMENTS.navButtons.bienvenida?.addEventListener('click', () => MODULOS.toggleBienvenida());
+ELEMENTS.navButtons.inspiracion?.addEventListener('click', () => MODULOS.mostrarInspiracion());
 ELEMENTS.navButtons.progreso?.addEventListener('click', () => MODULOS.toggleProgreso());
 ELEMENTS.navButtons.viaje?.addEventListener('click', async () => {
     const { data: { user } } = await supabase.auth.getUser();

@@ -66,9 +66,9 @@
             <div id="mainHelpTooltip" class="help-tooltip">
                 <h5>💡 Guía de la Pantalla Principal</h5>
                 <div class="help-item">
-                    <span class="help-btn-tag"><img src="assets/icon_bienvenida.png" alt="Icono Bienvenida"></span>
-                    <div class="help-desc"><strong>Bienvenida</strong> – Te da la oportunidad de volver a leer el
-                        mensaje inicial de Bienvenida.</div>
+                    <span class="help-btn-tag"><img src="assets/agenda.png" alt="Icono Inspiración"></span>
+                    <div class="help-desc"><strong>Inspiración del Día</strong> – Recibe una frase motivadora
+                        personalizada según tu progreso (Pro/Premium) o frases de músicos famosos (Free).</div>
                 </div>
                 <div class="help-item">
                     <span class="help-btn-tag"><img src="assets/icon_viaje.png" alt="Icono Mi Viaje"></span>
@@ -137,8 +137,8 @@
                 </div>
             </div>
             <div class="header-buttons">
-                <button id="bienvenidaBtn" class="icon-nav-btn" title="Bienvenida">
-                    <img src="assets/icon_bienvenida.png" alt="Bienvenida">
+                <button id="inspiracionBtn" class="icon-nav-btn" title="Inspiración del Día">
+                    <img src="assets/agenda.png" alt="Inspiración del Día">
                 </button>
                 <button id="viajeBtn" class="journey-btn icon-nav-btn" title="Mi Viaje">
                     <img src="assets/icon_viaje.png" alt="Mi Viaje">
@@ -174,6 +174,22 @@
             <div id="diarioContent"></div>
         </div>
     </div>
+
+    <!-- Modal de Inspiración del Día -->
+    <div id="inspiracionModal" class="modal">
+        <div class="modal-content inspiracion-modal-content">
+            <span class="close-modal">&times;</span>
+            <div class="inspiracion-header">
+                <div class="inspiracion-icon">✨</div>
+                <h2>Inspiración del Día</h2>
+            </div>
+            <div id="inspiracionContent" class="inspiracion-body">
+                <p class="inspiracion-frase"></p>
+                <p class="inspiracion-autor"></p>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal para Sesiones 1/1 (Premium) -->
     <div id="sesionModal" class="modal">
         <div class="modal-content sesion-modal-content">
