@@ -549,6 +549,23 @@ textarea#chatMentoriaInput {
         width: 24px;
         height: 24px;
     }
+
+    /* Mejora del ancho del chat en móvil */
+    .ia-container {
+        max-width: 96%;
+        gap: 8px;
+        /* Reducimos el gap un poco en móvil */
+    }
+
+    .message {
+        max-width: 90%;
+        padding: 10px 14px;
+        /* Un poco menos de padding para ganar espacio */
+    }
+
+    .user {
+        max-width: 85%;
+    }
 }
 
 .logout-btn {
