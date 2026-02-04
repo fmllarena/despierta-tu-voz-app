@@ -44,6 +44,39 @@
     box-sizing: border-box;
 }
 
+.password-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+.password-wrapper input {
+    padding-right: 45px !important;
+}
+
+.toggle-password {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none !important;
+    border: none !important;
+    padding: 0 !important;
+    cursor: pointer;
+    color: #999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.toggle-password:hover {
+    color: var(--color-acento);
+}
+
+.eye-icon {
+    width: 20px;
+    height: 20px;
+}
+
 .auth-buttons {
     display: flex;
     gap: 10px;

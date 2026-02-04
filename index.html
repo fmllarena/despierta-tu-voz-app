@@ -25,7 +25,15 @@
 
             <input type="text" id="authName" placeholder="Tu nombre para el Mentor (solo la 1a vez)">
             <input type="email" id="authEmail" placeholder="Tu correo electrónico">
-            <input type="password" id="authPassword" placeholder="Tu contraseña">
+            <div class="password-wrapper">
+                <input type="password" id="authPassword" placeholder="Tu contraseña">
+                <button type="button" class="toggle-password" data-target="authPassword">
+                    <svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                        <circle cx="12" cy="12" r="3"></circle>
+                    </svg>
+                </button>
+            </div>
 
             <div class="auth-buttons">
                 <button id="loginBtn">Entrar</button>
@@ -38,7 +46,15 @@
             <!-- Sección oculta para resetear contraseña -->
             <div id="resetPasswordContainer">
                 <p>Introduce tu nueva contraseña:</p>
-                <input type="password" id="newPassword" placeholder="Nueva contraseña">
+                <div class="password-wrapper">
+                    <input type="password" id="newPassword" placeholder="Nueva contraseña">
+                    <button type="button" class="toggle-password" data-target="newPassword">
+                        <svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                            <circle cx="12" cy="12" r="3"></circle>
+                        </svg>
+                    </button>
+                </div>
                 <button id="updatePasswordBtn">Actualizar Contraseña</button>
             </div>
 
