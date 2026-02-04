@@ -15,6 +15,16 @@ get_header(); ?>
 
 <section class="contact-section reveal">
     <div class="container">
+        <!-- Bloque de Reserva Directa (Cal.com) -->
+        <div class="tech-card highlight-box mb-60" style="text-align: center; margin-bottom: 60px;">
+            <span class="alt-tag">¿Prefieres hablar directamente?</span>
+            <h2>Reserva una Sesión de Valoración</h2>
+            <p>Si tienes claro que quieres dar el siguiente paso o necesitas que analicemos tu caso concreto en una
+                videollamada rápida de 30 minutos.</p>
+            <a href="https://cal.com/fernando-martinez-drmyul/30minfo" target="_blank" rel="noopener"
+                class="btn-lg mt-20" style="display: inline-block; margin-top: 20px;">RESERVAR SESIÓN GRATUITA ✨</a>
+        </div>
+
         <div class="contact-grid">
             <!-- Formulario -->
             <div class="contact-form-container">
