@@ -1027,8 +1027,18 @@ const MODULOS = {
     },
 
     async mostrarInspiracion() {
+        const btn = ELEMENTS.navButtons.inspiracion;
+        const originalContent = btn.innerHTML;
+
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
+
+        // Feedback visual: deshabilitar y mostrar que está cargando
+        btn.disabled = true;
+        btn.classList.add('loading-btn');
+        // Si el botón tiene una imagen, podemos añadirle una clase de rotación o cambiar el icono temporalmente
+        const img = btn.querySelector('img');
+        if (img) img.style.opacity = "0.5";
 
         // Intentar usar el perfil global primero para mayor velocidad
         let perfil = window.userProfile;
@@ -1090,9 +1100,15 @@ NO incluyas comillas. Responde solo con la frase.`;
             }
         }
 
-        // Mostrar en el modal
         if (ELEMENTS.inspiracionFrase) ELEMENTS.inspiracionFrase.textContent = frase;
         if (ELEMENTS.inspiracionAutor) ELEMENTS.inspiracionAutor.textContent = `— ${autor}`;
+
+        // Mostrar en el modal
+        // Restaurar estado del botón
+        btn.disabled = false;
+        btn.classList.remove('loading-btn');
+        if (img) img.style.opacity = "1";
+
         if (ELEMENTS.inspiracionModal) ELEMENTS.inspiracionModal.style.display = 'flex';
     },
 
