@@ -138,19 +138,40 @@ Genera un mensaje directo, impactante y accionable. Debe complementar el post de
     }
 
     /**
-     * Genera texto usando IA con Google Gemini API
+     * Genera texto usando IA con Google Gemini API (Fetch directo para estabilidad)
      */
-    async generateWithAI(prompt) {
+    async asyncGenerateWithAI(prompt) {
         try {
-            console.log('   🤖 Generando con Gemini API...');
+            console.log('   🤖 Generando con Gemini API (Fetch)...');
 
-            const { GoogleGenerativeAI } = require('@google/generative-ai');
-            const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-            const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-exp' });
+            const apiKey = process.env.GEMINI_API_KEY;
+            if (!apiKey) throw new Error('Falta GEMINI_API_KEY');
 
-            const result = await model.generateContent(prompt);
-            const response = await result.response;
-            const text = response.text();
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    contents: [{
+                        parts: [{
+                            text: prompt
+                        }]
+                    }]
+                })
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(`Error API (${response.status}): ${JSON.stringify(errorData)}`);
+            }
+
+            const data = await response.json();
+            const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+
+            if (!text) throw new Error('Respuesta vacía de la API');
 
             return text.trim();
         } catch (error) {
@@ -159,6 +180,13 @@ Genera un mensaje directo, impactante y accionable. Debe complementar el post de
             // Fallback simple si la IA falla
             return `[FALLBACK] Tu voz es tu esencia. Descúbrela hoy en Despierta tu Voz.`;
         }
+    }
+
+    /**
+     * Mapeo de método original para compatibilidad
+     */
+    async generateWithAI(prompt) {
+        return await this.asyncGenerateWithAI(prompt);
     }
 }
 

@@ -1393,9 +1393,9 @@ textarea.form-control {
     }
 
     /* Selectores más amplios para el nav móvil (soporta fallback de WP) */
-    nav,
-    .menu-main-container,
-    .menu-principal-container {
+    header nav,
+    header .menu-main-container,
+    header .menu-principal-container {
         display: none;
         position: absolute;
         top: 100%;
@@ -1480,6 +1480,42 @@ textarea.form-control {
     .showcase {
         padding: 80px 5%;
     }
+
+    /* ASEGURAR QUE EL FOOTER NAV SEA VISIBLE EN MÓVIL */
+    footer nav,
+    footer .footer-nav {
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        margin-bottom: 30px !important;
+        height: auto !important;
+        overflow: visible !important;
+    }
+
+    footer .footer-nav ul,
+    footer nav ul {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 15px !important;
+        list-style: none !important;
+        padding: 0 !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+    }
+
+    footer .footer-nav a,
+    footer nav a {
+        display: inline-block !important;
+        font-size: 1rem !important;
+        color: rgba(255, 255, 255, 0.8) !important;
+        text-decoration: none !important;
+        text-transform: uppercase !important;
+        letter-spacing: 1px !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+    }
 }
 
 /* FIX: Alineación Quirúrgica para contenido de Elementor */
@@ -1499,16 +1535,209 @@ textarea.form-control {
 }
 
 /* Asegurar que la imagen destacada no desborde y se alinee con el texto */
-.featured-image img {
-    width: 100% !important;
-    max-width: 100% !important;
-    height: auto !important;
-    display: block;
-    border-radius: 12px;
+/* FOUNDER SECTION */
+.founder-section {
+    padding: 120px 10%;
+    background: #fff;
 }
 
-/* Ajuste del contenedor de imagen */
-.featured-image {
-    max-width: 100%;
-    overflow: hidden;
+.container-flex {
+    display: flex;
+    align-items: center;
+    gap: 80px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.founder-image {
+    flex: 1;
+    max-width: 450px;
+}
+
+.founder-image img {
+    width: 100%;
+    height: auto;
+    border-radius: 30px;
+    box-shadow: 20px 20px 60px rgba(0, 0, 0, 0.05);
+}
+
+.founder-content {
+    flex: 1.5;
+}
+
+.founder-content h2 {
+    font-size: 2.8rem;
+    margin-bottom: 25px;
+    color: var(--color-brown);
+}
+
+.founder-content p {
+    font-size: 1.2rem;
+    color: var(--color-text-dark);
+    margin-bottom: 20px;
+}
+
+.founder-signature {
+    margin-top: 40px;
+    font-weight: 700;
+    font-size: 1.3rem;
+    color: var(--color-brown);
+}
+
+.founder-signature span {
+    font-weight: 300;
+    font-size: 1rem;
+    color: var(--color-text-muted);
+}
+
+/* TESTIMONIALS SECTION */
+.testimonials-section {
+    padding: 120px 5%;
+    background: var(--color-bg-light);
+    text-align: center;
+}
+
+.testimonials-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 350px);
+    gap: 30px;
+    max-width: 1400px;
+    margin: 60px auto 0;
+    overflow-x: auto;
+    padding: 20px 20px 40px;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-brown-light) transparent;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* Barra de scroll personalizada */
+.testimonials-grid::-webkit-scrollbar {
+    height: 6px;
+}
+
+.testimonials-grid::-webkit-scrollbar-track {
+    background: rgba(166, 93, 71, 0.05);
+    border-radius: 10px;
+}
+
+.testimonials-grid::-webkit-scrollbar-thumb {
+    background-color: var(--color-brown-light);
+    border-radius: 10px;
+}
+
+.testimonial-card {
+    background: white;
+    padding: 40px 30px 30px;
+    border-radius: var(--border-radius-lg);
+    box-shadow: var(--shadow-soft);
+    position: relative;
+    text-align: left;
+    transition: transform 0.3s ease;
+    border: 1px solid rgba(166, 93, 71, 0.05);
+    display: flex;
+    flex-direction: column;
+    scroll-snap-align: center;
+    min-width: 350px;
+}
+
+.testimonial-card.featured {
+    border: 2px solid var(--color-brown-light);
+    transform: scale(1.05);
+    z-index: 2;
+}
+
+.testimonial-card:hover {
+    transform: translateY(-10px);
+}
+
+.testimonial-card.featured:hover {
+    transform: scale(1.05) translateY(-10px);
+}
+
+.quote-icon-mini {
+    font-size: 4rem;
+    font-family: 'Playfair Display', serif;
+    color: var(--color-brown);
+    opacity: 0.1;
+    position: absolute;
+    top: 5px;
+    left: 30px;
+}
+
+.testimonial-text {
+    font-size: 0.95rem;
+    color: var(--color-text-dark);
+    line-height: 1.6;
+    margin-bottom: 25px;
+    font-style: italic;
+    position: relative;
+    z-index: 2;
+    flex-grow: 1;
+}
+
+.testimonial-info {
+    border-top: 1px solid rgba(166, 93, 71, 0.1);
+    padding-top: 20px;
+}
+
+.testimonial-info strong {
+    display: block;
+    color: var(--color-brown);
+    font-size: 1.1rem;
+    margin-bottom: 2px;
+}
+
+.testimonial-info span {
+    color: var(--color-text-muted);
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+@media (max-width: 991px) {
+    .testimonial-card.featured {
+        transform: scale(1);
+    }
+
+    .testimonial-card.featured:hover {
+        transform: translateY(-10px);
+    }
+
+    .testimonials-grid {
+        grid-template-columns: repeat(2, 1fr);
+        overflow-x: visible;
+        padding: 40px 0;
+    }
+}
+
+@media (max-width: 768px) {
+    .testimonials-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .testimonial-card {
+        min-width: 0;
+    }
+}
+
+.alt-tag.dark {
+    color: var(--color-white);
+    opacity: 0.9;
+}
+
+@media (max-width: 991px) {
+    .container-flex {
+        flex-direction: column;
+        text-align: center;
+        gap: 40px;
+    }
+
+    .founder-image {
+        max-width: 300px;
+    }
+
+    .main-quote {
+        font-size: 1.8rem;
+    }
 }

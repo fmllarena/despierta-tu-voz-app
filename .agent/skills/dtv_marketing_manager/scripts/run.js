@@ -107,6 +107,15 @@ async function main() {
             strategy: strategy
         };
 
+        // SALVAGUARDA: Si el copy tiene [FALLBACK], abortar publicación en Meta
+        const isFallback = content.copy.feed.includes('[FALLBACK]') || content.copy.story.includes('[FALLBACK]');
+        if (isFallback && (CONFIG.mode === 'draft' || CONFIG.mode === 'publish')) {
+            console.error('\n⚠️  ¡ERROR DE CALIDAD! El contenido generado es un [FALLBACK].');
+            console.error('   ❌ Abortando publicación en Meta para proteger la marca.');
+            console.log('   💡 Consejo: Revisa tu conexión, API KEY o los prompts.');
+            process.exit(1);
+        }
+
         let result;
 
         switch (CONFIG.mode) {

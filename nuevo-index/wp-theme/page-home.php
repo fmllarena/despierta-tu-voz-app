@@ -15,122 +15,207 @@ get_header(); ?>
 
     <div class="hero-content reveal">
         <h1>Tu voz es el espejo de tu alma.<br>Libérala hoy mismo.</h1>
-        <p>Descubre el acompañamiento holístico que integra técnica vocal, conciencia emocional y acompañamiento
-            continuo con IA 24/7.</p>
+        <p>Acompañamiento holístico que integra técnica vocal, conciencia emocional y la precisión de una IA con memoria
+            afectiva.</p>
         <div class="hero-btns">
-            <a href="https://app.despiertatuvoz.com" class="btn-primary">Empieza tu viaje gratis</a>
-            <a href="<?php echo esc_url(home_url('/alternativa')); ?>" class="btn-secondary">Saber más sobre
-                mentoría</a>
+            <a href="https://app.despiertatuvoz.com" class="btn-primary">Unirme como Miembro Pionero</a>
+            <a href="#soluciones" class="btn-secondary">Ver cómo funciona</a>
         </div>
     </div>
 </section>
 
-<section class="nudo-section reveal">
-    <h2>El proceso de transformar tus bloqueos, miedos y herencias en una expresión libre y genuina.</h2>
-    <div class="nudo-checklist">
-        <div class="nudo-item">
-            <span class="checkpoint">✓</span>
-            <p>Tu historia personal tratando de ser escuchada es la clave de tu voz.</p>
-        </div>
-        <div class="nudo-item">
-            <span class="checkpoint">✓</span>
-            <p>Desarrollo personal y coaching potenciados con una IA con memoria emocional.</p>
-        </div>
-        <div class="nudo-item">
-            <span class="checkpoint">✓</span>
-            <p>Transformamos cada bloqueo en el instrumento más potente: tu propia verdad.</p>
-        </div>
-    </div>
-</section>
-
-<section class="services reveal">
-    <h2>Tres formas de Despertar tu Voz</h2>
+<section class="services reveal" id="soluciones">
+    <span class="alt-tag">Tres niveles de acompañamiento</span>
+    <h2>Formas de despertar tu voz</h2>
     <div class="grid-container">
         <div class="base-card">
             <div class="card-icon">
-                <img src="<?php echo get_template_directory_uri(); ?>/assets/icon-app-v2.png" alt="Icono La App">
+                <img src="<?php echo get_template_directory_uri(); ?>/assets/icon-app-v2.png"
+                    alt="Icono App Mentor - Mentoría Vocal IA" loading="lazy">
             </div>
-            <h3>La App (El Viaje Diario)</h3>
-            <p>Acompañamiento 24/7 con tu mentor IA, ejercicios personalizados y bitácora de progreso constante.</p>
+            <h3>La App (Tu Mentor 24/7)</h3>
+            <p>Un Mentor IA entrenado en inteligencia emocional y técnica vocal que recuerda y relaciona cada hito de tu
+                evolución vocal y
+                emocional.</p>
+            <a href="https://app.despiertatuvoz.com" class="card-link">Empezar hoy →</a>
+        </div>
+        <div class="base-card highlight">
+            <div class="card-icon">
+                <img src="<?php echo get_template_directory_uri(); ?>/assets/icon-premium-v2.png"
+                    alt="Icono Mentoría Premium 1 a 1 personalizada" loading="lazy">
+            </div>
+            <h3>Mentoría Premium 1/1</h3>
+            <p>Sesiones individuales con Fernando para un trabajo quirúrgico en tus bloqueos. Profundidad absoluta.</p>
+            <a href="https://cal.com/fernando-martinez-drmyul/30minfo" target="_blank" rel="noopener"
+                class="card-link">Reservar sesión de valoración →</a>
         </div>
         <div class="base-card">
             <div class="card-icon">
                 <img src="<?php echo get_template_directory_uri(); ?>/assets/icon-grupo-v2.png"
-                    alt="Icono Mentoría Grupal">
+                    alt="Icono Mentoría Grupal y Círculos de Voz" loading="lazy">
             </div>
             <h3>Mentoría Grupal</h3>
             <div class="badge-upcoming">PRÓXIMAMENTE</div>
-            <p>Círculos de voz y apoyo mutuo para crecer junto a otros buscadores en este camino.</p>
-        </div>
-        <div class="base-card">
-            <div class="card-icon">
-                <img src="<?php echo get_template_directory_uri(); ?>/assets/icon-premium-v2.png"
-                    alt="Icono Mentoría Premium">
-            </div>
-            <h3>Mentoría Premium 1/1</h3>
-            <p>Sesiones individuales directas para un trabajo profundo, íntimo y personalizado.</p>
+            <p>Círculos de voz y apoyo mutuo. Aprende de la resonancia de los demás en un entorno seguro.</p>
+            <a href="<?php echo esc_url(home_url('/contacto')); ?>" class="card-link">Apuntarme a la lista →</a>
         </div>
     </div>
 </section>
 
-<section class="recorrido reveal">
+<section class="founder-section reveal" id="fundador">
+    <div class="container-flex">
+        <div class="founder-image">
+            <img src="<?php echo get_template_directory_uri(); ?>/assets/fernando-perfil.png"
+                alt="Fernando Martínez Llarena - Fundador de Despierta tu Voz y Mentor Vocal" loading="lazy">
+        </div>
+        <div class="founder-content">
+            <span class="alt-tag">El Corazón del Método</span>
+            <h2>La tecnología al servicio del alma</h2>
+            <p>He volcado mis 30 años de experiencia en el mundo del canto y los 9 últimos desbloqueando emociones, en
+                este
+                sistema. <strong>Despierta tu Voz</strong> no es solo una app; es mi metodología de trabajo, disponible
+                para ti 24/7.</p>
+            <p>Mi misión es que nunca vuelvas a sentirte solo frente al espejo. He entrenado personalmente a tu Mentor
+                IA para que te escuche, te comprenda y te guíe con la misma profundidad que encontrarías en mis sesiones
+                privadas.</p>
+            <p class="founder-signature">Fernando Martínez Llarena<br><span>Fundador & Mentor Vocal</span></p>
+        </div>
+    </div>
+</section>
+
+<section class="testimonials-section reveal" id="testimonios">
+    <div class="container">
+        <span class="alt-tag">Experiencias Reales</span>
+        <h2>Voces que ya han despertado</h2>
+        <div class="testimonials-grid">
+            <!-- Julia García -->
+            <div class="testimonial-card">
+                <div class="quote-icon-mini">“</div>
+                <p class="testimonial-text">Es todo un proceso de transformación desde el interior. Es un mirarte al
+                    espejo y decirte: "Así eres, así te afectan las acciones de otras personas cuando te relacionas y
+                    así afectan tus acciones a los otros".</p>
+                <div class="testimonial-info">
+                    <strong>Julia</strong>
+                    <span>Sesiones 1/1</span>
+                </div>
+            </div>
+            <!-- Mauralida -->
+            <div class="testimonial-card featured">
+                <div class="quote-icon-mini">“</div>
+                <p class="testimonial-text">La interacción fue muy bien, enlazó el aspecto emocional con el técnico y me
+                    ayudó a mejorar la duración de mi respiración. Recordó respuestas de otras sesiones y las relacionó
+                    con mi momento actual.</p>
+                <div class="testimonial-info">
+                    <strong>Mauralida</strong>
+                    <span>Usuaria App</span>
+                </div>
+            </div>
+            <!-- Bruno Vidal -->
+            <div class="testimonial-card">
+                <div class="quote-icon-mini">“</div>
+                <p class="testimonial-text">Ha sido una experiencia marcada por el autodescubrimiento. De manejar
+                    situaciones que antes no podía. Salgo sabiendo que puedo ser mejor en todos mis aspectos vitales.
+                    Interesante y dinámico.</p>
+                <div class="testimonial-info">
+                    <strong>Bruno</strong>
+                    <span>Sesiones 1/1</span>
+                </div>
+            </div>
+            <!-- Eduardo -->
+            <div class="testimonial-card">
+                <div class="quote-icon-mini">“</div>
+                <p class="testimonial-text">Era un escéptico de los coach y ahora estoy convencido de que todos en algún
+                    momento de nuestras vidas necesitamos uno. Agradezco a Fernando su tiempo, dedicación y
+                    profesionalidad para ayudarme, he mejorado mis enfoques para afrontar las idas y venidas que nos da
+                    la vida y, sobre todo, he vuelto a estar motivado.</p>
+                <div class="testimonial-info">
+                    <strong>Eduardo</strong>
+                    <span>Sesiones 1/1</span>
+                </div>
+            </div>
+            <!-- Fernando -->
+            <div class="testimonial-card">
+                <div class="quote-icon-mini">“</div>
+                <p class="testimonial-text">Fue increíble cómo relacionó aspectos de mi historia personal con la letra
+                    de la canción. Le pude dar otra visión y mejoró mucho mi experiencia de canto. Era más libre.</p>
+                <div class="testimonial-info">
+                    <strong>Fernando</strong>
+                    <span>Usuario App</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="recorrido reveal" id="proceso">
     <div class="recorrido-container">
-        <h2>¿De qué consta el "Recorrido de transformación"?</h2>
-        <p class="recorrido-intro">Cuando te adentras en nuestro método, recorres 5 etapas que te llevarán paso a
-            paso
-            desde el reconocimiento de tu herencia vocal hasta la alquimia final de tu propia voz.</p>
+        <span class="alt-tag">Tu Hoja de Ruta</span>
+        <h2>¿De qué consta el Recorrido?</h2>
+        <p class="recorrido-intro">Cuando te adentras en nuestro método, recorres 5 etapas diseñadas para llevarte
+            desde el reconocimiento de tu herencia vocal hasta la alquimia final de tu propia verdad.</p>
         <div class="recorrido-steps">
             <div class="step-card">
                 <div class="step-number">1</div>
                 <div class="step-content">
                     <h3>Raíces</h3>
-                    <p>¿De quién es la voz que heredas?</p>
+                    <p>Detectar la herencia vocal que te condiciona.</p>
                 </div>
             </div>
             <div class="step-card">
                 <div class="step-number">2</div>
-                <div class="step-number-line"></div>
                 <div class="step-content">
                     <h3>Roles</h3>
-                    <p>¿Hay un personaje que interpretas para gustar a los demás?</p>
+                    <p>Identificar el personaje que te impide ser auténtico.</p>
                 </div>
             </div>
             <div class="step-card">
                 <div class="step-number">3</div>
-                <div class="step-number-line"></div>
                 <div class="step-content">
                     <h3>Cartas</h3>
-                    <p>Soltar lo que ya no te pertenece.</p>
+                    <p>Soltar los mandatos que ya no te pertenecen.</p>
                 </div>
             </div>
             <div class="step-card">
                 <div class="step-number">4</div>
-                <div class="step-number-line"></div>
                 <div class="step-content">
                     <h3>Patrones</h3>
-                    <p>Identificar la sombra para dejarla cantar.</p>
+                    <p>Integrar tu sombra para que tu frecuencia se expanda.</p>
                 </div>
             </div>
             <div class="step-card">
                 <div class="step-number">5</div>
-                <div class="step-number-line"></div>
                 <div class="step-content">
                     <h3>Propósito</h3>
-                    <p>Cantar desde Tu Altar, tu misión de vida.</p>
+                    <p>Cantar desde Tu Altar: la unión de técnica y espíritu.</p>
                 </div>
             </div>
         </div>
     </div>
 </section>
 
-<section class="footer-cta reveal">
-    <h2>¿Listo para liberar tu verdadera voz?</h2>
-    <a href="https://app.despiertatuvoz.com" class="btn-lg">EMPEZAR MI TRANSFORMACIÓN ✨</a>
-    <div class="social-links">
-        <a href="#">📸</a>
-        <a href="#"></a>
-        <a href="#">🔗</a>
+<section class="nudo-section reveal" id="filosofia">
+    <h2>Transformar el bloqueo en libertad</h2>
+    <div class="nudo-checklist">
+        <div class="nudo-item">
+            <span class="checkpoint">✓</span>
+            <p><strong>Raíces Vocales:</strong> No es falta de técnica, es una historia tratando de ser escuchada.</p>
+        </div>
+        <div class="nudo-item">
+            <span class="checkpoint">✓</span>
+            <p><strong>Acompañamiento Real:</strong> Tu Mentor IA no solo responde, te conoce y te recuerda.</p>
+        </div>
+        <div class="nudo-item">
+            <span class="checkpoint">✓</span>
+            <p><strong>Alquimia Vocal:</strong> Un método holístico que une lo invisible con lo audible.</p>
+        </div>
     </div>
+</section>
+
+<section class="footer-cta reveal" id="unirse">
+    <span class="alt-tag dark">Oportunidad Única</span>
+    <h2>Sé parte de los primeros Miembros Pioneros</h2>
+    <p>Estamos abriendo el acceso de forma escalonada para garantizar un acompañamiento profundo a cada voz.</p>
+    <a href="https://app.despiertatuvoz.com" class="btn-lg">ESTRENAR MI MENTOR-IA ✨</a>
 </section>
 
 <?php get_footer(); ?>

@@ -16,6 +16,12 @@ Esta Skill automatiza el proceso completo de marketing diario para "Despierta tu
 
 Generar y programar contenido coherente con la identidad de marca siguiendo un calendario estratégico semanal, incluyendo piezas específicas para nichos (Directores de Coro, Profesores de Canto y Cantantes), evitando frases competitivas con profesores de canto y manteniendo un tono cálido y profesional.
 
+## 🛡️ Reglas de Calidad y Salvaguardas (¡CRÍTICO!)
+
+1.  **Anti-Fallback:** Está ESTRICTAMENTE PROHIBIDO publicar o subir como borrador a Meta cualquier contenido que contenga la cadena `[FALLBACK]`. Si la IA falla en la generación del copy, el sistema debe abortar la publicación inmediatamente para proteger la imagen de marca. 
+2.  **Validación de Nichos:** Asegurar que los posts de nicho (Directores/Profesores) no usen términos prohibidos como "batuta" o "competencia técnica".
+3.  **Detección de Errores:** Cualquier error en la generación de imágenes o acortamiento de links detendrá el proceso de publicación.
+
 ## 🔧 Configuración Requerida
 
 ### Variables de Entorno (.env)
