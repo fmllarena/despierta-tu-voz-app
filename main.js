@@ -1025,18 +1025,6 @@ const MODULOS = {
             btn.disabled = false;
         }
     },
-    toggleBienvenida() {
-        document.getElementById('msg-botiquin')?.remove();
-        const msg = document.getElementById('msg-bienvenida');
-        if (msg) return msg.remove();
-
-        // Recuperar nombre para el toggle también
-        const nombre = userProfile?.nombre || "viajero/a";
-        const nombreCap = nombre.charAt(0).toUpperCase() + nombre.slice(1);
-        const saludo = `¡Hola, <strong>${nombreCap}</strong>!<br><br>${MENSAJE_BIENVENIDA}`;
-
-        appendMessage(saludo, 'ia', 'msg-bienvenida');
-    },
 
     async mostrarInspiracion() {
         const { data: { user } } = await supabase.auth.getUser();
@@ -1065,11 +1053,10 @@ const MODULOS = {
                 { frase: "Cantar es como celebrar el oxígeno.", autor: "Björk" },
                 { frase: "La música es el corazón de la vida. Por ella habla el amor; sin ella no hay bien posible y con ella todo es hermoso.", autor: "Franz Liszt" },
                 { frase: "Tu voz es tu identidad. Cuídala, trabájala, y nunca dejes de creer en su poder.", autor: "Renée Fleming" },
-                { frase: "El canto es una celebración de la existencia.", autor: "Luciano Pavarotti" },
+                { frase: "Pienso que una vida dedicada a la música es una vida bellamente empleada.", autor: "Luciano Pavarotti" },
                 { frase: "La música es el verdadero lenguaje universal.", autor: "Carl Maria von Weber" },
                 { frase: "Cantar es rezar dos veces.", autor: "San Agustín" },
                 { frase: "La música es la poesía del aire.", autor: "Jean Paul Richter" },
-                { frase: "No cantes para vivir, vive para cantar.", autor: "Plácido Domingo" }
             ];
 
             const fraseAleatoria = frasesMusicos[Math.floor(Math.random() * frasesMusicos.length)];
