@@ -262,33 +262,48 @@ ELEMENTS.supportInput?.addEventListener('keypress', (e) => {
     if (e.key === 'Enter') SOPORTE.enviar();
 });
 
-async function llamarGemini(message, history, intent, extraData = {}) {
+async function llamarGemini(message, history, intent, extraData = {}, onChunk = null) {
     try {
+        const stream = !!onChunk;
         const response = await fetch('/api/chat', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ message, history, intent, ...extraData })
+            body: JSON.stringify({ message, history, intent, stream, ...extraData })
         });
 
-        const rawText = await response.text();
-        let data;
-        try {
-            data = JSON.parse(rawText);
-        } catch (jsonErr) {
-            console.error("Respuesta no es JSON:", rawText);
-            throw new Error(`Error del servidor (No JSON): ${rawText.substring(0, 50)}...`);
-        }
+        if (stream) {
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+            let fullText = "";
 
-        if (data.error) {
-            // Si es un error de la IA (timeout o conexión), no mostramos los detalles técnicos al usuario para no asustarlo
-            const isFriendlyError = data.isTimeout || data.isAIError || data.error.includes("Vaya");
-            const detailMsg = (data.details && !isFriendlyError) ? ` (${data.details})` : "";
-            throw new Error(data.error + detailMsg);
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+
+                const chunk = decoder.decode(value);
+                const lines = chunk.split('\n');
+
+                for (const line of lines) {
+                    if (line.startsWith('data: ')) {
+                        try {
+                            const data = JSON.parse(line.substring(6));
+                            if (data.error) throw new Error(data.error);
+                            if (data.text) {
+                                fullText += data.text;
+                                if (onChunk) onChunk(data.text, fullText);
+                            }
+                        } catch (e) {
+                            if (e.message.includes("Error técnico")) throw e;
+                        }
+                    }
+                }
+            }
+            return fullText;
+        } else {
+            const data = await response.json();
+            if (data.error) throw new Error(data.error);
+            return data.text;
         }
-        if (data.info) {
-            console.log(`🤖 IA Mentor: ${data.info}`);
-        }
-        return data.text;
     } catch (e) {
         console.error("Error en llamarGemini:", e);
         throw e;
@@ -729,7 +744,8 @@ async function sendMessage() {
     ELEMENTS.sendBtn.disabled = true;
 
     // --- ESTADO PENSANDO ---
-    appendMessage("Preparando la respuesta...", 'ia thinking', 'msg-thinking');
+    const thinkingId = 'msg-thinking-' + Date.now();
+    appendMessage("...", 'ia thinking', thinkingId);
 
     try {
         ['msg-botiquin', 'msg-bienvenida'].forEach(id => document.getElementById(id)?.remove());
@@ -740,43 +756,46 @@ async function sendMessage() {
             originPost: sessionStorage.getItem('dtv_origin_post'),
             originCat: sessionStorage.getItem('dtv_origin_cat'),
             canRecommend: canAIRecommend(),
-            blogLibrary: blogLibrary // Enviamos la lista de títulos para que la IA elija
+            blogLibrary: blogLibrary
         };
 
-        const responseText = await llamarGemini(text, chatHistory, "mentor_chat", extraData);
+        // Contenedor para la respuesta progresiva
+        const responseId = 'ia-response-' + Date.now();
+        let responseText = "";
 
-        // Limpieza de origen tras el primer mensaje
+        await llamarGemini(text, chatHistory, "mentor_chat", extraData, (chunk, fullText) => {
+            if (responseText === "") {
+                document.getElementById(thinkingId)?.remove();
+                appendMessage("", 'ia', responseId);
+            }
+
+            responseText = fullText;
+            const resEl = document.getElementById(responseId);
+            if (resEl) {
+                resEl.innerHTML = window.marked ? window.marked.parse(responseText + " ▮") : responseText;
+                resEl.scrollIntoView({ behavior: 'smooth', block: 'end' });
+            }
+        });
+
+        const finalEl = document.getElementById(responseId);
+        if (finalEl) finalEl.innerHTML = window.marked ? window.marked.parse(responseText) : responseText;
+
         sessionStorage.removeItem('dtv_origin_post');
         sessionStorage.removeItem('dtv_origin_cat');
 
-        // Quitar burbuja de pensar
-        document.getElementById('msg-thinking')?.remove();
-
         if (responseText && responseText.trim() !== "") {
-            appendMessage(responseText, 'ia');
-            await guardarMensajeDB(responseText, 'ia'); // Guardar respuesta de la IA
+            await guardarMensajeDB(responseText, 'ia');
             chatHistory.push({ role: "user", parts: [{ text }] }, { role: "model", parts: [{ text: responseText }] });
 
-            // --- DISPARADOR DE CRÓNICA (Cada 4 mensajes para capturar conversaciones cortas) ---
             if (chatHistory.length % 4 === 0 && chatHistory.length >= 4) {
-                console.log("📜 Sesión detectada. Generando Crónica de Alquimia...");
                 MODULOS.generarCronicaSesion();
             }
-
-            // Mantener historial manejable
-            if (chatHistory.length > 20) {
-                chatHistory = chatHistory.slice(-20);
-            }
-        } else {
-            console.warn("Recibida respuesta vacía de Gemini.");
+            if (chatHistory.length > 20) chatHistory = chatHistory.slice(-20);
         }
     } catch (e) {
-        document.getElementById('msg-thinking')?.remove();
+        document.getElementById(thinkingId)?.remove();
         console.error("Error en sendMessage:", e);
-        // Si el mensaje ya es un error amigable (empieza por Vaya o ¡Vaya), lo usamos tal cual sin añadir técnicos
-        const isFriendly = e.message.startsWith("Vaya") || e.message.startsWith("¡Vaya");
-        const errorMsg = isFriendly ? e.message : `Vaya, parece que hay un pequeño problema técnico. Prueba de nuevo en unos instantes.`;
-        appendMessage(errorMsg, 'ia');
+        appendMessage("Vaya, parece que hoy tengo un nudo en la garganta. ¿Podrías intentar decírmelo de nuevo?", 'ia');
     } finally {
         ELEMENTS.chatInput.disabled = false;
         ELEMENTS.sendBtn.disabled = false;
@@ -983,26 +1002,29 @@ const MODULOS = {
         try {
             const { data: { user } } = await supabase.auth.getUser();
             const prompt = `[MODO EMERGENCIA] Audición/presentación inminente. Basado en mi perfil, dame: 1. Ejercicio 2min, 2. Consejo técnico, 3. Frase poder. REGLA ESTRICTA: NO incluyas links a YouTube ni menciones a "cerrar sesión" o despedidas finales. Enfócate solo en la ayuda inmediata.`;
-            const resp = await llamarGemini(prompt, [], "mentor_chat", { userId: user?.id });
 
-            if (resp) {
-                // Parseamos markdown si está disponible
-                const htmlResp = window.marked ? window.marked.parse(resp) : resp.replace(/\n/g, '<br>');
-
+            let responseText = "";
+            await llamarGemini(prompt, [], "mentor_chat", { userId: user?.id }, (chunk, fullText) => {
+                responseText = fullText;
                 ELEMENTS.botiquinContent.innerHTML = `
                     <div class="botiquin-response">
-                        ${htmlResp}
+                        ${window.marked ? window.marked.parse(responseText + " ▮") : responseText}
                     </div>
                 `;
+            });
 
-                // Añadir lista de audios al mensaje del botiquín con menú desplegable
-                const audioSection = document.createElement('div');
-                audioSection.className = 'botiquin-audios';
-                audioSection.innerHTML = `<h4>✨ Recursos de Alquimia Sonora</h4>`;
+            if (responseText) {
+                ELEMENTS.botiquinContent.innerHTML = `<div class="botiquin-response">${window.marked ? window.marked.parse(responseText) : responseText}</div>`;
+            }
 
-                const audioItem = document.createElement('div');
-                audioItem.className = 'audio-item-stacked';
-                audioItem.innerHTML = `
+            // Añadir lista de audios al mensaje del botiquín con menú desplegable
+            const audioSection = document.createElement('div');
+            audioSection.className = 'botiquin-audios';
+            audioSection.innerHTML = `<h4>✨ Recursos de Alquimia Sonora</h4>`;
+
+            const audioItem = document.createElement('div');
+            audioItem.className = 'audio-item-stacked';
+            audioItem.innerHTML = `
                 <div class="audio-info">
                     <strong>Relajación Alquímica</strong>
                     <span>Elige la frecuencia que necesites oír.</span>
@@ -1017,9 +1039,8 @@ const MODULOS = {
                     </div>
                 </div>
             `;
-                audioSection.appendChild(audioItem);
-                ELEMENTS.botiquinContent.appendChild(audioSection);
-            }
+            audioSection.appendChild(audioItem);
+            ELEMENTS.botiquinContent.appendChild(audioSection);
         } catch (e) {
             console.error(e);
             ELEMENTS.botiquinContent.innerHTML = `<p class="error-msg">Error al preparar el botiquín. Inténtalo de nuevo.</p>`;

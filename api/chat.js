@@ -90,199 +90,91 @@ module.exports = async function handler(req, res) {
     if (req.method === 'OPTIONS') return res.status(200).end();
     if (req.method !== "POST") return res.status(405).json({ error: "Método no permitido" });
 
-    // Timeout global de 290 segundos (Sincronizado con el máximo de Vercel Pro de 300s)
+    const { stream } = req.body;
+
+    // Timeout global
     const globalTimeout = new Promise((_, reject) => {
         setTimeout(() => reject(new Error("GlobalTimeout")), 290000);
     });
 
     try {
-        const result = await Promise.race([processChat(req), globalTimeout]);
-        return res.status(200).json(result);
+        if (stream) {
+            // Configurar cabeceras de streaming
+            res.setHeader('Content-Type', 'text/event-stream');
+            res.setHeader('Cache-Control', 'no-cache');
+            res.setHeader('Connection', 'keep-alive');
+            await processChat(req, res);
+        } else {
+            const result = await Promise.race([processChat(req), globalTimeout]);
+            return res.status(200).json(result);
+        }
     } catch (error) {
         console.error("DEBUG ERR [chat.js]:", error);
+        if (res.writableEnded) return;
+
         const isTimeout = error.message === "GlobalTimeout";
         const status = isTimeout ? 504 : 500;
-        const knownErrors = ["Acceso denegado.", "Falta API Key", "Falta SUPABASE_SERVICE_ROLE_KEY", "Intento no válido", "Alumno no encontrado"];
-        const isKnown = knownErrors.some(k => error.message.includes(k));
-        const isAIError = error.message.includes("Error conexión IA") || error.message.includes("Error fetching") || error.message.includes("Insufficient Balance") || error.message.includes("Timeout") || error.message.includes("404") || error.message.includes("not_found_error");
+        const msg = isTimeout ? "¡Vaya! La respuesta está tardando más de lo habitual... ¿Podrías intentar algo más breve?" : "Error técnico temporal.";
 
-        let msg = "Vaya, parece que hay un pequeño problema técnico. Prueba de nuevo en unos instantes.";
-        if (isTimeout) {
-            msg = "¡Vaya! Parece que el Mentor hoy se ha puesto especialmente profundo y su respuesta está tardando un poco más de lo habitual. 🧘‍♂️ La sabiduría requiere su tiempo... ¿Podrias probar con una pregunta más directa?";
-        } else if (isAIError) {
-            msg = "Vaya, parece que el Mentor está recibiendo muchísimas consultas ahora mismo y su voz se ha quedado un poco en silencio. 🌿 Por favor, espera unos instantes y vuelve a intentarlo, ¡estoy deseando seguir conversando contigo!";
-        } else if (isKnown) {
-            msg = error.message;
+        if (stream) {
+            res.write(`data: ${JSON.stringify({ error: msg })}\n\n`);
+            res.end();
+        } else {
+            return res.status(status).json({ error: msg, details: error.message });
         }
-
-        return res.status(status).json({ error: msg, details: error.message, isAIError, isTimeout });
     }
 };
 
-async function processChat(req) {
-    const { intent, message, history = [], userId, mentorPassword = "", blogLibrary = [], canRecommend = false } = req.body;
+async function processChat(req, res = null) {
+    let { intent, message, history = [], userId, mentorPassword = "", blogLibrary = [], canRecommend = false, stream = false } = req.body;
     if (intent === 'warmup') return { text: "OK" };
     if (!intent || !SYSTEM_PROMPTS[intent]) throw new Error("Intento no válido");
 
-    if (intent === 'mentor_briefing') {
-        if (mentorPassword !== process.env.MENTOR_PASSWORD) throw new Error("Acceso denegado.");
-    }
-
     let context = "";
 
-    // Cargar base de conocimiento para el asistente web
-    if (intent === 'web_assistant') {
-        try {
-            const knowledgePath = path.join(__dirname, '..', 'knowledge', 'web_info.md');
-            const knowledgeContent = fs.readFileSync(knowledgePath, 'utf-8');
-            context += `\n--- BASE DE CONOCIMIENTO ---\n${knowledgeContent}\n`;
-            console.log("📚 Base de conocimiento web cargada correctamente.");
-        } catch (e) {
-            console.warn("⚠️ No se pudo cargar web_info.md:", e.message);
-        }
-    }
-    if (userId && (intent === 'mentor_chat' || intent === 'mentor_briefing' || intent === 'alchemy_analysis' || intent === 'mentor_advisor')) {
+    // OPTIMIZACIÓN INSPIRACIÓN: No cargar historial pesado
+    const isInspiracion = intent === 'inspiracion_dia';
+
+    if (userId && (intent === 'mentor_chat' || intent === 'mentor_briefing' || intent === 'alchemy_analysis' || intent === 'mentor_advisor' || isInspiracion)) {
         const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
-        const lowerMsg = message.toLowerCase();
 
-        // 1. PRIMERO: Obtener el tier del usuario para decidir qué datos cargar
-        const { data: tierData } = await supabase
-            .from('user_profiles')
-            .select('subscription_tier')
-            .eq('user_id', userId)
-            .maybeSingle();
-
-        const userTier = tierData?.subscription_tier || 'free';
+        // Carga de datos base
+        const { data: perfil } = await supabase.from('user_profiles').select('*').eq('user_id', userId).maybeSingle();
+        const userTier = perfil?.subscription_tier || 'free';
         const hasPremiumMemory = userTier === 'pro' || userTier === 'premium';
 
-        console.log(`🔍 [TIER CHECK] Usuario: ${userId.substring(0, 8)}... | Tier: ${userTier} | Memoria Activa: ${hasPremiumMemory}`);
-
-        // 2. SISTEMA DE MEMORIA HÍBRIDA (Solo para Pro/Premium)
-        const promises = [
-            // Perfil básico (todos los usuarios)
-            supabase.from('user_profiles').select('nombre, historia_vocal, ultimo_resumen, last_hito_completed, mentor_focus, mentor_personality, mentor_length, mentor_language, weekly_goal').eq('user_id', userId).maybeSingle(),
-            // Datos de coaching/viaje (todos los usuarios - incluye Módulo 1)
-            supabase.from('user_coaching_data').select('linea_vida_hitos, herencia_raices, roles_familiares, ritual_sanacion, plan_accion').eq('user_id', userId).maybeSingle()
-        ];
-
-        // Solo usuarios Pro/Premium tienen acceso a la tabla mensajes (memoria de conversaciones)
-        if (hasPremiumMemory) {
-            // Contexto Inmediato: Mensajes de los últimos 2 días (máx 50)
-            promises.push(
-                supabase.from('mensajes')
-                    .select('texto, emisor, created_at')
-                    .eq('alumno', userId)
-                    .gte('created_at', new Date(Date.now() - 48 * 3600 * 1000).toISOString())
-                    .order('created_at', { ascending: false })
-                    .limit(50)
-            );
-            // Contexto Evolutivo: Las últimas 10 Crónicas de Alquimia
-            promises.push(
-                supabase.from('mensajes')
-                    .select('texto, emisor, created_at')
-                    .eq('alumno', userId)
-                    .eq('emisor', 'resumen_diario')
-                    .order('created_at', { ascending: false })
-                    .limit(10)
-            );
-        } else {
-            // Usuarios Free: No tienen acceso a la memoria de conversaciones
-            promises.push(Promise.resolve({ data: [] }));
-            promises.push(Promise.resolve({ data: [] }));
-        }
-
-        // Búsqueda profunda de memoria (solo Pro/Premium)
-        const triggersMemory = ["recordar", "hablamos", "dijiste", "comentamos", "anterior", "pasado", "memoria", "acuerdas", "acodar", "sabes", "sabías", "allerseelen"].some(t => lowerMsg.includes(t));
-
-        if (hasPremiumMemory && triggersMemory) {
-            const noise = ["acuerdas", "hablamos", "dijiste", "comentamos", "anterior", "pasado", "memoria", "sobre", "puedes", "recordar", "sabes", "quiero", "tema", "algo", "sabías", "acordarte"];
-            const keywords = message.toLowerCase().replace(/[?,.;!]/g, "").split(" ")
-                .filter(w => w.length > 3 && !noise.includes(w))
-                .sort((a, b) => b.length - a.length);
-
-            const keywordToSearch = keywords.length > 0 ? keywords[0] : null;
-            if (keywordToSearch) {
-                console.log(`🔍 [MEMORIA] Búsqueda profunda para palabra: "${keywordToSearch}" (User: ${userId})`);
-                promises.push(supabase.from('mensajes').select('texto, emisor, created_at').eq('alumno', userId).ilike('texto', `%${keywordToSearch}%`).order('created_at', { ascending: false }).limit(15));
-            } else {
-                promises.push(Promise.resolve({ data: [] }));
-            }
-        } else {
-            promises.push(Promise.resolve({ data: [] }));
-        }
-
-        const [perfilRes, viajeRes, recentRes, chronRes, deepRes] = await Promise.all(promises);
-
-        // Unificar y deduplicar mensajes (solo si hay datos - Pro/Premium)
-        let allMessages = [...(recentRes.data || []), ...(chronRes.data || []), ...(deepRes.data || [])];
-        const uniqueMessages = Array.from(new Map(allMessages.map(m => [`${m.created_at}_${m.texto.substring(0, 30)}`, m])).values());
-        uniqueMessages.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
-
-        console.log(`📊 [DEBUG Contexto] AlumnoID: ${userId.substring(0, 8)}... | Tier: ${userTier} | Recientes: ${recentRes.data?.length || 0} | Crónicas: ${chronRes.data?.length || 0} | Profundos: ${deepRes.data?.length || 0} | Final: ${uniqueMessages.length} mensajes.`);
-
-        if (perfilRes.data) {
-            const p = perfilRes.data;
-            const hito = p.last_hito_completed || 0;
-            context += `\n--- SITUACIÓN ACTUAL SINTETIZADA (Perfil General) ---\n- Nombre: ${p.nombre}\n- Historia Vocal: ${p.historia_vocal}\n- Último Estado: ${p.ultimo_resumen}\n- Mi Viaje: Módulo ${hito}/5 completado.\n- Nivel de Suscripción: ${userTier.toUpperCase()}\n`;
-
-            // Inyectar preferencias
-            context += `\n--- PREFERENCIAS DEL ALUMNO ---\n`;
-            context += `- Enfoque solicitado (1=Técnico, 10=Emocional): ${p.mentor_focus || 5}/10\n`;
-            context += `- Personalidad (1=Neutro/Calmo, 10=Motivador/Fuego): ${p.mentor_personality || 5}/10\n`;
-            context += `- Extensión respuesta (1=Breve/Directo, 10=Profundo/Largo): ${p.mentor_length || 5}/10\n`;
-            context += `- Idioma preferido: ${p.mentor_language || 'es'}\n`;
-            if (p.weekly_goal) {
-                context += `- Trato Preferido del alumno: ${p.weekly_goal}\n`;
+        if (perfil) {
+            context += `\n--- SITUACIÓN ACTUAL ---\n- Nombre: ${perfil.nombre}\n- Último Estado: ${perfil.ultimo_resumen || 'Iniciando'}\n`;
+            if (!isInspiracion) {
+                context += `- Historia: ${perfil.historia_vocal}\n- Nivel: ${perfil.nivel_alquimia}/10\n`;
             }
         }
-        if (viajeRes.data) context += `\n--- DATOS DE VIAJE/COACHING ---\n${JSON.stringify(viajeRes.data)}\n`;
 
-        // Solo mostrar cronología si hay mensajes (usuarios Pro/Premium con historial)
-        if (uniqueMessages.length > 0) {
-            context += `\n--- CRONOLOGÍA DE EVOLUCIÓN (Diario de Alquimia - Sesiones Pasadas) ---\n`;
-            uniqueMessages.forEach(r => {
-                const prefix = r.emisor === 'resumen_diario' ? '📌 HITO EVOLUTIVO (Crónica)' : r.emisor;
-                context += `[${new Date(r.created_at).toLocaleDateString()}] ${prefix}: ${r.texto}\n`;
-            });
-            console.log("📝 Contexto de memoria (Crónicas y Chat) inyectado satisfactoriamente.");
-        } else if (!hasPremiumMemory) {
-            // Mensaje especial para usuarios Free
-            context += `\n[NOTA INTERNA: Este usuario tiene el plan GRATIS. No dispone de memoria de conversaciones anteriores. Trata cada sesión como un nuevo encuentro, aunque puedes acceder a sus datos de coaching/viaje si los ha completado.]\n`;
+        // Memoria de Crónicas (Solo si no es inspiración y tiene premium)
+        if (hasPremiumMemory && !isInspiracion) {
+            const { data: cronicas } = await supabase.from('mensajes')
+                .select('texto, created_at')
+                .eq('alumno', userId)
+                .eq('emisor', 'resumen_diario')
+                .order('created_at', { ascending: false })
+                .limit(3); // Inyectamos las últimas 3 crónicas como "nodos de memoria"
+
+            if (cronicas?.length > 0) {
+                context += `\n--- MEMORIA RECIENTE (Crónicas) ---\n`;
+                cronicas.reverse().forEach(c => {
+                    context += `[${new Date(c.created_at).toLocaleDateString()}] ${c.texto}\n`;
+                });
+            }
         }
-
-
-        // --- SISTEMA DE RECOMENDACIONES DE BIBLIOTECA (Blog Fernando) ---
-        if (canRecommend && blogLibrary.length > 0) {
-            context += `\n[BIBLIOTECA DE ARTÍCULOS DE FERNANDO]\n`;
-            context += `- Tienes permiso para integrar recomendaciones de la biblioteca si el flujo de la conversación lo permite de forma natural.\n`;
-            context += `- Solo recomienda si aporta valor real al momento presente del alumno.\n`;
-
-            // Limitamos a los primeros 20 títulos para no saturar el prompt
-            const titles = blogLibrary.slice(0, 20).map(post => `- ${post.title}: ${post.url}`).join('\n');
-            context += `ARTÍCULOS DISPONIBLES:\n${titles}\n`;
-            context += `\nInstrucción de estilo: Si recomiendas un link, hazlo con calidez, citando que es un artículo de Fernando.\n`;
-        } else if (canRecommend) {
-            context += `\n- Tienes permiso para recomendar lecturas, pero la biblioteca no está disponible ahora. No inventes links.\n`;
-        } else {
-            context += `\n- Prioriza por ahora el diálogo directo y la escucha activa antes de recurrir a lecturas externas o artículos.\n`;
-        }
-    }
-
-    if (context) {
-        console.log("🔗 Contexto Final (Primeros 100 char):", context.substring(0, 100));
     }
 
     const promptFinal = context ? `CONTEXTO:\n${context}\n\nMENSAJE:\n${message}` : message;
-    const isBriefing = intent === 'mentor_briefing';
-    let errors = [];
 
-    // --- CADENA DE MANDOS (EDICIÓN 2026: POTENCIA MÁXIMA) ---
-
-    // 1. GEMINI (LÍDER PRIORITARIO - 3-FLASH PREVIEW)
+    // --- GEMINI STREAMING (PRIORIDAD) ---
     if (process.env.GEMINI_API_KEY) {
         try {
-            console.log("🚀 Liderando con Gemini 3 Flash Preview...");
-            const timeoutMs = isBriefing ? 285000 : 280000;
+            const endpoint = stream ? 'streamGenerateContent' : 'generateContent';
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:streamGenerateContent?key=${process.env.GEMINI_API_KEY}&alt=sse`;
 
             const requestBody = {
                 contents: [
@@ -292,138 +184,76 @@ async function processChat(req) {
                 systemInstruction: { parts: [{ text: SYSTEM_PROMPTS[intent] }] }
             };
 
-            const geminiResponse = await Promise.race([
-                fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${process.env.GEMINI_API_KEY}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(requestBody)
-                }),
-                new Promise((_, r) => setTimeout(() => r(new Error("Timeout Gemini")), timeoutMs))
-            ]);
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(requestBody)
+            });
 
-            if (!geminiResponse.ok) {
-                const errorData = await geminiResponse.json().catch(() => ({}));
-                console.error("❌ ERROR API GEMINI:", {
-                    status: geminiResponse.status,
-                    error: errorData.error
-                });
-                throw new Error(`Gemini API Error [${geminiResponse.status}]: ${errorData.error?.message || geminiResponse.statusText}`);
+            if (!response.ok) throw new Error(`Gemini Error ${response.status}`);
+
+            if (stream && res) {
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                let fullText = "";
+
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+
+                    const chunk = decoder.decode(value);
+                    const lines = chunk.split('\n');
+
+                    for (const line of lines) {
+                        if (line.startsWith('data: ')) {
+                            try {
+                                const data = JSON.parse(line.substring(6));
+                                const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+                                if (text) {
+                                    fullText += text;
+                                    res.write(`data: ${JSON.stringify({ text: text })}\n\n`);
+                                }
+                            } catch (e) { }
+                        }
+                    }
+                }
+                res.end();
+                return;
+            } else {
+                const data = await response.json();
+                // Si usamos el endpoint stream sin res, tomamos el agregado (aunque es raro)
+                const text = data[0]?.candidates?.[0]?.content?.parts?.[0]?.text || "";
+                return { text: text, info: "Gemini 2.0 Flash" };
             }
-
-            const data = await geminiResponse.json();
-            const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-            if (!text) {
-                console.error("❌ RESPUESTA VACÍA DE GEMINI:", JSON.stringify(data, null, 2));
-                throw new Error("Gemini devolvió una respuesta vacía.");
-            }
-
-            return { text: text, info: "Gemini 3 Flash Preview" };
         } catch (e) {
             console.error("⛔ FALLO GEMINI:", e.message);
-            errors.push(`Gemini: ${e.message}`);
+            if (!res) throw e;
         }
     }
 
-    // 2. GROQ (BACKUP DE VELOCIDAD - LLAMA 3.3 70B)
-    if (process.env.GROQ_API_KEY) {
-        try {
-            console.log("🚀 Backup con Groq (Llama 3.3 70B)...");
-            const timeoutMs = isBriefing ? 60000 : 30000;
-
-            const groqResponse = await Promise.race([
-                fetch("https://api.groq.com/openai/v1/chat/completions", {
-                    method: "POST",
-                    headers: {
-                        "Authorization": `Bearer ${process.env.GROQ_API_KEY}`,
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({
-                        model: "llama-3.3-70b-versatile",
-                        messages: [
-                            { role: "system", content: SYSTEM_PROMPTS[intent] },
-                            ...formatHistoryForGroq(history),
-                            { role: "user", content: promptFinal }
-                        ],
-                        temperature: 0.7,
-                        max_tokens: 1500
-                    })
-                }),
-                new Promise((_, r) => setTimeout(() => r(new Error("Timeout Groq")), timeoutMs))
-            ]);
-
-            if (!groqResponse.ok) {
-                const errorData = await groqResponse.json();
-                throw new Error(`Groq API Error: ${errorData.error?.message || groqResponse.statusText}`);
-            }
-
-            const data = await groqResponse.json();
-            const text = data.choices?.[0]?.message?.content;
-            if (!text) throw new Error("Groq devolvió una respuesta vacía.");
-
-            return { text: text, info: "Groq (Llama 3.3 70B)" };
-        } catch (e) {
-            console.warn("⚠️ Fallo Groq (Saltando a Claude):", e.message);
-            errors.push(`Groq: ${e.message}`);
-        }
-    }
-
-    // 3. CLAUDE (FALLBACK ROBUSTO)
-    if (process.env.ANTHROPIC_API_KEY) {
-        const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-        const models = ["claude-haiku-4-5", "claude-sonnet-4-5", "claude-3-5-sonnet-20241022", "claude-3-5-sonnet-latest"];
-        for (const modelName of models) {
-            try {
-                console.log(`🛡️ Fallback Claude: ${modelName}...`);
-                const timeoutMs = isBriefing ? 275000 : 270000;
-                const response = await Promise.race([
-                    anthropic.messages.create({
-                        model: modelName,
-                        max_tokens: 1500,
-                        system: SYSTEM_PROMPTS[intent],
-                        messages: [...formatHistoryForClaude(history), { role: "user", content: promptFinal }],
-                    }),
-                    new Promise((_, r) => setTimeout(() => r(new Error("Timeout")), timeoutMs))
-                ]);
-                return { text: response.content[0].text, info: modelName };
-            } catch (e) {
-                console.warn(`Fallo Claude ${modelName}:`, e.message);
-                errors.push(`${modelName}: ${e.message}`);
-                if (e.message === "Timeout" && !isBriefing) break;
-            }
-        }
-    }
-
-    throw new Error(`Error conexión IA: ${errors.join(" | ")}`);
-}
-
-function formatHistoryForGroq(history) {
-    if (!Array.isArray(history)) return [];
-    return history.filter(h => h?.parts?.[0]?.text).map(h => ({
-        role: h.role === 'model' ? 'assistant' : 'user',
-        content: h.parts[0].text
-    }));
-}
-
-function formatHistoryForClaude(history) {
-    if (!Array.isArray(history)) return [];
-    return history.filter(h => h?.parts?.[0]?.text).map(h => ({ role: h.role === 'model' ? 'assistant' : 'user', content: h.parts[0].text }));
+    // Fallback normal si no hay stream o falla Gemini
+    throw new Error("Error de conexión con la IA.");
 }
 
 function formatHistoryForGeminiREST(history) {
     if (!Array.isArray(history)) return [];
+    let sanitized = [];
     let lastRole = null;
-    let sanitized = history.filter(h => {
-        if (!h?.parts?.[0]?.text) return false;
+
+    history.filter(h => h?.parts?.[0]?.text).forEach(h => {
         const role = h.role === 'model' ? 'model' : 'user';
-        if (role === lastRole) return false;
-        lastRole = role;
-        return true;
-    }).map(h => ({
-        role: h.role === 'model' ? 'model' : 'user',
-        parts: [{ text: h.parts[0].text }]
-    }));
-    while (sanitized.length > 30) sanitized.shift(); // Limite de historial para no saturar contextos largos
-    while (sanitized.length > 0 && sanitized[0].role !== 'user') sanitized.shift();
-    if (sanitized.length > 0 && sanitized[sanitized.length - 1].role === 'user') sanitized.pop();
+        if (role !== lastRole) {
+            sanitized.push({ role, parts: [{ text: h.parts[0].text }] });
+            lastRole = role;
+        }
+    });
+
+    // Ventana inteligente: últimos 10 mensajes (asegurando que el último no sea del modelo si viene después de otro mensaje del modelo)
+    while (sanitized.length > 10) sanitized.shift();
+
+    // Gemini a veces falla si el historial termina en 'model' y enviamos otro 'user' (rraro, pero mejor asegurar)
+    // En realidad, Gemini REST requiere que el último mensaje de 'contents' sea el que el modelo DEBE responder.
+    // Nosotros estamos añadiendo el mensaje actual DESPUÉS de este historial.
     return sanitized;
 }
+
