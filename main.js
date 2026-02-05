@@ -1030,15 +1030,20 @@ const MODULOS = {
 
     async mostrarInspiracion() {
         const btn = ELEMENTS.navButtons.inspiracion;
-        const originalContent = btn.innerHTML;
-
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
 
-        // Feedback visual: deshabilitar y mostrar que está cargando
+        // 1. Abrir el modal inmediatamente con feedback de carga
+        if (ELEMENTS.inspiracionModal) ELEMENTS.inspiracionModal.style.display = 'flex';
+        if (ELEMENTS.inspiracionFrase) {
+            ELEMENTS.inspiracionFrase.textContent = "Consultando a las musas...";
+            ELEMENTS.inspiracionFrase.classList.add('pulse-loading');
+        }
+        if (ELEMENTS.inspiracionAutor) ELEMENTS.inspiracionAutor.textContent = "";
+
+        // Feedback en el botón (opcional, ya que el modal está abierto)
         btn.disabled = true;
         btn.classList.add('loading-btn');
-        // Si el botón tiene una imagen, podemos añadirle una clase de rotación o cambiar el icono temporalmente
         const img = btn.querySelector('img');
         if (img) img.style.opacity = "0.5";
 
@@ -1053,7 +1058,6 @@ const MODULOS = {
         const tier = perfil?.subscription_tier || 'free';
 
         if (tier === 'free') {
-            // Frases de músicos famosos para tier free
             const frasesMusicos = [
                 { frase: "La música puede cambiar el mundo porque puede cambiar a las personas.", autor: "Bono" },
                 { frase: "La música es el lenguaje del espíritu. Abre el secreto de la vida trayendo paz, aboliendo conflictos.", autor: "Kahlil Gibran" },
@@ -1075,7 +1079,6 @@ const MODULOS = {
             frase = fraseAleatoria.frase;
             autor = fraseAleatoria.autor;
         } else {
-            // Para pro/premium: frase personalizada basada en su historial
             try {
                 const nombre = perfil?.nombre || "viajero/a";
                 const contexto = `
@@ -1102,16 +1105,17 @@ NO incluyas comillas. Responde solo con la frase.`;
             }
         }
 
-        if (ELEMENTS.inspiracionFrase) ELEMENTS.inspiracionFrase.textContent = frase;
+        // Actualizar UI del modal con la frase real
+        if (ELEMENTS.inspiracionFrase) {
+            ELEMENTS.inspiracionFrase.textContent = frase;
+            ELEMENTS.inspiracionFrase.classList.remove('pulse-loading');
+        }
         if (ELEMENTS.inspiracionAutor) ELEMENTS.inspiracionAutor.textContent = `— ${autor}`;
 
-        // Mostrar en el modal
         // Restaurar estado del botón
         btn.disabled = false;
         btn.classList.remove('loading-btn');
         if (img) img.style.opacity = "1";
-
-        if (ELEMENTS.inspiracionModal) ELEMENTS.inspiracionModal.style.display = 'flex';
     },
 
     async toggleProgreso() {
