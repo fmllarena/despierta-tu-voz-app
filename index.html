@@ -241,17 +241,44 @@
     <div id="upgradeModal" class="modal">
         <div class="modal-content upgrade-modal-content">
             <span class="close-modal close-upgrade">&times;</span>
-            <h2>Mejora tu Experiencia</h2>
-            <p>Elige el plan que mejor se adapte a tu viaje vocal.</p>
+            <div class="upgrade-header">
+                <h2>Elige cómo quieres transmutar tu voz</h2>
+                <p>Sube de nivel para desbloquear la memoria profunda y funciones exclusivas.</p>
+            </div>
             <div class="upgrade-options">
+                <!-- PROFUNDIZA -->
                 <div class="upgrade-card pro">
-                    <h3>Plan PRO</h3>
-                    <p>Chat ilimitado y memoria relacional profunda.</p>
-                    <button onclick="iniciarPago('pro')" class="btn-upgrade">Elegir Pro</button>
+                    <div class="upgrade-card-header">
+                        <h3>Plan Profundiza</h3>
+                        <div class="upgrade-price">
+                            <span class="price-old">19,90€</span>
+                            <span class="price-current">9,90€<span>/mes</span></span>
+                        </div>
+                    </div>
+                    <ul class="upgrade-features">
+                        <li>✅ Chat 24/7 ilimitado con el Mentor</li>
+                        <li>✅ Memoria relacional profunda</li>
+                        <li>✅ Acceso a los 5 Módulos de Sanación</li>
+                        <li>✅ Seguimiento de tu progreso emocional</li>
+                    </ul>
+                    <button onclick="iniciarPago('pro')" class="btn-upgrade">Elegir Plan Pro</button>
                 </div>
+                <!-- TRANSFORMA -->
                 <div class="upgrade-card premium">
-                    <h3>Plan TRANSFORMA</h3>
-                    <p>Todo el PRO + Sesiones 1/1 y Plan a medida.</p>
+                    <div class="upgrade-card-header">
+                        <div class="recommended-badge">Recomendado</div>
+                        <h3>Plan Transforma</h3>
+                        <div class="upgrade-price">
+                            <span class="price-old">99€</span>
+                            <span class="price-current">79,90€<span>/mes</span></span>
+                        </div>
+                    </div>
+                    <ul class="upgrade-features">
+                        <li>✅ Todo lo del Plan Pro</li>
+                        <li>✅ <strong>Sesión individual 1/1</strong> de 1h mensual</li>
+                        <li>✅ Plan de Alquimia a medida</li>
+                        <li>✅ Acceso preferente a talleres</li>
+                    </ul>
                     <button onclick="iniciarPago('premium')" class="btn-upgrade">Elegir Transforma</button>
                 </div>
             </div>
@@ -296,37 +323,40 @@
 
             <div class="settings-section profile-info">
                 <div id="settingsUserName" class="info-value">...</div>
-                <div id="settingsUserTier" class="info-value">...</div>
+                <div class="tier-container">
+                    <div id="settingsUserTier" class="info-value">...</div>
+                    <button id="upgradeSettingsBtn" class="upgrade-btn-small">Mejorar Plan</button>
+                </div>
             </div>
 
             <div class="settings-section">
                 <h3>Respuesta del Mentor</h3>
                 <div class="slider-group">
-                    <div class="slider-labels">
-                        <span>🧪 Técnico</span>
-                        <span>Enfoque</span>
-                        <span>🧘‍♂️ Emocional</span>
+                    <div class="slider-header">Enfoque</div>
+                    <div class="slider-inline">
+                        <span class="slider-label-left">🧪 Técnico</span>
+                        <input type="range" id="focusSlider" min="1" max="10" step="4.5" value="5"
+                            title="Enfoque del Mentor">
+                        <span class="slider-label-right">🧘‍♂️ Emocional</span>
                     </div>
-                    <input type="range" id="focusSlider" min="1" max="10" step="4.5" value="5"
-                        title="Enfoque del Mentor">
                 </div>
                 <div class="slider-group">
-                    <div class="slider-labels">
-                        <span>🧘 Neutro</span>
-                        <span>Personalidad</span>
-                        <span>🔥 Motivador</span>
+                    <div class="slider-header">Personalidad</div>
+                    <div class="slider-inline">
+                        <span class="slider-label-left">🧘 Neutro</span>
+                        <input type="range" id="personalitySlider" min="1" max="10" step="4.5" value="5"
+                            title="Personalidad del Mentor">
+                        <span class="slider-label-right">🔥 Motivador</span>
                     </div>
-                    <input type="range" id="personalitySlider" min="1" max="10" step="4.5" value="5"
-                        title="Personalidad del Mentor">
                 </div>
                 <div class="slider-group">
-                    <div class="slider-labels">
-                        <span>⚡ Breve/Directo</span>
-                        <span>Extensión</span>
-                        <span>📜 Detallado/Profundo</span>
+                    <div class="slider-header">Extensión</div>
+                    <div class="slider-inline">
+                        <span class="slider-label-left">⚡ Breve</span>
+                        <input type="range" id="lengthSlider" min="1" max="10" step="4.5" value="5"
+                            title="Extensión de las respuestas">
+                        <span class="slider-label-right">📜 Detallado</span>
                     </div>
-                    <input type="range" id="lengthSlider" min="1" max="10" step="4.5" value="5"
-                        title="Extensión de las respuestas">
                 </div>
             </div>
 

@@ -123,6 +123,7 @@ const ELEMENTS = {
     lengthSlider: document.getElementById('lengthSlider'),
     languageSelect: document.getElementById('languageSelect'),
     weeklyGoalInput: document.getElementById('weeklyGoalInput'),
+    upgradeSettingsBtn: document.getElementById('upgradeSettingsBtn'),
     // Legal Modal
     legalModal: document.getElementById('legalModal'),
     checkTerms: document.getElementById('checkTerms'),
@@ -1547,6 +1548,10 @@ ELEMENTS.ajustesBtn?.addEventListener('click', () => AJUSTES.abrirModal());
 ELEMENTS.closeSettings?.addEventListener('click', () => AJUSTES.cerrarModal());
 ELEMENTS.saveSettingsBtn?.addEventListener('click', () => AJUSTES.guardarAjustes());
 ELEMENTS.clearHistoryBtn?.addEventListener('click', () => AJUSTES.borrarHistorial());
+ELEMENTS.upgradeSettingsBtn?.addEventListener('click', () => {
+    AJUSTES.cerrarModal();
+    ELEMENTS.upgradeModal.style.display = 'flex';
+});
 
 // --- VOZ Y VIAJE ---
 
