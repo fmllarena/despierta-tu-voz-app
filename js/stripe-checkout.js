@@ -41,6 +41,10 @@ async function iniciarPago(planType) {
 
     const isAccepted = window.getAcceptedTermsStatus ? window.getAcceptedTermsStatus() : (user.accepted_terms || false);
     if (!isAccepted) {
+        if (window.mostrarModalLegal) {
+            window.mostrarModalLegal(planType);
+            return;
+        }
         const legalModal = document.getElementById('legalLandingModal') || document.getElementById('legalModal');
         if (legalModal) {
             window.pendingPlan = planType;

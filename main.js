@@ -159,7 +159,8 @@ const ELEMENTS = {
     // Alert Custom
     customAlert: document.getElementById('customAlert'),
     alertMessage: document.getElementById('alertMessage'),
-    alertConfirmBtn: document.getElementById('alertConfirmBtn')
+    alertConfirmBtn: document.getElementById('alertConfirmBtn'),
+    promoTermsBox: document.getElementById('promoTermsBox')
 };
 
 // --- UTILIDAD DE ALERTA PERSONALIZADA ---
@@ -1388,6 +1389,13 @@ const LEGAL = {
     abrirModal: (planType) => {
         LEGAL.pendingPlan = planType;
         if (ELEMENTS.legalModal) ELEMENTS.legalModal.style.display = 'flex';
+
+        // Mostrar caja de promo solo si hay un código activo en la sesión
+        if (ELEMENTS.promoTermsBox) {
+            const activePromo = sessionStorage.getItem('dtv_promo_code');
+            ELEMENTS.promoTermsBox.style.display = (activePromo === 'PROMO1MES') ? 'block' : 'none';
+        }
+
         // Reset checkboxes
         if (ELEMENTS.checkTerms) ELEMENTS.checkTerms.checked = false;
         if (ELEMENTS.checkMedical) ELEMENTS.checkMedical.checked = false;
