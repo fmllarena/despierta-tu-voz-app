@@ -2495,7 +2495,7 @@ textarea#chatMentoriaInput {
 .profile-info {
     display: flex;
     justify-content: space-between;
-    align-items: center;
+    align-items: flex-start;
     background: #fdfaf7;
     padding: 15px 25px;
     border-radius: 12px;
@@ -2552,9 +2552,11 @@ textarea#chatMentoriaInput {
 
 .tier-container {
     display: flex;
-    align-items: center;
-    gap: 15px;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 8px;
 }
+
 
 .upgrade-btn-small {
     background: linear-gradient(135deg, #d4af37, #b8860b);
