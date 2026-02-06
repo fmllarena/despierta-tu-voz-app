@@ -174,7 +174,7 @@ async function processChat(req, res = null) {
     if (process.env.GEMINI_API_KEY) {
         try {
             const endpoint = stream ? 'streamGenerateContent' : 'generateContent';
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:streamGenerateContent?key=${process.env.GEMINI_API_KEY}&alt=sse`;
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:${endpoint}?key=${process.env.GEMINI_API_KEY}${stream ? '&alt=sse' : ''}`;
 
             const requestBody = {
                 contents: [
@@ -221,8 +221,8 @@ async function processChat(req, res = null) {
                 return;
             } else {
                 const data = await response.json();
-                // Si usamos el endpoint stream sin res, tomamos el agregado (aunque es raro)
-                const text = data[0]?.candidates?.[0]?.content?.parts?.[0]?.text || "";
+                // Para requests no-stream, la respuesta es directa
+                const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
                 return { text: text, info: "Gemini 2.0 Flash" };
             }
         } catch (e) {
