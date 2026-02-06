@@ -1030,7 +1030,9 @@ function appendMessage(text, type, id = null) {
         // Crear contenedor para Mensaje + Avatar (resto de mensajes IA)
         const container = document.createElement('div');
         container.className = 'ia-container';
-        if (id) container.id = id;
+
+        // El ID debe ir en el div del mensaje para que el stream lo encuentre y no borre el avatar
+        if (id) div.id = id;
 
         const avatar = document.createElement('div');
         avatar.className = 'ia-avatar';
