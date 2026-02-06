@@ -803,13 +803,19 @@ async function sendMessage() {
         console.log("🔍 [Despedida] Texto completo:", responseText);
 
         const textLower = responseText.toLowerCase();
+        // Detección ultra-flexible de despedida
         const isFarewell = textLower.includes("cerrar sesión") ||
             textLower.includes("cerrar sesion") ||
             textLower.includes("encuentro de hoy quede guardado") ||
             textLower.includes("hasta pronto") ||
+            textLower.includes("hasta luego") ||
             textLower.includes("hasta la próxima") ||
             textLower.includes("hasta la proxima") ||
+            textLower.includes("adiós") ||
+            textLower.includes("adios") ||
+            textLower.includes("que tengas un buen") ||
             textLower.includes("que sigas disfrutando") ||
+            textLower.includes("disfruta del viaje") ||
             textLower.includes("diario de alquimia");
 
         console.log("🔍 [Despedida] ¿Es despedida?", isFarewell);
@@ -1069,7 +1075,17 @@ function appendMessage(text, type, id = null) {
     if (type.startsWith('ia')) {
         div.innerHTML = window.marked ? window.marked.parse(text) : text;
 
-        if (type !== 'ia-botiquin' && text !== "" && (text.includes("cerrar sesión") || text.includes("encuentro de hoy quede guardado"))) {
+        const textLower = text.toLowerCase();
+        const isFarewell = textLower.includes("cerrar sesión") ||
+            textLower.includes("cerrar sesion") ||
+            textLower.includes("encuentro de hoy quede guardado") ||
+            textLower.includes("hasta pronto") ||
+            textLower.includes("hasta luego") ||
+            textLower.includes("adiós") ||
+            textLower.includes("que tengas un buen") ||
+            textLower.includes("diario de alquimia");
+
+        if (type !== 'ia-botiquin' && text !== "" && isFarewell) {
             crearBotonesAccionFinal(div);
         }
 
