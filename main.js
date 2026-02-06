@@ -778,6 +778,7 @@ async function sendMessage() {
             }
         });
 
+        // Primero actualizamos el contenido final sin el cursor
         const finalEl = document.getElementById(responseId);
         if (finalEl) finalEl.innerHTML = window.marked ? window.marked.parse(responseText) : responseText;
 
@@ -792,6 +793,12 @@ async function sendMessage() {
                 MODULOS.generarCronicaSesion();
             }
             if (chatHistory.length > 20) chatHistory = chatHistory.slice(-20);
+        }
+
+        // --- INSERTAR BOTONES SI ES DESPEDIDA (DESPUÉS de actualizar el innerHTML final) ---
+        if (responseText && (responseText.includes("cerrar sesión") || responseText.includes("encuentro de hoy quede guardado"))) {
+            const finalMsgEl = document.getElementById(responseId);
+            if (finalMsgEl) crearBotonesAccionFinal(finalMsgEl);
         }
     } catch (e) {
         document.getElementById(thinkingId)?.remove();
@@ -977,6 +984,44 @@ async function exportarChatDoc() {
     }
 }
 
+function crearBotonesAccionFinal(parentDiv) {
+    if (!parentDiv) return;
+
+    // Evitar duplicados si ya existen
+    if (parentDiv.querySelector('.chat-action-container')) return;
+
+    const actionContainer = document.createElement('div');
+    actionContainer.className = 'chat-action-container';
+    actionContainer.style.marginTop = '15px';
+    actionContainer.style.display = 'flex';
+    actionContainer.style.flexDirection = 'column';
+    actionContainer.style.gap = '10px';
+
+    // Botón: Descargar Conversación
+    const downloadBtn = document.createElement('button');
+    downloadBtn.className = 'chat-download-btn';
+    downloadBtn.innerHTML = '📥 Descargar sesión (.doc)';
+    downloadBtn.onclick = (e) => {
+        e.stopPropagation();
+        exportarChatDoc();
+    };
+    actionContainer.appendChild(downloadBtn);
+
+    // Botón: Guardar y Cerrar Sesión
+    const logoutBtn = document.createElement('button');
+    logoutBtn.className = 'chat-logout-btn';
+    logoutBtn.innerHTML = '✨ Guardar y Cerrar Sesión';
+    logoutBtn.onclick = (e) => {
+        e.stopPropagation();
+        logoutBtn.innerHTML = '⌛ Guardando...';
+        logoutBtn.disabled = true;
+        ELEMENTS.navButtons.logout.click();
+    };
+    actionContainer.appendChild(logoutBtn);
+
+    parentDiv.appendChild(actionContainer);
+}
+
 function appendMessage(text, type, id = null) {
     if (!ELEMENTS.chatBox) return;
     const div = document.createElement('div');
@@ -987,34 +1032,8 @@ function appendMessage(text, type, id = null) {
     if (type.startsWith('ia')) {
         div.innerHTML = window.marked ? window.marked.parse(text) : text;
 
-        if (type !== 'ia-botiquin' && (text.includes("cerrar sesión") || text.includes("encuentro de hoy quede guardado"))) {
-            // Contenedor para los botones de acción final
-            const actionContainer = document.createElement('div');
-            actionContainer.className = 'chat-action-container';
-            actionContainer.style.marginTop = '15px';
-            actionContainer.style.display = 'flex';
-            actionContainer.style.flexDirection = 'column';
-            actionContainer.style.gap = '10px';
-
-            // Botón: Descargar Conversación
-            const downloadBtn = document.createElement('button');
-            downloadBtn.className = 'chat-download-btn';
-            downloadBtn.innerHTML = '📥 Descargar sesión (.doc)';
-            downloadBtn.onclick = () => exportarChatDoc();
-            actionContainer.appendChild(downloadBtn);
-
-            // Botón: Guardar y Cerrar Sesión
-            const logoutBtn = document.createElement('button');
-            logoutBtn.className = 'chat-logout-btn';
-            logoutBtn.innerHTML = '✨ Guardar y Cerrar Sesión';
-            logoutBtn.onclick = () => {
-                logoutBtn.innerHTML = '⌛ Guardando...';
-                logoutBtn.disabled = true;
-                ELEMENTS.navButtons.logout.click();
-            };
-            actionContainer.appendChild(logoutBtn);
-
-            div.appendChild(actionContainer);
+        if (type !== 'ia-botiquin' && text !== "" && (text.includes("cerrar sesión") || text.includes("encuentro de hoy quede guardado"))) {
+            crearBotonesAccionFinal(div);
         }
 
         // Si es Botiquín o estado de carga (thinking), no ponemos avatar para limpiar la interfaz
