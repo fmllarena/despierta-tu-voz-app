@@ -774,16 +774,18 @@ async function sendMessage() {
             const container = document.getElementById(responseId);
             const resEl = container?.querySelector('.message.ia');
             if (resEl) {
-                resEl.innerHTML = window.marked ? window.marked.parse(responseText + " ▮") : responseText;
-                // Eliminamos el autoscroll al final para que el usuario lea desde el inicio
-                // resEl.scrollIntoView({ behavior: 'smooth', block: 'end' });
+                // Limpiamos el tag técnico si aparece durante el streaming para que no sea visible
+                const cleanDisplay = responseText.replace(/\[SESION_FINAL\]/g, "").trim();
+                resEl.innerHTML = window.marked ? window.marked.parse(cleanDisplay + " ▮") : cleanDisplay;
             }
         });
 
-        // Primero actualizamos el contenido final sin el cursor
+        // Primero actualizamos el contenido final sin el cursor y SIN el tag técnico
         const finalContainer = document.getElementById(responseId);
         const finalEl = finalContainer?.querySelector('.message.ia');
-        if (finalEl) finalEl.innerHTML = window.marked ? window.marked.parse(responseText) : responseText;
+
+        const cleanFinalText = responseText.replace(/\[SESION_FINAL\]/g, "").trim();
+        if (finalEl) finalEl.innerHTML = window.marked ? window.marked.parse(cleanFinalText) : cleanFinalText;
 
         sessionStorage.removeItem('dtv_origin_post');
         sessionStorage.removeItem('dtv_origin_cat');
@@ -798,38 +800,10 @@ async function sendMessage() {
             if (chatHistory.length > 20) chatHistory = chatHistory.slice(-20);
         }
 
-        // --- INSERTAR BOTONES SI ES DESPEDIDA (DESPUÉS de actualizar el innerHTML final) ---
-        console.log("🔍 [Despedida] Analizando respuesta para detectar despedida...");
-        console.log("🔍 [Despedida] Texto completo:", responseText);
-
-        const textLower = responseText.toLowerCase();
-        // Detección ultra-flexible de despedida
-        const isFarewell = textLower.includes("cerrar sesión") ||
-            textLower.includes("cerrar sesion") ||
-            textLower.includes("encuentro de hoy quede guardado") ||
-            textLower.includes("hasta pronto") ||
-            textLower.includes("hasta luego") ||
-            textLower.includes("hasta la próxima") ||
-            textLower.includes("hasta la proxima") ||
-            textLower.includes("adiós") ||
-            textLower.includes("adios") ||
-            textLower.includes("que tengas un buen") ||
-            textLower.includes("que sigas disfrutando") ||
-            textLower.includes("disfruta del viaje") ||
-            textLower.includes("diario de alquimia");
-
-        console.log("🔍 [Despedida] ¿Es despedida?", isFarewell);
-
-        if (isFarewell) {
-            console.log("✅ [Despedida] Detectada despedida, creando botones...");
-            // Los botones se añaden al div.message, no al contenedor
-            if (finalEl) {
-                crearBotonesAccionFinal(finalEl);
-            } else {
-                console.warn("⚠️ [Despedida] finalEl es null, no se pueden crear botones");
-            }
-        } else {
-            console.log("ℹ️ [Despedida] No se detectó despedida en este mensaje");
+        // --- INSERTAR BOTONES SI ES DESPEDIDA (Detectando el Tag Técnico) ---
+        if (responseText && responseText.includes("[SESION_FINAL]")) {
+            console.log("✅ [Protocolo Cierre] Tag [SESION_FINAL] detectado. Disparando botones.");
+            if (finalEl) crearBotonesAccionFinal(finalEl);
         }
     } catch (e) {
         document.getElementById(thinkingId)?.remove();
@@ -1073,19 +1047,11 @@ function appendMessage(text, type, id = null) {
     if (!type.startsWith('ia') && id) div.id = id;
 
     if (type.startsWith('ia')) {
-        div.innerHTML = window.marked ? window.marked.parse(text) : text;
+        // Limpiamos siempre el tag técnico para que el usuario nunca lo vea en la interfaz
+        const cleanText = text.replace(/\[SESION_FINAL\]/g, "").trim();
+        div.innerHTML = window.marked ? window.marked.parse(cleanText) : cleanText;
 
-        const textLower = text.toLowerCase();
-        const isFarewell = textLower.includes("cerrar sesión") ||
-            textLower.includes("cerrar sesion") ||
-            textLower.includes("encuentro de hoy quede guardado") ||
-            textLower.includes("hasta pronto") ||
-            textLower.includes("hasta luego") ||
-            textLower.includes("adiós") ||
-            textLower.includes("que tengas un buen") ||
-            textLower.includes("diario de alquimia");
-
-        if (type !== 'ia-botiquin' && text !== "" && isFarewell) {
+        if (type !== 'ia-botiquin' && text !== "" && text.includes("[SESION_FINAL]")) {
             crearBotonesAccionFinal(div);
         }
 
