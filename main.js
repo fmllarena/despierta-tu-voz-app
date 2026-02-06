@@ -799,9 +799,28 @@ async function sendMessage() {
         }
 
         // --- INSERTAR BOTONES SI ES DESPEDIDA (DESPUÉS de actualizar el innerHTML final) ---
-        if (responseText && (responseText.includes("cerrar sesión") || responseText.includes("encuentro de hoy quede guardado"))) {
+        console.log("🔍 [Despedida] Analizando respuesta para detectar despedida...");
+        console.log("🔍 [Despedida] Texto completo:", responseText);
+
+        const textLower = responseText.toLowerCase();
+        const isFarewell = textLower.includes("cerrar sesión") ||
+            textLower.includes("cerrar sesion") ||
+            textLower.includes("encuentro de hoy quede guardado") ||
+            textLower.includes("hasta pronto") ||
+            textLower.includes("diario de alquimia");
+
+        console.log("🔍 [Despedida] ¿Es despedida?", isFarewell);
+
+        if (isFarewell) {
+            console.log("✅ [Despedida] Detectada despedida, creando botones...");
             // Los botones se añaden al div.message, no al contenedor
-            if (finalEl) crearBotonesAccionFinal(finalEl);
+            if (finalEl) {
+                crearBotonesAccionFinal(finalEl);
+            } else {
+                console.warn("⚠️ [Despedida] finalEl es null, no se pueden crear botones");
+            }
+        } else {
+            console.log("ℹ️ [Despedida] No se detectó despedida en este mensaje");
         }
     } catch (e) {
         document.getElementById(thinkingId)?.remove();
