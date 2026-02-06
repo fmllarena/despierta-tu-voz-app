@@ -1165,10 +1165,13 @@ if (ELEMENTS.navButtons.logout) {
 
         // Añadir botón de cierre real al mensaje
         setTimeout(() => {
-            const msgGuardada = document.getElementById('msg-sesion-guardada');
-            if (msgGuardada) {
+            const containerGuardada = document.getElementById('msg-sesion-guardada');
+            const msgInner = containerGuardada?.querySelector('.message.ia');
+            if (msgInner) {
                 const logoutRealBtn = document.createElement('button');
                 logoutRealBtn.className = 'chat-logout-btn';
+                logoutRealBtn.style.marginTop = '15px';
+                logoutRealBtn.style.display = 'block';
                 logoutRealBtn.innerHTML = '🚪 Cerrar sesión y salir';
                 logoutRealBtn.onclick = async () => {
                     logoutRealBtn.innerHTML = '⌛ Cerrando...';
@@ -1176,7 +1179,7 @@ if (ELEMENTS.navButtons.logout) {
                     await supabase.auth.signOut();
                     location.reload();
                 };
-                msgGuardada.appendChild(logoutRealBtn);
+                msgInner.appendChild(logoutRealBtn);
             }
         }, 100);
 
