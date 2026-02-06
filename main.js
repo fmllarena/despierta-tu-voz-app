@@ -773,7 +773,8 @@ async function sendMessage() {
             const resEl = document.getElementById(responseId);
             if (resEl) {
                 resEl.innerHTML = window.marked ? window.marked.parse(responseText + " ▮") : responseText;
-                resEl.scrollIntoView({ behavior: 'smooth', block: 'end' });
+                // Eliminamos el autoscroll al final para que el usuario lea desde el inicio
+                // resEl.scrollIntoView({ behavior: 'smooth', block: 'end' });
             }
         });
 
@@ -1479,6 +1480,11 @@ const AJUSTES = {
 
         ELEMENTS.languageSelect.value = userProfile.mentor_language || 'es';
         ELEMENTS.weeklyGoalInput.value = userProfile.weekly_goal || '';
+
+        // Ocultar botón de mejora si ya es Premium (Transforma)
+        if (ELEMENTS.upgradeSettingsBtn) {
+            ELEMENTS.upgradeSettingsBtn.style.display = tier === 'premium' ? 'none' : 'block';
+        }
 
         ELEMENTS.settingsModal.style.display = 'flex';
     },
