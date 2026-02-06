@@ -841,6 +841,141 @@ async function guardarMensajeDB(texto, emisor, customDate = null) {
     }
 }
 
+async function exportarChatDoc() {
+    try {
+        if (!supabase || !userProfile) {
+            alertCustom("Inicia sesión para descargar tu conversación.");
+            return;
+        }
+
+        console.log("📥 Generando documento de la sesión actual...");
+
+        // 1. Buscamos el último resumen_diario o crónica para saber dónde empieza "hoy"
+        const { data: ultimoResumen } = await supabase
+            .from('mensajes')
+            .select('created_at')
+            .eq('alumno', userProfile.user_id)
+            .eq('emisor', 'resumen_diario')
+            .order('created_at', { ascending: false })
+            .limit(1);
+
+        let fechaInicioBusqueda = "2024-01-01T00:00:00Z";
+        if (ultimoResumen && ultimoResumen.length > 0) {
+            fechaInicioBusqueda = ultimoResumen[0].created_at;
+        }
+
+        // 2. Obtener los mensajes posteriores a esa última crónica
+        const { data: mensajes, error } = await supabase
+            .from('mensajes')
+            .select('created_at, texto, emisor')
+            .eq('alumno', userProfile.user_id)
+            .gt('created_at', fechaInicioBusqueda)
+            .order('created_at', { ascending: true });
+
+        if (error) throw error;
+
+        let mensajesFinales = mensajes;
+        if (!mensajesFinales || mensajesFinales.length === 0) {
+            const { data: backupMsgs } = await supabase
+                .from('mensajes')
+                .select('created_at, texto, emisor')
+                .eq('alumno', userProfile.user_id)
+                .order('created_at', { ascending: false })
+                .limit(20);
+
+            if (backupMsgs && backupMsgs.length > 0) {
+                mensajesFinales = backupMsgs.reverse();
+            } else {
+                alertCustom("No he encontrado mensajes nuevos en esta sesión.");
+                return;
+            }
+        }
+
+        // 3. Crear el contenido en HTML para el .doc
+        const logoUrl = window.location.origin + "/assets/logo-appDTV2.png"; // Corrected path
+        let htmlBody = `
+            <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+            <head>
+                <meta charset='utf-8'>
+                <title>Bitácora de Alquimia Vocal</title>
+                <style>
+                    body { font-family: 'Georgia', serif; color: #333; line-height: 1.6; }
+                    .header { text-align: center; margin-bottom: 40px; border-bottom: 2px solid #8e7d6d; padding-bottom: 20px; }
+                    .logo { height: 80px; margin-bottom: 10px; }
+                    .title { color: #8e7d6d; font-size: 24pt; margin: 0; font-weight: normal; }
+                    .subtitle { color: #666; font-size: 11pt; font-style: italic; }
+                    .metadata { margin-bottom: 30px; font-size: 10pt; color: #888; text-align: right; }
+                    .message-box { margin-bottom: 25px; padding: 15px; border-radius: 10px; }
+                    .label { font-weight: bold; text-transform: uppercase; font-size: 9pt; letter-spacing: 1px; margin-bottom: 5px; display: block; }
+                    .usuario-label { color: #2c3e50; }
+                    .mentor-label { color: #8e7d6d; }
+                    .time { font-weight: normal; font-size: 8pt; color: #aaa; margin-left: 10px; }
+                    .content { font-size: 11pt; white-space: pre-wrap; }
+                    .footer { margin-top: 50px; text-align: center; font-size: 9pt; color: #8e7d6d; border-top: 1px solid #eee; padding-top: 20px; }
+                </style>
+            </head>
+            <body>
+                <div class='header'>
+                    <img src='${logoUrl}' class='logo' alt='Logo DTV'>
+                    <h1 class='title'>Bitácora de Alquimia Vocal</h1>
+                    <p class='subtitle'>El viaje hacia tu propia voz</p>
+                </div>
+
+                <div class='metadata'>
+                    Alumno: ${userProfile.nombre || userProfile.email}<br>
+                    Fecha de la sesión: ${new Date().toLocaleDateString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' })}
+                </div>
+
+                <div class='messages'>
+        `;
+
+        mensajesFinales.forEach(msg => {
+            if (msg.emisor === 'resumen_diario' || msg.emisor === 'sistema') return;
+
+            const time = new Date(msg.created_at).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+            const isMentor = msg.emisor === 'ia';
+            const labelClass = isMentor ? 'mentor-label' : 'usuario-label';
+            const labelText = isMentor ? '🤖 MENTOR VOCAL' : `👤 ${userProfile.nombre?.toUpperCase() || 'ALUMNO'}`;
+
+            // Limpiar Markdown básico para el Word
+            const cleanText = msg.texto.replace(/\*\*(.*?)\*\*/g, '$1').replace(/\*(.*?)\*/g, '$1');
+
+            htmlBody += `
+                <div class='message-box'>
+                    <span class='label ${labelClass}'>${labelText} <span class='time'>${time}</span></span>
+                    <div class='content'>${cleanText}</div>
+                </div>
+            `;
+        });
+
+        htmlBody += `
+                </div>
+                <div class='footer'>
+                    © 2026 Despierta tu Voz. Todos los derechos reservados.<br>
+                    <i>"Tu voz es el espejo de tu alma."</i>
+                </div>
+            </body>
+            </html>
+        `;
+
+        // 4. Crear el Blob y descargar
+        const blob = new Blob(['\ufeff', htmlBody], { type: 'application/msword' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `Sesion_DTV_${userProfile.nombre || 'Alquimia'}_${new Date().toISOString().split('T')[0]}.doc`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+
+        console.log("✅ Documento de sesión generado con éxito.");
+    } catch (e) {
+        console.error("Error al exportar DOC:", e);
+        alertCustom("Hubo un error al preparar tu documento.");
+    }
+}
+
 function appendMessage(text, type, id = null) {
     if (!ELEMENTS.chatBox) return;
     const div = document.createElement('div');
@@ -852,6 +987,22 @@ function appendMessage(text, type, id = null) {
         div.innerHTML = window.marked ? window.marked.parse(text) : text;
 
         if (type !== 'ia-botiquin' && (text.includes("cerrar sesión") || text.includes("encuentro de hoy quede guardado"))) {
+            // Contenedor para los botones de acción final
+            const actionContainer = document.createElement('div');
+            actionContainer.className = 'chat-action-container';
+            actionContainer.style.marginTop = '15px';
+            actionContainer.style.display = 'flex';
+            actionContainer.style.flexDirection = 'column';
+            actionContainer.style.gap = '10px';
+
+            // Botón: Descargar Conversación
+            const downloadBtn = document.createElement('button');
+            downloadBtn.className = 'chat-download-btn';
+            downloadBtn.innerHTML = '📥 Descargar sesión (.doc)';
+            downloadBtn.onclick = () => exportarChatDoc();
+            actionContainer.appendChild(downloadBtn);
+
+            // Botón: Guardar y Cerrar Sesión
             const logoutBtn = document.createElement('button');
             logoutBtn.className = 'chat-logout-btn';
             logoutBtn.innerHTML = '✨ Guardar y Cerrar Sesión';
@@ -860,7 +1011,9 @@ function appendMessage(text, type, id = null) {
                 logoutBtn.disabled = true;
                 ELEMENTS.navButtons.logout.click();
             };
-            div.appendChild(logoutBtn);
+            actionContainer.appendChild(logoutBtn);
+
+            div.appendChild(actionContainer);
         }
 
         // Si es Botiquín o estado de carga (thinking), no ponemos avatar para limpiar la interfaz
