@@ -770,7 +770,9 @@ async function sendMessage() {
             }
 
             responseText = fullText;
-            const resEl = document.getElementById(responseId);
+            // Ahora el ID está en el contenedor, así que buscamos el div.message dentro
+            const container = document.getElementById(responseId);
+            const resEl = container?.querySelector('.message.ia');
             if (resEl) {
                 resEl.innerHTML = window.marked ? window.marked.parse(responseText + " ▮") : responseText;
                 // Eliminamos el autoscroll al final para que el usuario lea desde el inicio
@@ -779,7 +781,8 @@ async function sendMessage() {
         });
 
         // Primero actualizamos el contenido final sin el cursor
-        const finalEl = document.getElementById(responseId);
+        const finalContainer = document.getElementById(responseId);
+        const finalEl = finalContainer?.querySelector('.message.ia');
         if (finalEl) finalEl.innerHTML = window.marked ? window.marked.parse(responseText) : responseText;
 
         sessionStorage.removeItem('dtv_origin_post');
@@ -797,8 +800,8 @@ async function sendMessage() {
 
         // --- INSERTAR BOTONES SI ES DESPEDIDA (DESPUÉS de actualizar el innerHTML final) ---
         if (responseText && (responseText.includes("cerrar sesión") || responseText.includes("encuentro de hoy quede guardado"))) {
-            const finalMsgEl = document.getElementById(responseId);
-            if (finalMsgEl) crearBotonesAccionFinal(finalMsgEl);
+            // Los botones se añaden al div.message, no al contenedor
+            if (finalEl) crearBotonesAccionFinal(finalEl);
         }
     } catch (e) {
         document.getElementById(thinkingId)?.remove();
@@ -1051,8 +1054,9 @@ function appendMessage(text, type, id = null) {
         const container = document.createElement('div');
         container.className = 'ia-container';
 
-        // El ID debe ir en el div del mensaje para que el stream lo encuentre y no borre el avatar
-        if (id) div.id = id;
+        // IMPORTANTE: El ID va en el CONTENEDOR, no en el div del mensaje
+        // Esto evita problemas de CSS con columnas
+        if (id) container.id = id;
 
         const avatar = document.createElement('div');
         avatar.className = 'ia-avatar';
@@ -1253,7 +1257,11 @@ const MODULOS = {
         let frase, autor;
         const tier = perfil?.subscription_tier || 'free';
 
+        console.log("🎭 [Inspiración] Tier detectado:", tier);
+        console.log("🎭 [Inspiración] Perfil completo:", perfil);
+
         if (tier === 'free') {
+            console.log("🎭 [Inspiración] Usando frases fijas para tier FREE");
             const frasesMusicos = [
                 { frase: "La música puede cambiar el mundo porque puede cambiar a las personas.", autor: "Bono" },
                 { frase: "La música es el lenguaje del espíritu. Abre el secreto de la vida trayendo paz, aboliendo conflictos.", autor: "Kahlil Gibran" },
@@ -1275,6 +1283,7 @@ const MODULOS = {
             frase = fraseAleatoria.frase;
             autor = fraseAleatoria.autor;
         } else {
+            console.log("🎭 [Inspiración] Generando frase personalizada con IA para tier:", tier);
             try {
                 const nombre = perfil?.nombre || "viajero/a";
                 const contexto = `
@@ -1291,11 +1300,13 @@ Genera UNA sola frase inspiradora (máximo 15 palabras) que conecte DIRECTAMENTE
 REGLA DE ORO: No seas genérico. Menciona algo que se parezca a lo que ha trabajado.
 NO incluyas comillas. Responde solo con la frase.`;
 
+                console.log("🎭 [Inspiración] Llamando a Gemini con prompt:", prompt);
                 const respuesta = await llamarGemini(prompt, [], "inspiracion_dia", { userId: user.id });
+                console.log("🎭 [Inspiración] Respuesta de Gemini:", respuesta);
                 frase = respuesta.trim().replace(/^["']|["']$/g, '');
                 autor = `Tu Mentor, para ${nombre}`;
             } catch (e) {
-                console.error("Error frases:", e);
+                console.error("❌ [Inspiración] Error generando frase con IA:", e);
                 frase = "Tu voz es el eco de tu alma; hoy, permítele resonar con toda su verdad.";
                 autor = "Tu Mentor";
             }
