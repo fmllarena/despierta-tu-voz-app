@@ -1085,9 +1085,15 @@ function appendMessage(text, type, id = null) {
         const container = document.createElement('div');
         container.className = 'ia-container';
 
-        // IMPORTANTE: El ID va en el CONTENEDOR, no en el div del mensaje
-        // Esto evita problemas de CSS con columnas
-        if (id) container.id = id;
+        // IMPORTANTE: Para msg-bienvenida, el ID va en el div del mensaje (para que el CSS funcione)
+        // Para otros mensajes con streaming, el ID va en el contenedor (para evitar problemas de columnas)
+        if (id) {
+            if (id === 'msg-bienvenida') {
+                div.id = id; // ID en el mensaje para que el CSS #msg-bienvenida funcione
+            } else {
+                container.id = id; // ID en el contenedor para streaming
+            }
+        }
 
         const avatar = document.createElement('div');
         avatar.className = 'ia-avatar';
