@@ -775,7 +775,8 @@ async function sendMessage() {
             const resEl = container?.querySelector('.message.ia');
             if (resEl) {
                 // Limpiamos el tag técnico si aparece durante el streaming para que no sea visible
-                const cleanDisplay = responseText.replace(/\[SESION_FINAL\]/g, "").trim();
+                // Usamos una regex flexible para capturar escapes de markdown como \_
+                const cleanDisplay = responseText.replace(/\[\s*SESION\\?_?FINAL\s*\]/gi, "").trim();
                 resEl.innerHTML = window.marked ? window.marked.parse(cleanDisplay + " ▮") : cleanDisplay;
             }
         });
@@ -784,7 +785,7 @@ async function sendMessage() {
         const finalContainer = document.getElementById(responseId);
         const finalEl = finalContainer?.querySelector('.message.ia');
 
-        const cleanFinalText = responseText.replace(/\[SESION_FINAL\]/g, "").trim();
+        const cleanFinalText = responseText.replace(/\[\s*SESION\\?_?FINAL\s*\]/gi, "").trim();
         if (finalEl) finalEl.innerHTML = window.marked ? window.marked.parse(cleanFinalText) : cleanFinalText;
 
         sessionStorage.removeItem('dtv_origin_post');
@@ -800,9 +801,10 @@ async function sendMessage() {
             if (chatHistory.length > 20) chatHistory = chatHistory.slice(-20);
         }
 
-        // --- INSERTAR BOTONES SI ES DESPEDIDA (Detectando el Tag Técnico) ---
-        if (responseText && responseText.includes("[SESION_FINAL]")) {
-            console.log("✅ [Protocolo Cierre] Tag [SESION_FINAL] detectado. Disparando botones.");
+        // --- INSERTAR BOTONES SI ES DESPEDIDA (Detectando el Tag Técnico con regex flexible) ---
+        const sessionFinalRegex = /\[\s*SESION\\?_?FINAL\s*\]/i;
+        if (responseText && sessionFinalRegex.test(responseText)) {
+            console.log("✅ [Protocolo Cierre] Tag [SESION_FINAL] detectado (vía regex). Disparando botones.");
             if (finalEl) crearBotonesAccionFinal(finalEl);
         }
     } catch (e) {
@@ -1047,11 +1049,11 @@ function appendMessage(text, type, id = null) {
     if (!type.startsWith('ia') && id) div.id = id;
 
     if (type.startsWith('ia')) {
-        // Limpiamos siempre el tag técnico para que el usuario nunca lo vea en la interfaz
-        const cleanText = text.replace(/\[SESION_FINAL\]/g, "").trim();
+        // Limpiamos siempre el tag técnico para que el usuario nunca lo vea en la interfaz (vía regex flexible)
+        const cleanText = text.replace(/\[\s*SESION\\?_?FINAL\s*\]/gi, "").trim();
         div.innerHTML = window.marked ? window.marked.parse(cleanText) : cleanText;
 
-        if (type !== 'ia-botiquin' && text !== "" && text.includes("[SESION_FINAL]")) {
+        if (type !== 'ia-botiquin' && text !== "" && /\[\s*SESION\\?_?FINAL\s*\]/i.test(text)) {
             crearBotonesAccionFinal(div);
         }
 
