@@ -807,6 +807,9 @@ async function sendMessage() {
             textLower.includes("cerrar sesion") ||
             textLower.includes("encuentro de hoy quede guardado") ||
             textLower.includes("hasta pronto") ||
+            textLower.includes("hasta la próxima") ||
+            textLower.includes("hasta la proxima") ||
+            textLower.includes("que sigas disfrutando") ||
             textLower.includes("diario de alquimia");
 
         console.log("🔍 [Despedida] ¿Es despedida?", isFarewell);
