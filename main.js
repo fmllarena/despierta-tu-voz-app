@@ -988,11 +988,21 @@ async function exportarChatDoc() {
 }
 
 function crearBotonesAccionFinal(parentDiv) {
-    if (!parentDiv) return;
+    console.log("🔘 [Botones] Intentando crear botones...");
+    console.log("🔘 [Botones] parentDiv:", parentDiv);
+
+    if (!parentDiv) {
+        console.warn("🔘 [Botones] parentDiv es null, abortando");
+        return;
+    }
 
     // Evitar duplicados si ya existen
-    if (parentDiv.querySelector('.chat-action-container')) return;
+    if (parentDiv.querySelector('.chat-action-container')) {
+        console.log("🔘 [Botones] Ya existen botones, abortando");
+        return;
+    }
 
+    console.log("🔘 [Botones] Creando contenedor de botones...");
     const actionContainer = document.createElement('div');
     actionContainer.className = 'chat-action-container';
     actionContainer.style.marginTop = '15px';
@@ -1023,6 +1033,8 @@ function crearBotonesAccionFinal(parentDiv) {
     actionContainer.appendChild(logoutBtn);
 
     parentDiv.appendChild(actionContainer);
+    console.log("✅ [Botones] Botones creados y añadidos correctamente");
+    console.log("🔘 [Botones] Contenedor final:", actionContainer);
 }
 
 function appendMessage(text, type, id = null) {

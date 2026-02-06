@@ -445,6 +445,53 @@ header p {
     margin-bottom: 0;
 }
 
+/* Botones de acción al final de conversación */
+.chat-action-container {
+    margin-top: 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 100%;
+}
+
+.chat-download-btn,
+.chat-logout-btn {
+    padding: 12px 20px;
+    border: none;
+    border-radius: 10px;
+    font-size: 0.9em;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: var(--fuente-principal);
+}
+
+.chat-download-btn {
+    background: #f0f0f0;
+    color: #555;
+    border: 1px solid #ddd;
+}
+
+.chat-download-btn:hover {
+    background: #e8e8e8;
+    transform: translateY(-1px);
+}
+
+.chat-logout-btn {
+    background: var(--color-acento);
+    color: white;
+}
+
+.chat-logout-btn:hover {
+    background: #7a6b5d;
+    transform: translateY(-1px);
+}
+
+.chat-logout-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
 .user {
     align-self: flex-end;
     background: var(--color-acento);
