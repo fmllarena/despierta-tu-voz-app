@@ -926,13 +926,12 @@ async function exportarChatDoc() {
 
         const logoUrl = base64Logo || "";
         let htmlBody = `
-            <html lang="es">
+            <html>
             <head>
                 <meta charset="utf-8">
-                <title>Bitácora de Alquimia Vocal</title>
                 <style>
-                    body { font-family: 'Arial', 'Helvetica', sans-serif; color: #333; line-height: 1.6; }
-                    .header { text-align: center; margin-bottom: 40px; border-bottom: 2px solid #8e7d6d; padding-bottom: 20px; }
+                    body { font-family: Arial, Helvetica, sans-serif; color: #333; line-height: 1.5; }
+                    .header { text-align: center; margin-bottom: 30px; border-bottom: 1px solid #8e7d6d; padding-bottom: 15px; }
                     .logo { height: 80px; margin-bottom: 10px; }
                     .title { color: #8e7d6d; font-size: 24pt; margin: 0; font-weight: normal; }
                     .subtitle { color: #666; font-size: 11pt; font-style: italic; }
@@ -947,10 +946,10 @@ async function exportarChatDoc() {
                 </style>
             </head>
             <body>
-                <div class='header'>
-                    ${logoUrl ? `<img src='${logoUrl}' class='logo' alt='Logo DTV'>` : ''}
-                    <h1 class='title'>Bitácora de Alquimia Vocal</h1>
-                    <p class='subtitle'>El viaje hacia tu propia voz</p>
+                <div class="header">
+                    ${logoUrl ? `<img src="${logoUrl}" width="150" style="margin-bottom:10px;">` : ""}
+                    <h1 style="color:#8e7d6d; font-size:20pt; margin:0;">Bitácora de Alquimia Vocal</h1>
+                    <p style="color:#666; font-style:italic;">El viaje hacia tu propia voz</p>
                 </div>
 
                 <div class='metadata'>
