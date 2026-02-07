@@ -907,7 +907,24 @@ async function exportarChatDoc() {
         }
 
         // 3. Crear el contenido en HTML para el .doc
-        const logoUrl = window.location.origin + "/assets/logo-appDTV2.png";
+
+        // Convertimos el logo a Base64 para que el documento sea autónomo y no pida "actualizar enlaces"
+        let base64Logo = "";
+        try {
+            const resp = await fetch(window.location.origin + "/assets/logo-appDTV2.png");
+            if (resp.ok) {
+                const blob = await resp.blob();
+                base64Logo = await new Promise(resolve => {
+                    const reader = new FileReader();
+                    reader.onloadend = () => resolve(reader.result);
+                    reader.readAsDataURL(blob);
+                });
+            }
+        } catch (e) {
+            console.error("Error convirtiendo logo a base64:", e);
+        }
+
+        const logoUrl = base64Logo || (window.location.origin + "/assets/logo-appDTV2.png");
         let htmlBody = `
             <html lang="es" xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
             <head>
