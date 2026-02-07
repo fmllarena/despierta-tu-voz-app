@@ -907,11 +907,11 @@ async function exportarChatDoc() {
         }
 
         // 3. Crear el contenido en HTML para el .doc
-        const logoUrl = window.location.origin + "/assets/logo-appDTV2.png"; // Corrected path
+        const logoUrl = window.location.origin + "/assets/logo-appDTV2.png";
         let htmlBody = `
-            <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+            <html lang="es" xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
             <head>
-                <meta charset='utf-8'>
+                <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
                 <title>Bitácora de Alquimia Vocal</title>
                 <style>
                     body { font-family: 'Georgia', serif; color: #333; line-height: 1.6; }
@@ -974,7 +974,7 @@ async function exportarChatDoc() {
         `;
 
         // 4. Crear el Blob y descargar
-        const blob = new Blob(['\ufeff', htmlBody], { type: 'application/msword' });
+        const blob = new Blob(['\ufeff', htmlBody], { type: 'application/msword;charset=utf-8' });
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
