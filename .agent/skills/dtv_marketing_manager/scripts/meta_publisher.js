@@ -66,13 +66,24 @@ class MetaPublisher {
     async publishScheduled(content, time = '18:00') {
         this.validateCredentials();
 
-        // Calcular timestamp para la publicación
-        const scheduledTime = this.calculateScheduledTime(time);
+        // Calcular timestamp para la publicación respetando el día de la estrategia
+        let scheduledTime = this.calculateScheduledTimeForDay(content.day, time);
 
-        console.log(`   📱 Programando Instagram para ${time}...`);
+        // Si es un post de nicho, añadir un desfase para que no coincidan todos al mismo minuto
+        if (content.type === 'Niche') {
+            const nicheOffsets = {
+                'choral_directors': 10,  // +10 min
+                'vocal_teachers': 20,    // +20 min
+                'singers_choristers': 30 // +30 min
+            };
+            const offset = nicheOffsets[content.strategy.image_variation] || 5;
+            scheduledTime += (offset * 60);
+        }
+
+        console.log(`   📱 Programando Instagram para ${content.day} a las ${time} (+ offset nicho if any)...`);
         const instagramResult = await this.publishInstagramScheduled(content, scheduledTime);
 
-        console.log(`   📘 Programando Facebook para ${time}...`);
+        console.log(`   📘 Programando Facebook para ${content.day} a las ${time} (+ offset nicho if any)...`);
         const facebookResult = await this.publishFacebookScheduled(content, scheduledTime);
 
         return {
@@ -148,7 +159,9 @@ class MetaPublisher {
     /**
      * Calcula el timestamp para un día específico de la semana
      */
-    calculateScheduledTimeForDay(dayName) {
+    calculateScheduledTimeForDay(dayName, time = '18:00') {
+        const [hours, minutes] = time.split(':').map(Number);
+
         const dayMap = {
             'monday': 1,
             'tuesday': 2,
@@ -165,14 +178,21 @@ class MetaPublisher {
 
         // Calcular días hasta el día objetivo
         let daysUntil = targetDay - currentDay;
-        if (daysUntil <= 0) {
-            daysUntil += 7; // Si ya pasó esta semana, programar para la próxima
+
+        // Si el día es hoy pero la hora ya pasó (o falta poco), programar para la próxima semana
+        // O si el día ya pasó esta semana, programar para la próxima
+        const minBuffer = 25 * 60 * 1000; // 25 min buffer para Meta
+        const targetToday = new Date(now);
+        targetToday.setHours(hours, minutes, 0, 0);
+
+        if (daysUntil < 0 || (daysUntil === 0 && targetToday.getTime() <= now.getTime() + minBuffer)) {
+            daysUntil += 7;
         }
 
-        // Crear fecha objetivo a las 18:00
+        // Crear fecha objetivo
         const targetDate = new Date(now);
         targetDate.setDate(now.getDate() + daysUntil);
-        targetDate.setHours(18, 0, 0, 0);
+        targetDate.setHours(hours, minutes, 0, 0);
 
         // Convertir a timestamp Unix
         return Math.floor(targetDate.getTime() / 1000);

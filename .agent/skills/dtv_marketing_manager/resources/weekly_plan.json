@@ -149,6 +149,7 @@
     "niche_targets": {
         "choral_directors": {
             "name": "Directores de Coro",
+            "recommended_day": "wednesday",
             "focus": "Rendimiento Grupal",
             "theme": "Psicología del grupo y empaste vocal",
             "suggested_title": "¿Por qué tu cuerda de sopranos suena tensa? El factor emocional del empaste.",
@@ -164,6 +165,7 @@
         },
         "vocal_teachers": {
             "name": "Profesores de Técnica Vocal",
+            "recommended_day": "thursday",
             "focus": "Aliado Pedagógico",
             "theme": "Gestión del bloqueo emocional en la pedagogía",
             "suggested_title": "Cuando la técnica choca con el muro: El soporte emocional entre clase y clase.",
@@ -180,6 +182,7 @@
         },
         "singers_choristers": {
             "name": "Cantantes y Coralistas",
+            "recommended_day": "friday",
             "focus": "Confianza",
             "theme": "Miedo a destacar y tensión emocional",
             "suggested_title": "¿Sientes que tu voz se esconde cuando cantas en grupo?",

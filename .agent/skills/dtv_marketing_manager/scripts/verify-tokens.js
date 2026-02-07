@@ -12,7 +12,7 @@ console.log('\n🔍 DTV Marketing Manager - Verificación de Tokens\n');
 console.log('═'.repeat(60));
 
 const tokens = {
-    'META_ACCESS_TOKEN': process.env.META_ACCESS_TOKEN,
+    'META_ACCESS_TOKEN': process.env.META_ACCESS_TOKEN || process.env.META_USER_ACCESS_TOKEN,
     'META_PAGE_ID': process.env.META_PAGE_ID,
     'META_INSTAGRAM_ACCOUNT_ID': process.env.META_INSTAGRAM_ACCOUNT_ID,
     'GEMINI_API_KEY': process.env.GEMINI_API_KEY,
@@ -103,7 +103,7 @@ async function verifyGeminiKey() {
 
         const options = {
             hostname: 'generativelanguage.googleapis.com',
-            path: `/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${tokens.GEMINI_API_KEY}`,
+            path: `/v1beta/models/gemini-2.5-flash:generateContent?key=${tokens.GEMINI_API_KEY}`,
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

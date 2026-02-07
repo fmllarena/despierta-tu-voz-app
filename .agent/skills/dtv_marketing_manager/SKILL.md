@@ -98,18 +98,25 @@ node .agent/skills/dtv_marketing_manager/scripts/run.js
 ### Ejecución con Parámetros
 
 ```bash
-# Modo borrador (por defecto)
-node .agent/skills/dtv_marketing_manager/scripts/run.js --mode=draft
+# Ejecutar contenido según el plan semanal (Día actual)
+node .agent/skills/dtv_marketing_manager/scripts/run.js
 
-# Publicación directa
-node .agent/skills/dtv_marketing_manager/scripts/run.js --mode=publish
+# Ejecutar un nicho específico (Se programará para su día recomendado)
+node .agent/skills/dtv_marketing_manager/scripts/run.js --niche=choral_directors
 
-# Solo generar assets
-node .agent/skills/dtv_marketing_manager/scripts/run.js --mode=assets_only
-
-# Especificar día de la semana
-node .agent/skills/dtv_marketing_manager/scripts/run.js --day=monday
+# Ejecutar todos los nichos para la semana (Cada uno se programará en su día)
+node .agent/skills/dtv_marketing_manager/scripts/run.js --niche=choral_directors
+node .agent/skills/dtv_marketing_manager/scripts/run.js --niche=vocal_teachers
+node .agent/skills/dtv_marketing_manager/scripts/run.js --niche=singers_choristers
 ```
+
+### 📅 Distribución Semanal de Nichos
+Para evitar la saturación y los posts repetidos, cada nicho tiene un día asignado:
+- **Miércoles:** Directores de Coro
+- **Jueves:** Profesores de Canto
+- **Viernes:** Cantantes y Coralistas
+
+El sistema detecta automáticamente estos días al usar el flag `--niche`.
 
 ### Automatización con Cron (Opcional)
 

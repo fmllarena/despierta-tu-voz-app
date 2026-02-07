@@ -52,12 +52,17 @@ async function main() {
     try {
         // Step 1: Análisis del contexto
         console.log('\n📊 Step 1: Analizando contexto...');
-        const dayOfWeek = cliArgs.day || CalendarLogic.getCurrentDay();
-
+        let dayOfWeek = cliArgs.day || CalendarLogic.getCurrentDay();
         let strategy;
+
         if (cliArgs.niche) {
             console.log(`   🎯 Generando para nicho: ${cliArgs.niche}`);
             strategy = CalendarLogic.getNicheStrategy(cliArgs.niche);
+            // Si es un nicho, usamos su día recomendado para la programación
+            if (strategy.niche_meta && strategy.niche_meta.recommended_day) {
+                dayOfWeek = strategy.niche_meta.recommended_day;
+                console.log(`   📅 Día programado (nicho): ${dayOfWeek}`);
+            }
             // Sobrescribir el tipo para que el generador de imágenes use el prompt correcto
             strategy.image_variation = cliArgs.niche;
         } else {
