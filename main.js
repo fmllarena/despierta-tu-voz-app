@@ -924,14 +924,14 @@ async function exportarChatDoc() {
             console.error("Error convirtiendo logo a base64:", e);
         }
 
-        const logoUrl = base64Logo || (window.location.origin + "/assets/logo-appDTV2.png");
+        const logoUrl = base64Logo || "";
         let htmlBody = `
-            <html lang="es" xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
+            <html lang="es">
             <head>
-                <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+                <meta charset="utf-8">
                 <title>Bitácora de Alquimia Vocal</title>
                 <style>
-                    body { font-family: 'Georgia', serif; color: #333; line-height: 1.6; }
+                    body { font-family: 'Arial', 'Helvetica', sans-serif; color: #333; line-height: 1.6; }
                     .header { text-align: center; margin-bottom: 40px; border-bottom: 2px solid #8e7d6d; padding-bottom: 20px; }
                     .logo { height: 80px; margin-bottom: 10px; }
                     .title { color: #8e7d6d; font-size: 24pt; margin: 0; font-weight: normal; }
@@ -948,7 +948,7 @@ async function exportarChatDoc() {
             </head>
             <body>
                 <div class='header'>
-                    <img src='${logoUrl}' class='logo' alt='Logo DTV'>
+                    ${logoUrl ? `<img src='${logoUrl}' class='logo' alt='Logo DTV'>` : ''}
                     <h1 class='title'>Bitácora de Alquimia Vocal</h1>
                     <p class='subtitle'>El viaje hacia tu propia voz</p>
                 </div>
@@ -967,7 +967,7 @@ async function exportarChatDoc() {
             const time = new Date(msg.created_at).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
             const isMentor = msg.emisor === 'ia';
             const labelClass = isMentor ? 'mentor-label' : 'usuario-label';
-            const labelText = isMentor ? '🤖 MENTOR VOCAL' : `👤 ${userProfile.nombre?.toUpperCase() || 'ALUMNO'}`;
+            const labelText = isMentor ? 'MENTOR VOCAL' : (userProfile.nombre?.toUpperCase() || 'ALUMNO');
 
             // Limpiar Markdown básico para el Word
             const cleanText = msg.texto.replace(/\*\*(.*?)\*\*/g, '$1').replace(/\*(.*?)\*/g, '$1');
@@ -990,8 +990,8 @@ async function exportarChatDoc() {
             </html>
         `;
 
-        // 4. Crear el Blob y descargar
-        const blob = new Blob(['\ufeff', htmlBody], { type: 'application/msword;charset=utf-8' });
+        // 4. Crear el Blob y descargar (Sin BOM para evitar el "?" inicial)
+        const blob = new Blob([htmlBody], { type: 'application/msword;charset=utf-8' });
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
