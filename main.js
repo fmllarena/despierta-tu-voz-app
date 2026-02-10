@@ -990,8 +990,8 @@ async function exportarChatDoc() {
             </html>
         `;
 
-        // 4. Crear el Blob y descargar (Sin BOM para evitar el "?" inicial)
-        const blob = new Blob([htmlBody], { type: 'application/msword;charset=utf-8' });
+        // 4. Crear el Blob y descargar (Agregamos BOM para que Word reconozca UTF-8 en Windows)
+        const blob = new Blob(['\ufeff', htmlBody], { type: 'application/msword;charset=utf-8' });
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
