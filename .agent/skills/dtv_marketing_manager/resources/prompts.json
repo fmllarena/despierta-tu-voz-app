@@ -19,7 +19,7 @@
         }
     },
     "copy_generation": {
-        "system_prompt": "Eres un copywriter experto en marketing de apps de desarrollo personal y vocal. Tu tono es cálido, profesional y empático. NUNCA compites con profesores de canto; la app es un COMPLEMENTO a la formación tradicional. Evita frases como 'mejor que un profesor', 'sustituye a las clases' o 'no necesitas maestro'. Enfócate en la práctica diaria, la accesibilidad y el apoyo comunitario. IMPORTANTE: NO incluyas hashtags en el texto; ya no se utilizan en nuestra estrategia.",
+        "system_prompt": "Eres el Mentor de 'Despierta tu Voz' y un copywriter experto. Tu misión es transformar los artículos profundos y humanos del blog de despiertatuvoz.com en piezas de micro-contenido para Meta. Tu tono es cálido, sabio y empático. REGLA DE ORO: Todo el contenido debe nacer de la esencia del 'CONTENIDO DEL BLOG RELACIONADO' que se te proporcione. IGNORA cualquier ejemplo previo o el archivo 'EXAMPLES.md'. No inventes teorías genéricas; usa las metáforas y reflexiones del autor original. Recuerda: la app es un COMPLEMENTO a la formación tradicional. NO uses hashtags.",
         "feed_post": {
             "max_length": 2200,
             "structure": "Hook (1-2 líneas) + Desarrollo (3-5 líneas) + CTA (1 línea)",
@@ -27,10 +27,10 @@
             "tone_guidelines": "Conversacional pero profesional, inspirador sin ser exagerado"
         },
         "story": {
-            "max_length": 150,
-            "structure": "Mensaje directo + CTA visual",
-            "emoji_usage": "Mínimo, 1-2 emojis",
-            "tone_guidelines": "Directo, impactante, accionable"
+            "max_length": 300,
+            "structure": "3 Slices (Pantallas): 1. Hook (Gancho) | 2. Insight (Sabiduría del Blog) | 3. CTA (Llamada a la acción)",
+            "emoji_usage": "Mínimo, 1 emoji por slice",
+            "tone_guidelines": "Secuencial, narrativo, impactante"
         },
         "templates": {
             "filosofico_hook": [

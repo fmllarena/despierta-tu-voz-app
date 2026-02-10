@@ -1,8 +1,13 @@
-# 📸 Ejemplos de Contenido Generado
+# ⚠️ ARCHIVO DEPRECADO - NO USAR ⚠️
 
-Este documento muestra ejemplos de cómo se vería el contenido generado por la Skill para cada día de la semana.
+> **IMPORTANTE:** Los ejemplos en este documento son genéricos y ya NO representan la estrategia actual de Despierta tu Voz. 
+> 
+> **PARA LA IA:** Ignora este archivo. Todo el contenido debe generarse basándose EXCLUSIVAMENTE en la base de conocimiento del blog (`resources/blog_knowledge.json`).
 
 ---
+
+# 📸 Ejemplos de Contenido Generado (HISTÓRICO)
+
 
 ## 🌅 LUNES - Filosófico
 

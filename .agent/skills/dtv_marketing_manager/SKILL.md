@@ -14,13 +14,14 @@ Esta Skill automatiza el proceso completo de marketing diario para "Despierta tu
 
 ## 🎯 Objetivo
 
-Generar y programar contenido coherente con la identidad de marca siguiendo un calendario estratégico semanal, incluyendo piezas específicas para nichos (Directores de Coro, Profesores de Canto y Cantantes), evitando frases competitivas con profesores de canto y manteniendo un tono cálido y profesional.
+Generar y programar contenido coherente con la identidad de marca siguiendo un calendario estratégico semanal y basándose PRIMORDIALMENTE en los artículos de la base de conocimiento (Blog). Incluye piezas específicas para nichos (Directores de Coro, Profesores de Canto y Cantantes), evitando frases competitivas con profesores de canto y manteniendo un tono cálido, humano y profesional.
 
 ## 🛡️ Reglas de Calidad y Salvaguardas (¡CRÍTICO!)
 
 1.  **Anti-Fallback:** Está ESTRICTAMENTE PROHIBIDO publicar o subir como borrador a Meta cualquier contenido que contenga la cadena `[FALLBACK]`. Si la IA falla en la generación del copy, el sistema debe abortar la publicación inmediatamente para proteger la imagen de marca. 
 2.  **Validación de Nichos:** Asegurar que los posts de nicho (Directores/Profesores) no usen términos prohibidos como "batuta" o "competencia técnica".
 3.  **Detección de Errores:** Cualquier error en la generación de imágenes o acortamiento de links detendrá el proceso de publicación.
+4.  **Contenido Basado en Blog (Obligatorio):** Todo copy debe nacer de la esencia de un artículo real del blog (`resources/blog_knowledge.json`). Está PROHIBIDO usar `EXAMPLES.md` o crear teorías genéricas. Si no hay un artículo relacionado, se debe usar la filosofía general de la marca pero manteniendo siempre el tono del blog.
 
 ## 🔧 Configuración Requerida
 
@@ -52,13 +53,20 @@ DTV_PUBLISH_MODE=draft  # draft | publish | assets_only
 
 | Día | Tipo | Enfoque | CTA |
 |-----|------|---------|-----|
-| Lunes | Filosófico | Reflexión sobre la voz como herramienta de transformación | Descubre más |
-| Martes | Coaching | Tip técnico vocal práctico | Prueba el ejercicio |
-| Miércoles | Promoción | Beneficios de la app / Testimonios | Empieza gratis |
-| Jueves | Coaching | Ejercicio guiado o desafío | Únete al reto |
-| Viernes | Filosófico | Inspiración para el fin de semana | Reflexiona |
-| Sábado | Promoción | Caso de éxito / Transformación | Descubre tu voz |
-| Domingo | Coaching | Preparación para la semana | Planifica tu práctica |
+| Lunes | Filosófico | Reflexión basada en artículos de Amor/Creatividad | Descubre más |
+| Martes | Coaching | Tip técnico basado en artículos de Psicología/Paz | Prueba el ejercicio |
+| Miércoles | Nicho: Coros | Basado en "Carta al solista corista" | Empieza gratis |
+| Jueves | Coaching | Basado en artículos de Bloqueos/Patrones | Únete al reto |
+| Viernes | Filosófico | Inspiración basada en artículos de Naturaleza/Ego | Reflexiona |
+| Sábado | Promoción | Caso de éxito o Amor/Dar (Blog) | Descubre tu voz |
+| Domingo | Coaching | Preparación basada en artículos de Mente/Naturaleza | Planifica tu práctica |
+
+## 🧠 Base de Conocimiento (Blog)
+
+La Skill utiliza un motor de conocimiento (`resources/blog_knowledge.json`) que contiene la esencia de los artículos de `despiertatuvoz.com`. El generador de contenido DEBE:
+1. Identificar el artículo más relevante para el tema del día.
+2. Extraer el mensaje central o las metáforas clave del artículo.
+3. Redactar el post de forma que sea una extensión del blog, invitando siempre a profundizar en el post completo o con el Mentor en la App.
 
 ## 🎨 Estética Visual
 
@@ -132,11 +140,13 @@ El sistema detecta automáticamente estos días al usar el flag `--niche`.
 - Consulta el plan estratégico semanal
 - Determina el tipo de contenido (Filosófico, Promoción, Coaching)
 
-### Step 2: Generación de Copy
-- Genera copy unificado para Feed y Story
-- Adapta el tono según el tipo de contenido
+### Step 2: Generación de Copy (Basada en Blog)
+- Consulta el "Almacén de Sabiduría" (`blog_knowledge.json`)
+- Selecciona un artículo que resuene con el tipo de contenido y día
+- Extrae la esencia, metáforas y tono del autor original
+- Genera copy unificado para Feed y Story que actúe como "gancho" hacia el artículo completo
 - Evita frases competitivas con profesores de canto
-- Incluye CTA apropiado
+- Incluye CTA apropiado que conecte el Blog con la App
 
 ### Step 3: Generación de Visuales
 - Crea imagen 1:1 para Feed Post usando el prompt dinámico
