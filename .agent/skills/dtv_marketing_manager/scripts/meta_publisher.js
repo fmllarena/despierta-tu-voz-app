@@ -108,7 +108,7 @@ class MetaPublisher {
         const postData = {
             image_url: imageUrl,
             caption: caption,
-            access_token: this.userToken
+            access_token: this.pageToken
         };
 
         const result = await this.makeGraphAPIRequest(
@@ -209,7 +209,7 @@ class MetaPublisher {
         const containerData = {
             image_url: imageUrl,
             caption: caption,
-            access_token: this.userToken
+            access_token: this.pageToken
         };
 
         const container = await this.makeGraphAPIRequest(
@@ -223,7 +223,7 @@ class MetaPublisher {
             creation_id: container.id,
             published: true,
             scheduled_publish_time: scheduledTime,
-            access_token: this.userToken
+            access_token: this.pageToken
         };
 
         const result = await this.makeGraphAPIRequest(

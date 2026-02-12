@@ -1,0 +1,9 @@
+COMPARE TOKENS START
+
+--- Result for User Token ---
+Status: 400
+Response: {"error":{"message":"(#10) Application does not have permission for this action","type":"OAuthException","code":10,"fbtrace_id":"AP1ToLTae4gkkKW8o1UMYoj"}}
+
+--- Result for Page Token ---
+Status: 400
+Response: {"error":{"message":"(#10) Application does not have permission for this action","type":"OAuthException","code":10,"fbtrace_id":"ANDuQ9eVDNXdpi6vvqj1enO"}}
