@@ -228,7 +228,120 @@ header p {
 .header-top-actions {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 12px;
+}
+
+/* Music Player Top Bar */
+.music-player-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.music-icon-btn {
+    background: transparent;
+    border: none;
+    font-size: 1.2em;
+    cursor: pointer;
+    padding: 5px;
+    border-radius: 50%;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+}
+
+.music-icon-btn:hover {
+    background: #fdfaf5;
+    transform: scale(1.1);
+}
+
+.music-icon-btn.playing {
+    animation: simplePulse 2s infinite ease-in-out;
+    background: rgba(142, 125, 109, 0.1);
+}
+
+.music-menu-dropdown {
+    display: none;
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background: white;
+    min-width: 220px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+    border-radius: 12px;
+    padding: 10px;
+    z-index: 1000;
+    margin-top: 10px;
+    border: 1px solid #f0e6dc;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.music-menu-header {
+    font-size: 0.75em;
+    color: var(--color-acento);
+    font-weight: bold;
+    padding: 5px 10px;
+    border-bottom: 1px solid #fcfaf7;
+    margin-bottom: 5px;
+    letter-spacing: 0.05em;
+}
+
+.music-item {
+    padding: 10px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.9em;
+    color: #444;
+    transition: all 0.2s ease;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    text-align: left;
+    background: transparent;
+    border: none;
+    width: 100%;
+    font-family: var(--fuente-principal);
+}
+
+.music-item:hover {
+    background: #fdfaf5;
+    color: var(--color-acento);
+}
+
+.music-item.active {
+    background: rgba(142, 125, 109, 0.08);
+    color: var(--color-acento);
+    font-weight: bold;
+}
+
+.music-item .music-desc {
+    font-size: 0.75em;
+    display: block;
+    color: #999;
+    font-weight: normal;
+}
+
+.music-stop-option {
+    margin-top: 5px;
+    padding: 8px 12px;
+    border: none;
+    background: #fdf2f2;
+    color: #e74c3c;
+    border-radius: 8px;
+    font-size: 0.85em;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    width: 100%;
+    text-align: left;
+}
+
+.music-stop-option:hover {
+    background: #feeaea;
 }
 
 .messages {

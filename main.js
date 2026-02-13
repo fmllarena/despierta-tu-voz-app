@@ -161,7 +161,12 @@ const ELEMENTS = {
     customAlert: document.getElementById('customAlert'),
     alertMessage: document.getElementById('alertMessage'),
     alertConfirmBtn: document.getElementById('alertConfirmBtn'),
-    promoTermsBox: document.getElementById('promoTermsBox')
+    promoTermsBox: document.getElementById('promoTermsBox'),
+    // Top Bar Music Player
+    musicToggleBtn: document.getElementById('musicToggleBtn'),
+    musicMenu: document.getElementById('musicMenu'),
+    musicListItems: document.getElementById('musicListItems'),
+    stopMusicBtn: document.getElementById('stopMusicBtn')
 };
 
 // --- UTILIDAD DE ALERTA PERSONALIZADA ---
@@ -1253,7 +1258,7 @@ const MODULOS = {
                     <span>Elige la frecuencia que necesites oír.</span>
                 </div>
                 <div class="audio-controls-stacked">
-                    <select id="freqSelector" class="audio-select" onchange="if(currentAudio) { currentAudio.pause(); currentAudio=null; if(currentAudioBtn) currentAudioBtn.innerHTML='▶'; }">
+                    <select id="freqSelector" class="audio-select" onchange="if(currentAudio) { currentAudio.pause(); currentAudio=null; if(currentAudioBtn) currentAudioBtn.innerHTML='▶'; } MUSICA.actualizarUI();">
                         ${AUDIOS_BOTIQUIN.map(audio => `<option value="${audio.file}" title="${audio.desc}">${audio.title}</option>`).join('')}
                     </select>
                     <div class="audio-actions">
@@ -2449,12 +2454,98 @@ EMAIL_VERIFICATION.init();
 let currentAudio = null;
 let currentAudioBtn = null;
 
-function reproducirAudioBotiquin(file, btn) {
-    const loopBtn = btn.parentElement.querySelector('.audio-loop-btn');
+const MUSICA = {
+    init: function () {
+        this.renderMenu();
+        this.setupListeners();
+    },
+
+    renderMenu: function () {
+        if (!ELEMENTS.musicListItems) return;
+        ELEMENTS.musicListItems.innerHTML = AUDIOS_BOTIQUIN.map(audio => `
+            <button class="music-item" onclick="MUSICA.seleccionarYReproducir('${audio.file}', this)">
+                <div class="music-info">
+                    <strong>${audio.title}</strong>
+                    <span class="music-desc">${audio.desc}</span>
+                </div>
+                <span class="music-status-icon">▶</span>
+            </button>
+        `).join('');
+    },
+
+    setupListeners: function () {
+        // Toggle menú
+        ELEMENTS.musicToggleBtn?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const isVisible = ELEMENTS.musicMenu.style.display === 'flex';
+            ELEMENTS.musicMenu.style.display = isVisible ? 'none' : 'flex';
+        });
+
+        // Detener música
+        ELEMENTS.stopMusicBtn?.addEventListener('click', () => {
+            this.detenerTodo();
+            ELEMENTS.musicMenu.style.display = 'none';
+        });
+
+        // Cerrar al pulsar fuera
+        window.addEventListener('click', (e) => {
+            if (ELEMENTS.musicMenu && !ELEMENTS.musicMenu.contains(e.target) && e.target !== ELEMENTS.musicToggleBtn) {
+                ELEMENTS.musicMenu.style.display = 'none';
+            }
+        });
+    },
+
+    seleccionarYReproducir: function (file, itemBtn) {
+        // Esta función viene del botón del menú superior
+        reproducirAudioBotiquin(file, itemBtn, true);
+        ELEMENTS.musicMenu.style.display = 'none';
+    },
+
+    detenerTodo: function () {
+        if (currentAudio) {
+            currentAudio.pause();
+            currentAudio = null;
+        }
+        if (currentAudioBtn) {
+            currentAudioBtn.innerHTML = '▶';
+            currentAudioBtn = null;
+        }
+        this.actualizarUI();
+    },
+
+    actualizarUI: function () {
+        // Actualizar el icono de la cabecera
+        if (currentAudio && !currentAudio.paused) {
+            ELEMENTS.musicToggleBtn?.classList.add('playing');
+            ELEMENTS.musicToggleBtn.innerHTML = '🎶';
+        } else {
+            ELEMENTS.musicToggleBtn?.classList.remove('playing');
+            ELEMENTS.musicToggleBtn.innerHTML = '🎵';
+        }
+
+        // Actualizar los estados en el menú desplegable
+        document.querySelectorAll('.music-item').forEach(btn => {
+            const file = btn.getAttribute('onclick').match(/'([^']+)'/)[1];
+            const fileName = file.split('/').pop();
+            const isActive = currentAudio && currentAudio.src.includes(fileName);
+
+            btn.classList.toggle('active', isActive && !currentAudio.paused);
+            const statusIcon = btn.querySelector('.music-status-icon');
+            if (statusIcon) {
+                statusIcon.innerHTML = (isActive && !currentAudio.paused) ? '⏸' : '▶';
+            }
+        });
+    }
+};
+
+function reproducirAudioBotiquin(file, btn, isFromGlobalMenu = false) {
+    // Si viene del menú global, el comportamiento de loop es por defecto true (siempre queremos música infinita)
+    const loopBtn = isFromGlobalMenu ? null : btn.parentElement.querySelector('.audio-loop-btn');
     const isLooping = loopBtn ? loopBtn.classList.contains('active') : true;
 
-    // Usamos el nombre del archivo para la comparación, evitando problemas con rutas relativas/absolutas
     const fileName = file.split('/').pop();
+
+    // Si ya está sonando este mismo audio
     if (currentAudio && currentAudio.src.includes(fileName)) {
         if (currentAudio.paused) {
             currentAudio.loop = isLooping;
@@ -2464,9 +2555,11 @@ function reproducirAudioBotiquin(file, btn) {
             currentAudio.pause();
             btn.innerHTML = '▶';
         }
+        MUSICA.actualizarUI();
         return;
     }
 
+    // Si había otro audio sonando, lo pausamos y actualizamos el botón anterior
     if (currentAudio) {
         currentAudio.pause();
         if (currentAudioBtn) currentAudioBtn.innerHTML = '▶';
@@ -2480,11 +2573,13 @@ function reproducirAudioBotiquin(file, btn) {
     currentAudio.play()
         .then(() => {
             btn.innerHTML = '⏸';
+            MUSICA.actualizarUI();
         })
         .catch(err => {
             console.error("Error reproduciendo archivo:", err);
             btn.innerHTML = '❌';
             setTimeout(() => btn.innerHTML = '▶', 2000);
+            MUSICA.actualizarUI();
         });
 
     currentAudio.onended = () => {
@@ -2493,18 +2588,23 @@ function reproducirAudioBotiquin(file, btn) {
             currentAudio = null;
             currentAudioBtn = null;
         }
+        MUSICA.actualizarUI();
     };
 
     currentAudio.onerror = (e) => {
         console.error("Error cargando audio:", e);
         btn.innerHTML = '⚠️';
+        MUSICA.actualizarUI();
     };
 }
 
-// Exportar al ámbito global para poder ser llamadas desde onclick
+// Inicializar sistema de música
+MUSICA.init();
+
+// Exportar al ámbito global
 window.reproducirAudioBotiquin = reproducirAudioBotiquin;
 window.toggleLoop = toggleLoop;
-
+window.MUSICA = MUSICA;
 
 function toggleLoop(btn) {
     btn.classList.toggle('active');
