@@ -2512,7 +2512,7 @@ const MUSICA = {
             currentAudio = null;
         }
         if (currentAudioBtn) {
-            currentAudioBtn.innerHTML = '▶';
+            setAudioBtnIcon(currentAudioBtn, '▶');
             currentAudioBtn = null;
         }
         this.actualizarUI();
@@ -2531,18 +2531,32 @@ const MUSICA = {
 
         // Actualizar los estados en el menú desplegable
         document.querySelectorAll('.music-item').forEach(btn => {
-            const file = btn.getAttribute('onclick').match(/'([^']+)'/)[1];
+            const onclickText = btn.getAttribute('onclick') || "";
+            const match = onclickText.match(/'([^']+)'/);
+            if (!match) return;
+
+            const file = match[1];
             const fileName = file.split('/').pop();
             const isActive = currentAudio && currentAudio.src.includes(fileName);
 
             btn.classList.toggle('active', isActive && !currentAudio.paused);
-            const statusIcon = btn.querySelector('.music-status-icon');
-            if (statusIcon) {
-                statusIcon.innerHTML = (isActive && !currentAudio.paused) ? '⏸' : '▶';
-            }
+            setAudioBtnIcon(btn, (isActive && !currentAudio.paused) ? '⏸' : '▶');
         });
     }
 };
+
+/**
+ * Ayudante para actualizar el icono de un botón sin borrar su estructura interna
+ */
+function setAudioBtnIcon(btn, icon) {
+    if (!btn) return;
+    const statusIcon = btn.querySelector('.music-status-icon');
+    if (statusIcon) {
+        statusIcon.innerHTML = icon;
+    } else {
+        btn.innerHTML = icon;
+    }
+}
 
 function reproducirAudioBotiquin(file, btn, isFromGlobalMenu = false) {
     // Si viene del menú global, el comportamiento de loop es por defecto true (siempre queremos música infinita)
@@ -2556,10 +2570,10 @@ function reproducirAudioBotiquin(file, btn, isFromGlobalMenu = false) {
         if (currentAudio.paused) {
             currentAudio.loop = isLooping;
             currentAudio.play().catch(e => console.error("Error play:", e));
-            btn.innerHTML = '⏸';
+            setAudioBtnIcon(btn, '⏸');
         } else {
             currentAudio.pause();
-            btn.innerHTML = '▶';
+            setAudioBtnIcon(btn, '▶');
         }
         MUSICA.actualizarUI();
         return;
@@ -2568,7 +2582,7 @@ function reproducirAudioBotiquin(file, btn, isFromGlobalMenu = false) {
     // Si había otro audio sonando, lo pausamos y actualizamos el botón anterior
     if (currentAudio) {
         currentAudio.pause();
-        if (currentAudioBtn) currentAudioBtn.innerHTML = '▶';
+        if (currentAudioBtn) setAudioBtnIcon(currentAudioBtn, '▶');
     }
 
     console.log("🔊 Intentando reproducir:", file);
@@ -2578,19 +2592,19 @@ function reproducirAudioBotiquin(file, btn, isFromGlobalMenu = false) {
 
     currentAudio.play()
         .then(() => {
-            btn.innerHTML = '⏸';
+            setAudioBtnIcon(btn, '⏸');
             MUSICA.actualizarUI();
         })
         .catch(err => {
             console.error("Error reproduciendo archivo:", err);
-            btn.innerHTML = '❌';
-            setTimeout(() => btn.innerHTML = '▶', 2000);
+            setAudioBtnIcon(btn, '❌');
+            setTimeout(() => setAudioBtnIcon(btn, '▶'), 2000);
             MUSICA.actualizarUI();
         });
 
     currentAudio.onended = () => {
         if (!currentAudio.loop) {
-            btn.innerHTML = '▶';
+            setAudioBtnIcon(btn, '▶');
             currentAudio = null;
             currentAudioBtn = null;
         }
@@ -2599,7 +2613,7 @@ function reproducirAudioBotiquin(file, btn, isFromGlobalMenu = false) {
 
     currentAudio.onerror = (e) => {
         console.error("Error cargando audio:", e);
-        btn.innerHTML = '⚠️';
+        setAudioBtnIcon(btn, '⚠️');
         MUSICA.actualizarUI();
     };
 }
