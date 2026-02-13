@@ -2515,12 +2515,13 @@ const MUSICA = {
 
     actualizarUI: function () {
         // Actualizar el icono de la cabecera
+        const toggleImg = ELEMENTS.musicToggleBtn?.querySelector('img');
         if (currentAudio && !currentAudio.paused) {
             ELEMENTS.musicToggleBtn?.classList.add('playing');
-            ELEMENTS.musicToggleBtn.innerHTML = '🎶';
+            if (toggleImg) toggleImg.src = 'assets/ondas-sonoras.png';
         } else {
             ELEMENTS.musicToggleBtn?.classList.remove('playing');
-            ELEMENTS.musicToggleBtn.innerHTML = '🎵';
+            if (toggleImg) toggleImg.src = 'assets/musica.png';
         }
 
         // Actualizar los estados en el menú desplegable

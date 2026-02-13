@@ -241,9 +241,8 @@ header p {
 .music-icon-btn {
     background: transparent;
     border: none;
-    font-size: 1.2em;
     cursor: pointer;
-    padding: 5px;
+    padding: 0;
     border-radius: 50%;
     transition: all 0.3s ease;
     display: flex;
@@ -253,6 +252,12 @@ header p {
     height: 32px;
 }
 
+.music-icon-btn img {
+    width: 24px;
+    height: 24px;
+    object-fit: contain;
+}
+
 .music-icon-btn:hover {
     background: #fdfaf5;
     transform: scale(1.1);
@@ -260,7 +265,6 @@ header p {
 
 .music-icon-btn.playing {
     animation: simplePulse 2s infinite ease-in-out;
-    background: rgba(142, 125, 109, 0.1);
 }
 
 .music-menu-dropdown {
