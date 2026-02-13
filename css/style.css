@@ -1650,6 +1650,15 @@ textarea#chatMentoriaInput {
     font-size: 1.2em;
 }
 
+.support-tag {
+    font-size: 0.55em;
+    font-weight: bold;
+    color: white;
+    background: var(--color-acento);
+    padding: 4px 8px;
+    border-radius: 12px;
+}
+
 @keyframes fadeInDown {
     from {
         opacity: 0;
