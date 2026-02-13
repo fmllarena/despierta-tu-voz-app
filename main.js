@@ -2117,6 +2117,11 @@ const TOUR = {
             text: "¿Nervios antes de cantar o un bloqueo repentino? Pulsa aquí para recibir calma y pautas inmediatas."
         },
         {
+            target: "#musicToggleBtn",
+            title: "Música de Alquimia",
+            text: "Elige una frecuencia sonora para que te acompañe mientras chateas. ¡La música no se detendrá aunque navegues por la app!"
+        },
+        {
             target: "#sesionBtn",
             title: "Tutorías Privadas",
             text: "Gestiona aquí tus encuentros personales 1/1 conmigo para profundizar en tu voz y mentalidad."
