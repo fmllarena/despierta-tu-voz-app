@@ -396,8 +396,8 @@ h3 {
 }
 
 .btn-outline:hover {
-    background: var(--color-acento);
-    color: white;
+    background-color: var(--color-acento) !important;
+    color: white !important;
 }
 
 .btn-nav {
@@ -873,6 +873,22 @@ h3 {
 .pricing-card .btn-premium-alt {
     margin-top: 5px;
     background: var(--color-oro-soft);
+}
+
+.pricing-card ul li.li-no-check::before {
+    content: none;
+}
+
+.pricing-card ul li.li-no-check {
+    margin-top: 20px;
+    font-style: italic;
+    color: var(--color-acento);
+    font-weight: 500;
+}
+
+.btn-small {
+    font-size: 0.9rem !important;
+    padding: 12px 25px !important;
 }
 
 #legalLandingModal .modal-content {
