@@ -887,8 +887,23 @@ h3 {
 }
 
 .btn-small {
-    font-size: 0.9rem !important;
-    padding: 12px 25px !important;
+    font-size: 0.85rem !important;
+    padding: 10px 20px !important;
+    letter-spacing: 0.5px;
+}
+
+.btn-brown {
+    background-color: #a65d47 !important;
+    color: white !important;
+    border: none !important;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(166, 93, 71, 0.2);
+}
+
+.btn-brown:hover {
+    background-color: #8e4d3a !important;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(166, 93, 71, 0.3);
 }
 
 #legalLandingModal .modal-content {
