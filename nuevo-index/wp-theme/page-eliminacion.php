@@ -45,12 +45,7 @@ get_header(); ?>
                 <p>Procesaremos tu solicitud en un plazo máximo de 72 horas hábiles.</p>
             </div>
 
-            <div class="instruction-box mt-40">
-                <h3>3. A través de Meta (Facebook/Instagram)</h3>
-                <p>Si has vinculado tu cuenta a través de Facebook o Instagram, puedes revocar el acceso desde tu
-                    configuración de Meta en: <strong>Configuración y privacidad > Aplicaciones y sitios web</strong>.
-                    Busca "Despierta tu Voz" y selecciona "Eliminar".</p>
-            </div>
+
         </div>
     </div>
 </section>
