@@ -10,6 +10,8 @@
             </ul>
         </nav>
         <p>&copy; <?php echo date('Y'); ?> Despierta tu Voz. Todos los derechos reservados. |
+            <a href="<?php echo esc_url(home_url('/politica-de-cookies')); ?>"
+                style="color: inherit; text-decoration: underline;">Cookies</a> |
             <a href="<?php echo esc_url(home_url('/politica-privacidad')); ?>"
                 style="color: inherit; text-decoration: underline;">Privacidad</a> |
             <a href="<?php echo esc_url(home_url('/terminos-y-condiciones')); ?>"
