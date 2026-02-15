@@ -787,6 +787,94 @@ h3 {
     display: none;
 }
 
+/* --- CALL SCHEDULING SECTION --- */
+.call-scheduling {
+    padding: 100px 0;
+    background: linear-gradient(to bottom, #ffffff, var(--color-oro-soft));
+    text-align: center;
+}
+
+.call-scheduling-card {
+    max-width: 850px;
+    margin: 0 auto;
+    background: white;
+    padding: 60px 40px;
+    border-radius: 40px;
+    box-shadow: 0 20px 60px rgba(58, 80, 107, 0.08);
+    border: 1px solid rgba(212, 175, 55, 0.2);
+}
+
+.call-scheduling h2 {
+    font-size: 2.5rem;
+    margin-bottom: 20px;
+    color: var(--color-acento);
+}
+
+.call-scheduling p {
+    font-size: 1.2rem;
+    color: #555;
+    margin-bottom: 40px;
+    max-width: 650px;
+    margin-left: auto;
+    margin-right: auto;
+    line-height: 1.8;
+}
+
+.call-scheduling .btn-primary {
+    padding: 20px 50px;
+    font-size: 1.2rem;
+    box-shadow: 0 10px 30px rgba(58, 80, 107, 0.2);
+}
+
+.call-scheduling .session-features {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    margin-top: 40px;
+    flex-wrap: wrap;
+}
+
+.session-feature {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.95rem;
+    color: var(--color-acento);
+    font-weight: 600;
+}
+
+.session-feature span {
+    color: var(--color-oro);
+    font-size: 1.2rem;
+}
+
+@media (max-width: 768px) {
+    .call-scheduling {
+        padding: 60px 20px;
+    }
+
+    .call-scheduling-card {
+        padding: 40px 20px;
+    }
+
+    .call-scheduling h2 {
+        font-size: 2rem;
+    }
+}
+
+/* --- PRICING ADJUSTMENTS --- */
+.pricing-card .btn+p {
+    margin-top: 15px;
+    font-size: 0.85rem;
+    color: #888;
+    text-align: center;
+}
+
+.pricing-card .btn-premium-alt {
+    margin-top: 5px;
+    background: var(--color-oro-soft);
+}
+
 #legalLandingModal .modal-content {
     max-width: 600px;
 }
