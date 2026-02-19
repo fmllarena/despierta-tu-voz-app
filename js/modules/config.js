@@ -7,6 +7,9 @@ export const AUDIOS_BOTIQUIN = [
     { id: 'canciones-ancestrales', title: 'Canciones Ancestrales', file: 'assets/audios/canciones_ancestrales.mp3', desc: 'Conexión con la sabiduría de la voz original.' }
 ];
 
+export const WELCOME_MESSAGE = "Hola Viajero, soy tu Mentor de Voces...";
+export const LOGO_URL = "https://fmllarena.github.io/despierta-tu-voz-app/assets/logo_dtv_circular.png";
+
 export const TIER_NAMES = {
     'free': 'Explora',
     'pro': 'Profundiza',

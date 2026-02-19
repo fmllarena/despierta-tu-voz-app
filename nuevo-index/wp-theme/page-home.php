@@ -208,6 +208,11 @@ get_header(); ?>
             <span class="checkpoint">✓</span>
             <p><strong>Alquimia Vocal:</strong> Un método holístico que une lo invisible con lo audible.</p>
         </div>
+        <div class="nudo-item">
+            <span class="checkpoint">✓</span>
+            <p><strong>Radar de Energía:</strong> Nuestra tecnología analiza la estabilidad y energía de tu vibración
+                para detectar bloqueos antes que nadie.</p>
+        </div>
     </div>
 </section>
 

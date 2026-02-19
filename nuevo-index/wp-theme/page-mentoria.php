@@ -19,9 +19,9 @@ get_header(); ?>
         <div class="tech-card highlight-box">
             <h2>El Modelo Híbrido (La gran ventaja)</h2>
             <p>"A diferencia de las mentorías convencionales donde empezamos de cero cada semana, aquí llegamos al
-                corazón del asunto desde el primer minuto. Yo tengo acceso (si solicitas una sesión individual 1/1)
-                a los avances y reflexiones que has trabajado con tu Mentor IA, lo que hace que nuestras sesiones
-                sean profundamente eficientes y reveladoras."</p>
+                corazón del asunto desde el primer minuto. Yo tengo acceso a los avances, las reflexiones y el análisis
+                de tu <strong>Radar de Energía</strong> que has trabajado con tu Mentor IA, lo que hace que nuestras
+                sesiones sean profundamente eficientes y reveladoras."</p>
         </div>
     </div>
 </section>
@@ -79,7 +79,8 @@ get_header(); ?>
     <h2>Da un paso más en tu Alquimia Vocal</h2>
     <div class="cta-content"
         style="max-width: 800px; margin: 0 auto 40px; text-align: left; background: rgba(255,255,255,0.05); padding: 40px; border-radius: 20px;">
-        <h3 style="color: #1a1a1a; margin-bottom: 20px; font-family: 'Outfit', sans-serif;">¿Quieres reservar una sesión de valoración?</h3>
+        <h3 style="color: #1a1a1a; margin-bottom: 20px; font-family: 'Outfit', sans-serif;">¿Quieres reservar una sesión
+            de valoración?</h3>
         <p style="font-size: 1.1rem; margin-bottom: 25px; opacity: 0.9;">Esta sesión de 30 minutos es el primer paso
             para entender qué historia está intentando contar tu voz.</p>
 

@@ -37,13 +37,23 @@ module.exports = async function handler(req, res) {
  * Procesa la lógica de negocio del chat: contexto + IA
  */
 async function processChat(req, res = null) {
-    const { intent, message, history = [], userId, stream = false } = req.body;
+    const { intent, message, history = [], userId, stream = false, vocal_scan = null } = req.body;
 
     if (intent === 'warmup') return { text: "OK" };
     if (!intent || !SYSTEM_PROMPTS[intent]) throw new Error("Intento no válido");
 
     // 1. Construir Contexto del Alumno
-    const context = await buildUserContext(userId, intent);
+    let context = await buildUserContext(userId, intent);
+
+    // Añadir Escaneo Vocal si existe
+    if (vocal_scan) {
+        context += `\n--- ESCANEO VOCAL EN TIEMPO REAL ---\n`;
+        context += `- Volumen medio: ${vocal_scan.volumen} (0-1)\n`;
+        context += `- Energía pico: ${vocal_scan.energia} (0-1)\n`;
+        context += `- Estabilidad: ${vocal_scan.estabilidad} (0-1)\n`;
+        context += `[SISTEMA: Comenta sutilmente este análisis solo si lo ves relevante para su estado emocional].\n`;
+    }
+
     const finalPrompt = context ? `CONTEXTO:\n${context}\n\nMENSAJE:\n${message}` : message;
 
     // 2. Llamada a Gemini
@@ -75,6 +85,7 @@ async function buildUserContext(userId, intent) {
 
     if (intent !== 'inspiracion_dia') {
         context += `- Historia: ${perfil.historia_vocal}\n- Nivel: ${perfil.nivel_alquimia}/10\n`;
+        context += `- Transmutaciones (Logros): ${perfil.creencias_transmutadas || 'Ninguna registrada'}\n`;
     }
 
     // Memoria Premium (Crónicas)
@@ -85,13 +96,14 @@ async function buildUserContext(userId, intent) {
             .eq('alumno', userId)
             .eq('emisor', 'resumen_diario')
             .order('created_at', { ascending: false })
-            .limit(3);
+            .limit(5); // Aumentamos a 5 para más profundidad
 
         if (cronicas?.length > 0) {
-            context += `\n--- MEMORIA RECIENTE (Crónicas) ---\n`;
+            context += `\n--- MEMORIA RECIENTE (Crónicas de Alquimia) ---\n`;
             cronicas.reverse().forEach(c => {
                 context += `[${new Date(c.created_at).toLocaleDateString()}] ${c.texto}\n`;
             });
+            context += `\n[SISTEMA: Usa estos datos para demostrar que recuerdas su evolución y no pedirle repetirse].\n`;
         }
     }
 

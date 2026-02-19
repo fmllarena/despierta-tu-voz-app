@@ -6,13 +6,24 @@
  * @param {Object} extraData - Datos adicionales (userId, etc).
  * @param {Function} onChunk - Callback para streaming.
  */
+import { state } from '../modules/state.js';
+
 export async function llamarGemini(message, history, intent, extraData = {}, onChunk = null) {
     try {
         const stream = !!onChunk;
+
+        // Incluir escaneo vocal si es reciente (últimos 10 segundos)
+        const vocal = state.vocalAnalytics;
+        const isRecent = vocal && (Date.now() - vocal.timestamp < 10000);
+        const payload = {
+            message, history, intent, stream, ...extraData,
+            vocal_scan: isRecent ? vocal : null
+        };
+
         const response = await fetch('/api/chat', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ message, history, intent, stream, ...extraData })
+            body: JSON.stringify(payload)
         });
 
         if (stream) {

@@ -55,7 +55,8 @@ export const APP_MODULES = {
 
     async mostrarInspiracion() {
         if (!state.userProfile) return;
-        if (ELEMENTS.navButtons.inspiracion) ELEMENTS.navButtons.inspiracion.disabled = true;
+        const btn = ELEMENTS.navButtons.inspiracion;
+        if (btn) btn.disabled = true;
 
         if (ELEMENTS.inspiracionModal) ELEMENTS.inspiracionModal.style.display = 'flex';
         if (ELEMENTS.inspiracionFrase) {
@@ -93,25 +94,119 @@ export const APP_MODULES = {
             ELEMENTS.inspiracionFrase.classList.remove('pulse-loading');
         }
         if (ELEMENTS.inspiracionAutor) ELEMENTS.inspiracionAutor.textContent = `— ${autor}`;
-        if (ELEMENTS.navButtons.inspiracion) ELEMENTS.navButtons.inspiracion.disabled = false;
+        if (btn) btn.disabled = false;
+    },
+
+    async toggleProgreso() {
+        const modal = document.getElementById('diarioModal');
+        if (!modal) return;
+
+        if (modal.style.display === 'flex') {
+            modal.style.display = 'none';
+        } else {
+            this.mostrarDiario(modal);
+        }
+    },
+
+    async mostrarDiario(modal) {
+        const perfil = state.userProfile;
+        const content = document.getElementById('diarioContent');
+        if (!content) return;
+
+        modal.style.display = 'flex';
+        content.innerHTML = `<div class="ia thinking">Abriendo tu Bitácora...</div>`;
+
+        try {
+            // 1. Cargar crónicas históricas
+            const { data: cronicas } = await state.supabase
+                .from('mensajes')
+                .select('texto, created_at')
+                .eq('alumno', state.userProfile.user_id)
+                .eq('emisor', 'resumen_diario')
+                .order('created_at', { ascending: false })
+                .limit(5);
+
+            const nivel = perfil?.nivel_alquimia || 1;
+
+            let html = `
+                <div class="diario-header">
+                    <div class="diario-seccion">
+                        <h4>Nivel de Alquimia: ${nivel}/10</h4>
+                        <div class="progress-bar-container"><div class="progress-fill" style="width: ${nivel * 10}%"></div></div>
+                    </div>
+                </div>
+                
+                <div class="diario-grid">
+                    <div class="diario-seccion">
+                        <h5><img src="assets/icon_progreso.png" width="16"> Último Estado</h5>
+                        <p>${perfil?.ultimo_resumen || "Iniciando el camino..."}</p>
+                    </div>
+                    <div class="diario-seccion">
+                        <h5>✨ Logros Transmutados</h5>
+                        <p>${perfil?.creencias_transmutadas || "Camino por sembrar..."}</p>
+                    </div>
+                </div>
+
+                <div class="diario-cronicas">
+                    <h4>Bitácora de Sesiones Reales</h4>
+                    ${cronicas && cronicas.length > 0 ?
+                    cronicas.map(c => `
+                            <div class="cronica-item">
+                                <span class="cronica-date">${new Date(c.created_at).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' })}</span>
+                                <div class="cronica-text">${window.marked ? window.marked.parse(c.texto) : c.texto}</div>
+                            </div>
+                        `).join('')
+                    : `<p class="empty-msg">Aún no hay crónicas guardadas. Cierra tu primera sesión con el Mentor para generarla.</p>`
+                }
+                </div>
+            `;
+            content.innerHTML = html;
+        } catch (e) {
+            console.error("Error al cargar diario:", e);
+            content.innerHTML = `<p class="error-msg">No hemos podido abrir la bitácora. Inténtalo de nuevo.</p>`;
+        }
     },
 
     async generarYGuardarResumen() {
         if (state.chatHistory.length < 2) return;
         try {
-            const prompt = `Analiza profundamente nuestra conversación actual y los temas tratados hoy. Genera un JSON con: resumen (un párrafo cálido), creencias (lista de creencias limitantes detectadas), nivel_alquimia (número 1-10).`;
+            const prompt = `Analiza nuestra conversación. Genera un JSON con este formato: {"resumen":"resumen técnico de los avances","creencias":"creencias limitantes detectadas","historia_vocal":"actualización del pasado vocal","nivel_alquimia":1-10,"creencias_transmutadas":"logros conseguidos"}. Responde SOLO el JSON.`;
             const raw = await llamarGemini(prompt, state.chatHistory, "mentor_chat", { userId: state.userProfile?.user_id });
             const data = JSON.parse(raw.replace(/```json|```/g, "").trim());
 
             await state.supabase.from('user_profiles').update({
                 ultimo_resumen: data.resumen,
                 creencias: data.creencias,
-                nivel_alquimia: data.nivel_alquimia || 1
+                historia_vocal: data.historia_vocal,
+                nivel_alquimia: data.nivel_alquimia || 1,
+                creencias_transmutadas: data.creencias_transmutadas || ""
             }).eq('user_id', state.userProfile.user_id);
 
             updateState({ userProfile: { ...state.userProfile, ...data } });
+            console.log("✨ Perfil actualizado proactivamente.");
         } catch (e) {
             console.error("Error resumen proactivo:", e);
+        }
+    },
+
+    async generarCronicaSesion() {
+        if (state.chatHistory.length < 4) return;
+
+        // Evitar duplicados recientes
+        const now = Date.now();
+        if (state.lastCronicaTime && (now - state.lastCronicaTime) < 300000) return; // 5 min gap
+
+        try {
+            console.log("📝 Sintetizando crónica de sesión...");
+            const responseText = await llamarGemini("Genera la crónica de nuestra sesión.", state.chatHistory, "session_chronicle", { userId: state.userProfile?.user_id });
+
+            if (responseText) {
+                await guardarMensajeDB(responseText, 'resumen_diario');
+                updateState({ lastCronicaTime: now });
+                console.log("✅ Crónica de Alquimia guardada.");
+            }
+        } catch (e) {
+            console.error("Error generando crónica:", e);
         }
     },
 
@@ -127,7 +222,6 @@ export const APP_MODULES = {
         if (modal) modal.style.display = 'flex';
 
         try {
-            // Carga dinámica del módulo Mi Viaje
             const { initJourney } = await import(`../../mi_viaje/main.js?v=${Date.now()}`);
             initJourney(state.supabase, user);
         } catch (e) {

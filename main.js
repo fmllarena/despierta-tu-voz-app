@@ -61,6 +61,7 @@ function setupEventListeners() {
 
     // Navigation buttons
     ELEMENTS.navButtons.viaje?.addEventListener('click', () => APP_MODULES.abrirViaje());
+    ELEMENTS.navButtons.progreso?.addEventListener('click', () => APP_MODULES.toggleProgreso());
     ELEMENTS.navButtons.botiquin?.addEventListener('click', () => APP_MODULES.abrirBotiquin());
     ELEMENTS.navButtons.inspiracion?.addEventListener('click', () => APP_MODULES.mostrarInspiracion());
     ELEMENTS.navButtons.logout?.addEventListener('click', () => authActions.logout());
@@ -109,17 +110,28 @@ async function sendMessage() {
         appendMessage("...", 'ia-thinking', thinkingId);
 
         let responseText = "";
+        const el = document.getElementById(thinkingId);
+
         await llamarGemini(text, state.chatHistory, 'mentor_chat', { userId: state.userProfile?.user_id }, (chunk, full) => {
             responseText = full;
-            const el = document.getElementById(thinkingId);
-            if (el) el.innerHTML = window.marked ? window.marked.parse(full) : full;
+            const cleanText = responseText.replace(/\[\s*SESION_FINAL\s*\]/gi, "").trim();
+            if (el) el.innerHTML = window.marked ? window.marked.parse(cleanText + " ▮") : cleanText;
         });
+
+        const finalClean = responseText.replace(/\[\s*SESION_FINAL\s*\]/gi, "").trim();
+        if (el) el.innerHTML = window.marked ? window.marked.parse(finalClean) : finalClean;
 
         await guardarMensajeDB(responseText, 'ia');
         state.chatHistory.push({ role: 'user', parts: [{ text }] }, { role: 'model', parts: [{ text: responseText }] });
 
-        // Resumen proactivo
-        if (state.chatHistory.length % 4 === 0) {
+        // Detección de sesión final
+        if (/\[\s*SESION_FINAL\s*\]/i.test(responseText)) {
+            crearBotonesAccionFinal(el?.parentElement || el);
+            APP_MODULES.generarCronicaSesion();
+        }
+
+        // Resumen proactivo (si no es el final)
+        else if (state.chatHistory.length % 4 === 0) {
             APP_MODULES.generarYGuardarResumen();
         }
 
@@ -130,6 +142,31 @@ async function sendMessage() {
         ELEMENTS.chatInput.disabled = false;
         scrollToBottom(ELEMENTS.chatBox);
     }
+}
+
+/**
+ * Crea botones de acción (Descargar/Cerrar) al final de la sesión
+ */
+function crearBotonesAccionFinal(parentDiv) {
+    if (!parentDiv || parentDiv.querySelector('.chat-action-container')) return;
+
+    const container = document.createElement('div');
+    container.className = 'chat-action-container';
+    container.style.marginTop = '15px';
+
+    const downloadBtn = document.createElement('button');
+    downloadBtn.className = 'save-btn';
+    downloadBtn.innerHTML = '📥 Descargar sesión (.doc)';
+    downloadBtn.onclick = () => window.exportarChatDoc ? window.exportarChatDoc() : alert('Exportación no lista');
+
+    const closeBtn = document.createElement('button');
+    closeBtn.className = 'save-btn logout-action-btn';
+    closeBtn.innerHTML = '✨ Guardar y Salir';
+    closeBtn.onclick = () => ELEMENTS.navButtons.logout.click();
+
+    container.appendChild(downloadBtn);
+    container.appendChild(closeBtn);
+    parentDiv.appendChild(container);
 }
 
 function appendMessage(text, type, id = null) {
