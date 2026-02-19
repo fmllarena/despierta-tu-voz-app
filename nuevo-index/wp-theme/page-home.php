@@ -115,20 +115,86 @@ get_header(); ?>
     </div>
 </section>
 
+<section class="qualification-section reveal" style="padding: 100px 0; background: #fff;">
+    <div class="container" style="max-width: 1100px; margin: 0 auto; padding: 0 20px;">
+        <div style="text-align: center; margin-bottom: 60px;">
+            <span class="alt-tag">Sinceridad Total</span>
+            <h2 style="color: #1a1a1a;">Encuentra tu sintonía</h2>
+            <p style="color: #666; font-size: 1.1rem;">No todo el mundo está listo para despertar su voz. Queremos ser
+                honestos contigo.</p>
+        </div>
+
+        <div class="qualification-grid"
+            style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 40px;">
+            <!-- NO ES PARA TI -->
+            <div class="qual-card"
+                style="padding: 40px; background: #f9f9f9; border-radius: 12px; border-top: 4px solid #cc000022;">
+                <h3 style="color: #8a3a3a; display: flex; align-items: center; gap: 10px; margin-bottom: 25px;">
+                    <span style="font-size: 1.5rem;">✕</span> NO es para ti si...
+                </h3>
+                <ul style="list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 15px;">
+                    <li style="display: flex; align-items: start; gap: 10px; color: #555;">
+                        <span style="color: #8a3a3a; font-weight: bold;">•</span> Consideras que la voz es
+                        exclusivamente un conjunto de músculos, aire y acústica.
+                    </li>
+                    <li style="display: flex; align-items: start; gap: 10px; color: #555;">
+                        <span style="color: #8a3a3a; font-weight: bold;">•</span> Buscas una formación técnica o
+                        académica tradicional basada únicamente en el rigor del conservatorio.
+                    </li>
+                    <li style="display: flex; align-items: start; gap: 10px; color: #555;">
+                        <span style="color: #8a3a3a; font-weight: bold;">•</span> No crees que tu historia personal o
+                        tus nudos emocionales tengan influencia alguna en tu sonido.
+                    </li>
+                    <li style="display: flex; align-items: start; gap: 10px; color: #555;">
+                        <span style="color: #8a3a3a; font-weight: bold;">•</span> Prefieres un método lineal que no
+                        requiera mirar hacia adentro ni cuestionar tus patrones.
+                    </li>
+                </ul>
+            </div>
+
+            <!-- SÍ ES PARA TI -->
+            <div class="qual-card"
+                style="padding: 40px; background: #fdfaf7; border-radius: 12px; border-top: 4px solid #8e7d6d; box-shadow: 0 10px 30px rgba(142,125,109,0.1);">
+                <h3 style="color: #8e7d6d; display: flex; align-items: center; gap: 10px; margin-bottom: 25px;">
+                    <span style="font-size: 1.5rem;">✓</span> SÍ es para ti si...
+                </h3>
+                <ul style="list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 15px;">
+                    <li style="display: flex; align-items: start; gap: 10px; color: #444;">
+                        <span style="color: #8e7d6d; font-weight: bold;">•</span> Sientes que "algo" te frena al cantar
+                        a pesar de conocer la técnica o haber dado muchas clases.
+                    </li>
+                    <li style="display: flex; align-items: start; gap: 10px; color: #444;">
+                        <span style="color: #8e7d6d; font-weight: bold;">•</span> Estás listo para integrar tu parte
+                        espiritual y emocional como el motor real de tu evolución vocal.
+                    </li>
+                    <li style="display: flex; align-items: start; gap: 10px; color: #444;">
+                        <span style="color: #8e7d6d; font-weight: bold;">•</span> Buscas un acompañamiento 24/7 que no
+                        solo te corrija, sino que te escuche y te recuerde.
+                    </li>
+                    <li style="display: flex; align-items: start; gap: 10px; color: #444;">
+                        <span style="color: #8e7d6d; font-weight: bold;">•</span> Crees que liberar tu voz es el primer
+                        paso para liberar tu vida y habitar tu propósito.
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</section>
+
 <section class="testimonials-section reveal" id="testimonios">
     <div class="container">
         <span class="alt-tag">Experiencias Reales</span>
         <h2>Voces que ya han despertado</h2>
         <div class="testimonials-grid">
-            <!-- Julia García -->
+            <!-- Antonio -->
             <div class="testimonial-card">
                 <div class="quote-icon-mini">“</div>
-                <p class="testimonial-text">Es todo un proceso de transformación desde el interior. Es un mirarte al
-                    espejo y decirte: "Así eres, así te afectan las acciones de otras personas cuando te relacionas y
-                    así afectan tus acciones a los otros".</p>
+                <p class="testimonial-text">Al hacer el repaso de mi vida me di cuenta de aspectos que realmente me
+                    hicieron llorar. Descubrí aspectos de mí que nunca me había dado cuenta y que estaban afectando a mi
+                    voz. Totalmente recomendable.</p>
                 <div class="testimonial-info">
-                    <strong>Julia</strong>
-                    <span>Sesiones 1/1</span>
+                    <strong>Antonio</strong>
+                    <span>Usuario App</span>
                 </div>
             </div>
             <!-- Mauralida -->
