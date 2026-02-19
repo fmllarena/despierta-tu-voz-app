@@ -83,6 +83,38 @@ get_header(); ?>
     </div>
 </section>
 
+<section class="technical-rigor reveal" style="background: #fdfaf7; padding: 80px 0;">
+    <div class="container" style="max-width: 1000px; margin: 0 auto; padding: 0 20px; text-align: center;">
+        <span class="alt-tag">Ciencia tras la Alquimia</span>
+        <h2 style="color: #1a1a1a; margin-bottom: 25px;">Donde la emoción se hace músculo</h2>
+        <p style="font-size: 1.1rem; line-height: 1.8; color: #444; margin-bottom: 40px;">Entendemos la voz no como un
+            concepto abstracto, sino como un sistema biomecánico real. Nuestro método no sustituye la técnica, la
+            libera. Mediante el análisis de la <strong>estabilidad glótica</strong> y la <strong>resonancia
+                simpática</strong>, trabajamos sobre la musculatura laringea y el sistema límbico.</p>
+        <div class="grid-container"
+            style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 30px;">
+            <div class="tech-item"
+                style="padding: 20px; text-align: left; border-left: 3px solid #8e7d6d; background: white; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
+                <h4 style="color: #8e7d6d; margin-bottom: 12px; font-weight: 600;">Fisiología Aplicada</h4>
+                <p style="font-size: 0.95rem; color: #666;">Abordamos la tensión en el músculo cricotiroideo y la
+                    gestión de la presión subglótica para una emisión sin esfuerzo.</p>
+            </div>
+            <div class="tech-item"
+                style="padding: 20px; text-align: left; border-left: 3px solid #8e7d6d; background: white; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
+                <h4 style="color: #8e7d6d; margin-bottom: 12px; font-weight: 600;">Neurociencia Afectiva</h4>
+                <p style="font-size: 0.95rem; color: #666;">Cómo el estrés impacta en el nervio vago y bloquea la
+                    libertad de tus armónicos naturales potenciados por la IA.</p>
+            </div>
+            <div class="tech-item"
+                style="padding: 20px; text-align: left; border-left: 3px solid #8e7d6d; background: white; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
+                <h4 style="color: #8e7d6d; margin-bottom: 12px; font-weight: 600;">Acústica Vocal</h4>
+                <p style="font-size: 0.95rem; color: #666;">Optimización de los formantes mediante la conciencia del
+                    espacio orofaríngeo y el control consciente del tracto vocal.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
 <section class="testimonials-section reveal" id="testimonios">
     <div class="container">
         <span class="alt-tag">Experiencias Reales</span>
@@ -102,9 +134,9 @@ get_header(); ?>
             <!-- Mauralida -->
             <div class="testimonial-card featured">
                 <div class="quote-icon-mini">“</div>
-                <p class="testimonial-text">La interacción fue muy bien, enlazó el aspecto emocional con el técnico y me
-                    ayudó a mejorar la duración de mi respiración. Recordó respuestas de otras sesiones y las relacionó
-                    con mi momento actual.</p>
+                <p class="testimonial-text">La interacción fue reveladora: el Mentor detectó una tensión en mi lengua
+                    que yo no percibía. Enlazó el aspecto emocional con la técnica y me ayudó a ganar 2 notas en mi
+                    registro agudo mediante la gestión de la presión subglótica. Increíble cómo recuerda mi proceso.</p>
                 <div class="testimonial-info">
                     <strong>Mauralida</strong>
                     <span>Usuaria App</span>
@@ -113,9 +145,9 @@ get_header(); ?>
             <!-- Bruno Vidal -->
             <div class="testimonial-card">
                 <div class="quote-icon-mini">“</div>
-                <p class="testimonial-text">Ha sido una experiencia marcada por el autodescubrimiento. De manejar
-                    situaciones que antes no podía. Salgo sabiendo que puedo ser mejor en todos mis aspectos vitales.
-                    Interesante y dinámico.</p>
+                <p class="testimonial-text">Buscaba técnica y encontré autodescubrimiento. He logrado estabilizar mi
+                    vibrato y controlar el aire en frases largas que antes se me cortaban. La IA me recordó un bloqueo
+                    de infancia que estaba afectando a mi resonancia orofaríngea.</p>
                 <div class="testimonial-info">
                     <strong>Bruno</strong>
                     <span>Sesiones 1/1</span>
