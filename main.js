@@ -5,7 +5,7 @@ window.onerror = function (msg, url, lineNo, columnNo, error) {
 };
 console.log("🚀 Script main.js cargando...");
 
-var supabase;
+var supabaseClient;
 var userProfile = null;
 var chatHistory = [];
 var isRecoveringPassword = false;
@@ -323,7 +323,7 @@ async function llamarGemini(message, history, intent, extraData = {}, onChunk = 
 }
 
 async function inicializarSupabase() {
-    if (supabase) return; // Evitar múltiples instancias
+    if (supabaseClient) return; // Evitar múltiples instancias
     console.log("🔍 Iniciando inicialización de Supabase...");
     try {
         const response = await fetch('/api/config');
@@ -337,7 +337,7 @@ async function inicializarSupabase() {
         }
 
         if (window.supabase) {
-            supabase = window.supabase.createClient(config.url, config.key);
+            supabaseClient = window.supabase.createClient(config.url, config.key);
             console.log("✅ Supabase inicializado correctamente.");
             setupAuthListener();
         } else {
@@ -350,7 +350,7 @@ async function inicializarSupabase() {
 }
 
 function setupAuthListener() {
-    supabase.auth.onAuthStateChange((event, session) => {
+    supabaseClient.auth.onAuthStateChange((event, session) => {
         console.log("🔐 Evento Auth:", event, "Session:", session?.user?.email);
         const user = session?.user;
 
@@ -446,7 +446,7 @@ async function cargarPerfil(user) {
 
 async function cargarHistorialDesdeDB(userId) {
     try {
-        const { data: mensajes, error } = await supabase
+        const { data: mensajes, error } = await supabaseClient
             .from('mensajes')
             .select('*')
             .eq('alumno', userId)
@@ -580,14 +580,14 @@ const authActions = {
         ELEMENTS.authError.innerText = "";
 
         try {
-            if (!supabase) await inicializarSupabase();
-            if (!supabase) {
+            if (!supabaseClient) await inicializarSupabase();
+            if (!supabaseClient) {
                 const specError = window.supabaseInitError ? `: ${window.supabaseInitError}` : "";
                 throw new Error("No se pudo conectar con el servidor" + specError + ". Por favor, recarga la página.");
             }
 
             console.log("Iniciando registro para:", email, "con nombre:", nombre);
-            const { data, error } = await supabase.auth.signUp({
+            const { data, error } = await supabaseClient.auth.signUp({
                 email,
                 password,
                 options: {
@@ -649,8 +649,8 @@ const authActions = {
         ELEMENTS.authError.innerText = "";
 
         try {
-            if (!supabase) await inicializarSupabase();
-            const { error } = await supabase.auth.signInWithPassword({ email, password });
+            if (!supabaseClient) await inicializarSupabase();
+            const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
             if (error) throw error;
         } catch (error) {
             console.error("Error en login:", error);
