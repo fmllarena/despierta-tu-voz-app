@@ -2660,3 +2660,102 @@ input:disabled+.slider {
     transform: scale(1.05);
     opacity: 0.9;
 }
+
+/* Diario de Alquimia */
+.diario-alquimia-view {
+    padding: 10px;
+    animation: fadeIn 0.5s ease;
+}
+
+.diario-header {
+    text-align: center;
+    margin-bottom: 25px;
+}
+
+.diario-icon {
+    font-size: 2.5em;
+    display: block;
+    margin-bottom: 5px;
+}
+
+.diario-section {
+    margin-bottom: 30px;
+}
+
+.diario-section h3 {
+    color: var(--color-acento);
+    font-size: 1.1em;
+    margin-bottom: 5px;
+}
+
+.section-desc {
+    font-size: 0.85em;
+    color: #888;
+    margin-bottom: 15px;
+}
+
+.notas-section textarea {
+    border-left: 4px solid #d4af37 !important;
+}
+
+.cronicas-timeline {
+    border-left: 2px solid #f0e0d0;
+    padding-left: 20px;
+    margin-left: 10px;
+}
+
+.cronica-entry {
+    position: relative;
+    margin-bottom: 25px;
+}
+
+.cronica-entry::before {
+    content: '';
+    position: absolute;
+    left: -27px;
+    top: 5px;
+    width: 12px;
+    height: 12px;
+    background: var(--color-acento);
+    border-radius: 50%;
+    border: 3px solid white;
+}
+
+.cronica-date {
+    font-size: 0.75em;
+    font-weight: bold;
+    color: var(--color-acento);
+    text-transform: uppercase;
+    margin-bottom: 5px;
+}
+
+.cronica-text {
+    font-size: 0.95em;
+    line-height: 1.5;
+    color: #444;
+    background: #fdfaf7;
+    padding: 15px;
+    border-radius: 12px;
+}
+
+.diario-actions {
+    margin-top: 30px;
+    text-align: center;
+}
+
+/* Special Node (Gold) in Roadmap */
+.roadmap-node.special-node {
+    background: linear-gradient(135deg, #fff9e6 0%, #fdfaf7 100%) !important;
+    border-color: #d4af37 !important;
+    box-shadow: 0 4px 15px rgba(212, 175, 55, 0.2) !important;
+}
+
+.roadmap-node.special-node .node-icon {
+    background: #fff0c0 !important;
+    color: #d4af37 !important;
+}
+
+.roadmap-node.special-node:hover {
+    border-color: #d4af37 !important;
+    box-shadow: 0 8px 20px rgba(212, 175, 55, 0.3) !important;
+}
