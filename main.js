@@ -154,23 +154,30 @@ async function sendMessage() {
         appendMessage("...", 'ia thinking', thinkingId);
 
         let responseText = "";
-        const el = document.getElementById(thinkingId);
+        const responseId = 'ia-response-' + Date.now();
 
         console.log("🤖 Llamando a Gemini API...");
         await llamarGemini(text, state.chatHistory, 'mentor_chat', { userId: state.userProfile?.user_id }, (chunk, full) => {
+            if (responseText === "") {
+                document.getElementById(thinkingId)?.remove();
+                appendMessage("", 'ia', responseId);
+            }
             responseText = full;
-            const cleanText = responseText.replace(/\[\s*SESION_FINAL\s*\]/gi, "").trim();
-            if (el) {
-                el.innerHTML = window.marked ? window.marked.parse(cleanText + " ▮") : cleanText;
+            const container = document.getElementById(responseId);
+            const resEl = container?.querySelector('.message.ia');
+            if (resEl) {
+                const cleanText = responseText.replace(/\[\s*SESION_FINAL\s*\]/gi, "").trim();
+                resEl.innerHTML = window.marked ? window.marked.parse(cleanText + " ▮") : cleanText;
                 scrollToBottom(ELEMENTS.chatBox);
             }
         });
 
         console.log("✅ Respuesta recibida.");
+        const finalContainer = document.getElementById(responseId);
+        const finalEl = finalContainer?.querySelector('.message.ia');
         const finalClean = responseText.replace(/\[\s*SESION_FINAL\s*\]/gi, "").trim();
-        if (el) {
-            el.classList.remove('thinking');
-            el.innerHTML = window.marked ? window.marked.parse(finalClean) : finalClean;
+        if (finalEl) {
+            finalEl.innerHTML = window.marked ? window.marked.parse(finalClean) : finalClean;
         }
 
         await guardarMensajeDB(responseText, 'ia');
@@ -178,7 +185,7 @@ async function sendMessage() {
 
         // Detección de sesión final
         if (/\[\s*SESION_FINAL\s*\]/i.test(responseText)) {
-            crearBotonesAccionFinal(el?.parentElement || el);
+            if (finalEl) crearBotonesAccionFinal(finalEl);
             APP_MODULES.generarCronicaSesion();
         }
 
@@ -230,11 +237,52 @@ function crearBotonesAccionFinal(parentDiv) {
 function appendMessage(text, type, id = null) {
     const div = document.createElement('div');
     div.className = `message ${type}`;
-    if (id) div.id = id;
 
-    div.innerHTML = (type.startsWith('ia') && window.marked) ? window.marked.parse(text) : text;
+    // Si no es IA, asignamos el ID directamente al div
+    if (!type.startsWith('ia') && id) div.id = id;
 
-    ELEMENTS.chatBox.appendChild(div);
+    if (type.startsWith('ia')) {
+        // Limpiamos siempre el tag técnico para que el usuario nunca lo vea en la interfaz (vía regex flexible)
+        const cleanText = text.replace(/\[\s*SESION\\?_?FINAL\s*\]/gi, "").trim();
+        div.innerHTML = window.marked ? window.marked.parse(cleanText) : cleanText;
+
+        // Si es Botiquín o estado de carga (thinking), no ponemos avatar para limpiar la interfaz
+        if (type === 'ia-botiquin' || type.includes('thinking')) {
+            if (id) div.id = id;
+            ELEMENTS.chatBox.appendChild(div);
+            scrollToBottom(ELEMENTS.chatBox);
+            return;
+        }
+
+        // Crear contenedor para Mensaje + Avatar (resto de mensajes IA)
+        const container = document.createElement('div');
+        container.className = 'ia-container';
+
+        // IMPORTANTE: Para msg-bienvenida, el ID va en el div del mensaje (para que el CSS funcione)
+        // Para otros mensajes con streaming, el ID va en el contenedor (para evitar problemas de columnas)
+        if (id) {
+            if (id === 'msg-bienvenida') {
+                div.id = id; // ID en el mensaje para que el CSS #msg-bienvenida funcione
+            } else {
+                container.id = id; // ID en el contenedor para streaming
+            }
+        }
+
+        const avatar = document.createElement('div');
+        avatar.className = 'ia-avatar';
+        avatar.innerHTML = `<img src="assets/foto-avatar.PNG" alt="Mentor">`;
+
+        container.appendChild(avatar);
+        container.appendChild(div);
+
+        ELEMENTS.chatBox.appendChild(container);
+    } else {
+        div.innerText = text;
+        div.style.whiteSpace = "pre-wrap";
+        ELEMENTS.chatBox.appendChild(div);
+    }
+
+    // Desplazar el chat
     scrollToBottom(ELEMENTS.chatBox);
 }
 
