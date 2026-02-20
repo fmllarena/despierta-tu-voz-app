@@ -8,7 +8,7 @@ get_header(); ?>
 <main id="primary" class="site-main">
 
     <section class="alt-hero technology-hero reveal"
-        style="background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('<?php echo get_template_directory_uri(); ?>/assets/relacionIA-humano2.png') no-repeat center center; background-size: cover;">
+        style="background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url(<?php echo get_template_directory_uri(); ?>/assets/relacionIA-humano2.png) no-repeat center center !important; background-size: cover !important;">
         <div class="container" style="max-width: 900px;">
             <span class="alt-tag">La ciencia de conectar los puntos</span>
             <h1>¿Cómo puede una IA "entenderme" como un humano?</h1>

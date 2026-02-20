@@ -3262,3 +3262,15 @@ input:disabled+.slider {
     height: 400px;
     background: radial-gradient(circle, rgba(212, 175, 55, 0.05) 0%, transparent 70%);
 }
+
+/* --- ANIMATIONS --- */
+.reveal {
+    opacity: 0;
+    transform: translateY(40px);
+    transition: all 1s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.reveal.visible {
+    opacity: 1;
+    transform: translateY(0);
+}

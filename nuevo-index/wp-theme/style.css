@@ -106,3 +106,15 @@ Version: 1.0.0
     align-items: center;
     justify-content: center;
 }
+
+/* --- ANIMATIONS --- */
+.reveal {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: all 0.8s ease-out;
+}
+
+.reveal.visible {
+    opacity: 1;
+    transform: translateY(0);
+}

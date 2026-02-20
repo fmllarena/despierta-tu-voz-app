@@ -9,16 +9,16 @@ function dtv_theme_assets()
     wp_enqueue_style('dtv-fonts', 'https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Playfair+Display:wght@700&display=swap', array(), null);
 
     // 2. Main CSS
-    wp_enqueue_style('dtv-main-style', get_template_directory_uri() . '/css/landing-v2.css', array('dtv-fonts'), '1.3.0');
+    wp_enqueue_style('dtv-main-style', get_template_directory_uri() . '/css/landing-v2.css', array('dtv-fonts'), '1.3.2');
 
     // 3. Theme's style.css
-    wp_enqueue_style('dtv-theme-overrides', get_stylesheet_uri(), array('dtv-main-style'), '1.3.0');
+    wp_enqueue_style('dtv-theme-overrides', get_stylesheet_uri(), array('dtv-main-style'), '1.3.2');
 
     // 4. Common JS
-    wp_enqueue_script('dtv-common-js', get_template_directory_uri() . '/js/common.js', array(), '1.3.0', true);
+    wp_enqueue_script('dtv-common-js', get_template_directory_uri() . '/js/common.js', array(), '1.3.2', true);
 
     // 5. AI Support JS
-    wp_enqueue_script('dtv-ai-support', get_template_directory_uri() . '/js/ai-support.js', array(), '1.2.2', true);
+    wp_enqueue_script('dtv-ai-support', get_template_directory_uri() . '/js/ai-support.js', array(), '1.2.3', true);
 }
 add_action('wp_enqueue_scripts', 'dtv_theme_assets');
 

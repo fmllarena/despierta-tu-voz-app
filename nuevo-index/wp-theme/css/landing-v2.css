@@ -686,9 +686,9 @@ footer p {
 .alt-hero {
     padding: 140px 10%;
     text-align: center;
-    background: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url('../assets/alternativa-hero-bg.png') !important;
-    background-size: cover !important;
-    background-position: center !important;
+    background: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url('../assets/alternativa-hero-bg.png');
+    background-size: cover;
+    background-position: center;
 }
 
 .alt-hero h1 {
@@ -700,16 +700,16 @@ footer p {
 }
 
 .mentoria-hero {
-    background: linear-gradient(rgba(249, 245, 240, 0.7), rgba(249, 245, 240, 0.7)), url('../assets/mentoria-hero-bg.png') !important;
-    background-size: cover !important;
-    background-position: center !important;
+    background: linear-gradient(rgba(249, 245, 240, 0.7), rgba(249, 245, 240, 0.7)), url('../assets/mentoria-hero-bg.png');
+    background-size: cover;
+    background-position: center;
 }
 
 .somos-hero {
-    background: linear-gradient(rgba(249, 245, 240, 0.4), rgba(249, 245, 240, 0.4)), url('../assets/somos-hero-bg.png') !important;
-    background-size: cover !important;
-    background-position: center !important;
-    background-repeat: no-repeat !important;
+    background: linear-gradient(rgba(249, 245, 240, 0.4), rgba(249, 245, 240, 0.4)), url('../assets/somos-hero-bg.png');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
 }
 
 .alt-tag {
