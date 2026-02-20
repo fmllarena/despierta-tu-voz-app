@@ -5,6 +5,8 @@ export const ELEMENTS = {
     micBtn: document.getElementById('micBtn'),
     authOverlay: document.getElementById('authOverlay'),
     authError: document.getElementById('authError'),
+    loginBtn: document.getElementById('loginBtn'),
+    signUpBtn: document.getElementById('signUpBtn'),
     mainHelpBtn: document.getElementById('mainHelpBtn'),
     mainHelpTooltip: document.getElementById('mainHelpTooltip'),
     headerButtons: document.querySelector('.header-buttons'),

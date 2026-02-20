@@ -66,6 +66,36 @@ function setupEventListeners() {
     ELEMENTS.navButtons.inspiracion?.addEventListener('click', () => APP_MODULES.mostrarInspiracion());
     ELEMENTS.navButtons.logout?.addEventListener('click', () => authActions.logout());
 
+    // Auth listeners
+    ELEMENTS.loginBtn?.addEventListener('click', () => authActions.login());
+    ELEMENTS.signUpBtn?.addEventListener('click', () => MODALS.abrirLegal());
+    ELEMENTS.forgotPasswordLink?.addEventListener('click', (e) => {
+        e.preventDefault();
+        authActions.resetPassword();
+    });
+    ELEMENTS.updatePasswordBtn?.addEventListener('click', () => authActions.updatePassword());
+
+    // Password Toggles
+    document.querySelectorAll('.toggle-password').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const input = document.getElementById(btn.dataset.target);
+            if (input) {
+                input.type = input.type === 'password' ? 'text' : 'password';
+            }
+        });
+    });
+
+    // Custom Alert
+    ELEMENTS.alertConfirmBtn?.addEventListener('click', () => {
+        ELEMENTS.customAlert.style.display = 'none';
+    });
+
+    // Check for recovery mode in URL
+    if (window.location.hash && window.location.hash.includes('type=recovery')) {
+        ELEMENTS.authOverlay.style.display = 'flex';
+        ELEMENTS.resetPasswordContainer.style.display = 'block';
+    }
+
     // Add more listeners as needed...
 }
 

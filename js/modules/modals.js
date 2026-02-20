@@ -28,9 +28,19 @@ export const MODALS = {
         ELEMENTS.closeUpgrade?.addEventListener('click', () => this.cerrarUpgrade());
 
         // Preferences Modal
-        ELEMENTS.openPreferencesBtn?.addEventListener('click', () => this.abrirPreferencias());
-        ELEMENTS.closePreferences?.addEventListener('click', () => this.cerrarPreferencias());
-        ELEMENTS.savePreferencesBtn?.addEventListener('click', () => this.guardarPreferencias());
+        ELEMENTS.savePreferencesBtn?.addEventListener('click', () => this.guardarPreferences());
+
+        // Legal Modal
+        const toggleLegal = () => {
+            ELEMENTS.confirmLegalBtn.disabled = !(ELEMENTS.checkTerms.checked && ELEMENTS.checkMedical.checked);
+        };
+        ELEMENTS.checkTerms?.addEventListener('change', toggleLegal);
+        ELEMENTS.checkMedical?.addEventListener('change', toggleLegal);
+        ELEMENTS.cancelLegalBtn?.addEventListener('click', () => this.cerrarLegal());
+        ELEMENTS.confirmLegalBtn?.addEventListener('click', () => {
+            this.cerrarLegal();
+            authActions.signUp();
+        });
 
         // Global click to close modals
         window.addEventListener('click', (e) => {
@@ -139,7 +149,6 @@ export const MODALS = {
         ELEMENTS.lifecycleToggle.checked = state.userProfile.consent_lifecycle !== false;
         ELEMENTS.preferencesModal.style.display = 'flex';
     },
-    cerrarPreferencias() { ELEMENTS.preferencesModal.style.display = 'none'; },
     async guardarPreferencias() {
         const btn = ELEMENTS.savePreferencesBtn;
         btn.disabled = true;
@@ -157,5 +166,13 @@ export const MODALS = {
         } finally {
             btn.disabled = false;
         }
+    },
+
+    // --- LEGAL ---
+    abrirLegal() {
+        ELEMENTS.legalModal.style.display = 'flex';
+    },
+    cerrarLegal() {
+        ELEMENTS.legalModal.style.display = 'none';
     }
 };
