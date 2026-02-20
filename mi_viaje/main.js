@@ -405,32 +405,34 @@ function renderDiarioAlquimia(cronicas, notasPersonales) {
     let contentHtml = `
         <div class="diario-alquimia-view">
             <div class="diario-header">
-                <span class="diario-icon">📖</span>
-                <h2>Tu Diario de Alquimia</h2>
-                <p>Aquí se guardan las huellas de tu transformación vocal y emocional.</p>
+                <span class="diario-icon">📜</span>
+                <h2>Diario de Alquimia Vocal</h2>
+                <p>El registro sagrado de tu evolución y tus descubrimientos.</p>
             </div>
             
             <!-- Sección de Notas Personales -->
             <div class="diario-section notas-section">
-                <h3>✍️ Tus Notas Personales</h3>
-                <p class="section-desc">Escribe aquí tus reflexiones, aprendizajes o cualquier cosa que quieras recordar de tu viaje.</p>
-                <textarea id="notasPersonalesInput" placeholder="Escribe tus notas aquí..." rows="6">${notasPersonales.join('\n\n---\n\n') || ''}</textarea>
-                <button id="guardarNotasBtn" class="journey-btn" style="margin-top: 15px;">💾 Guardar Notas</button>
+                <h3><span class="icon">✨</span> Tus Notas de Poder</h3>
+                <p class="section-desc">Un espacio libre para tus reflexiones más íntimas y aprendizajes clave en este viaje.</p>
+                <textarea id="notasPersonalesInput" placeholder="Hoy siento que mi voz..." rows="8">${notasPersonales.join('\n\n---\n\n') || ''}</textarea>
+                <div style="text-align: right;">
+                    <button id="guardarNotasBtn" class="journey-btn" style="margin-top: 15px;">💾 Sellar en el Diario</button>
+                </div>
             </div>
 
             <!-- Sección de Crónicas Automáticas -->
             <div class="diario-section cronicas-section">
-                <h3>🌙 Crónicas de tus Sesiones</h3>
-                <p class="section-desc">Resúmenes automáticos generados por el Mentor después de cada sesión.</p>
+                <h3><span class="icon">🌙</span> Crónicas del Destino</h3>
+                <p class="section-desc">Los ecos de tus conversaciones con el Mentor, capturados para la posteridad.</p>
                 <div class="cronicas-timeline">
     `;
 
     if (cronicas.length === 0) {
         const tier = (window.userProfile?.subscription_tier || 'free').toLowerCase();
         if (tier === 'free') {
-            contentHtml += `<p class="empty-state">Cambia de Plan si quieres ver aquí los resúmenes de tus sesiones con el Mentor.</p>`;
+            contentHtml += `<div class="cronica-text" style="font-style: italic; opacity: 0.7; text-align: center;">Acceso restringido: Evoluciona tu plan para desbloquear las crónicas automáticas del Mentor.</div>`;
         } else {
-            contentHtml += `<p class="empty-state">Aún no tienes crónicas. Sigue conversando con el Mentor para que se generen automáticamente.</p>`;
+            contentHtml += `<div class="cronica-text" style="font-style: italic; opacity: 0.7; text-align: center;">Tus páginas están en blanco por ahora. El Mentor espera tu próxima palabra...</div>`;
         }
     } else {
         cronicas.forEach(cronica => {
@@ -465,17 +467,17 @@ function renderDiarioAlquimia(cronicas, notasPersonales) {
 
     // Event listener para guardar notas
     document.getElementById('guardarNotasBtn').onclick = async () => {
-        const notasInput = document.getElementById('notasPersonalesInput');
-        const nuevasNotas = notasInput.value.trim();
+        const textarea = document.getElementById('notasPersonalesInput');
+        const nuevasNotas = textarea.value.trim();
 
         if (!nuevasNotas) {
-            alert("Escribe algo antes de guardar.");
+            alert("Escribe algo antes de sellar tu diario.");
             return;
         }
 
         const btn = document.getElementById('guardarNotasBtn');
         btn.disabled = true;
-        btn.innerText = "Guardando...";
+        btn.innerText = "Sellando...";
 
         try {
             // Crear array de notas (separadas por el delimitador)
@@ -488,15 +490,20 @@ function renderDiarioAlquimia(cronicas, notasPersonales) {
 
             if (error) throw error;
 
-            btn.innerText = "✅ Guardado";
+            // Éxito: Feedback visual Premium
+            btn.innerText = "✨ Sello Grabado ✨";
+            textarea.classList.add('save-success-haptic');
+
             setTimeout(() => {
-                btn.innerText = "💾 Guardar Notas";
                 btn.disabled = false;
+                btn.innerText = "💾 Sellar en el Diario";
+                textarea.classList.remove('save-success-haptic');
             }, 2000);
+
         } catch (err) {
             console.error("Error guardando notas:", err);
-            alert("Error al guardar tus notas. Inténtalo de nuevo.");
-            btn.innerText = "💾 Guardar Notas";
+            alert("Error al guardar en el diario sagrado. Inténtalo de nuevo.");
+            btn.innerText = "💾 Sellar en el Diario";
             btn.disabled = false;
         }
     };

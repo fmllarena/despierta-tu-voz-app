@@ -2680,91 +2680,172 @@ input:disabled+.slider {
     opacity: 0.9;
 }
 
-/* Diario de Alquimia */
+/* --- Diario de Alquimia Premium Overhaul --- */
 .diario-alquimia-view {
-    padding: 10px;
-    animation: fadeIn 0.5s ease;
+    padding: 25px;
+    background: linear-gradient(to bottom, #fffcf5 0%, #fdf8eb 100%);
+    position: relative;
+    overflow: hidden;
+    min-height: 400px;
+    border-radius: 12px;
+}
+
+/* Parchment texture feel */
+.diario-alquimia-view::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: url("https://www.transparenttextures.com/patterns/natural-paper.png");
+    opacity: 0.15;
+    pointer-events: none;
+    z-index: 0;
+}
+
+.diario-header,
+.diario-section,
+.diario-actions {
+    position: relative;
+    z-index: 1;
 }
 
 .diario-header {
     text-align: center;
-    margin-bottom: 25px;
+    margin-bottom: 35px;
 }
 
 .diario-icon {
-    font-size: 2.5em;
+    font-size: 3.5em;
+    margin-bottom: 10px;
     display: block;
-    margin-bottom: 5px;
+    filter: drop-shadow(0 4px 6px rgba(184, 134, 11, 0.2));
+}
+
+.diario-header h2 {
+    color: #4a3b32;
+    font-size: 1.8em;
+    font-weight: 700;
+    margin-bottom: 8px;
+    font-family: 'Playfair Display', "Garamond", serif;
+}
+
+.diario-header p {
+    color: #7d6b5d;
+    font-style: italic;
+    font-size: 0.95em;
 }
 
 .diario-section {
-    margin-bottom: 30px;
+    margin-bottom: 40px;
 }
 
 .diario-section h3 {
     color: var(--color-acento);
-    font-size: 1.1em;
-    margin-bottom: 5px;
+    font-size: 1.25em;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
 }
 
 .section-desc {
-    font-size: 0.85em;
-    color: #888;
-    margin-bottom: 15px;
+    font-size: 0.88em;
+    color: #8a7a6d;
+    margin-bottom: 20px;
+    line-height: 1.4;
 }
 
+/* Writing Area Enhancement */
 .notas-section textarea {
-    border-left: 4px solid #d4af37 !important;
+    width: 100%;
+    background: rgba(255, 255, 255, 0.7);
+    border: 1px solid #e0d5c0 !important;
+    border-left: 5px solid #d4af37 !important;
+    border-radius: 8px;
+    padding: 20px;
+    font-family: 'Outfit', sans-serif;
+    font-size: 1em;
+    line-height: 1.6;
+    color: #4a3b32;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.02);
+    transition: all 0.3s ease;
 }
 
+.notas-section textarea:focus {
+    background: white;
+    border-color: #d4af37 !important;
+    outline: none;
+    box-shadow: 0 4px 15px rgba(212, 175, 55, 0.1);
+}
+
+/* Timeline Upgrade */
 .cronicas-timeline {
-    border-left: 2px solid #f0e0d0;
-    padding-left: 20px;
-    margin-left: 10px;
+    border-left: 3px solid #e8dcc4;
+    padding-left: 25px;
+    margin-left: 15px;
+    position: relative;
 }
 
 .cronica-entry {
     position: relative;
-    margin-bottom: 25px;
+    margin-bottom: 35px;
 }
 
 .cronica-entry::before {
     content: '';
     position: absolute;
-    left: -27px;
-    /* Centrado con el borde de 2px y padding de 20px */
-    top: 5px;
-    width: 12px;
-    height: 12px;
-    background: var(--color-acento);
+    left: -33px;
+    /* Adjusted for new padding/border */
+    top: 4px;
+    width: 14px;
+    height: 14px;
+    background: #d4af37;
+    border: 3px solid #fffcf5;
     border-radius: 50%;
-    border: 2px solid white;
-    box-shadow: 0 0 0 2px var(--color-acento);
-    /* Reforzar el centro si es necesario */
+    box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.3);
+    z-index: 2;
 }
 
 .cronica-date {
-    font-size: 0.75em;
-    font-weight: bold;
-    color: var(--color-acento);
+    font-size: 0.8em;
+    font-weight: 700;
+    color: #b8860b;
     text-transform: uppercase;
-    margin-bottom: 5px;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+    display: inline-block;
+    background: rgba(212, 175, 55, 0.08);
+    padding: 2px 10px;
+    border-radius: 20px;
 }
 
 .cronica-text {
-    font-size: 0.95em;
-    line-height: 1.6;
+    font-size: 0.98em;
+    line-height: 1.7;
     color: #444;
-    background: white;
-    padding: 18px;
-    border-radius: 12px;
-    border: 1px solid #f0e0d0;
+    background: rgba(255, 255, 255, 0.8);
+    padding: 22px;
+    border-radius: 15px;
+    border: 1px solid #e8dcc4;
     text-align: left;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+    box-shadow: 0 3px 12px rgba(71, 57, 43, 0.04);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    -webkit-backdrop-filter: blur(4px);
+    backdrop-filter: blur(4px);
+}
+
+.cronica-text:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(71, 57, 43, 0.08);
+    background: white;
 }
 
 .diario-actions {
-    margin-top: 30px;
+    margin-top: 40px;
+    border-top: 1px solid #e8dcc4;
+    padding-top: 25px;
     text-align: center;
 }
 
