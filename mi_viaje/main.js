@@ -229,8 +229,9 @@ function renderBitacora(mod, data) {
     let contentHtml = `
         <div class="bitacora-view">
             <div class="bitacora-header">
-                <span class="bitacora-icon">${mod.icon}</span>
-                <h2>Tu Memoria: ${mod.title}</h2>
+                <div class="bitacora-badge">Módulo ${mod.id} Completado</div>
+                <span class="bitacora-icon-large">${mod.icon}</span>
+                <h2>Bitácora de Alquimia: ${mod.title}</h2>
                 <p>Aquí se guardan las semillas que plantaste en esta etapa de tu viaje.</p>
             </div>
             <div class="bitacora-body">
@@ -240,9 +241,12 @@ function renderBitacora(mod, data) {
         container.innerHTML = `
             <div class="bitacora-view">
                 <div class="bitacora-header">
-                    <span class="bitacora-icon">${mod.icon}</span>
-                    <h2>Tu Memoria: ${mod.title}</h2>
+                    <span class="bitacora-icon-large">${mod.icon}</span>
+                    <h2>${mod.title}</h2>
                     <p>Aún no hay huellas en esta etapa del viaje.</p>
+                </div>
+                <div class="bitacora-empty">
+                    <p>Parece que aún no has dejado tus reflexiones aquí. ¡Vuelve al mapa para iniciar este módulo!</p>
                 </div>
                 <div class="bitacora-actions">
                     <button class="journey-btn secondary" onclick="document.querySelector('.close-modulo').click()">← Volver al Mapa</button>
@@ -258,31 +262,49 @@ function renderBitacora(mod, data) {
     }
 
     // Iterar sobre las columnas y sus hitos
+    let hasEntries = false;
     for (const [colName, hits] of Object.entries(data)) {
         if (Array.isArray(hits) && hits.length > 0) {
+            hasEntries = true;
             hits.forEach(hito => {
-                contentHtml += `<div class="bitacora-entry">
-                    <h4>${hito.etapa || 'Hito'}</h4>
-                    <div class="entry-responses">`;
+                contentHtml += `
+                    <div class="bitacora-card">
+                        <div class="card-header">
+                            <span class="card-title">${hito.etapa || 'Hito del Camino'}</span>
+                            <span class="card-date">${new Date(hito.fecha).toLocaleDateString(undefined, { day: 'numeric', month: 'long' })}</span>
+                        </div>
+                        <div class="card-content">`;
 
                 for (const [qId, answer] of Object.entries(hito.respuestas || {})) {
                     contentHtml += `
-                        <div class="entry-item">
-                            <span class="entry-label">Reflexión:</span>
-                            <p class="entry-text">${answer}</p>
+                        <div class="bitacora-entry-item">
+                            <div class="entry-label">🌿 Reflexión profunda</div>
+                            <div class="entry-text">${answer}</div>
                         </div>
                     `;
                 }
-                contentHtml += `</div><div class="entry-date">${new Date(hito.fecha).toLocaleDateString()}</div></div>`;
+                contentHtml += `
+                        </div>
+                        <div class="card-footer">
+                            <span class="seal">Sello de Alquimia ✨</span>
+                        </div>
+                    </div>`;
             });
         }
+    }
+
+    if (!hasEntries) {
+        contentHtml += `
+            <div class="bitacora-empty">
+                <p>Las páginas de este módulo están esperando tus palabras...</p>
+            </div>`;
     }
 
     contentHtml += `
             </div>
             <div class="bitacora-actions">
                 <button class="journey-btn secondary" onclick="document.querySelector('.close-modulo').click()">← Volver al Mapa</button>
-                <button class="journey-btn danger" id="restartModuleBtn">Reiniciar Módulo 🔄</button>
+                <button class="journey-btn danger-outline" id="restartModuleBtn">Reiniciar Módulo 🔄</button>
             </div>
         </div>
     `;
@@ -291,7 +313,6 @@ function renderBitacora(mod, data) {
 
     document.getElementById('restartModuleBtn').onclick = () => {
         if (confirm("¿Estás seguro de que quieres reiniciar este módulo? Podrás volver a realizar los ejercicios, pero esto no borrará tu historial anterior en la base de datos (se añadirá como nuevas entradas).")) {
-            // Buscamos el índice del módulo en la metadata para abrirlo
             const modIndex = MODULES_METADATA.findIndex(m => m.id === mod.id);
             openModule(modIndex);
         }
