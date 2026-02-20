@@ -3,9 +3,9 @@ const { SYSTEM_PROMPTS } = require('./prompts');
 const { sanitizeGeminiHistory } = require('./utils');
 
 // --- SEGURIDAD DE GEMINI ---
-// Usar v1 para evitar errores 404 del SDK/v1beta.
+// v1beta es necesario para usar systemInstruction. v1 no soporta ese campo.
 const GEMINI_MODEL = "gemini-2.0-flash";
-const GEMINI_BASE_URL = "https://generativelanguage.googleapis.com/v1/models";
+const GEMINI_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/models";
 
 /**
  * Orquestador principal de la API de Chat
