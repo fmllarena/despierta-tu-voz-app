@@ -357,14 +357,12 @@ textarea {
 
 .header-buttons {
     display: none;
-    gap: 15px;
-    flex-wrap: nowrap;
-    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    justify-content: center;
     padding: 10px 15px;
     width: 100%;
-    max-width: 100vw;
-    overflow-x: hidden;
-    /* No scrolling needed now */
+    box-sizing: border-box;
     box-shadow: none !important;
 }
 
