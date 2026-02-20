@@ -274,6 +274,8 @@ function renderBitacora(mod, data) {
 
     // Iterar sobre las columnas y sus hitos
     let hasEntries = false;
+    const renderedHashes = new Set(); // Para evitar duplicados en la UI
+
     for (const [colName, hits] of Object.entries(data)) {
         // Solo mostrar campos que pertenecen a este módulo
         if (!allowedFields.includes(colName)) continue;
@@ -281,6 +283,11 @@ function renderBitacora(mod, data) {
         if (Array.isArray(hits) && hits.length > 0) {
             hasEntries = true;
             hits.forEach(hito => {
+                // Crear un hash único para este hito (etapa + respuestas)
+                const hitoHash = `${hito.etapa}|${JSON.stringify(hito.respuestas)}`;
+                if (renderedHashes.has(hitoHash)) return; // Saltar si ya se renderizó
+                renderedHashes.add(hitoHash);
+
                 contentHtml += `
                     <div class="bitacora-card">
                         <div class="card-header">
@@ -290,10 +297,13 @@ function renderBitacora(mod, data) {
                         <div class="card-content">`;
 
                 for (const [qId, answer] of Object.entries(hito.respuestas || {})) {
+                    // Limpiar asteriscos de negrita (tipo markdown **) del texto
+                    const cleanAnswer = typeof answer === 'string' ? answer.replace(/\*\*/g, '') : answer;
+
                     contentHtml += `
                         <div class="bitacora-entry-item">
                             <div class="entry-label">🌿 Reflexión profunda</div>
-                            <div class="entry-text">${answer}</div>
+                            <div class="entry-text">${cleanAnswer}</div>
                         </div>
                     `;
                 }
