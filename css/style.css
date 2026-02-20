@@ -695,7 +695,8 @@ textarea {
 }
 
 /* Module 5 special: last node spans 2 columns on desktop */
-.roadmap-node:nth-child(5) {
+.roadmap-node:nth-child(5),
+.roadmap-node:nth-child(6) {
     grid-column: span 2;
     max-width: 440px;
     justify-self: center;
@@ -2713,12 +2714,15 @@ input:disabled+.slider {
     content: '';
     position: absolute;
     left: -27px;
+    /* Centrado con el borde de 2px y padding de 20px */
     top: 5px;
     width: 12px;
     height: 12px;
     background: var(--color-acento);
     border-radius: 50%;
-    border: 3px solid white;
+    border: 2px solid white;
+    box-shadow: 0 0 0 2px var(--color-acento);
+    /* Reforzar el centro si es necesario */
 }
 
 .cronica-date {
@@ -2731,11 +2735,14 @@ input:disabled+.slider {
 
 .cronica-text {
     font-size: 0.95em;
-    line-height: 1.5;
+    line-height: 1.6;
     color: #444;
-    background: #fdfaf7;
-    padding: 15px;
+    background: white;
+    padding: 18px;
     border-radius: 12px;
+    border: 1px solid #f0e0d0;
+    text-align: left;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
 }
 
 .diario-actions {

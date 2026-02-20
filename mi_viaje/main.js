@@ -372,7 +372,7 @@ function renderDiarioAlquimia(cronicas, notasPersonales) {
                 <h3>✍️ Tus Notas Personales</h3>
                 <p class="section-desc">Escribe aquí tus reflexiones, aprendizajes o cualquier cosa que quieras recordar de tu viaje.</p>
                 <textarea id="notasPersonalesInput" placeholder="Escribe tus notas aquí..." rows="6">${notasPersonales.join('\n\n---\n\n') || ''}</textarea>
-                <button id="guardarNotasBtn" class="journey-btn">💾 Guardar Notas</button>
+                <button id="guardarNotasBtn" class="journey-btn" style="margin-top: 15px;">💾 Guardar Notas</button>
             </div>
 
             <!-- Sección de Crónicas Automáticas -->
