@@ -62,11 +62,11 @@
                                 
                                 <p><strong>Pero no me olvidé de ti.</strong></p>
                                 
-                                <p>De hecho, aquel interés vuestro fue el motor que me hizo parar y pensar: <em>"¿Cómo puedo estar ahí para ellos no solo en una sesión, sino cada vez que sientan que su voz se aprieta o pierden el apoyo antes de una presentación o un concierto?"</em>.</p>
+                                <p>De hecho, aquel interés vuestro fue el motor que me hizo parar y pensar: <em>"¿Cómo puedo estar ahí para ellos no solo en una sesión, sino cada vez que sientan que su voz se bloquea o pierden el apoyo antes de una audición o un concierto?"</em>.</p>
                                 
-                                <p>He pasado estos últimos 12 meses volcando todo lo que sé en una tecnología que te acompaña 24/7 para equilibrar tu técnica y tu sentir: <strong>Mi Mentor-IA de Despierta tu Voz</strong>.</p>
+                                <p>He pasado estos últimos 12 meses volcando todo lo que sé en una tecnología que te acompaña 24/7 para equilibrar tu técnica y tu sentir: <strong>Mi app Mentor DTV</strong>.</p>
                                 
-                                <p>No es un curso teórico. No es solo una app de ejercicios genéricos. Es un espacio de entrenamiento donde trabajarás tu voz, tus miedos y tu estabilidad sonora en el momento exacto en que lo necesitas.</p>
+                                <p>No es un curso teórico. No es solo una app de ejercicios genéricos. Es un espacio de entrenamiento donde trabajarás tu voz, tus miedos y tu estabilidad vocal y corporal en el momento exacto en que lo necesitas.</p>
                                 
                                 <p>Mañana voy a abrir el acceso a los primeros <strong>"Miembros Pioneros"</strong>.</p>
                                 
