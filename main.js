@@ -5,10 +5,10 @@ window.onerror = function (msg, url, lineNo, columnNo, error) {
 };
 console.log("🚀 Script main.js cargando...");
 
-let supabase;
-let userProfile = null;
-let chatHistory = [];
-let isRecoveringPassword = false;
+var supabase;
+var userProfile = null;
+var chatHistory = [];
+var isRecoveringPassword = false;
 
 const MENSAJE_BIENVENIDA = `<p>Hola, ¡qué alegría que estés aquí! Soy tu Mentor Vocal.</p><br><p>Mi misión es acompañarte a descubrir todo el potencial de tu voz, desde la técnica hasta lo que sientes al cantar. Para empezar con buen pie... ¿hay algo específico que te haya traído hoy aquí o algún bloqueo que te gustaría trabajar conmigo?</p>`;
 
