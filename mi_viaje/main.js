@@ -272,49 +272,81 @@ function renderBitacora(mod, data) {
 
     const allowedFields = moduleFields[mod.id] || [];
 
-    // Iterar sobre las columnas y sus hitos
-    let hasEntries = false;
-    const renderedHashes = new Set(); // Para evitar duplicados en la UI
-
+    // Procesar hitos de las columnas permitidas
+    // 1. Aplanar todos los hitos de las columnas permitidas
+    let allHits = [];
     for (const [colName, hits] of Object.entries(data)) {
-        // Solo mostrar campos que pertenecen a este módulo
-        if (!allowedFields.includes(colName)) continue;
+        if (!allowedFields.includes(colName) || !Array.isArray(hits)) continue;
+        allHits.push(...hits);
+    }
 
-        if (Array.isArray(hits) && hits.length > 0) {
-            hasEntries = true;
-            hits.forEach(hito => {
-                // Crear un hash único para este hito (etapa + respuestas)
-                const hitoHash = `${hito.etapa}|${JSON.stringify(hito.respuestas)}`;
-                if (renderedHashes.has(hitoHash)) return; // Saltar si ya se renderizó
-                renderedHashes.add(hitoHash);
+    let hasEntries = false;
+    // 2. Agrupar por etapa y normalizar (limpiar texto y ordenar claves)
+    const groupedHitos = {};
+    allHits.forEach(hito => {
+        const etapa = hito.etapa || 'Hito del Camino';
+        if (!groupedHitos[etapa]) groupedHitos[etapa] = [];
 
-                contentHtml += `
-                    <div class="bitacora-card">
-                        <div class="card-header">
-                            <span class="card-title">${hito.etapa || 'Hito del Camino'}</span>
-                            <span class="card-date">${new Date(hito.fecha).toLocaleDateString(undefined, { day: 'numeric', month: 'long' })}</span>
-                        </div>
-                        <div class="card-content">`;
+        const sortedResponses = {};
+        Object.keys(hito.respuestas || {}).sort().forEach(key => {
+            let val = hito.respuestas[key];
+            if (typeof val === 'string') val = val.replace(/\*\*/g, '').trim();
+            if (val) sortedResponses[key] = val;
+        });
 
-                for (const [qId, answer] of Object.entries(hito.respuestas || {})) {
-                    // Limpiar asteriscos de negrita (tipo markdown **) del texto
-                    const cleanAnswer = typeof answer === 'string' ? answer.replace(/\*\*/g, '') : answer;
+        groupedHitos[etapa].push({
+            ...hito,
+            respuestas: sortedResponses
+        });
+    });
 
-                    contentHtml += `
-                        <div class="bitacora-entry-item">
-                            <div class="entry-label">🌿 Reflexión profunda</div>
-                            <div class="entry-text">${cleanAnswer}</div>
-                        </div>
-                    `;
-                }
-                contentHtml += `
-                        </div>
-                        <div class="card-footer">
-                            <span class="seal">Sello de Alquimia ✨</span>
-                        </div>
-                    </div>`;
+    // 3. Eliminar duplicados y subconjuntos (fuzzy de-duplication)
+    let finalHitos = [];
+    for (const etapa in groupedHitos) {
+        const group = groupedHitos[etapa];
+        group.sort((a, b) => Object.keys(b.respuestas).length - Object.keys(a.respuestas).length);
+
+        const uniqueInGroup = [];
+        group.forEach(h => {
+            const isRedundant = uniqueInGroup.some(existing => {
+                const hEntries = Object.entries(h.respuestas);
+                if (hEntries.length === 0) return true;
+                return hEntries.every(([qk, qv]) => existing.respuestas[qk] === qv);
             });
-        }
+            if (!isRedundant) uniqueInGroup.push(h);
+        });
+        finalHitos.push(...uniqueInGroup);
+    }
+
+    // 4. Ordenar hitos finales por fecha
+    finalHitos.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
+
+    if (finalHitos.length > 0) {
+        hasEntries = true;
+        finalHitos.forEach(hito => {
+            contentHtml += `
+                <div class="bitacora-card">
+                    <div class="card-header">
+                        <span class="card-title">${hito.etapa || 'Hito del Camino'}</span>
+                        <span class="card-date">${new Date(hito.fecha).toLocaleDateString(undefined, { day: 'numeric', month: 'long' })}</span>
+                    </div>
+                    <div class="card-content">`;
+
+            for (const [qId, answer] of Object.entries(hito.respuestas || {})) {
+                contentHtml += `
+                    <div class="bitacora-entry-item">
+                        <div class="entry-label">🌿 Reflexión profunda</div>
+                        <div class="entry-text">${answer}</div>
+                    </div>
+                `;
+            }
+            contentHtml += `
+                    </div>
+                    <div class="card-footer">
+                        <span class="seal">Sello de Alquimia ✨</span>
+                    </div>
+                </div>`;
+        });
     }
 
     if (!hasEntries) {

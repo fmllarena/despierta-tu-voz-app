@@ -20,7 +20,8 @@ $itemsToBackup = @(
     "api",
     "css",
     "js",
-    "assets"
+    "assets",
+    "mi_viaje"
 )
 
 foreach ($item in $itemsToBackup) {
