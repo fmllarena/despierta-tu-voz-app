@@ -1,6 +1,10 @@
 {
     "name": "despierta-tu-voz-app",
     "version": "1.0.6",
+    "scripts": {
+        "start": "node simple_server.js",
+        "dev": "node simple_server.js"
+    },
     "dependencies": {
         "@google/generative-ai": "^0.1.0",
         "@supabase/supabase-js": "^2.0.0",
