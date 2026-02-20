@@ -261,9 +261,23 @@ function renderBitacora(mod, data) {
         return;
     }
 
+    // Mapeo de campos por módulo para filtrar la bitácora
+    const moduleFields = {
+        1: ['linea_vida_hitos'],
+        2: ['herencia_raices'],
+        3: ['roles_familiares'],
+        4: ['carta_yo_pasado', 'carta_padres', 'sanacion_heridas', 'ritual_sanacion'],
+        5: ['inventario_creencias', 'proposito_vida', 'plan_accion']
+    };
+
+    const allowedFields = moduleFields[mod.id] || [];
+
     // Iterar sobre las columnas y sus hitos
     let hasEntries = false;
     for (const [colName, hits] of Object.entries(data)) {
+        // Solo mostrar campos que pertenecen a este módulo
+        if (!allowedFields.includes(colName)) continue;
+
         if (Array.isArray(hits) && hits.length > 0) {
             hasEntries = true;
             hits.forEach(hito => {
@@ -1050,17 +1064,28 @@ async function guardarHitoJSON(supabase, user, column, newObject, extraPayload =
             currentArray = currentRecord[column];
         }
 
-        // Evitar duplicados exactos
-        const isDuplicate = currentArray.some(item =>
-            item.etapa === newObject.etapa &&
-            JSON.stringify(item.respuestas) === JSON.stringify(newObject.respuestas)
-        );
+        // Evitar duplicados exactos (mismo hito y respuestas similares en un tiempo corto o idénticas)
+        const isDuplicate = currentArray.some(item => {
+            const sameEtapa = item.etapa === newObject.etapa;
+            const sameAnswers = JSON.stringify(item.respuestas) === JSON.stringify(newObject.respuestas);
+
+            // Si es la misma etapa y respuestas, es duplicado
+            if (sameEtapa && sameAnswers) return true;
+
+            // Si es la misma etapa y se guardó hace menos de 5 segundos, sospechamos de duplicado por doble clic
+            const itemTime = new Date(item.fecha).getTime();
+            const newTime = new Date(newObject.fecha).getTime();
+            if (sameEtapa && Math.abs(newTime - itemTime) < 5000) return true;
+
+            return false;
+        });
 
         if (!isDuplicate) {
             currentArray.push(newObject);
             console.log(`- Nuevo array preparado (${currentArray.length} hitos)`);
         } else {
-            console.warn("⚠️ Hito duplicado detectado, omitiendo push.");
+            console.warn("⚠️ Hito duplicado o muy reciente detectado, omitiendo push.");
+            return; // No guardamos si es duplicado
         }
 
         // 3. Upsert crítico
@@ -1119,8 +1144,10 @@ async function finishModuleWithAI(supabase, user, skipInputCheck = false) {
         fecha: new Date().toISOString()
     };
 
-    console.log("💾 Finalizando módulo, guardando último hito...", hitoData);
-    await guardarHitoJSON(supabase, user, step.field, hitoData);
+    // console.log("💾 Finalizando módulo, guardando último hito...", hitoData);
+    // await guardarHitoJSON(supabase, user, step.field, hitoData);
+    // COMENTADO: Ya se guarda en el último nextStep() antes de llamar a esta función.
+    // Evitamos duplicidad de cajas.
 
     // --- DISPARADOR DE EMAIL DE HITO (Brevo) ---
     // Al actualizar 'last_hito_completed', el Webhook de Supabase lanzará el email automáticamente.
