@@ -33,16 +33,26 @@ async function initApp() {
 
     // 3. Auth Listener
     state.supabase.auth.onAuthStateChange(async (event, session) => {
-        const user = session?.user;
+        try {
+            console.log("🔐 Evento Auth detectado:", event, session?.user?.email);
+            const user = session?.user;
 
-        if (event === 'SIGNED_OUT') {
-            updateState({ userProfile: null, chatHistory: [] });
-            updateUI(null);
-        } else if (user) {
-            const perfil = await cargarPerfil(user);
-            await cargarHistorialDesdeDB(user.id);
-            updateUI(user);
-            saludarUsuario(user, perfil);
+            if (event === 'SIGNED_OUT') {
+                updateState({ userProfile: null, chatHistory: [] });
+                updateUI(null);
+            } else if (user) {
+                console.log("👤 Usuario detectado, actualizando UI inicial...");
+                updateUI(user);
+
+                const perfil = await cargarPerfil(user);
+                await cargarHistorialDesdeDB(user.id);
+                saludarUsuario(user, perfil);
+
+                console.log("✅ Carga de datos completada, refrescando UI.");
+                updateUI(user);
+            }
+        } catch (e) {
+            console.error("❌ Error en el listener de Auth:", e);
         }
     });
 
@@ -103,7 +113,10 @@ function updateUI(user) {
     const isVisible = user ? 'block' : 'none';
     const isFlex = user ? 'flex' : 'none';
 
-    ELEMENTS.authOverlay.style.display = user ? 'none' : 'flex';
+    // Mantener overlay si estamos recuperando contraseña
+    const showOverlay = !user || state.isRecoveringPassword;
+    ELEMENTS.authOverlay.style.display = showOverlay ? 'flex' : 'none';
+
     if (ELEMENTS.headerButtons) ELEMENTS.headerButtons.style.display = isFlex;
 
     // UI logic for tiers (Free vs Pro vs Premium)

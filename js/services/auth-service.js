@@ -1,17 +1,31 @@
 import { state, updateState } from '../modules/state.js';
 import { ELEMENTS } from '../modules/elements.js';
+import { inicializarSupabase } from './config-service.js';
 
 export const authActions = {
     async login() {
-        const email = document.getElementById('authEmail').value;
-        const password = document.getElementById('authPassword').value;
+        console.log("🔑 Intentando login...");
+        const email = document.getElementById('authEmail')?.value;
+        const password = document.getElementById('authPassword')?.value;
+        const loginBtn = document.getElementById('loginBtn');
+        const signUpBtn = document.getElementById('signUpBtn');
+
         if (!email || !password) {
             ELEMENTS.authError.style.color = "red";
             return ELEMENTS.authError.innerText = "Completa los campos.";
         }
 
-        const loginBtn = document.getElementById('loginBtn');
-        const signUpBtn = document.getElementById('signUpBtn');
+        if (!state.supabase) {
+            console.log("⚠️ Supabase no detectado en state, intentando inicializar...");
+            await inicializarSupabase();
+        }
+
+        if (!state.supabase) {
+            console.error("❌ No se pudo inicializar Supabase.");
+            ELEMENTS.authError.innerText = "Error de conexión. Por favor, recarga.";
+            return;
+        }
+
         loginBtn.disabled = true;
         signUpBtn.disabled = true;
         loginBtn.innerText = "Entrando...";
@@ -20,14 +34,18 @@ export const authActions = {
         try {
             const { error } = await state.supabase.auth.signInWithPassword({ email, password });
             if (error) throw error;
+            console.log("✅ Supabase respondió sin error.");
         } catch (error) {
-            console.error("Error en login:", error);
+            console.error("❌ Error en login:", error);
             ELEMENTS.authError.style.color = "red";
-            ELEMENTS.authError.innerText = "Error: " + error.message;
+            ELEMENTS.authError.innerText = "Error: " + (error.message || "Credenciales incorrectas o problema de red.");
         } finally {
-            loginBtn.disabled = false;
-            signUpBtn.disabled = false;
-            loginBtn.innerText = "Entrar";
+            console.log("🔄 Reset de botones auth.");
+            if (loginBtn) {
+                loginBtn.disabled = false;
+                loginBtn.innerText = "Entrar";
+            }
+            if (signUpBtn) signUpBtn.disabled = false;
         }
     },
 
