@@ -3,6 +3,7 @@
         <nav class="footer-nav">
             <ul>
                 <li><a href="<?php echo esc_url(home_url('/#soluciones')); ?>">Método</a></li>
+                <li><a href="<?php echo esc_url(home_url('/tecnologia')); ?>">Tecnología</a></li>
                 <li><a href="<?php echo esc_url(home_url('/#fundador')); ?>">Mentor</a></li>
                 <li><a href="<?php echo esc_url(home_url('/#proceso')); ?>">Recorrido</a></li>
                 <li><a href="<?php echo esc_url(home_url('/somos')); ?>">Somos</a></li>
