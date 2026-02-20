@@ -2549,15 +2549,33 @@ input:disabled+.slider {
 }
 
 /* Botiquín Modal Specifics */
+.botiquin-modal-content {
+    background: #fdf2f2;
+    /* Tono rojizo suave */
+    border: 1px solid #f9e6e6;
+    max-width: 500px;
+}
+
+.botiquin-header {
+    text-align: center;
+    margin-bottom: 25px;
+}
+
+.botiquin-icon-title {
+    max-width: 80px;
+    margin-bottom: 10px;
+}
+
 .botiquin-loading {
     padding: 40px;
     text-align: center;
 }
 
 .botiquin-response {
-    padding: 5px 10px;
-    line-height: 1.6;
-    color: #444;
+    padding: 10px 20px;
+    line-height: 1.7;
+    color: #4a3b32;
+    text-align: left;
 }
 
 .botiquin-response h1,
