@@ -236,6 +236,27 @@ function renderBitacora(mod, data) {
             <div class="bitacora-body">
     `;
 
+    if (!data) {
+        container.innerHTML = `
+            <div class="bitacora-view">
+                <div class="bitacora-header">
+                    <span class="bitacora-icon">${mod.icon}</span>
+                    <h2>Tu Memoria: ${mod.title}</h2>
+                    <p>Aún no hay huellas en esta etapa del viaje.</p>
+                </div>
+                <div class="bitacora-actions">
+                    <button class="journey-btn secondary" onclick="document.querySelector('.close-modulo').click()">← Volver al Mapa</button>
+                    <button class="journey-btn" id="restartModuleBtn">Iniciar Módulo 🚀</button>
+                </div>
+            </div>
+        `;
+        document.getElementById('restartModuleBtn').onclick = () => {
+            const modIndex = MODULES_METADATA.findIndex(m => m.id === mod.id);
+            openModule(modIndex);
+        };
+        return;
+    }
+
     // Iterar sobre las columnas y sus hitos
     for (const [colName, hits] of Object.entries(data)) {
         if (Array.isArray(hits) && hits.length > 0) {

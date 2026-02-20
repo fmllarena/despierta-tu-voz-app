@@ -1408,7 +1408,7 @@ NO incluyas comillas. Responde solo con la frase.`;
         modal.style.display = 'flex';
     },
     async generarYGuardarResumen() {
-        if (!supabase || chatHistory.length < 2) return;
+        if (!supabaseClient || chatHistory.length < 2) return;
         const { data: { user } } = await supabaseClient.auth.getUser();
         if (!user) return;
         try {
@@ -1918,7 +1918,7 @@ ELEMENTS.navButtons.viaje?.addEventListener('click', async () => {
     document.getElementById('viajeModal').style.display = 'flex';
     try {
         const { initJourney } = await import(`./mi_viaje/main.js?v=${Date.now()}`);
-        initJourney(supabase, user);
+        initJourney(supabaseClient, user);
     } catch (e) { console.error(e); }
 });
 
