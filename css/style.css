@@ -2158,8 +2158,8 @@ textarea {
 }
 
 .music-icon-btn img {
-    width: 28px !important;
-    height: 28px !important;
+    width: 20px !important;
+    height: 20px !important;
     object-fit: contain;
 }
 
@@ -2758,4 +2758,59 @@ input:disabled+.slider {
 .roadmap-node.special-node:hover {
     border-color: #d4af37 !important;
     box-shadow: 0 8px 20px rgba(212, 175, 55, 0.3) !important;
+}
+
+/* Inspiración del Día Modal */
+.inspiracion-modal-content {
+    max-width: 450px;
+    text-align: center;
+    background: linear-gradient(135deg, #fffaf0 0%, #fdfaf7 100%);
+    border: 1px solid #f0e0d0;
+}
+
+.inspiracion-header {
+    margin-bottom: 25px;
+}
+
+.inspiracion-icon {
+    font-size: 3em;
+    margin-bottom: 10px;
+    display: block;
+}
+
+.inspiracion-body {
+    padding: 10px 20px;
+}
+
+.inspiracion-frase {
+    font-size: 1.3em;
+    font-style: italic;
+    color: #4a3b32;
+    line-height: 1.6;
+    margin-bottom: 20px;
+    font-family: inherit;
+}
+
+.inspiracion-autor {
+    font-size: 0.9em;
+    color: var(--color-acento);
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.pulse-loading {
+    animation: pulse-opacity 1.5s infinite ease-in-out;
+}
+
+@keyframes pulse-opacity {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.5;
+    }
 }
