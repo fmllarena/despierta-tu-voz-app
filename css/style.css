@@ -298,12 +298,15 @@ header p {
     gap: 10px;
 }
 
-input {
+input,
+textarea {
     flex: 1;
     border: 1px solid #ddd;
     padding: 10px;
     border-radius: 25px;
     outline: none;
+    font-family: inherit;
+    resize: none;
 }
 
 #sendBtn {
