@@ -281,44 +281,31 @@ function renderBitacora(mod, data) {
     }
 
     let hasEntries = false;
-    // 2. Agrupar por etapa y normalizar (limpiar texto y ordenar claves)
-    const groupedHitos = {};
+    // 2. Ordenar hitos por fecha descendente (más recientes primero)
+    allHits.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+
+    // 3. Filtrar: Quedarse solo con la versión más reciente de cada etapa
+    const latestByEtapa = new Map();
     allHits.forEach(hito => {
         const etapa = hito.etapa || 'Hito del Camino';
-        if (!groupedHitos[etapa]) groupedHitos[etapa] = [];
+        if (!latestByEtapa.has(etapa)) {
+            // Normalizar respuestas (limpiar texto)
+            const cleanResponses = {};
+            Object.keys(hito.respuestas || {}).forEach(key => {
+                let val = hito.respuestas[key];
+                if (typeof val === 'string') val = val.replace(/\*\*/g, '').trim();
+                if (val) cleanResponses[key] = val;
+            });
 
-        const sortedResponses = {};
-        Object.keys(hito.respuestas || {}).sort().forEach(key => {
-            let val = hito.respuestas[key];
-            if (typeof val === 'string') val = val.replace(/\*\*/g, '').trim();
-            if (val) sortedResponses[key] = val;
-        });
-
-        groupedHitos[etapa].push({
-            ...hito,
-            respuestas: sortedResponses
-        });
+            latestByEtapa.set(etapa, {
+                ...hito,
+                respuestas: cleanResponses
+            });
+        }
     });
 
-    // 3. Eliminar duplicados y subconjuntos (fuzzy de-duplication)
-    let finalHitos = [];
-    for (const etapa in groupedHitos) {
-        const group = groupedHitos[etapa];
-        group.sort((a, b) => Object.keys(b.respuestas).length - Object.keys(a.respuestas).length);
-
-        const uniqueInGroup = [];
-        group.forEach(h => {
-            const isRedundant = uniqueInGroup.some(existing => {
-                const hEntries = Object.entries(h.respuestas);
-                if (hEntries.length === 0) return true;
-                return hEntries.every(([qk, qv]) => existing.respuestas[qk] === qv);
-            });
-            if (!isRedundant) uniqueInGroup.push(h);
-        });
-        finalHitos.push(...uniqueInGroup);
-    }
-
-    // 4. Ordenar hitos finales por fecha
+    // 4. Convertir a array y ordenar cronológicamente para la vista (ascendente)
+    let finalHitos = Array.from(latestByEtapa.values());
     finalHitos.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
 
     if (finalHitos.length > 0) {
