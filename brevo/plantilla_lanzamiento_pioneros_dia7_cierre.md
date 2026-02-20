@@ -46,7 +46,7 @@
                                     <li>Tu acceso no tendrá las condiciones preferentes que estamos dando a este primer grupo de valientes.</li>
                                 </ul>
                                 
-                                <p>No dejes que el miedo o la indecisión vuelvan a silenciar tu voz. Esta herramienta ha sido creada por y para personas como tú, que saben que la voz es mucho más que técnica.</p>
+                                <p>No dejes que el miedo o la indecisión vuelvan a silenciar tu voz. Esta herramienta ha sido creada por y para personas como tú, que saben que la voz alcanza su verdadera potencia cuando la técnica y el espíritu caminan de la mano.</p>
                             </div>
 
                             <table width="100%" cellpadding="0" cellspacing="0">
@@ -57,7 +57,7 @@
                                 </tr>
                             </table>
 
-                            <p style="color: #8e7d6d; font-size: 14px; text-align: center; font-style: italic;">"El primer paso de la transformación es el más difícil, pero es el único que cuenta."</p>
+                            <p style="color: #8e7d6d; font-size: 14px; text-align: center; font-style: italic;">"El primer paso de la transformación es el más difícil, pero es el único que cuenta ahora."</p>
                         </td>
                     </tr>
                 </table>

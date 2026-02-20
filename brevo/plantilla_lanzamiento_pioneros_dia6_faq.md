@@ -39,10 +39,10 @@
                                 <p>Sé que introducir una inteligencia artificial en algo tan humano como la voz puede generar dudas. Por eso, he recopilado las preguntas que más me estáis haciendo estos días:</p>
                                 
                                 <p><strong>1. ¿Sustituye a mi profesor de canto?</strong><br>
-                                En absoluto. El Mentor-IA es tu aliado <em>entre clase y clase</em>. Tu profesor te da la técnica; la App te ayuda a gestionarla cuando él no está delante y aparecen los nervios o el bloqueo.</p>
-
-                                <p><strong>2. No soy profesional, ¿es para mí?</strong><br>
-                                Sí. Está diseñada tanto para profesionales que buscan un "botiquín" rápido, como para aficionados que quieren ganar confianza y entender su voz desde un lugar más consciente.</p>
+                                En absoluto. El Mentor-IA es tu aliado <em>entre clase y clase</em>. Tu profesor te da la técnica; la App te ayuda a gestionarla cuando él no está delante, traduciendo tus bloqueos emocionales en soluciones para tu laringe y tu apoyo.</p>
+                                
+                                <p><strong>2. ¿Es para mí si busco técnica pura?</strong><br>
+                                Solo si entiendes que la técnica necesita de libertad interna para brillar. Somos el puente que une tu estabilidad sonora con tu presencia emocional.</p>
 
                                 <p><strong>3. ¿Qué pasa si cancelo mi suscripción?</strong><br>
                                 En Despierta tu Voz no hay nudos. Puedes cancelar cuando quieras. Pero recuerda que si cancelas ahora, perderás tu precio blindado de Pionero (9,90€) si decides volver más tarde.</p>

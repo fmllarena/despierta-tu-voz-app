@@ -51,7 +51,7 @@
                             </h2>
                             
                             <p style="color: #5a5a5a; font-size: 16px; line-height: 1.6; margin: 0 0 20px;">
-                                Es un honor darte la bienvenida al <strong>Plan Transforma</strong>. Al elegir este camino, abres la puerta a un acompañamiento personal y profundo donde tu voz deja de ser un examen para convertirse en tu mayor refugio.
+                                Es un honor darte la bienvenida al <strong>Plan Transforma</strong>. Al elegir este camino, abres la puerta a una evolución total donde tu técnica vocal, tu mente y tu sonido se alinean para que tu voz sea, por fin, tu mayor libertad.
                             </p>
 
                             <p style="color: #5a5a5a; font-size: 16px; line-height: 1.6; margin: 0 0 25px;">

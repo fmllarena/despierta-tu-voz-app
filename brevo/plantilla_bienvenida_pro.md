@@ -53,7 +53,7 @@
                             </h2>
                             
                             <p style="color: #5a5a5a; font-size: 16px; line-height: 1.6; margin: 0 0 20px;">
-                                Es una alegría darte la bienvenida al <strong>Plan Profundiza</strong>. Has tomado una decisión valiente: la de dejar de cantar desde la técnica para empezar a cantar desde tu verdad.
+                                Es una alegría darte la bienvenida al <strong>Plan Profundiza</strong>. Has tomado una decisión clave: la de unir tu técnica vocal con tu verdad emocional para que tu sonido por fin sea libre, estable y auténtico.
                             </p>
 
                             <p style="color: #5a5a5a; font-size: 16px; line-height: 1.6; margin: 0 0 15px;">

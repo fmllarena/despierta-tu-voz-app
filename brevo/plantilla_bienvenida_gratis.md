@@ -50,11 +50,11 @@
                             </h2>
                             
                             <p style="color: #5a5a5a; font-size: 16px; line-height: 1.6; margin: 0 0 20px;">
-                                Es un placer saludarte. Has dado el primer paso para averiguar por qué a veces no puedes dar todo lo que tienes al cantar.
+                                Es un placer saludarte. Has dado el primer paso para descubrir cómo tu estado emocional impacta directamente en tu sonido: desde esa tensión en la garganta hasta la falta de apoyo en tus notas más largas.
                             </p>
 
                             <p style="color: #5a5a5a; font-size: 16px; line-height: 1.6; margin: 0 0 15px;">
-                                Desde este momento, ya tienes acceso a tu Mentor IA disponible las 24 horas para:
+                                Desde este momento, ya tienes acceso a tu Mentor IA, diseñado para equilibrar tu técnica y tu sentir:
                             </p>
 
                             <!-- Acciones iniciales -->

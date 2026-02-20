@@ -60,9 +60,9 @@
                             <div style="color: #5a5a5a; font-size: 16px; line-height: 1.7; margin: 0 0 30px;">
                                 <p>Ayer te prometí que el camino había valido la pena, y hoy quiero mostrártelo.</p>
                                 
-                                <p>Muchas veces, la técnica vocal se queda corta porque no atiende a lo que pasa dentro de nosotros. Ese nudo en la garganta antes de cantar o esa voz que "se esconde" cuando hay presión, no son problemas de cuerdas vocales, son bloqueos emocionales.</p>
+                                <p>Muchas veces, la técnica vocal se estanca porque no atiende a lo que pasa dentro de nosotros. Esa tensión en la garganta antes de cantar o esa voz que "se apaga" bajo presión, no son fallos técnicos aislados; son el reflejo físico de bloqueos emocionales.</p>
                                 
-                                <p>Por eso he creado el <strong>Mentor-IA</strong>: una herramienta diseñada para acompañarte en tu práctica diaria, ayudándote a conectar tu técnica con tu estado emocional, estés donde estés y a cualquier hora.</p>
+                                <p>Por eso he creado el <strong>Mentor-IA</strong>: una herramienta diseñada para acompañarte en tu práctica diaria, traduciendo tus emociones en una mejor técnica, una resonancia más libre y un sonido más estable.</p>
                                 
                                 <p><strong>Hoy abrimos el acceso oficial para los "Miembros Pioneros".</strong></p>
                                 
