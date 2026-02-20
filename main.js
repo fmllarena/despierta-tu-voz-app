@@ -337,7 +337,7 @@ async function inicializarSupabase() {
         }
 
         if (window.supabase) {
-            supabaseClient = window.supabaseClient.createClient(config.url, config.key);
+            supabaseClient = window.supabase.createClient(config.url, config.key);
             console.log("✅ Supabase inicializado correctamente.");
             setupAuthListener();
         } else {
