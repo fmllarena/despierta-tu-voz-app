@@ -71,6 +71,29 @@
     </header>
 
     <div class="chat-container">
+        <div class="header-buttons" id="mainHeaderButtons">
+            <button id="inspiracionBtn" class="icon-nav-btn" title="Inspiración del Día">
+                <img src="assets/inspiracion.png" alt="Inspiración del Día">
+            </button>
+            <button id="viajeBtn" class="journey-btn icon-nav-btn" title="Mi Viaje">
+                <img src="assets/icon_viaje.png" alt="Mi Viaje">
+            </button>
+            <button id="progresoBtn" class="icon-nav-btn" title="Mi Progreso">
+                <img src="assets/icon_progreso.png" alt="Mi Progreso">
+            </button>
+            <button id="botiquinBtn" class="icon-nav-btn" title="Emergencias">
+                <img src="assets/icon_emergencia.png" alt="Emergencias">
+            </button>
+            <button id="sesionBtn" class="premium-btn icon-nav-btn" title="Sesiones 1/1">
+                <img src="assets/icon_sesiones.png" alt="Sesiones">
+            </button>
+            <button id="upgradeBtn" class="upgrade-btn icon-nav-btn" title="Mejorar Plan">
+                <img src="assets/icon_upgrade.png" alt="Mejorar Plan">
+            </button>
+            <button id="ajustesBtn" class="icon-nav-btn" title="Ajustes">
+                <img src="assets/icon_ajustes.png" alt="Ajustes">
+            </button>
+        </div>
         <div class="chat-header">
             <div class="chat-header-top">
                 <span>Sesión con el Mentor</span>
@@ -103,7 +126,7 @@
                         5 Módulos.</div>
                 </div>
                 <div class="help-item">
-                    <span class="help-btn-tag"><img src="assets/icon_progreso.png" alt="Icono Mi Progreso"></span>
+                    <span class="help-btn-tag"><img src="assets/icon_progreso.png" alt="Icono Mi Pregreso"></span>
                     <div class="help-desc"><strong>Mi Progreso</strong> – Tu Diario de Alquimia. El Mentor registra tus
                         hitos, miedos transmutados y tu nivel de evolución.</div>
                 </div>
@@ -157,29 +180,6 @@
                         asistencia para abrir el chat de soporte técnico.</div>
                 </div>
             </div>
-        </div>
-        <div class="header-buttons">
-            <button id="inspiracionBtn" class="icon-nav-btn" title="Inspiración del Día">
-                <img src="assets/inspiracion.png" alt="Inspiración del Día">
-            </button>
-            <button id="viajeBtn" class="journey-btn icon-nav-btn" title="Mi Viaje">
-                <img src="assets/icon_viaje.png" alt="Mi Viaje">
-            </button>
-            <button id="progresoBtn" class="icon-nav-btn" title="Mi Progreso">
-                <img src="assets/icon_progreso.png" alt="Mi Progreso">
-            </button>
-            <button id="botiquinBtn" class="icon-nav-btn" title="Emergencias">
-                <img src="assets/icon_emergencia.png" alt="Emergencias">
-            </button>
-            <button id="sesionBtn" class="premium-btn icon-nav-btn" title="Sesiones 1/1">
-                <img src="assets/icon_sesiones.png" alt="Sesiones">
-            </button>
-            <button id="upgradeBtn" class="upgrade-btn icon-nav-btn" title="Mejorar Plan">
-                <img src="assets/icon_upgrade.png" alt="Mejorar Plan">
-            </button>
-            <button id="ajustesBtn" class="icon-nav-btn" title="Ajustes">
-                <img src="assets/icon_ajustes.png" alt="Ajustes">
-            </button>
         </div>
         <div class="messages" id="chatBox"></div>
         <div class="input-area">
@@ -615,13 +615,14 @@
                 </a>
             </div>
         </div>
-        <!-- Modal de Alerta Personalizado -->
-        <div id="customAlert" class="modal alert-modal" style="z-index: 9999;">
-            <div class="modal-content alert-content">
-                <h4 id="alertTitle">app Mentor DTV</h4>
-                <p id="alertMessage"></p>
-                <button id="alertConfirmBtn" class="save-btn" style="width: 100%; margin-top: 15px;">Aceptar</button>
-            </div>
+    </div>
+
+    <!-- Modal de Alerta Personalizado -->
+    <div id="customAlert" class="modal alert-modal" style="z-index: 9999;">
+        <div class="modal-content alert-content">
+            <h4 id="alertTitle">app Mentor DTV</h4>
+            <p id="alertMessage"></p>
+            <button id="alertConfirmBtn" class="save-btn" style="width: 100%; margin-top: 15px;">Aceptar</button>
         </div>
     </div>
 

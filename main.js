@@ -147,22 +147,31 @@ async function sendMessage() {
     ELEMENTS.chatInput.disabled = true;
 
     try {
+        console.log("📝 Enviando mensaje:", text);
         await guardarMensajeDB(text, 'user');
 
         const thinkingId = 'thinking-' + Date.now();
-        appendMessage("...", 'ia-thinking', thinkingId);
+        appendMessage("...", 'ia thinking', thinkingId);
 
         let responseText = "";
         const el = document.getElementById(thinkingId);
 
+        console.log("🤖 Llamando a Gemini API...");
         await llamarGemini(text, state.chatHistory, 'mentor_chat', { userId: state.userProfile?.user_id }, (chunk, full) => {
             responseText = full;
             const cleanText = responseText.replace(/\[\s*SESION_FINAL\s*\]/gi, "").trim();
-            if (el) el.innerHTML = window.marked ? window.marked.parse(cleanText + " ▮") : cleanText;
+            if (el) {
+                el.innerHTML = window.marked ? window.marked.parse(cleanText + " ▮") : cleanText;
+                scrollToBottom(ELEMENTS.chatBox);
+            }
         });
 
+        console.log("✅ Respuesta recibida.");
         const finalClean = responseText.replace(/\[\s*SESION_FINAL\s*\]/gi, "").trim();
-        if (el) el.innerHTML = window.marked ? window.marked.parse(finalClean) : finalClean;
+        if (el) {
+            el.classList.remove('thinking');
+            el.innerHTML = window.marked ? window.marked.parse(finalClean) : finalClean;
+        }
 
         await guardarMensajeDB(responseText, 'ia');
         state.chatHistory.push({ role: 'user', parts: [{ text }] }, { role: 'model', parts: [{ text: responseText }] });
@@ -179,8 +188,14 @@ async function sendMessage() {
         }
 
     } catch (e) {
-        console.error("Error en sendMessage:", e);
-        appendMessage("Lo siento, ha habido un error.", 'ia');
+        console.error("❌ Error en sendMessage:", e);
+        const el = document.querySelector('.ia.thinking');
+        if (el) {
+            el.classList.remove('thinking');
+            el.innerHTML = "Lo siento, el Mentor está meditando profundamente ahora mismo. Por favor, intenta de nuevo en unos momentos o refresca la página.";
+        } else {
+            appendMessage("Lo siento, ha habido un problema de conexión con el Mentor vocal.", 'ia');
+        }
     } finally {
         ELEMENTS.chatInput.disabled = false;
         scrollToBottom(ELEMENTS.chatBox);

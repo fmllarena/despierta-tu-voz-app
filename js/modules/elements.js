@@ -9,7 +9,7 @@ export const ELEMENTS = {
     signUpBtn: document.getElementById('signUpBtn'),
     mainHelpBtn: document.getElementById('mainHelpBtn'),
     mainHelpTooltip: document.getElementById('mainHelpTooltip'),
-    headerButtons: document.querySelector('.header-buttons'),
+    headerButtons: document.getElementById('mainHeaderButtons'),
     navButtons: {
         inspiracion: document.getElementById('inspiracionBtn'),
         viaje: document.getElementById('viajeBtn'),
