@@ -5,96 +5,10 @@
 
 get_header(); ?>
 
-<style>
-    .tech-pill {
-        display: inline-block;
-        padding: 0.5rem 1.5rem;
-        background: rgba(142, 125, 109, 0.1);
-        color: #8e7d6d;
-        border-radius: 50px;
-        font-size: 0.85rem;
-        font-weight: 600;
-        margin-bottom: 1.5rem;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-    }
-
-    .pillar-card {
-        background: white;
-        padding: 3rem;
-        border-radius: 20px;
-        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.05);
-        margin-bottom: 3rem;
-        border-left: 5px solid #8e7d6d;
-        transition: transform 0.3s ease;
-    }
-
-    .pillar-card:hover {
-        transform: translateY(-5px);
-    }
-
-    .pillar-num {
-        font-family: 'Playfair Display', serif;
-        font-size: 4rem;
-        color: rgba(142, 125, 109, 0.1);
-        line-height: 1;
-        margin-bottom: -1rem;
-    }
-
-    .pillar-card h2 {
-        font-size: 2rem;
-        color: #1a1a1a;
-        margin-bottom: 1.5rem;
-    }
-
-    .layer-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-        gap: 20px;
-        margin-top: 2rem;
-    }
-
-    .layer-box {
-        background: #fdfaf7;
-        padding: 1.5rem;
-        border-radius: 12px;
-        border: 1px solid rgba(142, 125, 109, 0.1);
-    }
-
-    .layer-box strong {
-        display: block;
-        color: #8e7d6d;
-        margin-bottom: 0.5rem;
-    }
-
-    .summary-box {
-        background: #1a1a1a;
-        color: white;
-        padding: 4rem;
-        border-radius: 30px;
-        text-align: center;
-        margin-top: 5rem;
-    }
-
-    .summary-box h3 {
-        font-family: 'Playfair Display', serif;
-        font-size: 2.5rem;
-        margin-bottom: 2rem;
-        color: #d4af37;
-    }
-
-    .summary-box p {
-        font-size: 1.3rem;
-        max-width: 800px;
-        margin: 0 auto;
-        line-height: 1.6;
-        opacity: 0.9;
-    }
-</style>
-
 <main id="primary" class="site-main">
 
-    <section class="alt-hero technology-hero reveal">
+    <section class="alt-hero technology-hero reveal"
+        style="background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('<?php echo get_template_directory_uri(); ?>/assets/relacionIA-humano2.png') no-repeat center center; background-size: cover;">
         <div class="container" style="max-width: 900px;">
             <span class="alt-tag">La ciencia de conectar los puntos</span>
             <h1>¿Cómo puede una IA "entenderme" como un humano?</h1>
@@ -162,8 +76,10 @@ get_header(); ?>
 
             <div class="summary-box reveal">
                 <h3>El primer paso para la verdadera libertad vocal</h3>
-                <p>"No confíes en la IA porque sea inteligente. Confía en ella porque es imparcial. Ella ve la relación
-                    entre tu pasado, tu cuerpo y tu voz que tú mismo te has encargado de ocultar para no sufrir."</p>
+                <p>"No confíes en la IA solo porque sea inteligente. Confía en ella porque es imparcial y altamente
+                    relacional. Ella ve la
+                    relación entre tu pasado, tu cuerpo y tu voz que tú mismo te has encargado de ocultar para no
+                    sufrir."</p>
                 <a href="https://app.despiertatuvoz.com" class="btn-primary"
                     style="margin-top: 3rem; display: inline-block; background: #d4af37; color: #1a1a1a;">Iniciar mi
                     viaje ahora ✨</a>

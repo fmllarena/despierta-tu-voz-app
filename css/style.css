@@ -3088,3 +3088,177 @@ input:disabled+.slider {
         width: 100%;
     }
 }
+
+/* --- TECHNOLOGY SECTION STYLES --- */
+.tech-pill {
+    display: inline-block;
+    padding: 0.5rem 1.5rem;
+    background: rgba(142, 125, 109, 0.1);
+    color: #8e7d6d;
+    border-radius: 50px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.pillar-card {
+    background: white;
+    padding: 3rem;
+    border-radius: 20px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.05);
+    margin-bottom: 3rem;
+    border-left: 5px solid #8e7d6d;
+    transition: transform 0.3s ease;
+}
+
+.pillar-card:hover {
+    transform: translateY(-5px);
+}
+
+.pillar-num {
+    font-family: 'Playfair Display', serif;
+    font-size: 4rem;
+    color: rgba(142, 125, 109, 0.1);
+    line-height: 1;
+    margin-bottom: -1rem;
+}
+
+.pillar-card h2 {
+    font-size: 2rem;
+    color: #1a1a1a;
+    margin-bottom: 1.5rem;
+}
+
+.pillar-card p {
+    font-size: 1.1rem;
+    line-height: 1.8;
+    color: #444;
+}
+
+.layer-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 20px;
+    margin-top: 2rem;
+}
+
+.layer-box {
+    background: #fdfaf7;
+    padding: 1.5rem;
+    border-radius: 12px;
+    border: 1px solid rgba(142, 125, 109, 0.1);
+}
+
+.layer-box strong {
+    display: block;
+    color: #8e7d6d;
+    margin-bottom: 0.5rem;
+}
+
+.summary-box {
+    background: #1a1a1a;
+    color: white;
+    padding: 4rem;
+    border-radius: 30px;
+    text-align: center;
+    margin-top: 5rem;
+}
+
+.summary-box h3 {
+    font-family: 'Playfair Display', serif;
+    font-size: 2.5rem;
+    margin-bottom: 2rem;
+    color: #d4af37;
+}
+
+.summary-box p {
+    font-size: 1.3rem;
+    max-width: 800px;
+    margin: 0 auto;
+    line-height: 1.6;
+    opacity: 0.9;
+}
+
+.technology-hero {
+    background: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url('../assets/relacionIA-humano2.png') no-repeat center center;
+    background-size: cover;
+    min-height: 60vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* --- LANDING AI TEASER --- */
+.ai-teaser {
+    background: #1a1a1a;
+    color: white;
+    padding: 100px 0;
+    overflow: hidden;
+    position: relative;
+}
+
+.ai-teaser .container {
+    position: relative;
+    z-index: 2;
+}
+
+.ai-teaser-content {
+    max-width: 800px;
+    margin: 0 auto;
+    text-align: center;
+}
+
+.ai-teaser h2 {
+    color: white;
+    margin-top: 20px;
+}
+
+.ai-teaser p {
+    font-size: 1.25rem;
+    line-height: 1.8;
+    opacity: 0.9;
+    margin: 30px 0;
+}
+
+.ai-teaser-grid {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-top: 40px;
+}
+
+.ai-teaser-card {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 20px;
+    border-radius: 15px;
+    flex: 1;
+    min-width: 200px;
+}
+
+.ai-teaser-card strong {
+    color: #d4af37;
+    display: block;
+    margin-bottom: 10px;
+}
+
+.ai-teaser-card p {
+    font-size: 0.95rem;
+    opacity: 0.7;
+    margin: 0;
+}
+
+.ai-teaser-footer {
+    margin-top: 50px;
+}
+
+.ai-teaser-deco {
+    position: absolute;
+    top: -100px;
+    right: -100px;
+    width: 400px;
+    height: 400px;
+    background: radial-gradient(circle, rgba(212, 175, 55, 0.05) 0%, transparent 70%);
+}
