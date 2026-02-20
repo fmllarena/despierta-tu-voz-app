@@ -1,4 +1,10 @@
-// --- CONFIGURACIÓN Y ESTADO (Versión 5.4 - Fix Alerts) ---
+// --- MANEJO DE ERRORES GLOBAL ---
+window.onerror = function (msg, url, lineNo, columnNo, error) {
+    alert("Error de JS: " + msg + "\nLínea: " + lineNo + "\nArchivo: " + url);
+    return false;
+};
+console.log("🚀 Script main.js cargando...");
+
 let supabase;
 let userProfile = null;
 let chatHistory = [];
