@@ -1859,6 +1859,13 @@ textarea {
     margin-bottom: 25px;
 }
 
+.tier-container {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+
 .info-value {
     color: var(--color-acento);
     font-size: 1.1em;
@@ -1872,6 +1879,28 @@ textarea {
 .slider-group {
     margin-bottom: 25px;
 }
+
+.slider-header {
+    font-size: 0.85em;
+    font-weight: bold;
+    color: #666;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.slider-inline {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.slider-label-left,
+.slider-label-right {
+    font-size: 0.9em;
+    white-space: nowrap;
+}
+
 
 .slider-labels {
     display: flex;
@@ -1942,12 +1971,23 @@ textarea {
 
 /* Actions */
 .settings-actions {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 10px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
     margin-top: 25px;
-    align-items: stretch;
+    justify-content: space-between;
 }
+
+.settings-actions>button {
+    flex: 1 1 calc(33% - 12px);
+    min-width: 120px;
+}
+
+.preferences-btn {
+    flex: 2 1 100% !important;
+    /* Make it wider if needed */
+}
+
 
 .save-btn {
     background: var(--color-acento);
@@ -1986,6 +2026,46 @@ textarea {
     text-align: center;
 }
 
+.preferences-btn {
+    background: #f5f0eb;
+    color: var(--color-acento);
+    border: 1px solid #ddd;
+    padding: 10px 5px;
+    border-radius: 20px;
+    font-size: 0.8em;
+    cursor: pointer;
+    transition: all 0.3s;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    line-height: 1.2;
+}
+
+.preferences-btn:hover {
+    background: #ebe0d5;
+    transform: translateY(-2px);
+}
+
+.upgrade-btn-small {
+    background: #27ae60;
+    color: white;
+    border: none;
+    padding: 5px 12px;
+    border-radius: 15px;
+    font-size: 0.75em;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.upgrade-btn-small:hover {
+    background: #219150;
+    transform: scale(1.05);
+}
+
+
 .danger-btn:hover {
     background: #e74c3c;
     color: white;
@@ -1997,12 +2077,12 @@ textarea {
 }
 
 .danger-hint {
-    grid-column: 1 / span 3;
+    width: 100%;
+    margin-top: 15px;
     font-size: 0.75em;
-    color: #888;
-    margin-top: 5px;
-    line-height: 1.4;
+    color: #999;
     text-align: center;
+    line-height: 1.4;
     padding: 10px;
     background: #fffcf0;
     border-radius: 8px;
