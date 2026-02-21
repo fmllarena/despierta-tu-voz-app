@@ -10,10 +10,8 @@ export const MODALS = {
     },
 
     setup() {
-        // Settings Modal
-        ELEMENTS.ajustesBtn?.addEventListener('click', () => this.abrirAjustes());
-        ELEMENTS.closeSettings?.addEventListener('click', () => this.cerrarAjustes());
-        ELEMENTS.saveSettingsBtn?.addEventListener('click', () => this.guardarAjustes());
+        // Settings Modal — gestionado por settings.js (AJUSTES.setup)
+        // No duplicar listeners aquí para ajustesBtn/closeSettings/saveSettingsBtn
 
         // Sesión Modal
         ELEMENTS.sesionBtn?.addEventListener('click', () => this.abrirSesion());
