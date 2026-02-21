@@ -283,6 +283,11 @@ async function cargarPerfil(user) {
             // Usuario existente: marcar tour como visto para que nunca se dispare
             localStorage.setItem('dtv_tour_seen', 'true');
         }
+
+        // --- COMPROBACIÓN DE PAGOS ---
+        if (window.PAYMENTS) {
+            window.PAYMENTS.checkStatus();
+        }
     } catch (e) {
         console.error("Error crítico en cargarPerfil:", e);
     }

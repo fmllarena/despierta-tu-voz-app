@@ -75,9 +75,4 @@ export const PAYMENTS = window.PAYMENTS = {
     }
 };
 
-// Auto-inicialización si el DOM está listo
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => PAYMENTS.checkStatus());
-} else {
-    PAYMENTS.checkStatus();
-}
+// La inicialización se controla desde main.js tras cargar el perfil
