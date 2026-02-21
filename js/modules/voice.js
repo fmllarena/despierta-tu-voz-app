@@ -1,8 +1,13 @@
 import { ELEMENTS } from './elements.js';
+import { state, updateState } from './state.js';
 
 export const VOICE = window.VOICE = {
     recognition: null,
     audioActual: null,
+    audioContext: null,
+    analyser: null,
+    dataArray: null,
+    isAnalyzing: false,
 
     setup(sendMessageCallback) {
         const Speech = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -14,6 +19,7 @@ export const VOICE = window.VOICE = {
         ELEMENTS.micBtn.addEventListener('click', () => {
             try {
                 this.recognition.start();
+                this.startAnalysis();
                 ELEMENTS.micBtn.style.backgroundColor = "#ffcccc";
             } catch (e) {
                 console.error(e);
@@ -24,6 +30,7 @@ export const VOICE = window.VOICE = {
             if (ELEMENTS.chatInput) {
                 ELEMENTS.chatInput.value = e.results[0][0].transcript;
                 ELEMENTS.micBtn.style.backgroundColor = "";
+                this.stopAnalysis();
                 if (sendMessageCallback) {
                     sendMessageCallback();
                 } else if (window.sendMessage) {
@@ -34,73 +41,75 @@ export const VOICE = window.VOICE = {
 
         this.recognition.onerror = () => {
             ELEMENTS.micBtn.style.backgroundColor = "";
+            this.stopAnalysis();
             alert("¿Micro?");
         };
 
         this.recognition.onend = () => {
             ELEMENTS.micBtn.style.backgroundColor = "";
+            // La detención del análisis se maneja en onresult o onerror para asegurar que los datos estén listos
         };
     },
 
-    async hablarTexto(texto, btn) {
-        if (this.audioActual && !this.audioActual.paused) {
-            this.audioActual.pause();
-            this.audioActual = null;
-            btn.innerHTML = '🔊 Oír Mentor';
-            return;
-        }
-
-        btn.innerHTML = '⏳...';
-        btn.disabled = true;
+    async startAnalysis() {
+        if (this.isAnalyzing) return;
 
         try {
-            const textoLimpio = texto.replace(/#|\*|_|\[|\]|\(|\)/g, "").trim();
-            const response = await fetch('/api/tts', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ text: textoLimpio, voiceName: 'es-ES-Chirp3-HD-Aoede' })
-            });
+            if (!this.audioContext) {
+                this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                this.analyser = this.audioContext.createAnalyser();
+                this.analyser.fftSize = 256;
+                this.dataArray = new Uint8Array(this.analyser.frequencyBinCount);
+            }
 
-            const data = await response.json();
-            if (data.error) throw new Error(data.error);
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            const source = this.audioContext.createMediaStreamSource(stream);
+            source.connect(this.analyser);
 
-            const audioBlob = b64toBlob(data.audioContent, 'audio/mp3');
-            const audioUrl = URL.createObjectURL(audioBlob);
-            this.audioActual = new Audio(audioUrl);
-
-            this.audioActual.onplay = () => {
-                btn.innerHTML = '⏸ Detener';
-                btn.disabled = false;
-            };
-            this.audioActual.onended = () => {
-                btn.innerHTML = '🔊 Oír Mentor';
-                URL.revokeObjectURL(audioUrl);
-                this.audioActual = null;
-            };
-            this.audioActual.play();
-        } catch (e) {
-            console.error(e);
-            btn.innerHTML = '🔊 Oír Mentor';
-            btn.disabled = false;
+            this.isAnalyzing = true;
+            this.analyzeLoop();
+        } catch (err) {
+            console.error("Error iniciando análisis de audio:", err);
         }
+    },
+
+    analyzeLoop() {
+        if (!this.isAnalyzing) return;
+
+        this.analyser.getByteFrequencyData(this.dataArray);
+
+        // Cálculo de métricas
+        let values = 0;
+        let max = 0;
+        for (let i = 0; i < this.dataArray.length; i++) {
+            values += this.dataArray[i];
+            if (this.dataArray[i] > max) max = this.dataArray[i];
+        }
+
+        const avg = values / this.dataArray.length;
+        const vol = Math.min(avg / 128, 1);
+        const energy = Math.min(max / 255, 1);
+
+        // Estabilidad (simplificada: relación entre avg y max)
+        const stability = max > 0 ? Math.max(0, 1 - (Math.abs(max - avg) / 255)) : 1;
+
+        updateState({
+            vocalAnalytics: {
+                volumen: parseFloat(vol.toFixed(2)),
+                energia: parseFloat(energy.toFixed(2)),
+                estabilidad: parseFloat(stability.toFixed(2)),
+                timestamp: Date.now()
+            }
+        });
+
+        requestAnimationFrame(() => this.analyzeLoop());
+    },
+
+    stopAnalysis() {
+        this.isAnalyzing = false;
+        console.log("Análisis vocal finalizado:", state.vocalAnalytics);
     }
 };
-
-export function b64toBlob(b64, type = '', sliceSize = 512) {
-    const byteChars = atob(b64);
-    const byteArrays = [];
-    for (let offset = 0; offset < byteChars.length; offset += sliceSize) {
-        const slice = byteChars.slice(offset, offset + sliceSize);
-        const byteNumbers = new Array(slice.length);
-        for (let i = 0; i < slice.length; i++) byteNumbers[i] = slice.charCodeAt(i);
-        byteArrays.push(new Uint8Array(byteNumbers));
-    }
-    return new Blob(byteArrays, { type });
-}
-
-// Exponer a window para compatibilidad legacy
-window.hablarTexto = (texto, btn) => VOICE.hablarTexto(texto, btn);
-window.b64toBlob = b64toBlob;
 
 // Inicializar
 if (document.readyState === 'loading') {

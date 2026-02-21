@@ -5,7 +5,8 @@ export const state = {
     isRecoveringPassword: false,
     blogLibrary: [],
     lastCronicaTime: null,
-    dtvSessions: 0
+    dtvSessions: 0,
+    vocalAnalytics: null
 };
 
 export function updateState(updates) {

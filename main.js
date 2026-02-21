@@ -1018,22 +1018,8 @@ function appendMessage(text, type, id = null) {
         avatar.className = 'ia-avatar';
         avatar.innerHTML = `<img src="assets/foto-avatar.PNG" alt="Mentor">`;
 
-        // Botón de Voz (solo en mensajes de IA)
-        const voiceBtn = document.createElement('button');
-        voiceBtn.className = 'voice-btn';
-        voiceBtn.style.marginTop = '10px';
-        voiceBtn.innerHTML = '🔊 Oír Mentor';
-        voiceBtn.onclick = () => {
-            if (window.hablarTexto) {
-                window.hablarTexto(cleanText, voiceBtn);
-            } else if (window.VOICE && window.VOICE.hablarTexto) {
-                window.VOICE.hablarTexto(cleanText, voiceBtn);
-            }
-        };
-
         container.appendChild(avatar);
         container.appendChild(div);
-        div.appendChild(voiceBtn);
 
         ELEMENTS.chatBox.appendChild(container);
 

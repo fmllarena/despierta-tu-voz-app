@@ -1513,30 +1513,6 @@ textarea {
 }
 
 /* Botones en el chat */
-.voice-btn {
-    background: #f1ede9;
-    color: #8e7d6d;
-    border: 1px solid #d1c7bc;
-    border-radius: 12px;
-    padding: 6px 12px;
-    font-size: 0.85em;
-    cursor: pointer;
-    margin-top: 8px;
-    display: table;
-    transition: all 0.2s;
-    font-weight: 500;
-}
-
-.voice-btn:hover {
-    background: #8e7d6d;
-    color: white;
-}
-
-.voice-btn:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-}
-
 .audio-btn,
 .chat-logout-btn {
     display: block;
