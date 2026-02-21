@@ -37,11 +37,14 @@ export const LEGAL = window.LEGAL = {
         btn.innerText = "Registrando...";
 
         try {
-            const { data: { user } } = await supabaseClient.auth.getUser();
+            const client = supabaseClient || window.supabaseClient;
+            if (!client) throw new Error("Supabase client not initialized.");
+
+            const { data: { user } } = await client.auth.getUser();
             if (!user) return;
 
-            // Actualizar en base de datos (usando supabaseClient desde config.js)
-            const { error } = await supabaseClient
+            // Actualizar en base de datos (usando supabaseClient desde config.js o window)
+            const { error } = await client
                 .from('user_profiles')
                 .update({ accepted_terms: true })
                 .eq('user_id', user.id);
