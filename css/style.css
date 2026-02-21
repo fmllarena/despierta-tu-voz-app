@@ -1534,7 +1534,8 @@ textarea {
     color: white;
 }
 
-.chat-logout-btn {
+.chat-logout-btn,
+.chat-download-btn {
     background: var(--color-acento);
     color: white;
     font-weight: bold;
@@ -1542,9 +1543,20 @@ textarea {
     box-shadow: 0 4px 10px rgba(142, 125, 109, 0.3);
 }
 
-.chat-logout-btn:hover {
+.chat-logout-btn:hover,
+.chat-download-btn:hover {
     background: #7a6b5d;
     transform: translateY(-2px);
+}
+
+.chat-download-btn {
+    background: transparent;
+    color: var(--color-acento);
+    border: 1px solid var(--color-acento);
+}
+
+.chat-download-btn:hover {
+    background: rgba(142, 125, 109, 0.1);
 }
 
 /* --- ESTILOS MEJORAR PLAN (PREMIUM) --- */
