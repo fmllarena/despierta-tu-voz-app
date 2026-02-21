@@ -1,15 +1,17 @@
-export const ELEMENTS = {
+/**
+ * DTV UI Elements Module
+ * Contiene todas las referencias al DOM utilizadas en la aplicación.
+ */
+window.ELEMENTS = {
     chatBox: document.getElementById('chatBox'),
     chatInput: document.getElementById('chatMentoriaInput'),
     sendBtn: document.getElementById('sendBtn'),
     micBtn: document.getElementById('micBtn'),
     authOverlay: document.getElementById('authOverlay'),
     authError: document.getElementById('authError'),
-    loginBtn: document.getElementById('loginBtn'),
-    signUpBtn: document.getElementById('signUpBtn'),
     mainHelpBtn: document.getElementById('mainHelpBtn'),
     mainHelpTooltip: document.getElementById('mainHelpTooltip'),
-    headerButtons: document.getElementById('mainHeaderButtons'),
+    headerButtons: document.querySelector('.header-buttons'),
     navButtons: {
         inspiracion: document.getElementById('inspiracionBtn'),
         viaje: document.getElementById('viajeBtn'),

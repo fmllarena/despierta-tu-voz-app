@@ -5,8 +5,19 @@ window.onerror = function (msg, url, lineNo, columnNo, error) {
 };
 console.log("🚀 Script main.js cargando...");
 
-// Variables globales movidas a config.js
+var supabaseClient;
+var userProfile = null;
+var chatHistory = [];
+var isRecoveringPassword = false;
 
+const MENSAJE_BIENVENIDA = `<p>Hola, ¡qué alegría que estés aquí! Soy tu Mentor Vocal.</p><br><p>Mi misión es acompañarte a descubrir todo el potencial de tu voz, desde la técnica hasta lo que sientes al cantar. Para empezar con buen pie... ¿hay algo específico que te haya traído hoy aquí o algún bloqueo que te gustaría trabajar conmigo?</p>`;
+
+const AUDIOS_BOTIQUIN = [
+    { id: 'relajacion432', title: 'Relajación 432Hz', file: 'assets/audios/relajacion432.mp3', desc: 'Frecuencia de la naturaleza para calma profunda.' },
+    { id: 'relajacion528', title: 'Relajación 528Hz', file: 'assets/audios/relajacion528.mp3', desc: 'Frecuencia de la transformación y reparación (ADN).' },
+    { id: 'relajacion-animacion', title: 'Relajarse y animarse', file: 'assets/audios/relajacion-animacion.mp3', desc: 'Equilibrio entre calma y energía.' },
+    { id: 'canciones-ancestrales', title: 'Canciones Ancestrales', file: 'assets/audios/canciones_ancestrales.mp3', desc: 'Conexión con la sabiduría de la voz original.' }
+];
 
 // --- FILTRO DE PRUDENCIA: Sesiones y Tiempo ---
 if (!sessionStorage.getItem('dtv_session_start')) {
@@ -31,8 +42,7 @@ function canAIRecommend() {
 }
 
 // Cargar biblioteca de artículos
-// blogLibrary movido a config.js
-
+let blogLibrary = [];
 async function loadBlogLibrary() {
     try {
         // Silenciamos el error CORS manejándolo internamente sin warnings
@@ -76,8 +86,94 @@ const urlUpgrade = urlParams.get('upgrade');
 if (urlUpgrade) {
     sessionStorage.setItem('dtv_auto_upgrade', urlUpgrade); // 'pro' o 'premium'
 }
-// Objeto ELEMENTS movido a elements.js
-
+const ELEMENTS = {
+    chatBox: document.getElementById('chatBox'),
+    chatInput: document.getElementById('chatMentoriaInput'),
+    sendBtn: document.getElementById('sendBtn'),
+    micBtn: document.getElementById('micBtn'),
+    authOverlay: document.getElementById('authOverlay'),
+    authError: document.getElementById('authError'),
+    mainHelpBtn: document.getElementById('mainHelpBtn'),
+    mainHelpTooltip: document.getElementById('mainHelpTooltip'),
+    headerButtons: document.querySelector('.header-buttons'),
+    navButtons: {
+        inspiracion: document.getElementById('inspiracionBtn'),
+        viaje: document.getElementById('viajeBtn'),
+        progreso: document.getElementById('progresoBtn'),
+        botiquin: document.getElementById('botiquinBtn'),
+        logout: document.getElementById('logoutBtn')
+    },
+    forgotPasswordLink: document.getElementById('forgotPasswordLink'),
+    resetPasswordContainer: document.getElementById('resetPasswordContainer'),
+    updatePasswordBtn: document.getElementById('updatePasswordBtn'),
+    upgradeBtn: document.getElementById('upgradeBtn'),
+    whatsappReportBtn: document.getElementById('whatsappReportBtn'),
+    upgradeModal: document.getElementById('upgradeModal'),
+    closeUpgrade: document.querySelector('.close-upgrade'),
+    sesionBtn: document.getElementById('sesionBtn'),
+    sesionModal: document.getElementById('sesionModal'),
+    closeSesion: document.querySelector('.close-sesion'),
+    sessionQuotaInfo: document.getElementById('sessionQuotaInfo'),
+    book30Btn: document.getElementById('book30Btn'),
+    book60Btn: document.getElementById('book60Btn'),
+    buyExtra30Btn: document.getElementById('buyExtra30Btn'),
+    buyExtra60Btn: document.getElementById('buyExtra60Btn'),
+    ajustesBtn: document.getElementById('ajustesBtn'),
+    settingsModal: document.getElementById('settingsModal'),
+    closeSettings: document.querySelector('.close-settings'),
+    saveSettingsBtn: document.getElementById('saveSettingsBtn'),
+    clearHistoryBtn: document.getElementById('clearHistoryBtn'),
+    settingsUserName: document.getElementById('settingsUserName'),
+    settingsUserTier: document.getElementById('settingsUserTier'),
+    focusSlider: document.getElementById('focusSlider'),
+    personalitySlider: document.getElementById('personalitySlider'),
+    lengthSlider: document.getElementById('lengthSlider'),
+    languageSelect: document.getElementById('languageSelect'),
+    weeklyGoalInput: document.getElementById('weeklyGoalInput'),
+    upgradeSettingsBtn: document.getElementById('upgradeSettingsBtn'),
+    // Legal Modal
+    legalModal: document.getElementById('legalModal'),
+    checkTerms: document.getElementById('checkTerms'),
+    checkMedical: document.getElementById('checkMedical'),
+    confirmLegalBtn: document.getElementById('confirmLegalBtn'),
+    cancelLegalBtn: document.getElementById('cancelLegalBtn'),
+    // Soporte Híbrido
+    supportBubble: document.getElementById('supportBubble'),
+    supportModal: document.getElementById('supportModal'),
+    supportChatBox: document.getElementById('supportChatBox'),
+    supportInput: document.getElementById('supportInput'),
+    sendSupportBtn: document.getElementById('sendSupportBtn'),
+    whatsappSupportLink: document.getElementById('whatsappSupportLink'),
+    closeSupport: document.querySelector('.close-support'),
+    // Modal de Inspiración
+    inspiracionModal: document.getElementById('inspiracionModal'),
+    inspiracionFrase: document.querySelector('.inspiracion-frase'),
+    inspiracionAutor: document.querySelector('.inspiracion-autor'),
+    closeInspiracion: document.getElementById('closeInspiracion'),
+    // Botiquín Modal
+    botiquinModal: document.getElementById('botiquinModal'),
+    botiquinContent: document.getElementById('botiquinContent'),
+    closeBotiquin: document.querySelector('.close-botiquin'),
+    // Preferencias Modal
+    openPreferencesBtn: document.getElementById('openPreferencesBtn'),
+    preferencesModal: document.getElementById('preferencesModal'),
+    closePreferences: document.querySelector('.close-preferences'),
+    marketingToggle: document.getElementById('marketingToggle'),
+    lifecycleToggle: document.getElementById('lifecycleToggle'),
+    savePreferencesBtn: document.getElementById('savePreferencesBtn'),
+    prefStatusMessage: document.getElementById('prefStatusMessage'),
+    deleteAccountBtn: document.getElementById('deleteAccountBtn'),
+    // Alert Custom
+    customAlert: document.getElementById('customAlert'),
+    alertMessage: document.getElementById('alertMessage'),
+    alertConfirmBtn: document.getElementById('alertConfirmBtn'),
+    promoTermsBox: document.getElementById('promoTermsBox'),
+    // Top Bar Music Player
+    musicToggleBtn: document.getElementById('musicToggleBtn'),
+    musicMenu: document.getElementById('musicMenu'),
+    musicListItems: document.getElementById('musicListItems'),
+    stopMusicBtn: document.getElementById('stopMusicBtn')
+};
 
 // --- UTILIDAD DE ALERTA PERSONALIZADA ---
 window.alertCustom = function (mensaje) {
