@@ -1994,6 +1994,44 @@ textarea {
     min-width: 120px;
 }
 
+.save-btn {
+    background: var(--color-acento);
+    color: white;
+    border: none;
+    padding: 10px 5px;
+    border-radius: 20px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s;
+    font-size: 0.85em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+}
+
+.save-btn:hover {
+    background: #726255;
+    transform: translateY(-2px);
+}
+
+.danger-btn {
+    background: #fff;
+    color: #e74c3c;
+    border: 1px solid #e74c3c;
+    padding: 10px 5px;
+    border-radius: 20px;
+    font-size: 0.85em;
+    cursor: pointer;
+    transition: all 0.3s;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+}
+
+
 .preferences-btn {
     background: #f5f0eb;
     color: var(--color-acento);
@@ -2060,27 +2098,6 @@ textarea {
     /* Ensure it stays at the end of the flex container on mobile */
 }
 
-.preferences-btn {
-    background: #f5f0eb;
-    color: var(--color-acento);
-    border: 1px solid #ddd;
-    padding: 10px 5px;
-    border-radius: 20px;
-    font-size: 0.8em;
-    cursor: pointer;
-    transition: all 0.3s;
-    font-weight: 600;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    line-height: 1.2;
-}
-
-.preferences-btn:hover {
-    background: #ebe0d5;
-    transform: translateY(-2px);
-}
 
 @media (max-width: 600px) {
     .settings-actions {
