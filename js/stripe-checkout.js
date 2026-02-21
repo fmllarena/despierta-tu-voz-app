@@ -39,7 +39,7 @@ async function iniciarPago(planType) {
         return;
     }
 
-    const isAccepted = window.getAcceptedTermsStatus ? window.getAcceptedTermsStatus() : (user.accepted_terms || false);
+    const isAccepted = window.getAcceptedTermsStatus ? window.getAcceptedTermsStatus() : (window.userProfile?.accepted_terms || false);
     if (!isAccepted) {
         if (window.mostrarModalLegal) {
             window.mostrarModalLegal(planType);

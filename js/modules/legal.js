@@ -72,7 +72,8 @@ export const LEGAL = window.LEGAL = {
 
     // Getter para que stripe-checkout.js vea el estado actual
     getAcceptedTermsStatus() {
-        return userProfile?.accepted_terms || (ELEMENTS.checkTerms?.checked && ELEMENTS.checkMedical?.checked);
+        const profile = window.userProfile;
+        return profile?.accepted_terms || (ELEMENTS.checkTerms?.checked && ELEMENTS.checkMedical?.checked);
     }
 };
 
