@@ -262,7 +262,9 @@ async function cargarPerfil(user) {
 
         // --- VERIFICACIÓN DE EMAIL ---
         // Mostrar banner si es usuario FREE no verificado
-        EMAIL_VERIFICATION.show(perfil);
+        if (window.EMAIL_VERIFICATION) {
+            window.EMAIL_VERIFICATION.show(perfil);
+        }
 
         // --- TOUR DE BIENVENIDA ---
         // Solo lanzar para usuarios nuevos (sin historial de resumen previo)
@@ -271,7 +273,7 @@ async function cargarPerfil(user) {
             localStorage.removeItem('dtv_tour_seen');
             // Pequeño delay para asegurar que el DOM y estilos estén listos
             setTimeout(() => {
-                if (window.TOUR) {
+                if (window.TOUR && typeof window.TOUR.start === 'function') {
                     window.TOUR.start();
                 } else {
                     console.warn("⚠️ TOUR no inicializado o módulo no cargado.");
@@ -1430,195 +1432,11 @@ document.querySelectorAll('.close-modal').forEach(btn => {
     });
 });
 
-// --- INICIALIZACIÓN Y ESTADOS DE PAGO ---
-async function checkPaymentStatus() {
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('payment') === 'success') {
-        const sessionId = urlParams.get('session_id');
-        const planType = urlParams.get('plan');
-
-        // Limpiamos la URL sin recargar para una experiencia más limpia
-        window.history.replaceState({}, document.title, window.location.pathname);
-
-        // Detectar si es una sesión extra
-        const isExtraSession = planType && planType.startsWith('extra_');
-
-        if (sessionId && !isExtraSession) {
-            // Caso Actualización de Plan (Suscripción)
-            alert("¡Tu plan se ha actualizado con éxito! Bienvenido a tu nuevo nivel de transformación.");
-            // Recargamos el perfil para aplicar cambios de UI (tier)
-            const { data: { user } } = await supabaseClient.auth.getUser();
-            if (user) await cargarPerfil(user);
-        } else if (isExtraSession) {
-            // Caso Sesión Extra (Pago único) - Abrir Cal.com automáticamente
-            const duracion = planType.includes('30') ? '30' : '60';
-            const tier = planType.includes('premium') ? 'premium' : 'pro';
-
-            // Determinar el enlace correcto de Cal.com
-            let calLink = '';
-            if (duracion === '30') {
-                calLink = SESIONES.links.normal30;
-            } else {
-                calLink = SESIONES.links.normal60;
-            }
-
-            // Construir URL con datos del usuario
-            const finalUrl = `${calLink}?email=${encodeURIComponent(userProfile.email)}&name=${encodeURIComponent(userProfile.nombre || "")}`;
-
-            // Abrir Cal.com en nueva pestaña
-            window.open(finalUrl, '_blank');
-
-            // Mostrar mensaje de confirmación
-            alert(`✅ ¡Pago confirmado! Se ha abierto el calendario para que reserves tu sesión de ${duracion} minutos.\n\nSi no se abrió automáticamente, haz clic en "Reservar" en el modal de Sesiones 1/1.`);
-
-            // Abrir el modal de sesiones para que vea su cuota actualizada
-            SESIONES.abrirModal();
-        }
-    } else if (urlParams.get('payment') === 'cancel') {
-        window.history.replaceState({}, document.title, window.location.pathname);
-        alert("El proceso de pago fue cancelado.");
-    }
-
-    // Detectar si viene desde email de fin de trial (upgrade=pro)
-    const autoUpgrade = sessionStorage.getItem('dtv_auto_upgrade');
-    if (autoUpgrade) {
-        sessionStorage.removeItem('dtv_auto_upgrade'); // Limpiar para que no se repita
-
-        // Esperar un momento para que la UI esté lista
-        setTimeout(() => {
-            const upgradeModal = document.getElementById('upgradeModal');
-            if (upgradeModal) {
-                upgradeModal.style.display = 'flex';
-                console.log(`🔔 Abriendo modal de upgrade automáticamente (plan: ${autoUpgrade})`);
-            }
-        }, 1000);
-    }
-}
+// checkPaymentStatus y EMAIL_VERIFICATION movidos a módulos independientes
 
 // TOUR movido a js/modules/tour.js
 
-// Ejecutamos la comprobación al cargar
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', checkPaymentStatus);
-} else {
-    checkPaymentStatus();
-}
-
-// --- VERIFICACIÓN DE EMAIL ---
-const EMAIL_VERIFICATION = {
-    banner: document.getElementById('emailVerificationBanner'),
-    resendBtn: document.getElementById('resendVerificationBtn'),
-    closeBtn: document.getElementById('closeVerificationBanner'),
-
-    init() {
-        // Listeners
-        this.resendBtn?.addEventListener('click', () => this.resendEmail());
-        this.closeBtn?.addEventListener('click', () => this.closeBanner());
-
-        // Verificar parámetros de URL (resultado de verificación)
-        this.checkVerificationStatus();
-    },
-
-    async show(userProfile) {
-        // Solo mostrar para usuarios FREE no verificados
-        if (!userProfile) return;
-
-        const isFree = userProfile.subscription_tier === 'free';
-        const isVerified = !!userProfile.email_confirmado_at; // Usar columna existente
-        const bannerDismissed = sessionStorage.getItem('email_banner_dismissed');
-
-        if (isFree && !isVerified && !bannerDismissed && this.banner) {
-            this.banner.style.display = 'block';
-        }
-    },
-
-    closeBanner() {
-        if (this.banner) {
-            this.banner.style.display = 'none';
-            sessionStorage.setItem('email_banner_dismissed', 'true');
-        }
-    },
-
-    async resendEmail() {
-        if (!userProfile) return;
-
-        this.resendBtn.disabled = true;
-        this.resendBtn.innerText = 'Enviando...';
-
-        try {
-            const { data: { user } } = await supabaseClient.auth.getUser();
-
-            const response = await fetch('/api/send-verification-email', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    userId: user.id,
-                    email: user.email,
-                    nombre: userProfile.nombre || user.email.split('@')[0]
-                })
-            });
-
-            const result = await response.json();
-
-            if (response.ok) {
-                this.resendBtn.innerText = '✓ Enviado';
-                setTimeout(() => {
-                    this.resendBtn.innerText = 'Reenviar email';
-                    this.resendBtn.disabled = false;
-                }, 3000);
-            } else {
-                throw new Error(result.error || 'Error desconocido');
-            }
-        } catch (error) {
-            console.error('Error reenviando email:', error);
-            this.resendBtn.innerText = 'Error. Intenta de nuevo';
-            setTimeout(() => {
-                this.resendBtn.innerText = 'Reenviar email';
-                this.resendBtn.disabled = false;
-            }, 3000);
-        }
-    },
-
-    checkVerificationStatus() {
-        const params = new URLSearchParams(window.location.search);
-        const verification = params.get('verification');
-
-        if (verification) {
-            let message = '';
-            switch (verification) {
-                case 'success':
-                    message = '✅ ¡Email verificado con éxito! Ya tienes acceso completo.';
-                    this.closeBanner();
-                    break;
-                case 'already_verified':
-                    message = 'Tu email ya estaba verificado.';
-                    this.closeBanner();
-                    break;
-                case 'expired':
-                    message = '⚠️ El link de verificación ha expirado. Solicita uno nuevo.';
-                    break;
-                case 'invalid_token':
-                    message = '❌ Link de verificación inválido.';
-                    break;
-                case 'error':
-                    message = '❌ Error al verificar el email. Inténtalo de nuevo.';
-                    break;
-            }
-
-            if (message) {
-                setTimeout(() => {
-                    appendMessage(message, 'ia');
-                }, 1000);
-
-                // Limpiar parámetro de URL
-                window.history.replaceState({}, document.title, window.location.pathname);
-            }
-        }
-    }
-};
-
-// Inicializar verificación de email
-EMAIL_VERIFICATION.init();
+// EMAIL_VERIFICATION movido a js/modules/email.js
 
 // --- SISTEMA DE REPRODUCCIÓN AUDIO BOTIQUÍN ---
 // Movido a js/modules/music.js
