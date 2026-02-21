@@ -10,42 +10,13 @@ export const MODALS = {
     },
 
     setup() {
-        // Settings Modal — gestionado por settings.js (AJUSTES.setup)
-        // No duplicar listeners aquí para ajustesBtn/closeSettings/saveSettingsBtn
-
-        // Sesión Modal
-        ELEMENTS.sesionBtn?.addEventListener('click', () => this.abrirSesion());
-        ELEMENTS.closeSesion?.addEventListener('click', () => this.cerrarSesion());
-        ELEMENTS.book30Btn?.addEventListener('click', () => this.reservarSesion('normal30'));
-        ELEMENTS.book60Btn?.addEventListener('click', () => this.reservarSesion('normal60'));
-        ELEMENTS.buyExtra30Btn?.addEventListener('click', () => this.comprarExtra('30'));
-        ELEMENTS.buyExtra60Btn?.addEventListener('click', () => this.comprarExtra('60'));
-
-        // Upgrade Modal
-        ELEMENTS.upgradeBtn?.addEventListener('click', () => this.abrirUpgrade());
-        ELEMENTS.closeUpgrade?.addEventListener('click', () => this.cerrarUpgrade());
-
-        // Preferences Modal
-        ELEMENTS.savePreferencesBtn?.addEventListener('click', () => this.guardarPreferences());
-
-        // Legal Modal
-        const toggleLegal = () => {
-            ELEMENTS.confirmLegalBtn.disabled = !(ELEMENTS.checkTerms.checked && ELEMENTS.checkMedical.checked);
-        };
-        ELEMENTS.checkTerms?.addEventListener('change', toggleLegal);
-        ELEMENTS.checkMedical?.addEventListener('change', toggleLegal);
-        ELEMENTS.cancelLegalBtn?.addEventListener('click', () => this.cerrarLegal());
-        ELEMENTS.confirmLegalBtn?.addEventListener('click', () => {
-            this.cerrarLegal();
-            authActions.signUp();
-        });
-
-        // Global click to close modals
-        window.addEventListener('click', (e) => {
-            if (e.target.classList.contains('modal')) {
-                e.target.style.display = 'none';
-            }
-        });
+        // NOTA: Todos los listeners están gestionados por módulos especializados:
+        // - ajustesBtn, closeSettings, saveSettingsBtn → settings.js (AJUSTES.setup)
+        // - sesionBtn, closeSesion, book*Btn, buyExtra* → sessions.js (SESIONES.setup)
+        // - upgradeBtn, closeUpgrade → main.js
+        // - savePreferencesBtn, openPreferencesBtn → settings.js (PREFERENCIAS.setup)
+        // - checkTerms, checkMedical, cancelLegalBtn, confirmLegalBtn → legal.js (LEGAL.setup)
+        // No se registra ningún listener aquí para evitar duplicaciones.
     },
 
     // --- AJUSTES ---
