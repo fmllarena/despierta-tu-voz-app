@@ -15,15 +15,22 @@ export const SESIONES = window.SESIONES = {
     },
 
     actualizarInfoCuota: () => {
-        const consumed = userProfile?.sessions_minutes_consumed || 0;
-        const tier = userProfile?.subscription_tier || 'free';
-        const remaining = tier === 'premium' ? Math.max(0, 60 - consumed) : 0;
+        const profile = window.userProfile;
+        const consumed = profile?.sessions_minutes_consumed || 0;
+        const tier = (profile?.subscription_tier || 'free').toLowerCase();
 
-        if (tier === 'premium') {
+        // Transforma = Premium
+        const isPremium = tier === 'premium' || tier === 'transforma';
+        const isPro = tier === 'pro' || tier === 'profundiza';
+
+        if (isPremium) {
+            const total = 60;
+            const remaining = Math.max(0, total - consumed);
+
             ELEMENTS.sessionQuotaInfo.innerHTML = `
                 <div class="quota-badge">
-                    <span class="quota-label">Tu tiempo incluido restante:</span>
-                    <span class="quota-value">${remaining} min</span>
+                    <span class="quota-label">Tiempo consumido:</span>
+                    <span class="quota-value">${consumed} / ${total} min</span>
                 </div>
             `;
             // Hab/Des botones incluidos
@@ -39,11 +46,22 @@ export const SESIONES = window.SESIONES = {
                 ELEMENTS.book30Btn.innerText = "Reservar 30 min";
                 ELEMENTS.book60Btn.innerText = "Reservar 1 hora";
             }
-        } else {
-            // Caso PRO
+        } else if (isPro) {
+            // Caso PRO: No tiene cuota base, pero puede comprar extras
             ELEMENTS.sessionQuotaInfo.innerHTML = `
                 <div class="quota-badge">
-                    <span class="quota-label">Tu plan actual no incluye sesiones 1/1 grupales/individules.</span>
+                    <span class="quota-label">Tu plan Profundiza no incluye sesiones gratuitas.</span>
+                </div>
+            `;
+            ELEMENTS.book30Btn.disabled = true;
+            ELEMENTS.book60Btn.disabled = true;
+            ELEMENTS.book30Btn.innerText = "No incluido";
+            ELEMENTS.book60Btn.innerText = "No incluido";
+        } else {
+            // Caso FREE
+            ELEMENTS.sessionQuotaInfo.innerHTML = `
+                <div class="quota-badge">
+                    <span class="quota-label">Las sesiones 1/1 requieren el plan Profundiza o Transforma.</span>
                 </div>
             `;
             ELEMENTS.book30Btn.disabled = true;
@@ -54,7 +72,8 @@ export const SESIONES = window.SESIONES = {
     },
 
     comprarExtra: (duracion) => {
-        const tier = userProfile?.subscription_tier || 'free';
+        const profile = window.userProfile;
+        const tier = profile?.subscription_tier || 'free';
         // Los usuarios FREE deben primero pasar a PRO/Premium antes de comprar extras
         if (tier === 'free') {
             alert("Las sesiones con el Mentor están reservadas para alumnos de los planes Profundiza (PRO) o Transforma. ¡Mejora tu plan para empezar!");
@@ -73,10 +92,11 @@ export const SESIONES = window.SESIONES = {
     },
 
     reservar: (tipo) => {
+        const profile = window.userProfile;
         const url = SESIONES.links[tipo];
         if (url && url !== "#") {
             // Añadimos el email del usuario para que Cal.com lo reconozca
-            const finalUrl = `${url}?email=${encodeURIComponent(userProfile.email)}&name=${encodeURIComponent(userProfile.nombre || "")}`;
+            const finalUrl = `${url}?email=${encodeURIComponent(profile.email)}&name=${encodeURIComponent(profile.nombre || "")}`;
             window.open(finalUrl, '_blank');
         } else {
             alert("El enlace para esta sesión aún no está configurado.");
