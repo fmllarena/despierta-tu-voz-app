@@ -774,7 +774,7 @@ async function guardarMensajeDB(texto, emisor, customDate = null) {
 
 async function exportarChatDoc() {
     try {
-        if (!supabase || !userProfile) {
+        if (!supabaseClient || !userProfile) {
             alertCustom("Inicia sesión para descargar tu conversación.");
             return;
         }
@@ -782,7 +782,7 @@ async function exportarChatDoc() {
         console.log("📥 Generando documento de la sesión actual...");
 
         // 1. Buscamos el último resumen_diario o crónica para saber dónde empieza "hoy"
-        const { data: ultimoResumen } = await supabase
+        const { data: ultimoResumen } = await supabaseClient
             .from('mensajes')
             .select('created_at')
             .eq('alumno', userProfile.user_id)
@@ -796,7 +796,7 @@ async function exportarChatDoc() {
         }
 
         // 2. Obtener los mensajes posteriores a esa última crónica
-        const { data: mensajes, error } = await supabase
+        const { data: mensajes, error } = await supabaseClient
             .from('mensajes')
             .select('created_at, texto, emisor')
             .eq('alumno', userProfile.user_id)
@@ -807,7 +807,7 @@ async function exportarChatDoc() {
 
         let mensajesFinales = mensajes;
         if (!mensajesFinales || mensajesFinales.length === 0) {
-            const { data: backupMsgs } = await supabase
+            const { data: backupMsgs } = await supabaseClient
                 .from('mensajes')
                 .select('created_at, texto, emisor')
                 .eq('alumno', userProfile.user_id)
@@ -1102,9 +1102,21 @@ if (ELEMENTS.navButtons.logout) {
             const containerGuardada = document.getElementById('msg-sesion-guardada');
             const msgInner = containerGuardada?.querySelector('.message.ia');
             if (msgInner) {
+                // Botón: Descargar Conversación (Agregado para corregir la falta en el cierre manual)
+                const downloadBtn = document.createElement('button');
+                downloadBtn.className = 'chat-download-btn';
+                downloadBtn.style.marginTop = '15px';
+                downloadBtn.style.display = 'block';
+                downloadBtn.innerHTML = '📥 Descargar sesión (.doc)';
+                downloadBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    exportarChatDoc();
+                };
+                msgInner.appendChild(downloadBtn);
+
                 const logoutRealBtn = document.createElement('button');
                 logoutRealBtn.className = 'chat-logout-btn';
-                logoutRealBtn.style.marginTop = '15px';
+                logoutRealBtn.style.marginTop = '10px';
                 logoutRealBtn.style.display = 'block';
                 logoutRealBtn.innerHTML = '🚪 Cerrar sesión y salir';
                 logoutRealBtn.onclick = async () => {
