@@ -3,46 +3,26 @@ import { supabaseClient, userProfile, chatHistory } from './config.js';
 import { alertCustom } from './utils.js';
 
 export const AJUSTES = window.AJUSTES = {
-    abrirModal: async () => {
-        // Leer siempre desde window.userProfile (actualizado por main.js tras login)
-        const perfil = window.userProfile;
-
-        if (!perfil) {
-            console.log("Perfil no cargado, intentando recuperar...");
-            const { data: { user } } = await supabaseClient.auth.getUser();
-            if (user) {
-                if (window.cargarPerfil) await window.cargarPerfil(user);
-            } else {
-                alert("Debes iniciar sesión para ver los ajustes.");
-                return;
-            }
-        }
-
+    abrirModal() {
+        // Usar siempre window.userProfile — actualizado por main.js tras el login
         const profile = window.userProfile;
+
         if (!profile) {
-            alert("No se pudo cargar tu perfil. Por favor, recarga la página.");
+            alert("Debes iniciar sesión para ver los ajustes.");
             return;
         }
 
-        ELEMENTS.settingsUserName.innerText = profile.nombre || "Usuario";
-
-        const TIER_NAMES = {
-            'free': 'Explora',
-            'pro': 'Profundiza',
-            'premium': 'Transforma'
-        };
+        const TIER_NAMES = { 'free': 'Explora', 'pro': 'Profundiza', 'premium': 'Transforma' };
         const tier = profile.subscription_tier || 'free';
-        ELEMENTS.settingsUserTier.innerText = `PLAN ${TIER_NAMES[tier] || tier.toUpperCase()}`;
 
-        // Cargar valores actuales tal cual están en la DB
+        ELEMENTS.settingsUserName.innerText = profile.nombre || "Usuario";
+        ELEMENTS.settingsUserTier.innerText = `PLAN ${TIER_NAMES[tier] || tier.toUpperCase()}`;
         ELEMENTS.focusSlider.value = profile.mentor_focus ?? 5;
         ELEMENTS.personalitySlider.value = profile.mentor_personality ?? 5;
         ELEMENTS.lengthSlider.value = profile.mentor_length ?? 5;
-
         ELEMENTS.languageSelect.value = profile.mentor_language || 'es';
         ELEMENTS.weeklyGoalInput.value = profile.weekly_goal || '';
 
-        // Ocultar botón de mejora si ya es Premium (Transforma)
         if (ELEMENTS.upgradeSettingsBtn) {
             ELEMENTS.upgradeSettingsBtn.style.display = tier === 'premium' ? 'none' : 'block';
         }
@@ -56,11 +36,12 @@ export const AJUSTES = window.AJUSTES = {
 
     guardarAjustes: async () => {
         const btn = ELEMENTS.saveSettingsBtn;
+        const db = window.supabaseClient;
         btn.disabled = true;
         btn.innerText = "Guardando...";
 
         try {
-            const { data: { user } } = await supabaseClient.auth.getUser();
+            const { data: { user } } = await db.auth.getUser();
             if (!user) throw new Error("Debes iniciar sesión.");
 
             const updates = {
@@ -71,7 +52,7 @@ export const AJUSTES = window.AJUSTES = {
                 weekly_goal: ELEMENTS.weeklyGoalInput.value.trim()
             };
 
-            const { data: updatedProfile, error } = await supabaseClient
+            const { data: updatedProfile, error } = await db
                 .from('user_profiles')
                 .update(updates)
                 .eq('user_id', user.id)
@@ -80,13 +61,11 @@ export const AJUSTES = window.AJUSTES = {
 
             if (error) throw error;
 
-            // Actualizar perfil local obligatoriamente con la respuesta del servidor
             if (updatedProfile) {
-                // Actualizamos vía window para asegurar sincronización con config.js y main.js
                 window.userProfile = updatedProfile;
             }
 
-            console.log("✅ Ajustes guardados y perfil local sincronizado:", updates);
+            console.log("✅ Ajustes guardados:", updates);
             alertCustom("Ajustes guardados correctamente.");
             AJUSTES.cerrarModal();
         } catch (e) {
@@ -102,25 +81,24 @@ export const AJUSTES = window.AJUSTES = {
         if (!confirm("¿Estás seguro de que quieres borrar todo el historial de chat? Esta acción no se puede deshacer.")) return;
 
         const btn = ELEMENTS.clearHistoryBtn;
+        const db = window.supabaseClient;
+        const perfil = window.userProfile;
         btn.disabled = true;
         btn.innerText = "Borrando...";
 
         try {
-            const { error } = await supabaseClient
+            const { error } = await db
                 .from('mensajes')
                 .delete()
-                .eq('alumno', userProfile.user_id);
+                .eq('alumno', perfil.user_id);
 
             if (error) throw error;
 
-            // Limpiar historial global
             if (window.chatHistory) window.chatHistory.length = 0;
-
             ELEMENTS.chatBox.innerHTML = "";
 
-            // saludarUsuario está en main.js
             if (window.saludarUsuario) {
-                window.saludarUsuario({ id: userProfile.user_id, email: userProfile.email }, userProfile);
+                window.saludarUsuario({ id: perfil.user_id, email: perfil.email }, perfil);
             }
 
             alert("Historial borrado correctamente.");
@@ -148,11 +126,11 @@ export const AJUSTES = window.AJUSTES = {
 
 export const PREFERENCIAS = window.PREFERENCIAS = {
     abrirModal: () => {
-        if (!userProfile) return alert("Inicia sesión para gestionar tus preferencias.");
+        const perfil = window.userProfile;
+        if (!perfil) return alert("Inicia sesión para gestionar tus preferencias.");
 
-        // Cargar estado actual
-        ELEMENTS.marketingToggle.checked = userProfile.consent_marketing !== false;
-        ELEMENTS.lifecycleToggle.checked = userProfile.consent_lifecycle !== false;
+        ELEMENTS.marketingToggle.checked = perfil.consent_marketing !== false;
+        ELEMENTS.lifecycleToggle.checked = perfil.consent_lifecycle !== false;
         ELEMENTS.prefStatusMessage.style.display = 'none';
 
         ELEMENTS.preferencesModal.style.display = 'flex';
