@@ -2,7 +2,7 @@
  * DTV UI Elements Module
  * Contiene todas las referencias al DOM utilizadas en la aplicación.
  */
-window.ELEMENTS = {
+export const ELEMENTS = window.ELEMENTS = {
     chatBox: document.getElementById('chatBox'),
     chatInput: document.getElementById('chatMentoriaInput'),
     sendBtn: document.getElementById('sendBtn'),

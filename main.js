@@ -1018,8 +1018,22 @@ function appendMessage(text, type, id = null) {
         avatar.className = 'ia-avatar';
         avatar.innerHTML = `<img src="assets/foto-avatar.PNG" alt="Mentor">`;
 
+        // Botón de Voz (solo en mensajes de IA)
+        const voiceBtn = document.createElement('button');
+        voiceBtn.className = 'voice-btn';
+        voiceBtn.style.marginTop = '10px';
+        voiceBtn.innerHTML = '🔊 Oír Mentor';
+        voiceBtn.onclick = () => {
+            if (window.hablarTexto) {
+                window.hablarTexto(cleanText, voiceBtn);
+            } else if (window.VOICE && window.VOICE.hablarTexto) {
+                window.VOICE.hablarTexto(cleanText, voiceBtn);
+            }
+        };
+
         container.appendChild(avatar);
         container.appendChild(div);
+        div.appendChild(voiceBtn);
 
         ELEMENTS.chatBox.appendChild(container);
 
@@ -1569,84 +1583,7 @@ const AJUSTES = {
 };
 
 // --- MODAL LEGAL ---
-
-const LEGAL = {
-    pendingPlan: null,
-
-    abrirModal: (planType) => {
-        LEGAL.pendingPlan = planType;
-        if (ELEMENTS.legalModal) ELEMENTS.legalModal.style.display = 'flex';
-
-        // Mostrar caja de promo solo si hay un código activo en la sesión
-        if (ELEMENTS.promoTermsBox) {
-            const activePromo = sessionStorage.getItem('dtv_promo_code');
-            ELEMENTS.promoTermsBox.style.display = (activePromo === 'PROMO1MES') ? 'block' : 'none';
-        }
-
-        // Reset checkboxes
-        if (ELEMENTS.checkTerms) ELEMENTS.checkTerms.checked = false;
-        if (ELEMENTS.checkMedical) ELEMENTS.checkMedical.checked = false;
-        if (ELEMENTS.confirmLegalBtn) ELEMENTS.confirmLegalBtn.disabled = true;
-    },
-
-    cerrarModal: () => {
-        if (ELEMENTS.legalModal) ELEMENTS.legalModal.style.display = 'none';
-        LEGAL.pendingPlan = null;
-    },
-
-    validarChecks: () => {
-        const bothChecked = ELEMENTS.checkTerms?.checked && ELEMENTS.checkMedical?.checked;
-        if (ELEMENTS.confirmLegalBtn) ELEMENTS.confirmLegalBtn.disabled = !bothChecked;
-    },
-
-    confirmarYContinuar: async () => {
-        const btn = ELEMENTS.confirmLegalBtn;
-        if (!btn) return;
-        btn.disabled = true;
-        btn.innerText = "Registrando...";
-
-        try {
-            const { data: { user } } = await supabaseClient.auth.getUser();
-            if (!user) return;
-
-            // Actualizar en base de datos
-            const { error } = await supabase
-                .from('user_profiles')
-                .update({ accepted_terms: true })
-                .eq('user_id', user.id);
-
-            if (error) throw error;
-
-            // Actualizar perfil local
-            if (userProfile) userProfile.accepted_terms = true;
-
-            // Cerrar modal
-            LEGAL.cerrarModal();
-
-            // Continuar con el pago que quedó pendiente
-            if (LEGAL.pendingPlan && window.ejecutarPagoPostLegal) {
-                window.ejecutarPagoPostLegal(LEGAL.pendingPlan);
-            }
-
-        } catch (e) {
-            console.error("Error al aceptar términos:", e);
-            alert("Hubo un error al registrar tu aceptación. Inténtalo de nuevo.");
-            btn.disabled = false;
-            btn.innerText = "Confirmar y Continuar";
-        }
-    }
-};
-
-// Listeners para el Modal Legal
-ELEMENTS.checkTerms?.addEventListener('change', LEGAL.validarChecks);
-ELEMENTS.checkMedical?.addEventListener('change', LEGAL.validarChecks);
-ELEMENTS.cancelLegalBtn?.addEventListener('click', LEGAL.cerrarModal);
-ELEMENTS.confirmLegalBtn?.addEventListener('click', LEGAL.confirmarYContinuar);
-
-// Hacer accesible para stripe-checkout.js
-window.mostrarModalLegal = LEGAL.abrirModal;
-// Getter para que stripe-checkout.js vea el estado actual
-window.getAcceptedTermsStatus = () => userProfile?.accepted_terms || false;
+// Movido a js/modules/legal.js
 
 // --- PREFERENCIAS DE EMAIL Y CUENTA ---
 
@@ -1749,79 +1686,9 @@ ELEMENTS.upgradeSettingsBtn?.addEventListener('click', () => {
 });
 
 // --- VOZ Y VIAJE ---
+// Movido a js/modules/voice.js
 
-const VOICE = {
-    recognition: null,
-    audioActual: null,
-    setup() {
-        const Speech = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (!Speech || !ELEMENTS.micBtn) return ELEMENTS.micBtn && (ELEMENTS.micBtn.style.display = 'none');
-
-        this.recognition = new Speech();
-        this.recognition.lang = 'es-ES';
-        ELEMENTS.micBtn.addEventListener('click', () => {
-            try { this.recognition.start(); ELEMENTS.micBtn.style.backgroundColor = "#ffcccc"; } catch (e) { console.error(e); }
-        });
-
-        this.recognition.onresult = e => {
-            ELEMENTS.chatInput.value = e.results[0][0].transcript;
-            ELEMENTS.micBtn.style.backgroundColor = "";
-            sendMessage();
-        };
-        this.recognition.onerror = () => { ELEMENTS.micBtn.style.backgroundColor = ""; alert("¿Micro?"); };
-        this.recognition.onend = () => ELEMENTS.micBtn.style.backgroundColor = "";
-    }
-};
-
-VOICE.setup();
-
-async function hablarTexto(texto, btn) {
-    if (VOICE.audioActual && !VOICE.audioActual.paused) {
-        VOICE.audioActual.pause();
-        VOICE.audioActual = null;
-        btn.innerHTML = '🔊 Oír Mentor';
-        return;
-    }
-
-    btn.innerHTML = '⏳...';
-    btn.disabled = true;
-
-    try {
-        const textoLimpio = texto.replace(/#|\*|_|\[|\]|\(|\)/g, "").trim();
-        const response = await fetch('/api/tts', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ text: textoLimpio, voiceName: 'es-ES-Chirp3-HD-Aoede' })
-        });
-
-        const data = await response.json();
-        if (data.error) throw new Error(data.error);
-
-        const audioBlob = b64toBlob(data.audioContent, 'audio/mp3');
-        const audioUrl = URL.createObjectURL(audioBlob);
-        VOICE.audioActual = new Audio(audioUrl);
-
-        VOICE.audioActual.onplay = () => { btn.innerHTML = '⏸ Detener'; btn.disabled = false; };
-        VOICE.audioActual.onended = () => { btn.innerHTML = '🔊 Oír Mentor'; URL.revokeObjectURL(audioUrl); VOICE.audioActual = null; };
-        VOICE.audioActual.play();
-    } catch (e) {
-        console.error(e);
-        btn.innerHTML = '🔊 Oír Mentor';
-        btn.disabled = false;
-    }
-}
-
-function b64toBlob(b64, type = '', sliceSize = 512) {
-    const byteChars = atob(b64);
-    const byteArrays = [];
-    for (let offset = 0; offset < byteChars.length; offset += sliceSize) {
-        const slice = byteChars.slice(offset, offset + sliceSize);
-        const byteNumbers = new Array(slice.length);
-        for (let i = 0; i < slice.length; i++) byteNumbers[i] = slice.charCodeAt(i);
-        byteArrays.push(new Uint8Array(byteNumbers));
-    }
-    return new Blob(byteArrays, { type });
-}
+// b64toBlob movido a js/modules/voice.js o js/modules/utils.js
 
 // Event Listeners
 ELEMENTS.navButtons.botiquin?.addEventListener('click', () => MODULOS.abrirBotiquin());
@@ -2378,179 +2245,4 @@ const EMAIL_VERIFICATION = {
 EMAIL_VERIFICATION.init();
 
 // --- SISTEMA DE REPRODUCCIÓN AUDIO BOTIQUÍN ---
-let currentAudio = null;
-let currentAudioBtn = null;
-
-const MUSICA = {
-    init: function () {
-        this.renderMenu();
-        this.setupListeners();
-    },
-
-    renderMenu: function () {
-        if (!ELEMENTS.musicListItems) return;
-        ELEMENTS.musicListItems.innerHTML = AUDIOS_BOTIQUIN.map(audio => `
-            <button class="music-item" onclick="MUSICA.seleccionarYReproducir('${audio.file}', this)">
-                <div class="music-info">
-                    <strong>${audio.title}</strong>
-                    <span class="music-desc">${audio.desc}</span>
-                </div>
-                <span class="music-status-icon">▶</span>
-            </button>
-        `).join('');
-    },
-
-    setupListeners: function () {
-        // Toggle menú
-        ELEMENTS.musicToggleBtn?.addEventListener('click', (e) => {
-            e.stopPropagation();
-            const isVisible = ELEMENTS.musicMenu.style.display === 'flex';
-            ELEMENTS.musicMenu.style.display = isVisible ? 'none' : 'flex';
-        });
-
-        // Detener música
-        ELEMENTS.stopMusicBtn?.addEventListener('click', () => {
-            this.detenerTodo();
-            ELEMENTS.musicMenu.style.display = 'none';
-        });
-
-        // Cerrar al pulsar fuera
-        window.addEventListener('click', (e) => {
-            if (ELEMENTS.musicMenu && !ELEMENTS.musicMenu.contains(e.target) && e.target !== ELEMENTS.musicToggleBtn) {
-                ELEMENTS.musicMenu.style.display = 'none';
-            }
-        });
-    },
-
-    seleccionarYReproducir: function (file, itemBtn) {
-        // Esta función viene del botón del menú superior
-        reproducirAudioBotiquin(file, itemBtn, true);
-        ELEMENTS.musicMenu.style.display = 'none';
-    },
-
-    detenerTodo: function () {
-        if (currentAudio) {
-            currentAudio.pause();
-            currentAudio = null;
-        }
-        if (currentAudioBtn) {
-            setAudioBtnIcon(currentAudioBtn, '▶');
-            currentAudioBtn = null;
-        }
-        this.actualizarUI();
-    },
-
-    actualizarUI: function () {
-        // Actualizar el icono de la cabecera
-        const toggleImg = ELEMENTS.musicToggleBtn?.querySelector('img');
-        if (currentAudio && !currentAudio.paused) {
-            ELEMENTS.musicToggleBtn?.classList.add('playing');
-            if (toggleImg) toggleImg.src = 'assets/ondas-sonoras.png';
-        } else {
-            ELEMENTS.musicToggleBtn?.classList.remove('playing');
-            if (toggleImg) toggleImg.src = 'assets/musica.png';
-        }
-
-        // Actualizar los estados en el menú desplegable
-        document.querySelectorAll('.music-item').forEach(btn => {
-            const onclickText = btn.getAttribute('onclick') || "";
-            const match = onclickText.match(/'([^']+)'/);
-            if (!match) return;
-
-            const file = match[1];
-            const fileName = file.split('/').pop();
-            const isActive = currentAudio && currentAudio.src.includes(fileName);
-
-            btn.classList.toggle('active', isActive && !currentAudio.paused);
-            setAudioBtnIcon(btn, (isActive && !currentAudio.paused) ? '⏸' : '▶');
-        });
-    }
-};
-
-/**
- * Ayudante para actualizar el icono de un botón sin borrar su estructura interna
- */
-function setAudioBtnIcon(btn, icon) {
-    if (!btn) return;
-    const statusIcon = btn.querySelector('.music-status-icon');
-    if (statusIcon) {
-        statusIcon.innerHTML = icon;
-    } else {
-        btn.innerHTML = icon;
-    }
-}
-
-function reproducirAudioBotiquin(file, btn, isFromGlobalMenu = false) {
-    // Si viene del menú global, el comportamiento de loop es por defecto true (siempre queremos música infinita)
-    const loopBtn = isFromGlobalMenu ? null : btn.parentElement.querySelector('.audio-loop-btn');
-    const isLooping = loopBtn ? loopBtn.classList.contains('active') : true;
-
-    const fileName = file.split('/').pop();
-
-    // Si ya está sonando este mismo audio
-    if (currentAudio && currentAudio.src.includes(fileName)) {
-        if (currentAudio.paused) {
-            currentAudio.loop = isLooping;
-            currentAudio.play().catch(e => console.error("Error play:", e));
-            setAudioBtnIcon(btn, '⏸');
-        } else {
-            currentAudio.pause();
-            setAudioBtnIcon(btn, '▶');
-        }
-        MUSICA.actualizarUI();
-        return;
-    }
-
-    // Si había otro audio sonando, lo pausamos y actualizamos el botón anterior
-    if (currentAudio) {
-        currentAudio.pause();
-        if (currentAudioBtn) setAudioBtnIcon(currentAudioBtn, '▶');
-    }
-
-    console.log("🔊 Intentando reproducir:", file);
-    currentAudio = new Audio(file);
-    currentAudio.loop = isLooping;
-    currentAudioBtn = btn;
-
-    currentAudio.play()
-        .then(() => {
-            setAudioBtnIcon(btn, '⏸');
-            MUSICA.actualizarUI();
-        })
-        .catch(err => {
-            console.error("Error reproduciendo archivo:", err);
-            setAudioBtnIcon(btn, '❌');
-            setTimeout(() => setAudioBtnIcon(btn, '▶'), 2000);
-            MUSICA.actualizarUI();
-        });
-
-    currentAudio.onended = () => {
-        if (!currentAudio.loop) {
-            setAudioBtnIcon(btn, '▶');
-            currentAudio = null;
-            currentAudioBtn = null;
-        }
-        MUSICA.actualizarUI();
-    };
-
-    currentAudio.onerror = (e) => {
-        console.error("Error cargando audio:", e);
-        setAudioBtnIcon(btn, '⚠️');
-        MUSICA.actualizarUI();
-    };
-}
-
-// Inicializar sistema de música
-MUSICA.init();
-
-// Exportar al ámbito global
-window.reproducirAudioBotiquin = reproducirAudioBotiquin;
-window.toggleLoop = toggleLoop;
-window.MUSICA = MUSICA;
-
-function toggleLoop(btn) {
-    btn.classList.toggle('active');
-    if (currentAudio && currentAudioBtn === btn.parentElement.querySelector('.audio-play-btn')) {
-        currentAudio.loop = btn.classList.contains('active');
-    }
-}
+// Movido a js/modules/music.js
