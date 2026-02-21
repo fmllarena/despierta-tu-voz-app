@@ -4,11 +4,13 @@ import { alertCustom } from './utils.js';
 
 export const AJUSTES = window.AJUSTES = {
     abrirModal: async () => {
-        if (!userProfile) {
+        // Leer siempre desde window.userProfile (actualizado por main.js tras login)
+        const perfil = window.userProfile;
+
+        if (!perfil) {
             console.log("Perfil no cargado, intentando recuperar...");
             const { data: { user } } = await supabaseClient.auth.getUser();
             if (user) {
-                // cargarPerfil está en main.js, lo llamamos vía window
                 if (window.cargarPerfil) await window.cargarPerfil(user);
             } else {
                 alert("Debes iniciar sesión para ver los ajustes.");
@@ -16,28 +18,29 @@ export const AJUSTES = window.AJUSTES = {
             }
         }
 
-        if (!userProfile) {
+        const profile = window.userProfile;
+        if (!profile) {
             alert("No se pudo cargar tu perfil. Por favor, recarga la página.");
             return;
         }
 
-        ELEMENTS.settingsUserName.innerText = userProfile.nombre || "Usuario";
+        ELEMENTS.settingsUserName.innerText = profile.nombre || "Usuario";
 
         const TIER_NAMES = {
             'free': 'Explora',
             'pro': 'Profundiza',
             'premium': 'Transforma'
         };
-        const tier = userProfile.subscription_tier || 'free';
+        const tier = profile.subscription_tier || 'free';
         ELEMENTS.settingsUserTier.innerText = `PLAN ${TIER_NAMES[tier] || tier.toUpperCase()}`;
 
         // Cargar valores actuales tal cual están en la DB
-        ELEMENTS.focusSlider.value = userProfile.mentor_focus ?? 5;
-        ELEMENTS.personalitySlider.value = userProfile.mentor_personality ?? 5;
-        ELEMENTS.lengthSlider.value = userProfile.mentor_length ?? 5;
+        ELEMENTS.focusSlider.value = profile.mentor_focus ?? 5;
+        ELEMENTS.personalitySlider.value = profile.mentor_personality ?? 5;
+        ELEMENTS.lengthSlider.value = profile.mentor_length ?? 5;
 
-        ELEMENTS.languageSelect.value = userProfile.mentor_language || 'es';
-        ELEMENTS.weeklyGoalInput.value = userProfile.weekly_goal || '';
+        ELEMENTS.languageSelect.value = profile.mentor_language || 'es';
+        ELEMENTS.weeklyGoalInput.value = profile.weekly_goal || '';
 
         // Ocultar botón de mejora si ya es Premium (Transforma)
         if (ELEMENTS.upgradeSettingsBtn) {
