@@ -8,7 +8,8 @@ export const SOPORTE = window.SOPORTE = {
     abrir() {
         this.isOpen = true;
         ELEMENTS.supportModal.style.display = 'flex';
-        if (this.history.length === 0) {
+        // Solo añadir mensaje si el chat está vacío
+        if (ELEMENTS.supportChatBox.children.length === 0) {
             this.appendMessage("Hola, soy el asistente de soporte de Despierta tu Voz. ¿En qué puedo ayudarte con la plataforma?", 'ia');
         }
     },
@@ -64,7 +65,13 @@ export const SOPORTE = window.SOPORTE = {
 
     setup() {
         // Listeners Soporte
-        ELEMENTS.supportBubble?.addEventListener('click', () => this.abrir());
+        ELEMENTS.supportBubble?.addEventListener('click', () => {
+            if (this.isOpen) {
+                this.cerrar();
+            } else {
+                this.abrir();
+            }
+        });
         ELEMENTS.closeSupport?.addEventListener('click', () => this.cerrar());
         ELEMENTS.sendSupportBtn?.addEventListener('click', () => this.enviar());
         ELEMENTS.supportInput?.addEventListener('keypress', (e) => {
