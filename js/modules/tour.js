@@ -9,6 +9,11 @@ export const TOUR = window.TOUR = {
             text: "Soy tu Mentor Vocal. Vamos a realizar un breve recorrido para que sepas cómo puedo acompañarte en tu transformación."
         },
         {
+            target: "#inspiracionBtn",
+            title: "Inspiración del Día",
+            text: "Cada día recibirás una frase motivadora personalizada según tu progreso (planes Pro/Transforma) o frases de grandes músicos si estás en el plan Explora."
+        },
+        {
             target: "#viajeBtn",
             title: "Tu Hoja de Ruta",
             text: "Aquí encontrarás los 5 Módulos de Sanación Vocal. Es el corazón de tu proceso de desbloqueo y crecimiento."
