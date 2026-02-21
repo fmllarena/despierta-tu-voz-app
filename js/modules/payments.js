@@ -68,7 +68,6 @@ export const PAYMENTS = window.PAYMENTS = {
             setTimeout(() => {
                 if (ELEMENTS.upgradeModal) {
                     ELEMENTS.upgradeModal.style.display = 'flex';
-                    console.log(`🔔 Abriendo modal de upgrade automáticamente (plan: ${autoUpgrade})`);
                 }
             }, 1000);
         }

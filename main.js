@@ -3,7 +3,7 @@ window.onerror = function (msg, url, lineNo, columnNo, error) {
     alert("Error de JS: " + msg + "\nLínea: " + lineNo + "\nArchivo: " + url);
     return false;
 };
-console.log("🚀 Script main.js cargando...");
+
 
 // Variables globales movidas a config.js
 
@@ -253,7 +253,6 @@ async function cargarPerfil(user) {
         // Si el perfil está vacío pero tenemos mensajes cargados, disparamos el resumen 
         // proactivamente para "reparar" la cuenta sin esperar a un nuevo mensaje.
         if (chatHistory.length > 0 && (!perfil.ultimo_resumen || !perfil.creencias)) {
-            console.log("🛠️ Detectada cuenta sin resumen pero con historial. Reparando perfil...");
             MODULOS.generarYGuardarResumen();
         }
 
@@ -269,7 +268,6 @@ async function cargarPerfil(user) {
         // --- TOUR DE BIENVENIDA ---
         // Solo lanzar para usuarios nuevos (sin historial de resumen previo)
         if (!perfil.ultimo_resumen) {
-            console.log("🆕 Usuario nuevo detectado. Iniciando tour de bienvenida...");
             localStorage.removeItem('dtv_tour_seen');
             // Pequeño delay para asegurar que el DOM y estilos estén listos
             setTimeout(() => {
@@ -345,27 +343,21 @@ function updateUI(user) {
         }
 
         // El perfil puede tardar un poco en cargar, usamos el tier del perfil si existe
-        const tier = (userProfile?.subscription_tier || 'free').toLowerCase().trim();
-        console.log("🛠️ Debug UI - User:", user.email, "Tier Detectado:", tier);
-
         if (tier === 'premium' || tier === 'transforma') {
             if (ELEMENTS.upgradeBtn) ELEMENTS.upgradeBtn.style.display = 'none';
             if (ELEMENTS.sesionBtn) ELEMENTS.sesionBtn.style.display = 'flex'; // Usar flex si es icon-nav-btn
-            console.log("✅ Mostrando botón de sesiones (Premium)");
         } else if (tier === 'pro' || tier === 'profundiza' || tier === 'miembro promo inicial') {
             if (ELEMENTS.upgradeBtn) {
                 ELEMENTS.upgradeBtn.title = "Mejorar a Transforma";
                 ELEMENTS.upgradeBtn.style.display = 'flex';
             }
             if (ELEMENTS.sesionBtn) ELEMENTS.sesionBtn.style.display = 'flex';
-            console.log("✅ Mostrando botón de sesiones (Pro/Promo)");
         } else {
             if (ELEMENTS.upgradeBtn) {
                 ELEMENTS.upgradeBtn.title = "Mejorar Plan";
                 ELEMENTS.upgradeBtn.style.display = 'flex';
             }
             if (ELEMENTS.sesionBtn) ELEMENTS.sesionBtn.style.display = 'none';
-            console.log("ℹ️ Escondiendo botón de sesiones (Free)");
         }
         if (ELEMENTS.ajustesBtn) ELEMENTS.ajustesBtn.style.display = 'block';
         if (ELEMENTS.supportBubble) ELEMENTS.supportBubble.style.display = 'flex';
