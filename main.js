@@ -343,6 +343,7 @@ function updateUI(user) {
         }
 
         // El perfil puede tardar un poco en cargar, usamos el tier del perfil si existe
+        const tier = (userProfile?.subscription_tier || 'free').toLowerCase().trim();
         if (tier === 'premium' || tier === 'transforma') {
             if (ELEMENTS.upgradeBtn) ELEMENTS.upgradeBtn.style.display = 'none';
             if (ELEMENTS.sesionBtn) ELEMENTS.sesionBtn.style.display = 'flex'; // Usar flex si es icon-nav-btn
