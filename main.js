@@ -265,20 +265,22 @@ async function cargarPerfil(user) {
         EMAIL_VERIFICATION.show(perfil);
 
         // --- TOUR DE BIENVENIDA ---
-        // Forzar reinicio del tour si es un usuario realmente nuevo (sin resumen previo)
+        // Solo lanzar para usuarios nuevos (sin historial de resumen previo)
         if (!perfil.ultimo_resumen) {
-            console.log("🆕 Usuario nuevo detectado. Reiniciando tour localmente...");
+            console.log("🆕 Usuario nuevo detectado. Iniciando tour de bienvenida...");
             localStorage.removeItem('dtv_tour_seen');
+            // Pequeño delay para asegurar que el DOM y estilos estén listos
+            setTimeout(() => {
+                if (window.TOUR) {
+                    window.TOUR.start();
+                } else {
+                    console.warn("⚠️ TOUR no inicializado o módulo no cargado.");
+                }
+            }, 1500);
+        } else {
+            // Usuario existente: marcar tour como visto para que nunca se dispare
+            localStorage.setItem('dtv_tour_seen', 'true');
         }
-
-        // Pequeño delay para asegurar que el DOM y los estilos (updateUI) estén listos
-        setTimeout(() => {
-            if (window.TOUR) {
-                window.TOUR.start();
-            } else {
-                console.warn("⚠️ TOUR no inicializado o módulo no cargado.");
-            }
-        }, 1500);
     } catch (e) {
         console.error("Error crítico en cargarPerfil:", e);
     }
