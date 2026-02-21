@@ -35,7 +35,7 @@ get_header(); ?>
                     comentario que hiciste hoy sobre una situación de estrés en tu trabajo.</p>
                 <p style="margin-top: 1rem; color: #8e7d6d; font-weight: 600;">El resultado: Te señala un patrón de
                     "estrangulamiento vocal" que se activa siempre que te sientes vulnerable, algo que a un humano le
-                    llevaría meses de terapia detectar.</p>
+                    llevaría varias sesiones de terapia detectar.</p>
             </div>
 
             <div class="pillar-card">
@@ -58,9 +58,9 @@ get_header(); ?>
                         <p>Tu evolución en las últimas 50 sesiones.</p>
                     </div>
                 </div>
-                <p style="margin-top: 2.5rem; border-top: 1px solid #eee; padding-top: 2rem; font-style: italic;">"La IA
+                <p style="margin-top: 1rem; color: #8e7d6d; font-weight: 600;">La IA
                     no adivina; deduce. Te muestra que tu dificultad para llegar a esa nota aguda no es técnica, sino
-                    que coincide matemáticamente con las frases de la canción que resuenan con tus bloqueos personales".
+                    que coincide matemáticamente con las frases de la canción que resuenan con tus bloqueos personales.
                 </p>
             </div>
 
