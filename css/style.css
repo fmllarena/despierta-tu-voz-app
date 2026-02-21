@@ -3296,3 +3296,178 @@ input:disabled+.slider {
     opacity: 1;
     transform: translateY(0);
 }
+
+/* --- ONBOARDING TOUR STYLES --- */
+.dtv-tour-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 5000;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+    opacity: 0;
+}
+
+.dtv-tour-overlay.active {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.dtv-tour-spotlight {
+    position: absolute;
+    box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.7);
+    border-radius: 12px;
+    z-index: 5001;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    pointer-events: none;
+}
+
+.dtv-tour-bubble {
+    position: absolute;
+    z-index: 5002;
+    background: rgba(255, 255, 255, 0.1);
+    -webkit-backdrop-filter: blur(15px);
+    backdrop-filter: blur(15px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 20px;
+    padding: 25px;
+    width: 300px;
+    max-width: calc(100vw - 40px);
+    color: white;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    opacity: 0;
+    transform: translateY(20px);
+    pointer-events: none;
+}
+
+.dtv-tour-bubble.active {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+    animation: tourPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+.dtv-tour-bubble::before {
+    content: '';
+    position: absolute;
+    border: 10px solid transparent;
+}
+
+/* Arrow positions */
+.dtv-tour-bubble.arrow-top::before {
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border-bottom-color: rgba(255, 255, 255, 0.1);
+}
+
+.dtv-tour-bubble.arrow-bottom::before {
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border-top-color: rgba(255, 255, 255, 0.1);
+}
+
+.dtv-tour-content h4 {
+    margin: 0 0 10px 0;
+    font-size: 1.1em;
+    color: #f1c40f;
+    letter-spacing: 0.5px;
+}
+
+.dtv-tour-content p {
+    margin: 0;
+    font-size: 0.95em;
+    line-height: 1.5;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.dtv-tour-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 20px;
+    padding-top: 15px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.dtv-tour-progress {
+    font-size: 0.8em;
+    color: rgba(255, 255, 255, 0.5);
+    font-weight: bold;
+}
+
+.dtv-tour-nav {
+    display: flex;
+    gap: 8px;
+}
+
+.dtv-tour-btn {
+    background: white;
+    color: #333;
+    border: none;
+    padding: 6px 15px;
+    border-radius: 15px;
+    font-size: 0.85em;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.dtv-tour-btn:hover {
+    background: #f1c40f;
+    color: #000;
+}
+
+.dtv-tour-btn.btn-prev {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.dtv-tour-btn.btn-prev:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.dtv-tour-skip {
+    display: block;
+    text-align: center;
+    margin-top: 15px;
+    font-size: 0.8em;
+    color: rgba(255, 255, 255, 0.4);
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.dtv-tour-skip:hover {
+    color: white;
+    text-decoration: underline;
+}
+
+/* Centered welcome step */
+.dtv-tour-bubble.centered {
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    margin: 0 !important;
+}
+
+.dtv-tour-bubble.centered.active {
+    animation: tourPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+@keyframes tourPop {
+    from {
+        opacity: 0;
+        transform: scale(0.9) translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
