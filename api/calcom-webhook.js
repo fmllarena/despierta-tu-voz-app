@@ -18,6 +18,26 @@ module.exports = async function handler(req, res) {
     const { SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY } = process.env;
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
+    // --- SEGURIDAD: VERIFICACIÓN DE SECRETO ---
+    // El secreto que el usuario pone en Cal.com se usa para validar el mensaje
+    const CALCOM_SECRET = "dtv_vocal_mentor_secure_pAss"; // Este es el secreto generado
+    const signature = req.headers['x-cal-signature-256'];
+
+    // Si quieres máxima seguridad, aquí se verificaría la firma HMAC. 
+    // Para esta implementación rápida, verificaremos que el mensaje venga de Cal.com.
+    // En Cal.com, el campo "Secreto" sirve para firmar el contenido.
+    if (signature) {
+        const crypto = require('crypto');
+        const hmac = crypto.createHmac('sha256', CALCOM_SECRET);
+        // Usamos el body tal cual para verificar la firma
+        const digest = hmac.update(JSON.stringify(req.body)).digest('hex');
+
+        if (signature !== digest) {
+            console.error("[SEGURIDAD] Firma de Cal.com inválida.");
+            return res.status(401).json({ error: 'Invalid signature' });
+        }
+    }
+
     try {
         const payload = req.body;
         console.log("[Cal.com Proxy] Recibido payload:", JSON.stringify(payload));
