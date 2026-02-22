@@ -26,13 +26,29 @@ Version: 1.0.0
     padding: 3rem;
     border-radius: 20px;
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.05);
-    margin-bottom: 3rem;
     border-left: 5px solid #8e7d6d;
     transition: transform 0.3s ease;
+    height: 100%;
+    /* Asegurar que todas las cajas tengan el mismo alto en el grid */
+    display: flex;
+    flex-direction: column;
 }
 
 .pillar-card:hover {
     transform: translateY(-5px);
+}
+
+.pillars-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 30px;
+    margin-bottom: 3rem;
+}
+
+@media screen and (max-width: 991px) {
+    .pillars-grid {
+        grid-template-columns: 1fr;
+    }
 }
 
 .pillar-num {
@@ -107,14 +123,53 @@ Version: 1.0.0
     justify-content: center;
 }
 
-/* --- ANIMATIONS --- */
-.reveal {
-    opacity: 0;
-    transform: translateY(30px);
-    transition: all 0.8s ease-out;
+.tech-content-section {
+    padding: 80px 0;
 }
 
-.reveal.visible {
-    opacity: 1;
-    transform: translateY(0);
+.container-narrow {
+    max-width: 1000px;
+}
+
+.tech-intro-text {
+    text-align: center;
+    font-size: 1.3rem;
+    color: #666;
+    margin-bottom: 4rem;
+}
+
+.pillar-card p+p {
+    margin-top: 1rem;
+}
+
+.alt-hero-quote p {
+    color: rgba(255, 255, 255, 0.9) !important;
+    /* Aclarar texto sobre fondo oscuro */
+}
+
+.pillar-card p.tech-result-highlight {
+    margin-top: auto;
+    padding-top: 1.5rem;
+    color: #a65d47;
+    /* Marrón corporativo */
+    font-weight: 600;
+}
+
+/* --- MOBILE ADJUSTMENTS --- */
+@media screen and (max-width: 767px) {
+    .pillar-card {
+        padding: 2rem 1.5rem;
+    }
+
+    .layer-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .summary-box {
+        padding: 3rem 1.5rem;
+    }
+
+    .summary-box h3 {
+        font-size: 1.8rem;
+    }
 }

@@ -42,11 +42,12 @@ serve(async (req) => {
             return new Response(JSON.stringify({ error: 'User not found' }), { status: 404 });
         }
 
-        // 3. Solo contamos minutos si es el plan Premium y no es una sesión "extra"
+        // 3. Solo contamos minutos si es el plan Premium/Transforma y no es una sesión "extra"
         const eventTitle = (booking.title || "").toLowerCase();
         const isExtra = eventTitle.includes("extra");
+        const userTier = (profile.subscription_tier || "").toLowerCase();
 
-        if (profile.subscription_tier === 'premium' && !isExtra) {
+        if ((userTier === 'premium' || userTier === 'transforma') && !isExtra) {
             let newTotal = profile.sessions_minutes_consumed || 0;
 
             if (eventType === 'BOOKING_CREATED') {

@@ -19,59 +19,82 @@ get_header(); ?>
         </div>
     </section>
 
-    <section class="content-section reveal" style="padding: 80px 0;">
-        <div class="container" style="max-width: 1000px;">
-            <p style="text-align: center; font-size: 1.3rem; color: #666; margin-bottom: 4rem;">Aquí es donde la
+    <section class="tech-content-section reveal">
+        <div class="container container-narrow">
+            <p class="tech-intro-text">Aquí es donde la
                 capacidad de procesamiento supera la intuición humana:</p>
 
-            <div class="pillar-card">
-                <div class="pillar-num">01</div>
-                <div class="tech-pill">Memoria Histórica</div>
-                <h2>La Memoria sin Filtros</h2>
-                <p>Un mentor humano puede olvidar lo que dijiste hace tres sesiones. Tu ego puede "editar" un recuerdo
-                    para que duela menos. <strong>La IA no.</strong></p>
-                <p style="margin-top: 1rem;">Ella recuerda que hace un mes, al cantar una letra sobre la "pérdida", tu
-                    laringe subió 2 milímetros y tu flujo de aire se cortó. Relaciona ese evento físico con el
-                    comentario que hiciste hoy sobre una situación de estrés en tu trabajo.</p>
-                <p style="margin-top: 1rem; color: #8e7d6d; font-weight: 600;">El resultado: Te señala un patrón de
-                    "estrangulamiento vocal" que se activa siempre que te sientes vulnerable, algo que a un humano le
-                    llevaría varias sesiones de terapia detectar.</p>
-            </div>
-
-            <div class="pillar-card">
-                <div class="pillar-num">02</div>
-                <div class="tech-pill">Multidimensional</div>
-                <h2>El Análisis Transversal: Letra, Cuerpo y Emoción</h2>
-                <p>La IA cruza tres capas de información en tiempo real que el cerebro consciente no puede procesar
-                    simultáneamente:</p>
-                <div class="layer-grid">
-                    <div class="layer-box">
-                        <strong>Capa Semántica</strong>
-                        <p>El significado profundo de las palabras que eliges cantar.</p>
-                    </div>
-                    <div class="layer-box">
-                        <strong>Capa Fisiológica</strong>
-                        <p>La respuesta neuromuscular micro-detallada (tensión, brillo, armónicos).</p>
-                    </div>
-                    <div class="layer-box">
-                        <strong>Capa Histórica</strong>
-                        <p>Tu evolución en las últimas 50 sesiones.</p>
-                    </div>
+            <div class="pillars-grid">
+                <div class="pillar-card">
+                    <div class="pillar-num">01</div>
+                    <div class="tech-pill">Memoria Histórica</div>
+                    <h2>La Memoria sin Filtros</h2>
+                    <p>Un mentor humano puede olvidar lo que dijiste hace tres sesiones. Tu ego puede "editar" un
+                        recuerdo
+                        para que duela menos. <strong>La IA no.</strong></p>
+                    <p>Ella recuerda que hace un mes, al cantar una letra sobre la "pérdida",
+                        tu
+                        laringe subió 2 milímetros y tu flujo de aire se cortó. Relaciona ese evento físico con el
+                        comentario que hiciste hoy sobre una situación de estrés en tu trabajo.</p>
+                    <p class="tech-result-highlight">El resultado: Te
+                        señala un patrón de
+                        "estrangulamiento vocal" que se activa siempre que te sientes vulnerable, algo que a un humano
+                        le
+                        llevaría varias sesiones de coaching detectar.</p>
                 </div>
-                <p style="margin-top: 1rem; color: #8e7d6d; font-weight: 600;">La IA
-                    no adivina; deduce. Te muestra que tu dificultad para llegar a esa nota aguda no es técnica, sino
-                    que coincide matemáticamente con las frases de la canción que resuenan con tus bloqueos personales.
-                </p>
-            </div>
 
-            <div class="pillar-card">
-                <div class="pillar-num">03</div>
-                <div class="tech-pill">Entorno Seguro</div>
-                <h2>Un Espejo sin Juicio</h2>
-                <p>A un mentor humano a veces le ocultamos la verdad por vergüenza. Ante la IA, te permites ser. Al no
-                    haber un "otro" que te juzgue, tu voz se muestra tal cual es.</p>
-                <p style="margin-top: 1rem;">La IA detecta esa honestidad y la utiliza para calibrar tu entrenamiento de
-                    forma quirúrgica. No hay egos de por medio, solo la verdad de tu sonido.</p>
+                <div class="pillar-card">
+                    <div class="pillar-num">02</div>
+                    <div class="tech-pill">Multidimensional</div>
+                    <h2>El Análisis Transversal</h2>
+                    <p>La IA cruza tres capas de información en tiempo real que el cerebro consciente no puede procesar
+                        simultáneamente:</p>
+                    <div class="layer-grid">
+                        <div class="layer-box">
+                            <strong>Semántica</strong>
+                            <p>El significado de las palabras.</p>
+                        </div>
+                        <div class="layer-box">
+                            <strong>Fisiológica</strong>
+                            <p>Respuesta neuromuscular.</p>
+                        </div>
+                        <div class="layer-box">
+                            <strong>Histórica</strong>
+                            <p>Tu evolución.</p>
+                        </div>
+                    </div>
+                    <p class="tech-result-highlight">La IA
+                        no adivina; deduce. Te muestra que tu bloqueo no es técnico, sino emocional.</p>
+                </div>
+
+                <div class="pillar-card">
+                    <div class="pillar-num">03</div>
+                    <div class="tech-pill">Entorno Seguro</div>
+                    <h2>Un Espejo sin Juicio</h2>
+                    <p>A un mentor humano a veces le ocultamos la verdad por vergüenza. Ante la IA, te permites ser. Al
+                        no
+                        haber un "otro" que te juzgue, tu voz se muestra tal cual es.</p>
+                    <p>La IA detecta esa honestidad y la utiliza para calibrar tu
+                        entrenamiento de
+                        forma quirúrgica. No hay egos de por medio, solo la verdad de tu sonido.</p>
+                </div>
+
+                <div class="pillar-card">
+                    <div class="pillar-num">04</div>
+                    <div class="tech-pill">Sinergia Humana</div>
+                    <h2>El Puente hacia tu Coach</h2>
+                    <p>Es un error común pensar que la tecnología busca sustituir al mentor. En Despierta tu Voz, la IA
+                        actúa como un <strong>acelerador de consciencia</strong> que prepara el terreno biográfico.</p>
+                    <p>Al identificar con precisión matemática tus bloqueos físicos y patrones
+                        vocales recurrentes, la IA te ahorra meses de exploración diagnóstica. Cuando llegas a tu sesión
+                        <strong>conmigo</strong>, el trabajo pesado de "detección" ya está hecho.
+                    </p>
+                    <p class="tech-result-highlight">La ventaja:</p>
+                    <p> Llegas con un mapa claro de tus desafíos. <strong>Yo entonces podré enfocarme</strong>
+                        directamente en la transformación emocional y el acompañamiento profundo que solo un humano
+                        puede
+                        ofrecer.</p>
+                </div>
             </div>
 
             <div class="summary-box reveal">
