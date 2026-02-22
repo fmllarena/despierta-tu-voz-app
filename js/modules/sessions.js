@@ -15,7 +15,7 @@ export const SESIONES = window.SESIONES = {
 
         // Re-fetch del perfil para asegurar datos frescos tras reserva externa
         try {
-            const { data, error } = await window.supabase
+            const { data, error } = await window.supabaseClient
                 .from('user_profiles')
                 .select('*')
                 .eq('user_id', window.userProfile.user_id)
