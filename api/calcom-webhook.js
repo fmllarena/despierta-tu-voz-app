@@ -40,23 +40,28 @@ module.exports = async function handler(req, res) {
             return res.status(200).json({ status: 'ignored', event: rawEvent });
         }
 
-        // 1. Obtener el email del usuario
+        // 1. Obtener datos del usuario (Priorizar userId de metadata)
+        const bookingMetadata = booking.metadata || {};
+        const userIdFromMetadata = bookingMetadata.userId || bookingMetadata.userid;
+
         const userEmail = (booking.attendees?.[0]?.email || "").toLowerCase().trim();
         const durationMinutes = Number(booking.duration) || 0;
 
-        if (!userEmail) {
-            console.error("[Cal.com Webhook] No se encontró email en el payload");
-            return res.status(400).json({ error: 'No email found' });
+        console.log(`[Cal.com Webhook] Detectado. UserID: ${userIdFromMetadata}, Email: ${userEmail}, Duración: ${durationMinutes} min`);
+
+        // 2. Buscar al usuario en Supabase (Usar ID si existe, si no por email)
+        let query = supabase.from('user_profiles').select('user_id, sessions_minutes_consumed, subscription_tier');
+
+        if (userIdFromMetadata) {
+            query = query.eq('user_id', userIdFromMetadata);
+        } else if (userEmail) {
+            query = query.ilike('email', userEmail);
+        } else {
+            console.error("[Cal.com Webhook] No hay email ni ID para buscar");
+            return res.status(400).json({ error: 'No user identification found' });
         }
 
-        console.log(`[Cal.com Webhook] Usuario: ${userEmail}, Duración: ${durationMinutes} min`);
-
-        // 2. Buscar al usuario en Supabase (insensible a mayúsculas/minúsculas)
-        const { data: profile, error: searchError } = await supabase
-            .from('user_profiles')
-            .select('user_id, sessions_minutes_consumed, subscription_tier')
-            .ilike('email', userEmail)
-            .single();
+        const { data: profile, error: searchError } = await query.single();
 
         if (searchError || !profile) {
             console.error(`[Cal.com Webhook] Usuario no encontrado en DB: ${userEmail}`, searchError);

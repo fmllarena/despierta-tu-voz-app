@@ -9,9 +9,25 @@ export const SESIONES = window.SESIONES = {
         extra60: "#"  // Placeholder (se gestiona tras pago)
     },
 
-    abrirModal: () => {
+    abrirModal: async () => {
         ELEMENTS.sesionModal.style.display = 'block';
         SESIONES.actualizarInfoCuota();
+
+        // Re-fetch del perfil para asegurar datos frescos tras reserva externa
+        try {
+            const { data, error } = await window.supabase
+                .from('user_profiles')
+                .select('*')
+                .eq('user_id', window.userProfile.user_id)
+                .single();
+
+            if (data && !error) {
+                window.userProfile = data;
+                SESIONES.actualizarInfoCuota();
+            }
+        } catch (e) {
+            console.error("Error refrescando perfil:", e);
+        }
     },
 
     actualizarInfoCuota: () => {
@@ -95,8 +111,8 @@ export const SESIONES = window.SESIONES = {
         const profile = window.userProfile;
         const url = SESIONES.links[tipo];
         if (url && url !== "#") {
-            // Añadimos el email del usuario para que Cal.com lo reconozca
-            const finalUrl = `${url}?email=${encodeURIComponent(profile.email)}&name=${encodeURIComponent(profile.nombre || "")}`;
+            // Añadimos el email y el user_id para que el Webhook lo reciba directamente
+            const finalUrl = `${url}?email=${encodeURIComponent(profile.email)}&name=${encodeURIComponent(profile.nombre || "")}&userId=${profile.user_id}`;
             window.open(finalUrl, '_blank');
         } else {
             alert("El enlace para esta sesión aún no está configurado.");
