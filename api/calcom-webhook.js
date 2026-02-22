@@ -1,17 +1,7 @@
 const { createClient } = require('@supabase/supabase-js');
-const crypto = require('crypto');
 
-// Utilidad para leer el body en bruto (RAW) necesario para verificar la firma
-async function buffer(readable) {
-    const chunks = [];
-    for await (const chunk of readable) {
-        chunks.push(typeof chunk === 'string' ? Buffer.from(chunk) : chunk);
-    }
-    return Buffer.concat(chunks);
-}
-
-const handler = async function (req, res) {
-    // Configurar CORS
+module.exports = async function handler(req, res) {
+    // SOPORTE CORS
     res.setHeader('Access-Control-Allow-Credentials', true);
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -28,44 +18,40 @@ const handler = async function (req, res) {
     const { SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY } = process.env;
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-    // --- SEGURIDAD: VERIFICACIÓN DE SECRETO ---
-    const CALCOM_SECRET = "dtv_vocal_mentor_secure_pAss";
-    const signature = req.headers['x-cal-signature-256'];
-
-    let rawBody;
     try {
-        rawBody = await buffer(req);
-        const bodyString = rawBody.toString();
+        const payload = req.body;
+        console.log("------------------------------------------");
+        console.log("[Cal.com Webhook] Petición recibida");
+        console.log("[Cal.com Webhook] Payload:", JSON.stringify(payload));
 
-        if (signature) {
-            const hmac = crypto.createHmac('sha256', CALCOM_SECRET);
-            const digest = hmac.update(bodyString).digest('hex');
-
-            if (signature !== digest) {
-                console.error("[SEGURIDAD] Firma de Cal.com inválida.");
-                return res.status(401).json({ error: 'Invalid signature' });
-            }
+        if (!payload || !payload.payload) {
+            console.error("[Cal.com Webhook] Payload vacío o mal formado");
+            return res.status(400).json({ error: 'Payload mal formado' });
         }
-
-        const payload = JSON.parse(bodyString);
-        console.log("[Cal.com Proxy] Payload verificado:", JSON.stringify(payload));
 
         const rawEvent = (payload.triggerEvent || "").toUpperCase();
         const eventType = rawEvent.replace('.', '_');
         const booking = payload.payload;
 
+        console.log(`[Cal.com Webhook] Evento: ${eventType}`);
+
         if (eventType !== 'BOOKING_CREATED' && eventType !== 'BOOKING_CANCELLED') {
+            console.log(`[Cal.com Webhook] Evento ignorado: ${rawEvent}`);
             return res.status(200).json({ status: 'ignored', event: rawEvent });
         }
 
+        // 1. Obtener el email del usuario
         const userEmail = (booking.attendees?.[0]?.email || "").toLowerCase().trim();
         const durationMinutes = Number(booking.duration) || 0;
 
         if (!userEmail) {
-            console.error("No se encontró email en el payload de Cal.com");
+            console.error("[Cal.com Webhook] No se encontró email en el payload");
             return res.status(400).json({ error: 'No email found' });
         }
 
+        console.log(`[Cal.com Webhook] Usuario: ${userEmail}, Duración: ${durationMinutes} min`);
+
+        // 2. Buscar al usuario en Supabase (insensible a mayúsculas/minúsculas)
         const { data: profile, error: searchError } = await supabase
             .from('user_profiles')
             .select('user_id, sessions_minutes_consumed, subscription_tier')
@@ -73,13 +59,16 @@ const handler = async function (req, res) {
             .single();
 
         if (searchError || !profile) {
-            console.error(`Usuario no encontrado: ${userEmail}`, searchError);
-            return res.status(404).json({ error: 'User not found in Supabase' });
+            console.error(`[Cal.com Webhook] Usuario no encontrado en DB: ${userEmail}`, searchError);
+            return res.status(404).json({ error: 'User not found' });
         }
 
+        // 3. Verificación de Plan
         const eventTitle = (booking.title || "").toLowerCase();
         const isExtra = eventTitle.includes("extra");
         const userTier = (profile.subscription_tier || "").toLowerCase().trim();
+
+        console.log(`[Cal.com Webhook] Tier DB: ${userTier}, Título reserva: ${eventTitle}`);
 
         const isPremiumTier = userTier === 'premium' || userTier === 'transforma';
 
@@ -92,6 +81,8 @@ const handler = async function (req, res) {
                 newTotal = Math.max(0, newTotal - durationMinutes);
             }
 
+            console.log(`[Cal.com Webhook] Actualizando cuota. Anterior: ${profile.sessions_minutes_consumed}, Nueva: ${newTotal}`);
+
             const { error: updateError } = await supabase
                 .from('user_profiles')
                 .update({
@@ -101,26 +92,19 @@ const handler = async function (req, res) {
                 .eq('user_id', profile.user_id);
 
             if (updateError) {
-                console.error("Error actualizando cuota:", updateError);
+                console.error("[Cal.com Webhook] Error actualizando Supabase:", updateError);
                 return res.status(500).json({ error: 'Update failed' });
             }
 
+            console.log(`[Cal.com Webhook] ÉXITO: Cuota actualizada para ${userEmail}`);
             return res.status(200).json({ success: true, newTotal });
         } else {
-            return res.status(200).json({ status: 'ignored_logic', reason: 'Not eligible tier or extra session' });
+            console.log(`[Cal.com Webhook] Sesión ignorada por lógica comercial (Tier o Extra)`);
+            return res.status(200).json({ status: 'ignored_by_tier', tier: userTier });
         }
 
     } catch (error) {
-        console.error("[ERROR CRITICO Proxy Cal.com]:", error.message);
+        console.error("[Cal.com Webhook] ERROR CRÍTICO:", error);
         return res.status(500).json({ error: error.message });
     }
 };
-
-// IMPORTANTE: Desactivar bodyParser para poder leer el RAW body
-handler.config = {
-    api: {
-        bodyParser: false,
-    },
-};
-
-module.exports = handler;
