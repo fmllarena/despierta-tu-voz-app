@@ -1,6 +1,16 @@
 const { createClient } = require('@supabase/supabase-js');
+const crypto = require('crypto');
 
-module.exports = async function handler(req, res) {
+// Utilidad para leer el body en bruto (RAW) necesario para verificar la firma
+async function buffer(readable) {
+    const chunks = [];
+    for await (const chunk of readable) {
+        chunks.push(typeof chunk === 'string' ? Buffer.from(chunk) : chunk);
+    }
+    return Buffer.concat(chunks);
+}
+
+const handler = async function (req, res) {
     // Configurar CORS
     res.setHeader('Access-Control-Allow-Credentials', true);
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -19,31 +29,27 @@ module.exports = async function handler(req, res) {
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
     // --- SEGURIDAD: VERIFICACIÓN DE SECRETO ---
-    // El secreto que el usuario pone en Cal.com se usa para validar el mensaje
-    const CALCOM_SECRET = "dtv_vocal_mentor_secure_pAss"; // Este es el secreto generado
+    const CALCOM_SECRET = "dtv_vocal_mentor_secure_pAss";
     const signature = req.headers['x-cal-signature-256'];
 
-    // Si quieres máxima seguridad, aquí se verificaría la firma HMAC. 
-    // Para esta implementación rápida, verificaremos que el mensaje venga de Cal.com.
-    // En Cal.com, el campo "Secreto" sirve para firmar el contenido.
-    if (signature) {
-        const crypto = require('crypto');
-        const hmac = crypto.createHmac('sha256', CALCOM_SECRET);
-        // Usamos el body tal cual para verificar la firma
-        const digest = hmac.update(JSON.stringify(req.body)).digest('hex');
-
-        if (signature !== digest) {
-            console.error("[SEGURIDAD] Firma de Cal.com inválida.");
-            return res.status(401).json({ error: 'Invalid signature' });
-        }
-    }
-
+    let rawBody;
     try {
-        const payload = req.body;
-        console.log("[Cal.com Proxy] Recibido payload:", JSON.stringify(payload));
+        rawBody = await buffer(req);
+        const bodyString = rawBody.toString();
 
-        // Cal.com envía varios tipos de eventos. Nos interesa 'BOOKING_CREATED' y 'BOOKING_CANCELLED'
-        // Aceptamos formatos con punto (booking.created) y con guion bajo (BOOKING_CREATED)
+        if (signature) {
+            const hmac = crypto.createHmac('sha256', CALCOM_SECRET);
+            const digest = hmac.update(bodyString).digest('hex');
+
+            if (signature !== digest) {
+                console.error("[SEGURIDAD] Firma de Cal.com inválida.");
+                return res.status(401).json({ error: 'Invalid signature' });
+            }
+        }
+
+        const payload = JSON.parse(bodyString);
+        console.log("[Cal.com Proxy] Payload verificado:", JSON.stringify(payload));
+
         const rawEvent = (payload.triggerEvent || "").toUpperCase();
         const eventType = rawEvent.replace('.', '_');
         const booking = payload.payload;
@@ -52,7 +58,6 @@ module.exports = async function handler(req, res) {
             return res.status(200).json({ status: 'ignored', event: rawEvent });
         }
 
-        // 1. Obtener el email del usuario y normalizarlo
         const userEmail = (booking.attendees?.[0]?.email || "").toLowerCase().trim();
         const durationMinutes = Number(booking.duration) || 0;
 
@@ -61,9 +66,6 @@ module.exports = async function handler(req, res) {
             return res.status(400).json({ error: 'No email found' });
         }
 
-        console.log(`[Cal.com Proxy] Procesando ${eventType} para ${userEmail} (${durationMinutes} min)`);
-
-        // 2. Buscar al usuario en Supabase (insensible a mayúsculas/minúsculas)
         const { data: profile, error: searchError } = await supabase
             .from('user_profiles')
             .select('user_id, sessions_minutes_consumed, subscription_tier')
@@ -75,7 +77,6 @@ module.exports = async function handler(req, res) {
             return res.status(404).json({ error: 'User not found in Supabase' });
         }
 
-        // 3. Solo contamos minutos si es el plan Premium/Transforma y no es una sesión "extra"
         const eventTitle = (booking.title || "").toLowerCase();
         const isExtra = eventTitle.includes("extra");
         const userTier = (profile.subscription_tier || "").toLowerCase().trim();
@@ -104,10 +105,8 @@ module.exports = async function handler(req, res) {
                 return res.status(500).json({ error: 'Update failed' });
             }
 
-            console.log(`[EXITO] Cuota actualizada para ${userEmail}: ${newTotal} min.`);
             return res.status(200).json({ success: true, newTotal });
         } else {
-            console.log(`[INFO] Evento ignorado. Tier: ${userTier}, Extra: ${isExtra}`);
             return res.status(200).json({ status: 'ignored_logic', reason: 'Not eligible tier or extra session' });
         }
 
@@ -116,3 +115,12 @@ module.exports = async function handler(req, res) {
         return res.status(500).json({ error: error.message });
     }
 };
+
+// IMPORTANTE: Desactivar bodyParser para poder leer el RAW body
+handler.config = {
+    api: {
+        bodyParser: false,
+    },
+};
+
+module.exports = handler;
