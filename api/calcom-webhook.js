@@ -22,7 +22,6 @@ module.exports = async function handler(req, res) {
         const payload = req.body;
         console.log("------------------------------------------");
         console.log("[Cal.com Webhook] Petición recibida");
-        console.log("[Cal.com Webhook] Payload:", JSON.stringify(payload));
 
         if (!payload || !payload.payload) {
             console.error("[Cal.com Webhook] Payload vacío o mal formado");
@@ -33,52 +32,60 @@ module.exports = async function handler(req, res) {
         const eventType = rawEvent.replace('.', '_');
         const booking = payload.payload;
 
-        console.log(`[Cal.com Webhook] Evento: ${eventType}`);
-
         if (eventType !== 'BOOKING_CREATED' && eventType !== 'BOOKING_CANCELLED') {
-            console.log(`[Cal.com Webhook] Evento ignorado: ${rawEvent}`);
             return res.status(200).json({ status: 'ignored', event: rawEvent });
         }
 
-        // 1. Obtener datos del usuario (Priorizar userId de metadata)
+        // 1. Cálculo de Duración (Cal.com no envía 'duration' directo, hay que calcularlo)
+        let durationMinutes = 0;
+        if (booking.startTime && booking.endTime) {
+            const start = new Date(booking.startTime);
+            const end = new Date(booking.endTime);
+            durationMinutes = Math.round((end - start) / 60000);
+        } else if (booking.duration) {
+            // Backup por si acaso en algunas versiones sí viene
+            durationMinutes = Number(booking.duration);
+        }
+
+        // 2. Identificación del Usuario (Priorizar ID, luego Email)
         const bookingMetadata = booking.metadata || {};
         const userIdFromMetadata = bookingMetadata.userId || bookingMetadata.userid;
-
         const userEmail = (booking.attendees?.[0]?.email || "").toLowerCase().trim();
-        const durationMinutes = Number(booking.duration) || 0;
 
-        console.log(`[Cal.com Webhook] Detectado. UserID: ${userIdFromMetadata}, Email: ${userEmail}, Duración: ${durationMinutes} min`);
+        console.log(`[Cal.com Webhook] Evento: ${eventType} | Duración: ${durationMinutes} min`);
+        console.log(`[Cal.com Webhook] ID: ${userIdFromMetadata} | Email: ${userEmail}`);
 
-        // 2. Buscar al usuario en Supabase (Usar ID si existe, si no por email)
+        if (!userIdFromMetadata && !userEmail) {
+            console.error("[Cal.com Webhook] No se encontró forma de identificar al usuario");
+            return res.status(400).json({ error: 'No user identification found' });
+        }
+
+        // 3. Buscar al usuario en Supabase
         let query = supabase.from('user_profiles').select('user_id, sessions_minutes_consumed, subscription_tier');
 
         if (userIdFromMetadata) {
             query = query.eq('user_id', userIdFromMetadata);
-        } else if (userEmail) {
-            query = query.ilike('email', userEmail);
         } else {
-            console.error("[Cal.com Webhook] No hay email ni ID para buscar");
-            return res.status(400).json({ error: 'No user identification found' });
+            query = query.ilike('email', userEmail);
         }
 
         const { data: profile, error: searchError } = await query.single();
 
         if (searchError || !profile) {
-            console.error(`[Cal.com Webhook] Usuario no encontrado en DB: ${userEmail}`, searchError);
-            return res.status(404).json({ error: 'User not found' });
+            console.error(`[Cal.com Webhook] Perfil no encontrado para: ${userIdFromMetadata || userEmail}`, searchError);
+            return res.status(404).json({ error: 'User profile not found' });
         }
 
-        // 3. Verificación de Plan
+        // 4. Actualización de Cuota (Premium / Transforma)
         const eventTitle = (booking.title || "").toLowerCase();
         const isExtra = eventTitle.includes("extra");
         const userTier = (profile.subscription_tier || "").toLowerCase().trim();
 
-        console.log(`[Cal.com Webhook] Tier DB: ${userTier}, Título reserva: ${eventTitle}`);
+        // Permitimos premium, transforma y también pro/profundiza por si acaso (ajustable)
+        const isEligible = ['premium', 'transforma'].includes(userTier);
 
-        const isPremiumTier = userTier === 'premium' || userTier === 'transforma';
-
-        if (isPremiumTier && !isExtra) {
-            let newTotal = Number(profile.sessions_minutes_consumed) || 0;
+        if (isEligible && !isExtra) {
+            let newTotal = Number(profile.sessions_minutes_consumed || 0);
 
             if (eventType === 'BOOKING_CREATED') {
                 newTotal += durationMinutes;
@@ -86,7 +93,7 @@ module.exports = async function handler(req, res) {
                 newTotal = Math.max(0, newTotal - durationMinutes);
             }
 
-            console.log(`[Cal.com Webhook] Actualizando cuota. Anterior: ${profile.sessions_minutes_consumed}, Nueva: ${newTotal}`);
+            console.log(`[Cal.com Webhook] Actualizando cuota de ${userEmail}: ${profile.sessions_minutes_consumed} -> ${newTotal}`);
 
             const { error: updateError } = await supabase
                 .from('user_profiles')
@@ -97,15 +104,15 @@ module.exports = async function handler(req, res) {
                 .eq('user_id', profile.user_id);
 
             if (updateError) {
-                console.error("[Cal.com Webhook] Error actualizando Supabase:", updateError);
-                return res.status(500).json({ error: 'Update failed' });
+                console.error("[Cal.com Webhook] Error al actualizar Supabase:", updateError);
+                return res.status(500).json({ error: 'Database update failed' });
             }
 
-            console.log(`[Cal.com Webhook] ÉXITO: Cuota actualizada para ${userEmail}`);
-            return res.status(200).json({ success: true, newTotal });
+            console.log(`[Cal.com Webhook] ÉXITO: Contador actualizado.`);
+            return res.status(200).json({ success: true, user: userEmail, newTotal });
         } else {
-            console.log(`[Cal.com Webhook] Sesión ignorada por lógica comercial (Tier o Extra)`);
-            return res.status(200).json({ status: 'ignored_by_tier', tier: userTier });
+            console.log(`[Cal.com Webhook] Ignorado por lógica: Tier=${userTier}, Extra=${isExtra}`);
+            return res.status(200).json({ status: 'ignored_by_logic', tier: userTier });
         }
 
     } catch (error) {
