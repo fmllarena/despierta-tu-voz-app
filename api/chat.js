@@ -1,6 +1,6 @@
 const { createClient } = require('@supabase/supabase-js');
-const { SYSTEM_PROMPTS } = require('./prompts');
-const { sanitizeGeminiHistory } = require('./utils');
+const { SYSTEM_PROMPTS } = require('./_lib/prompts');
+const { sanitizeGeminiHistory } = require('./_lib/utils');
 
 // --- SEGURIDAD DE GEMINI ---
 // v1beta es necesario para usar systemInstruction. v1 no soporta ese campo.
