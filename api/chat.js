@@ -37,13 +37,13 @@ module.exports = async function handler(req, res) {
  * Procesa la lógica de negocio del chat: contexto + IA
  */
 async function processChat(req, res = null) {
-    const { intent, message, history = [], userId, stream = false, vocal_scan = null } = req.body;
+    const { intent, message, history = [], userId, stream = false, vocal_scan = null, originPost = null, originCat = null } = req.body;
 
     if (intent === 'warmup') return { text: "OK" };
     if (!intent || !SYSTEM_PROMPTS[intent]) throw new Error("Intento no válido");
 
     // 1. Construir Contexto del Alumno
-    let context = await buildUserContext(userId, intent);
+    let context = await buildUserContext(userId, intent, originPost, originCat);
 
     // Añadir Escaneo Vocal si existe
     if (vocal_scan) {
@@ -69,19 +69,29 @@ async function processChat(req, res = null) {
 /**
  * Recupera datos de Supabase para alimentar el prompt
  */
-async function buildUserContext(userId, intent) {
-    if (!userId) return "";
+async function buildUserContext(userId, intent, originPost = null, originCat = null) {
+    if (!userId && !originPost) return "";
 
     // Solo cargar contexto para intents que lo requieran
     const needsContext = ['mentor_chat', 'mentor_briefing', 'alchemy_analysis', 'mentor_advisor', 'inspiracion_dia'].includes(intent);
     if (!needsContext) return "";
 
     const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
+    let context = "";
+
+    // Añadir contexto de origen si viene del blog (Prioridad alta para la IA)
+    if (originPost) {
+        context += `\n--- ARTÍCULO LEÍDO (Contexto de Origen) ---\n`;
+        context += `- Título: ${originPost}\n`;
+        if (originCat) context += `- Categoría: ${originCat}\n`;
+        context += `[SISTEMA: El alumno viene de leer este artículo. Salúdale mencionando que te alegra que lo haya leído y pregúntale qué le ha parecido o cómo resuena con su situación actual].\n`;
+    }
+
     const { data: perfil } = await supabase.from('user_profiles').select('*').eq('user_id', userId).maybeSingle();
 
-    if (!perfil) return "";
+    if (!perfil) return context;
 
-    let context = `\n--- SITUACIÓN ACTUAL ---\n- Nombre: ${perfil.nombre}\n- Último Estado: ${perfil.ultimo_resumen || 'Iniciando'}\n`;
+    context += `\n--- SITUACIÓN ACTUAL ---\n- Nombre: ${perfil.nombre}\n- Último Estado: ${perfil.ultimo_resumen || 'Iniciando'}\n`;
 
     if (intent !== 'inspiracion_dia') {
         context += `- Historia: ${perfil.historia_vocal}\n- Nivel: ${perfil.nivel_alquimia}/10\n`;

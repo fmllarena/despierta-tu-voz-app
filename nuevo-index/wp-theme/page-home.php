@@ -78,6 +78,9 @@ get_header(); ?>
             <p>Mi misión es que nunca vuelvas a sentirte solo frente al espejo. He entrenado personalmente a tu Mentor
                 IA para que te escuche, te comprenda y te guíe con la misma profundidad que encontrarías en mis sesiones
                 privadas.</p>
+            <p style="margin: 20px 0; font-style: italic; color: #8e7d6d; font-size: 1rem;">¿Tienes alguna objeción en
+                utilizar la IA y desconoces sus posibilidades? <a href="<?php echo esc_url(home_url('/tecnologia')); ?>"
+                    style="color: #1a1a1a; text-decoration: underline; font-weight: 600;">Te lo explico aquí</a>.</p>
             <p class="founder-signature">Fernando Martínez Llarena<br><span>Fundador & Mentor Vocal</span></p>
         </div>
     </div>
