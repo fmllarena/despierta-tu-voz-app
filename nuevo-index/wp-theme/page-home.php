@@ -78,9 +78,15 @@ get_header(); ?>
             <p>Mi misión es que nunca vuelvas a sentirte solo frente al espejo. He entrenado personalmente a tu Mentor
                 IA para que te escuche, te comprenda y te guíe con la misma profundidad que encontrarías en mis sesiones
                 privadas.</p>
-            <p style="margin: 20px 0; font-style: italic; color: #8e7d6d; font-size: 1rem;">¿Tienes alguna objeción en
-                utilizar la IA y desconoces sus posibilidades? <a href="<?php echo esc_url(home_url('/tecnologia')); ?>"
-                    style="color: #1a1a1a; text-decoration: underline; font-weight: 600;">Te lo explico aquí</a>.</p>
+            <div
+                style="border: 1px solid #e2d9cd; background: #fffaf5; padding: 20px; border-radius: 12px; margin: 30px 0; border-left: 5px solid #8e7d6d; box-shadow: 0 4px 15px rgba(0,0,0,0.03); text-align: center;">
+                <p style="margin: 0; color: #8e7d6d; font-size: 1.05rem; line-height: 1.6; font-style: italic;">
+                    ¿Tienes alguna objeción en utilizar la IA y desconoces sus posibilidades?<br>
+                    <a href="<?php echo esc_url(home_url('/tecnologia')); ?>"
+                        style="display: inline-block; margin-top: 10px; color: #1a1a1a; text-decoration: underline; font-weight: 700;">Te
+                        lo explico aquí</a>.
+                </p>
+            </div>
             <p class="founder-signature">Fernando Martínez Llarena<br><span>Fundador & Mentor Vocal</span></p>
         </div>
     </div>
@@ -90,8 +96,9 @@ get_header(); ?>
     <div class="container" style="max-width: 1000px; margin: 0 auto; padding: 0 20px; text-align: center;">
         <span class="alt-tag">La Base del Método</span>
         <h2 style="color: #1a1a1a; margin-bottom: 25px;">Donde la emoción se hace sonido</h2>
-        <p style="font-size: 1.1rem; line-height: 1.8; color: #444; margin-bottom: 40px;">Entendemos la voz no como un
-            concepto abstracto, sino como un instrumento físico real. Nuestro método no sustituye la técnica, la libera.
+        <p style="font-size: 1.1rem; line-height: 1.8; color: #444; margin-bottom: 40px;">Entiendo la voz no como un
+            concepto abstracto, sino como un instrumento físico y emocional real. El método DTV no sustituye la técnica,
+            la libera.
             Mediante el análisis de tu <strong>estabilidad sonora</strong> y tu <strong>resonancia natural</strong>,
             trabajamos para soltar las tensiones que bloquean tu verdadera potencia.</p>
         <div class="grid-container"
@@ -142,7 +149,7 @@ get_header(); ?>
                     </li>
                     <li style="display: flex; align-items: start; gap: 10px; color: #555;">
                         <span style="color: #8a3a3a; font-weight: bold;">•</span> Buscas una formación técnica o
-                        académica tradicional basada únicamente en el rigor del conservatorio.
+                        académica tradicional basada únicamente en el rigor del método antiguo.
                     </li>
                     <li style="display: flex; align-items: start; gap: 10px; color: #555;">
                         <span style="color: #8a3a3a; font-weight: bold;">•</span> No crees que tu historia personal o
