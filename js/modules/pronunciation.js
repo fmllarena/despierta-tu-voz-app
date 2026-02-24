@@ -12,7 +12,8 @@ export const PRONUNCIATION = {
      * Extracts [PRONUNCIAR: word, lang] and replaces it with a Play button
      */
     parseTags(html) {
-        const regex = /\[PRONUNCIAR:\s*([^,\]]+),\s*([^\]]+)\]/gi;
+        // Regex más flexible: permite espacios, mayúsculas/minúsculas y variaciones tras el idioma
+        const regex = /\[PRONUNCIAR:\s*([^,\]]+),\s*([^\]]+?)\s*\]/gi;
         return html.replace(regex, (match, word, lang) => {
             const cleanWord = word.trim();
             const cleanLang = lang.trim().toLowerCase();
