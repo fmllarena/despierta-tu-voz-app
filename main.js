@@ -105,10 +105,17 @@ window.addEventListener('click', e => {
 async function llamarGemini(message, history, intent, extraData = {}, onChunk = null) {
     try {
         const stream = !!onChunk;
+        const body = { message, history, intent, stream, ...extraData };
+
+        // Soporte para archivos Multi-modal
+        if (extraData.fileData) {
+            body.fileData = extraData.fileData;
+        }
+
         const response = await fetch('/api/chat', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ message, history, intent, stream, ...extraData })
+            body: JSON.stringify(body)
         });
 
         if (stream) {
@@ -599,6 +606,12 @@ async function sendMessage() {
     appendMessage(text, 'user');
     await guardarMensajeDB(text, 'user'); // Asegurar el guardado antes de continuar
 
+    // Obtener datos de archivo si existen
+    const fileData = window.FILES ? await window.FILES.getFileData() : null;
+    if (fileData) {
+        window.FILES.clearFile(); // Limpiar UI tras recoger los datos
+    }
+
     ELEMENTS.chatInput.value = '';
     ELEMENTS.chatInput.style.height = 'auto'; // Reset height after sending
     ELEMENTS.chatInput.disabled = true;
@@ -927,7 +940,13 @@ function appendMessage(text, type, id = null) {
 
     if (type.startsWith('ia')) {
         // Limpiamos siempre el tag técnico para que el usuario nunca lo vea en la interfaz (vía regex flexible)
-        const cleanText = text.replace(/\[\s*SESION\\?_?FINAL\s*\]/gi, "").trim();
+        let cleanText = text.replace(/\[\s*SESION\\?_?FINAL\s*\]/gi, "").trim();
+
+        // Parsear tags de pronunciación
+        if (window.PRONUNCIATION) {
+            cleanText = window.PRONUNCIATION.parseTags(cleanText);
+        }
+
         div.innerHTML = window.marked ? window.marked.parse(cleanText) : cleanText;
 
         if (type !== 'ia-botiquin' && text !== "" && /\[\s*SESION\\?_?FINAL\s*\]/i.test(text)) {
@@ -1438,3 +1457,6 @@ document.querySelectorAll('.close-modal').forEach(btn => {
 
 // --- SISTEMA DE REPRODUCCIÓN AUDIO BOTIQUÍN ---
 // Movido a js/modules/music.js
+// --- INICIALIZACIÓN DE MÓDULOS ---
+if (window.FILES) window.FILES.init();
+if (window.PRONUNCIATION) window.PRONUNCIATION.init();

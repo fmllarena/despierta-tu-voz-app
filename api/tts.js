@@ -3,8 +3,20 @@ module.exports = async function handler(req, res) {
         return res.status(405).json({ error: 'Method not allowed' });
     }
 
-    const { text, voiceName = 'es-ES-Chirp3-HD-Aoede' } = req.body;
+    const { text, languageCode = 'es-ES', voiceName } = req.body;
     const apiKey = process.env.GOOGLE_TTS_API_KEY;
+
+    // Mapa de voces por defecto por idioma (enfocado en calidad Studio/Wavenet)
+    const voiceMaps = {
+        'en-US': 'en-US-Studio-O',
+        'de-DE': 'de-DE-Studio-B',
+        'it-IT': 'it-IT-Studio-C',
+        'fr-FR': 'fr-FR-Studio-A',
+        'pt-PT': 'pt-PT-Wavenet-D',
+        'es-ES': 'es-ES-Chirp3-HD-Aoede'
+    };
+
+    const finalVoiceName = voiceName || voiceMaps[languageCode] || voiceMaps['en-US'];
 
     if (!apiKey) {
         return res.status(500).json({ error: 'Falta la API Key de Google TTS en el servidor.' });
@@ -23,9 +35,9 @@ module.exports = async function handler(req, res) {
                 body: JSON.stringify({
                     input: { text },
                     voice: {
-                        languageCode: 'es-ES',
-                        name: voiceName,
-                        ssmlGender: 'NEUTRAL' // Generalmente Studio-B es neutral o masculino
+                        languageCode: languageCode,
+                        name: finalVoiceName,
+                        ssmlGender: 'NEUTRAL'
                     },
                     audioConfig: { audioEncoding: 'MP3' }
                 })

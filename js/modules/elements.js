@@ -5,6 +5,7 @@
 export const ELEMENTS = window.ELEMENTS = {
     chatBox: document.getElementById('chatBox'),
     chatInput: document.getElementById('chatMentoriaInput'),
+    chatInputArea: document.querySelector('.input-area'),
     sendBtn: document.getElementById('sendBtn'),
     micBtn: document.getElementById('micBtn'),
     authOverlay: document.getElementById('authOverlay'),

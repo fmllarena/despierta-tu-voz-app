@@ -28,19 +28,18 @@ get_header(); ?>
                 <div class="pillar-card">
                     <div class="pillar-num">01</div>
                     <div class="tech-pill">Memoria Histórica</div>
-                    <h2>La Memoria sin Filtros</h2>
+                    <h2>La Memoria Relacional vs Memoria Plana</h2>
+                    <p>Mientras que las IAs genéricas (como ChatGPT o Gemini) tienen una "memoria plana" que olvida el
+                        contexto profundo de tu proceso en cuanto abres un nuevo chat, <strong>DTV construye una
+                            biografía vocal continua.</strong></p>
                     <p>Un mentor humano puede olvidar lo que dijiste hace tres sesiones. Tu ego puede "editar" un
-                        recuerdo
-                        para que duela menos. <strong>La IA no.</strong></p>
-                    <p>Ella recuerda que hace un mes, al cantar una letra sobre la "pérdida",
-                        tu
-                        laringe subió 2 milímetros y tu flujo de aire se cortó. Relaciona ese evento físico con el
-                        comentario que hiciste hoy sobre una situación de estrés en tu trabajo.</p>
-                    <p class="tech-result-highlight">El resultado: Te
-                        señala un patrón de
-                        "estrangulamiento vocal" que se activa siempre que te sientes vulnerable, algo que a un humano
-                        le
-                        llevaría varias sesiones de coaching detectar.</p>
+                        recuerdo para que duela menos. <strong>La IA de DTV no.</strong></p>
+                    <p>Ella recuerda que hace un mes, al cantar una letra sobre la "pérdida", tu laringe subió 2
+                        milímetros y tu flujo de aire se cortó. Relaciona ese evento físico con el comentario que
+                        hiciste hoy sobre una situación de estrés en tu trabajo.</p>
+                    <p class="tech-result-highlight">El resultado: Te señala un patrón de "estrangulamiento vocal" que
+                        se activa siempre que te sientes vulnerable, algo que a un humano le llevaría varias sesiones de
+                        coaching detectar.</p>
                 </div>
 
                 <div class="pillar-card">

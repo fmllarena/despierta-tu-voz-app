@@ -129,11 +129,27 @@ async function callGeminiAPI({ intent, prompt, history, stream, res }) {
     const endpoint = stream ? 'streamGenerateContent' : 'generateContent';
     const url = `${GEMINI_BASE_URL}/${GEMINI_MODEL}:${endpoint}?key=${process.env.GEMINI_API_KEY}${stream ? '&alt=sse' : ''}`;
 
+    const contents = [
+        ...sanitizeGeminiHistory(history),
+        {
+            role: "user",
+            parts: [{ text: prompt }]
+        }
+    ];
+
+    // Si hay datos de archivo, los añadimos a la última entrada del usuario
+    if (req.body.fileData) {
+        const lastContent = contents[contents.length - 1];
+        lastContent.parts.push({
+            inlineData: {
+                mimeType: req.body.fileData.mimeType,
+                data: req.body.fileData.data
+            }
+        });
+    }
+
     const requestBody = {
-        contents: [
-            ...sanitizeGeminiHistory(history),
-            { role: "user", parts: [{ text: prompt }] }
-        ],
+        contents: contents,
         systemInstruction: { parts: [{ text: SYSTEM_PROMPTS[intent] }] }
     };
 

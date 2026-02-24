@@ -2,10 +2,10 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const BREVO_API_KEY = Deno.env.get('BREVO_API_KEY')
-const TEMPLATE_DAY_15 = 9
-const TEMPLATE_DAY_23 = 8
-const TEMPLATE_INACTIVITY_10 = 15
-const TEMPLATE_POST_JOURNEY_5 = 16
+const TEMPLATE_DAY_15 = Number(Deno.env.get('BREVO_RETENTION_15_TEMPLATE_ID')) || 9
+const TEMPLATE_DAY_23 = Number(Deno.env.get('BREVO_RETENTION_23_TEMPLATE_ID')) || 8
+const TEMPLATE_INACTIVITY_10 = Number(Deno.env.get('BREVO_INACTIVITY_10_TEMPLATE_ID')) || 15
+const TEMPLATE_POST_JOURNEY_5 = Number(Deno.env.get('BREVO_POST_JOURNEY_5_TEMPLATE_ID')) || 16
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL') || ''
 const supabaseServiceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
