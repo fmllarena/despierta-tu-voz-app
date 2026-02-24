@@ -143,8 +143,8 @@ async function callGeminiAPI({ intent, prompt, history, stream, res, fileData })
         const lastContent = contents[contents.length - 1];
         lastContent.parts.push({
             inlineData: {
-                mimeType: req.body.fileData.mimeType,
-                data: req.body.fileData.data
+                mimeType: fileData.mimeType,
+                data: fileData.data
             }
         });
     }
