@@ -712,7 +712,7 @@ async function guardarMensajeDB(texto, emisor, customDate = null) {
         } else {
             console.log("Mensaje guardado correctamente.");
             // --- ACTUALIZAR ACTIVIDAD PARA EMAIL DE INACTIVIDAD ---
-            await supabase
+            await supabaseClient
                 .from('user_profiles')
                 .update({
                     last_active_at: new Date().toISOString(),

@@ -37,7 +37,7 @@ module.exports = async function handler(req, res) {
  * Procesa la lógica de negocio del chat: contexto + IA
  */
 async function processChat(req, res = null) {
-    const { intent, message, history = [], userId, stream = false, vocal_scan = null, originPost = null, originCat = null } = req.body;
+    const { intent, message, history = [], userId, stream = false, vocal_scan = null, originPost = null, originCat = null, fileData = null } = req.body;
 
     if (intent === 'warmup') return { text: "OK" };
     if (!intent || !SYSTEM_PROMPTS[intent]) throw new Error("Intento no válido");
@@ -62,7 +62,8 @@ async function processChat(req, res = null) {
         prompt: finalPrompt,
         history,
         stream,
-        res
+        res,
+        fileData
     });
 }
 
@@ -123,7 +124,7 @@ async function buildUserContext(userId, intent, originPost = null, originCat = n
 /**
  * Ejecuta la llamada REST a Gemini
  */
-async function callGeminiAPI({ intent, prompt, history, stream, res }) {
+async function callGeminiAPI({ intent, prompt, history, stream, res, fileData }) {
     if (!process.env.GEMINI_API_KEY) throw new Error("API Key no configurada");
 
     const endpoint = stream ? 'streamGenerateContent' : 'generateContent';
@@ -138,7 +139,7 @@ async function callGeminiAPI({ intent, prompt, history, stream, res }) {
     ];
 
     // Si hay datos de archivo, los añadimos a la última entrada del usuario
-    if (req.body.fileData) {
+    if (fileData) {
         const lastContent = contents[contents.length - 1];
         lastContent.parts.push({
             inlineData: {
