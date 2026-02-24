@@ -1460,3 +1460,23 @@ document.querySelectorAll('.close-modal').forEach(btn => {
 // --- INICIALIZACIÓN DE MÓDULOS ---
 if (window.FILES) window.FILES.init();
 if (window.PRONUNCIATION) window.PRONUNCIATION.init();
+
+// --- ACCIONES RÁPIDAS (FONÉTICA) ---
+if (ELEMENTS.phoneticsMenu) {
+    ELEMENTS.phoneticsMenu.querySelectorAll('.lang-option').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const lang = btn.getAttribute('data-lang');
+            const presetText = `Dime la fonética de esta palabra en ${lang}: (escribe aquí)`;
+            ELEMENTS.chatInput.value = presetText;
+            ELEMENTS.chatInput.focus();
+
+            // Posicionar cursor después del ":"
+            const pos = presetText.indexOf(':') + 2;
+            ELEMENTS.chatInput.setSelectionRange(pos, presetText.length);
+
+            // Ocultar menú tras elegir (opcional, el CSS ya lo maneja por hover pero ayuda)
+            ELEMENTS.phoneticsMenu.style.display = 'none';
+            setTimeout(() => ELEMENTS.phoneticsMenu.style.display = '', 500);
+        });
+    });
+}

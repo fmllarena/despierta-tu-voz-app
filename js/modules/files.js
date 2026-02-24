@@ -19,27 +19,18 @@ export const FILES = window.FILES = {
         fileInput.style.display = 'none';
         document.body.appendChild(fileInput);
 
-        // Create Clip Button
-        const clipBtn = document.createElement('button');
-        clipBtn.id = 'clipBtn';
-        clipBtn.className = 'clip-btn';
-        clipBtn.innerHTML = '📎';
-        clipBtn.title = 'Adjuntar partitura o ensayo';
-
-        // Insert before mic button or at the end
-        if (ELEMENTS.micBtn) {
-            ELEMENTS.micBtn.parentNode.insertBefore(clipBtn, ELEMENTS.micBtn);
-        }
-
-        // Create Preview Container
+        // Create Preview Container (keep this as it's useful)
         const previewContainer = document.createElement('div');
         previewContainer.id = 'filePreviewContainer';
         previewContainer.className = 'file-preview-container';
         previewContainer.style.display = 'none';
         ELEMENTS.chatInputArea.parentNode.insertBefore(previewContainer, ELEMENTS.chatInputArea);
 
-        // Events
-        clipBtn.addEventListener('click', () => fileInput.click());
+        // Events - Use both the old one (if it exists) and the new quick button
+        const clipBtn = document.getElementById('clipBtn') || ELEMENTS.quickUploadBtn;
+        if (clipBtn) {
+            clipBtn.addEventListener('click', () => fileInput.click());
+        }
 
         fileInput.addEventListener('change', (e) => {
             const file = e.target.files[0];

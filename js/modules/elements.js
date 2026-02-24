@@ -89,5 +89,9 @@ export const ELEMENTS = window.ELEMENTS = {
     musicToggleBtn: document.getElementById('musicToggleBtn'),
     musicMenu: document.getElementById('musicMenu'),
     musicListItems: document.getElementById('musicListItems'),
-    stopMusicBtn: document.getElementById('stopMusicBtn')
+    stopMusicBtn: document.getElementById('stopMusicBtn'),
+    // Quick Actions
+    quickUploadBtn: document.getElementById('quickUploadBtn'),
+    quickPhoneticsBtn: document.getElementById('quickPhoneticsBtn'),
+    phoneticsMenu: document.getElementById('phoneticsMenu')
 };
