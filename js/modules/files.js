@@ -41,8 +41,11 @@ export const FILES = window.FILES = {
     },
 
     handleFileSelection(file) {
-        if (file.size > 15 * 1024 * 1024) {
-            alert('El archivo es demasiado grande (máx 15MB)');
+        // En Vercel Hobby el límite de payload es 4.5MB. 
+        // El Base64 añade un 33%, así que el límite seguro es ~3.4MB.
+        const MAX_SIZE = 3.5 * 1024 * 1024;
+        if (file.size > MAX_SIZE) {
+            alert('El archivo es demasiado grande para el plan actual (máx 3.5MB). Por favor, usa un clip más corto o comprime el PDF.');
             return;
         }
 
