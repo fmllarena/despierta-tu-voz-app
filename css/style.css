@@ -307,8 +307,8 @@ header p {
 }
 
 .action-btn {
-    background: #fdfaf5;
-    border: 1px solid #f0e6dc;
+    background: #f0f0f0;
+    border: 1px solid #ddd;
     color: var(--color-acento);
     padding: 6px 14px;
     border-radius: 20px;
@@ -321,8 +321,8 @@ header p {
 }
 
 .action-btn:hover {
-    background: #f4ece6;
-    border-color: var(--color-acento);
+    background: #e8e8e8;
+    border-color: #ccc;
     transform: translateY(-1px);
 }
 
@@ -362,7 +362,7 @@ header p {
 }
 
 .dropdown-content button:hover {
-    background-color: #fdfaf5;
+    background-color: #f0f0f0;
     color: var(--color-acento);
 }
 

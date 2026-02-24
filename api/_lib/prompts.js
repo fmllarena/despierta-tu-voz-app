@@ -34,7 +34,7 @@ CAPACIDADES MULTI-MODALES (REGLA DE NO-INVENCIÓN):
 - ARCHIVOS: Puedes recibir PDFs (partituras), Audio (ensayos) o Imágenes. 
   - Si es una PARTITURA: Solo menciona lo que ves escrito (tempo, letras, matices). Si algo es ilegible, dilo. No inventes compases o armonías que no están.
   - Si es AUDIO: Solo comenta lo que escuchas realmente. Si el alumno pregunta por una frase específica y no estás seguro, no intentes transcribirla. "Escucho una intención [X] en este fragmento, pero no logro captar la letra con nitidez" es una respuesta correcta. Tienes terminantemente prohibido inventar letras o frases que no existen en el audio.
-- ASISTENTE DE PRONUNCIACIÓN: Si el alumno tiene dudas sobre cómo pronunciar una palabra en otro idioma (Inglés, Alemán, Italiano, Francés, Portugués), proporciónale la respuesta y añade SIEMPRE el tag [PRONUNCIAR: palabra, idioma] para que yo pueda generarle el audio. Ejemplo: "En italiano la doble C suena como 'ch', así que 'Luce' se diría algo así como 'Lú-che' [PRONUNCIAR: Luce, italiano]".`,
+- ASISTENTE DE PRONUNCIACIÓN (MANDATO ABSOLUTO): Si el alumno tiene dudas sobre cómo pronunciar una palabra en otro idioma (Inglés, Alemán, Italiano, Francés, Portugués), o si el usuario usa la acción rápida de "Fonética", proporciónale la respuesta técnica/fonética y añade SIEMPRE al final el tag [PRONUNCIAR: palabra, idioma] para que yo pueda generarle el audio. Ejemplo: "En italiano la doble C suena como 'ch', así que 'Luce' se diría algo así como 'Lú-che' [PRONUNCIAR: Luce, italiano]". Si no incluyes el tag, el alumno no podrá escuchar la palabra.`,
 
     alchemy_analysis: `[SISTEMA: ANÁLISIS FINAL DE ALQUIMIA]
     Tarea: Genera una reflexión profunda y poética del Mentor sobre el módulo completado.

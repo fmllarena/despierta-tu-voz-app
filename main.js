@@ -650,7 +650,13 @@ async function sendMessage() {
             if (resEl) {
                 // Limpiamos el tag técnico si aparece durante el streaming para que no sea visible
                 // Usamos una regex flexible para capturar escapes de markdown como \_
-                const cleanDisplay = responseText.replace(/\[\s*SESION\\?_?FINAL\s*\]/gi, "").trim();
+                let cleanDisplay = responseText.replace(/\[\s*SESION\\?_?FINAL\s*\]/gi, "").trim();
+
+                // Parsear tags de pronunciación
+                if (window.PRONUNCIATION) {
+                    cleanDisplay = window.PRONUNCIATION.parseTags(cleanDisplay);
+                }
+
                 resEl.innerHTML = window.marked ? window.marked.parse(cleanDisplay + " ▮") : cleanDisplay;
             }
         });
@@ -660,7 +666,13 @@ async function sendMessage() {
         const finalEl = finalContainer?.querySelector('.message.ia');
 
         const cleanFinalText = responseText.replace(/\[\s*SESION\\?_?FINAL\s*\]/gi, "").trim();
-        if (finalEl) finalEl.innerHTML = window.marked ? window.marked.parse(cleanFinalText) : cleanFinalText;
+        if (finalEl) {
+            let parsedText = cleanFinalText;
+            if (window.PRONUNCIATION) {
+                parsedText = window.PRONUNCIATION.parseTags(parsedText);
+            }
+            finalEl.innerHTML = window.marked ? window.marked.parse(parsedText) : parsedText;
+        }
 
         sessionStorage.removeItem('dtv_origin_post');
         sessionStorage.removeItem('dtv_origin_cat');
