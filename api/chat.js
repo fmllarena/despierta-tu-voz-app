@@ -4,7 +4,7 @@ const { sanitizeGeminiHistory } = require('./_lib/utils');
 
 // --- SEGURIDAD DE GEMINI ---
 // v1beta es necesario para usar systemInstruction. v1 no soporta ese campo.
-const GEMINI_MODEL = "gemini-2.0-flash";
+const GEMINI_MODEL = "gemini-2.5-flash";
 const GEMINI_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/models";
 
 /**
@@ -129,8 +129,8 @@ async function callGeminiAPI({ intent, prompt, history, stream, res, fileData })
 
     const endpoint = stream ? 'streamGenerateContent' : 'generateContent';
 
-    // Selección dinámica de modelo: Pro para archivos (mejor análisis), Flash para chat (más rápido)
-    const modelToUse = fileData ? "gemini-1.5-pro" : GEMINI_MODEL;
+    // Selección dinámica de modelo: Pro 3.1 para archivos (mejor análisis), 2.5 Flash para chat (más rápido)
+    const modelToUse = fileData ? "gemini-3.1-pro-preview" : GEMINI_MODEL;
     const url = `${GEMINI_BASE_URL}/${modelToUse}:${endpoint}?key=${process.env.GEMINI_API_KEY}${stream ? '&alt=sse' : ''}`;
 
     const contents = [
