@@ -630,7 +630,8 @@ async function sendMessage() {
             originPost: sessionStorage.getItem('dtv_origin_post'),
             originCat: sessionStorage.getItem('dtv_origin_cat'),
             canRecommend: canAIRecommend(),
-            blogLibrary: blogLibrary
+            blogLibrary: blogLibrary,
+            fileData: fileData // <--- CRITICAL FIX: Include the file data
         };
 
         // Contenedor para la respuesta progresiva

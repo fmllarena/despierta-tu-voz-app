@@ -128,7 +128,10 @@ async function callGeminiAPI({ intent, prompt, history, stream, res, fileData })
     if (!process.env.GEMINI_API_KEY) throw new Error("API Key no configurada");
 
     const endpoint = stream ? 'streamGenerateContent' : 'generateContent';
-    const url = `${GEMINI_BASE_URL}/${GEMINI_MODEL}:${endpoint}?key=${process.env.GEMINI_API_KEY}${stream ? '&alt=sse' : ''}`;
+
+    // Selección dinámica de modelo: Pro para archivos (mejor análisis), Flash para chat (más rápido)
+    const modelToUse = fileData ? "gemini-1.5-pro" : GEMINI_MODEL;
+    const url = `${GEMINI_BASE_URL}/${modelToUse}:${endpoint}?key=${process.env.GEMINI_API_KEY}${stream ? '&alt=sse' : ''}`;
 
     const contents = [
         ...sanitizeGeminiHistory(history),
