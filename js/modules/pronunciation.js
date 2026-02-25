@@ -24,25 +24,32 @@ export const PRONUNCIATION = window.PRONUNCIATION = {
             const safeLang = cleanLang.replace(/'/g, "\\'");
 
             return `
-                <div class="pronunciation-widget" style="display:inline-block; margin: 5px 0;">
+                <div class="pronunciation-widget" style="display:flex; align-items:center; gap:5px; margin: 8px 0; flex-wrap: wrap;">
                     <button class="play-pronunciation-btn" 
-                            onclick="window.playPronunciation('${safeWord}', '${safeLang}')"
-                            style="cursor:pointer; background:#f8f9fa; border:1px solid #ddd; border-radius:18px; padding:5px 12px; font-size:0.9em; display:flex; align-items:center; gap:8px;">
+                            onclick="window.playPronunciation('${safeWord}', '${safeLang}', 1.0)"
+                            style="cursor:pointer; background:#f8f9fa; border:1px solid #ddd; border-top-left-radius:18px; border-bottom-left-radius:18px; padding:6px 14px; font-size:0.9em; display:flex; align-items:center; gap:8px; margin-right: -5px;">
                         <span>🔊 Escuchar </span> <strong>${cleanWord}</strong>
+                    </button>
+                    <button class="slow-pronunciation-btn" 
+                            onclick="window.playPronunciation('${safeWord}', '${safeLang}', 0.7)"
+                            title="Escuchar más lento"
+                            style="cursor:pointer; background:#fdfaf5; border:1px solid #ddd; border-left: none; border-top-right-radius:18px; border-bottom-right-radius:18px; padding:6px 10px; font-size:0.9em; display:flex; align-items:center;">
+                        <span>🐌</span>
                     </button>
                 </div>
             `;
         });
     },
 
-    async play(text, lang) {
+    async play(text, lang, speed = 1.0) {
         try {
             const response = await fetch('/api/tts', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     text: text,
-                    languageCode: this.getLanguageCode(lang)
+                    languageCode: this.getLanguageCode(lang),
+                    speakingRate: speed
                 })
             });
 
@@ -85,6 +92,6 @@ export const PRONUNCIATION = window.PRONUNCIATION = {
 };
 
 // Global helper for the onclick handler
-window.playPronunciation = (text, lang) => {
-    PRONUNCIATION.play(text, lang);
+window.playPronunciation = (text, lang, speed) => {
+    PRONUNCIATION.play(text, lang, speed);
 };
