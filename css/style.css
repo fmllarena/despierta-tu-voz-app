@@ -343,7 +343,6 @@ header p {
     z-index: 100;
     border-radius: 12px;
     border: 1px solid #eee;
-    overflow: hidden;
 }
 
 /* Puente invisible para mantener el hover entre el botón y el menú */
@@ -384,6 +383,17 @@ header p {
 .dropdown-content button:hover {
     background-color: #f0f0f0;
     color: var(--color-acento);
+}
+
+/* Radios individuales para compensar la falta de overflow:hidden */
+.dropdown-content button:first-child {
+    border-top-left-radius: 11px;
+    border-top-right-radius: 11px;
+}
+
+.dropdown-content button:last-child {
+    border-bottom-left-radius: 11px;
+    border-bottom-right-radius: 11px;
 }
 
 .dropdown:hover .dropdown-content {
