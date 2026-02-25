@@ -64,6 +64,16 @@ export const TOUR = window.TOUR = {
             text: "Si no te apetece escribir, pulsa el micro y transcribiré tus palabras para que nuestra charla sea más fluida."
         },
         {
+            target: "#quickUploadBtn",
+            title: "Tus Archivos",
+            text: "Haz clic aquí para compartir conmigo una partitura en PDF o un audio de tu ensayo. Lo analizaré para darte feedback específico."
+        },
+        {
+            target: "#quickPhoneticsBtn",
+            title: "Maestría en Idiomas",
+            text: "¿Dudas con la letra? Selecciona un idioma y te explicaré la fonética paso a paso, con audios para que escuches la pronunciación correcta."
+        },
+        {
             target: "#logoutBtn",
             title: "Guardar y Salir",
             text: "<strong>MUY IMPORTANTE</strong>: Cierra sesión siempre aquí para que pueda procesar y guardar todo nuestro avance."
