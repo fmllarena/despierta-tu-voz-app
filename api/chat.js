@@ -1,6 +1,7 @@
 const { createClient } = require('@supabase/supabase-js');
 const { SYSTEM_PROMPTS } = require('./_lib/prompts');
 const { sanitizeGeminiHistory } = require('./_lib/utils');
+const Anthropic = require('@anthropic-ai/sdk');
 
 // --- SEGURIDAD DE GEMINI ---
 // v1beta es necesario para usar systemInstruction. v1 no soporta ese campo.
@@ -24,7 +25,6 @@ module.exports = async function handler(req, res) {
             setupStreamHeaders(res);
             await processChat(req, res);
         } else {
-            // Timeout de 60s para peticiones normales (Vercel Hobby es 10s, pero manejamos el caso general)
             const result = await processChat(req);
             return res.status(200).json(result);
         }
@@ -34,7 +34,7 @@ module.exports = async function handler(req, res) {
 };
 
 /**
- * Procesa la lógica de negocio del chat: contexto + IA
+ * Procesa la lógica de negocio del chat con fallback secuencial
  */
 async function processChat(req, res = null) {
     const { intent, message, history = [], userId, stream = false, vocal_scan = null, originPost = null, originCat = null, fileData = null } = req.body;
@@ -56,15 +56,44 @@ async function processChat(req, res = null) {
 
     const finalPrompt = context ? `CONTEXTO:\n${context}\n\nMENSAJE:\n${message}` : message;
 
-    // 2. Llamada a Gemini
-    return await callGeminiAPI({
-        intent,
-        prompt: finalPrompt,
-        history,
-        stream,
-        res,
-        fileData
-    });
+    // --- CADENA DE REINTENTOS CON FALLBACK ---
+    const errors = [];
+
+    // Intento 1: Gemini (Siempre primero)
+    try {
+        console.log("🚀 Intentando con Gemini...");
+        return await callGeminiAPI({ intent, prompt: finalPrompt, history, stream, res, fileData });
+    } catch (e) {
+        console.warn("⚠️ Gemini falló:", e.message);
+        errors.push(`Gemini: ${e.message}`);
+        // Si hay stream y ya se ha escrito algo, no podemos reintentar fácilmente sin confundir al cliente.
+        // Pero normalmente los fallos de API ocurren antes de escribir nada.
+        if (stream && res && res.writableEnded) throw e;
+    }
+
+    // Intento 2: Groq (Llama 3.3 70B)
+    if (process.env.GROQ_API_KEY && !fileData) { // Groq no maneja archivos en este flujo
+        try {
+            console.log("🚀 Backup con Groq...");
+            return await callGroqAPI({ intent, prompt: finalPrompt, history });
+        } catch (e) {
+            console.warn("⚠️ Groq falló:", e.message);
+            errors.push(`Groq: ${e.message}`);
+        }
+    }
+
+    // Intento 3: Claude (Anthropic)
+    if (process.env.ANTHROPIC_API_KEY) {
+        try {
+            console.log("🚀 Backup con Claude...");
+            return await callClaudeAPI({ intent, prompt: finalPrompt, history });
+        } catch (e) {
+            console.warn("⚠️ Claude falló:", e.message);
+            errors.push(`Claude: ${e.message}`);
+        }
+    }
+
+    throw new Error(`Todos los modelos fallaron: ${errors.join(" | ")}`);
 }
 
 /**
@@ -73,14 +102,12 @@ async function processChat(req, res = null) {
 async function buildUserContext(userId, intent, originPost = null, originCat = null) {
     if (!userId && !originPost) return "";
 
-    // Solo cargar contexto para intents que lo requieran
     const needsContext = ['mentor_chat', 'mentor_briefing', 'alchemy_analysis', 'mentor_advisor', 'inspiracion_dia'].includes(intent);
     if (!needsContext) return "";
 
     const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
     let context = "";
 
-    // Añadir contexto de origen si viene del blog (Prioridad alta para la IA)
     if (originPost) {
         context += `\n--- ARTÍCULO LEÍDO (Contexto de Origen) ---\n`;
         context += `- Título: ${originPost}\n`;
@@ -89,7 +116,6 @@ async function buildUserContext(userId, intent, originPost = null, originCat = n
     }
 
     const { data: perfil } = await supabase.from('user_profiles').select('*').eq('user_id', userId).maybeSingle();
-
     if (!perfil) return context;
 
     context += `\n--- SITUACIÓN ACTUAL ---\n- Nombre: ${perfil.nombre}\n- Último Estado: ${perfil.ultimo_resumen || 'Iniciando'}\n`;
@@ -99,7 +125,6 @@ async function buildUserContext(userId, intent, originPost = null, originCat = n
         context += `- Transmutaciones (Logros): ${perfil.creencias_transmutadas || 'Ninguna registrada'}\n`;
     }
 
-    // Memoria Premium (Crónicas)
     const userTier = perfil.subscription_tier || 'free';
     if ((userTier === 'pro' || userTier === 'premium') && intent !== 'inspiracion_dia') {
         const { data: cronicas } = await supabase.from('mensajes')
@@ -107,7 +132,7 @@ async function buildUserContext(userId, intent, originPost = null, originCat = n
             .eq('alumno', userId)
             .eq('emisor', 'resumen_diario')
             .order('created_at', { ascending: false })
-            .limit(5); // Aumentamos a 5 para más profundidad
+            .limit(5);
 
         if (cronicas?.length > 0) {
             context += `\n--- MEMORIA RECIENTE (Crónicas de Alquimia) ---\n`;
@@ -125,23 +150,17 @@ async function buildUserContext(userId, intent, originPost = null, originCat = n
  * Ejecuta la llamada REST a Gemini
  */
 async function callGeminiAPI({ intent, prompt, history, stream, res, fileData }) {
-    if (!process.env.GEMINI_API_KEY) throw new Error("API Key no configurada");
+    if (!process.env.GEMINI_API_KEY) throw new Error("Falta API Key de Gemini");
 
     const endpoint = stream ? 'streamGenerateContent' : 'generateContent';
-
-    // Selección dinámica de modelo: Pro 3.1 para archivos (mejor análisis), 2.5 Flash para chat (más rápido)
     const modelToUse = fileData ? "gemini-3.1-pro-preview" : GEMINI_MODEL;
     const url = `${GEMINI_BASE_URL}/${modelToUse}:${endpoint}?key=${process.env.GEMINI_API_KEY}${stream ? '&alt=sse' : ''}`;
 
     const contents = [
         ...sanitizeGeminiHistory(history),
-        {
-            role: "user",
-            parts: [{ text: prompt }]
-        }
+        { role: "user", parts: [{ text: prompt }] }
     ];
 
-    // Si hay datos de archivo, los añadimos a la última entrada del usuario
     if (fileData) {
         const lastContent = contents[contents.length - 1];
         lastContent.parts.push({
@@ -173,8 +192,64 @@ async function callGeminiAPI({ intent, prompt, history, stream, res, fileData })
     } else {
         const data = await response.json();
         const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
-        return { text: text, info: GEMINI_MODEL };
+        return { text: text, info: modelToUse };
     }
+}
+
+/**
+ * Ejecuta fallback con Groq (REST)
+ */
+async function callGroqAPI({ intent, prompt, history }) {
+    if (!process.env.GROQ_API_KEY) throw new Error("Falta API Key de Groq");
+
+    const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+        method: "POST",
+        headers: {
+            "Authorization": `Bearer ${process.env.GROQ_API_KEY}`,
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            model: "llama-3.3-70b-versatile",
+            messages: [
+                { role: "system", content: SYSTEM_PROMPTS[intent] },
+                ...history.filter(h => h?.parts?.[0]?.text).map(h => ({
+                    role: h.role === 'model' ? 'assistant' : 'user',
+                    content: h.parts[0].text
+                })),
+                { role: "user", content: prompt }
+            ],
+            temperature: 0.7,
+            max_tokens: 1500
+        })
+    });
+
+    if (!response.ok) {
+        const errData = await response.json();
+        throw new Error(`Groq Error: ${errData.error?.message || response.statusText}`);
+    }
+
+    const data = await response.json();
+    return { text: data.choices?.[0]?.message?.content || "", info: "Groq (Llama 3.3)" };
+}
+
+/**
+ * Ejecuta fallback con Claude (SDK)
+ */
+async function callClaudeAPI({ intent, prompt, history }) {
+    if (!process.env.ANTHROPIC_API_KEY) throw new Error("Falta API Key de Claude");
+
+    const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+    const response = await anthropic.messages.create({
+        model: "claude-3-5-sonnet-latest",
+        max_tokens: 1500,
+        system: SYSTEM_PROMPTS[intent],
+        messages: history.filter(h => h?.parts?.[0]?.text).map(h => ({
+            role: h.role === 'model' ? 'assistant' : 'user',
+            content: h.parts[0].text
+        })).concat([{ role: "user", content: prompt }]),
+    });
+
+    return { text: response.content[0].text, info: "Claude 3.5 Sonnet" };
 }
 
 /**
@@ -209,8 +284,6 @@ async function handleStreamResponse(response, res) {
     }
 }
 
-// --- HELPERS AUXILIARES ---
-
 function setupStreamHeaders(res) {
     res.setHeader('Content-Type', 'text/event-stream');
     res.setHeader('Cache-Control', 'no-cache');
@@ -221,7 +294,9 @@ function handleError(error, res, stream) {
     console.error("⛔ [Backend Chat Error]:", error);
     if (res.writableEnded) return;
 
-    const msg = error.message.includes("Gemini Error") ? "El Mentor está meditando... (Error de IA)" : "Error técnico temporal.";
+    const msg = error.message.includes("Gemini Error") || error.message.includes("Groq") || error.message.includes("Claude")
+        ? "El Mentor está meditando profundamente... Prueba de nuevo."
+        : "Error técnico temporal.";
 
     if (stream) {
         res.write(`data: ${JSON.stringify({ error: msg })}\n\n`);
