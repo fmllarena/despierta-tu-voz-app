@@ -7,17 +7,19 @@ module.exports = async function handler(req, res) {
     // Intentamos usar la clave específica de TTS, si no, usamos la de Gemini como fallback
     const apiKey = process.env.GOOGLE_TTS_API_KEY || process.env.GEMINI_API_KEY;
 
-    // Mapa de voces por defecto por idioma (enfocado en calidad Studio/Wavenet)
+    // Mapa de voces por defecto con su género correcto para evitar errores 400
     const voiceMaps = {
-        'en-US': 'en-US-Studio-O',
-        'de-DE': 'de-DE-Studio-B',
-        'it-IT': 'it-IT-Studio-C',
-        'fr-FR': 'fr-FR-Studio-A',
-        'pt-PT': 'pt-PT-Wavenet-D',
-        'es-ES': 'es-ES-Chirp3-HD-Aoede'
+        'en-US': { name: 'en-US-Studio-O', gender: 'FEMALE' },
+        'de-DE': { name: 'de-DE-Studio-B', gender: 'MALE' },
+        'it-IT': { name: 'it-IT-Studio-C', gender: 'MALE' },
+        'fr-FR': { name: 'fr-FR-Studio-A', gender: 'FEMALE' },
+        'pt-PT': { name: 'pt-PT-Wavenet-D', gender: 'FEMALE' },
+        'es-ES': { name: 'es-ES-Chirp3-HD-Aoede', gender: 'FEMALE' }
     };
 
-    const finalVoiceName = voiceName || voiceMaps[languageCode] || voiceMaps['en-US'];
+    const config = voiceMaps[languageCode] || voiceMaps['en-US'];
+    const finalVoiceName = voiceName || config.name;
+    const finalGender = (voiceMaps[languageCode] && !voiceName) ? config.gender : 'FEMALE';
 
     if (!apiKey) {
         return res.status(500).json({ error: 'Falta la API Key de Google TTS en el servidor.' });
@@ -38,7 +40,7 @@ module.exports = async function handler(req, res) {
                     voice: {
                         languageCode: languageCode,
                         name: finalVoiceName,
-                        ssmlGender: 'NEUTRAL'
+                        ssmlGender: finalGender
                     },
                     audioConfig: { audioEncoding: 'MP3' }
                 })
