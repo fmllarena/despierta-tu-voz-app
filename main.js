@@ -619,7 +619,15 @@ async function sendMessage() {
 
     // --- ESTADO PENSANDO ---
     const thinkingId = 'msg-thinking-' + Date.now();
-    appendMessage("Procesando respuesta...", 'ia thinking', thinkingId);
+    let thinkingMsg = "Procesando respuesta...";
+    if (fileData) {
+        if (fileData.mimeType && fileData.mimeType.startsWith('audio')) {
+            thinkingMsg = "Analizando audio y preparando respuesta...";
+        } else {
+            thinkingMsg = "Analizando archivo y preparando respuesta...";
+        }
+    }
+    appendMessage(thinkingMsg, 'ia thinking', thinkingId);
 
     try {
         ['msg-botiquin', 'msg-bienvenida'].forEach(id => document.getElementById(id)?.remove());

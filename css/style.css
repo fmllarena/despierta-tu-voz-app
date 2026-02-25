@@ -250,6 +250,25 @@ header p {
     border: 1px solid #f0f0f0;
 }
 
+.ia.thinking {
+    font-style: italic;
+    color: #999;
+    animation: pulseThinking 1.5s infinite ease-in-out;
+    background: #f9f9f9;
+}
+
+@keyframes pulseThinking {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.5;
+    }
+}
+
 #msg-bienvenida {
     background: #3E3E3E;
     color: white;
