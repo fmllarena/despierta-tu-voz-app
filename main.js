@@ -619,7 +619,7 @@ async function sendMessage() {
 
     // --- ESTADO PENSANDO ---
     const thinkingId = 'msg-thinking-' + Date.now();
-    appendMessage("...", 'ia thinking', thinkingId);
+    appendMessage("Procesando respuesta...", 'ia thinking', thinkingId);
 
     try {
         ['msg-botiquin', 'msg-bienvenida'].forEach(id => document.getElementById(id)?.remove());
