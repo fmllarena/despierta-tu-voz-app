@@ -350,11 +350,20 @@ header p {
 .dropdown-content::after {
     content: "";
     position: absolute;
-    bottom: -10px;
-    left: 0;
-    width: 100%;
-    height: 10px;
+    bottom: -15px;
+    /* Cubrimos más espacio hacia abajo */
+    left: -20%;
+    /* Más ancho que el menú para seguridad */
+    width: 140%;
+    height: 15px;
     background: transparent;
+    pointer-events: all;
+}
+
+/* Evitamos que el botón de fonética se mueva al hacer hover, para no romper el puente */
+.dropdown:hover .action-btn {
+    transform: none;
+    background: #e8e8e8;
 }
 
 .dropdown-content button {
