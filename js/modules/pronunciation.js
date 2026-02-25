@@ -33,8 +33,9 @@ export const PRONUNCIATION = window.PRONUNCIATION = {
                     <button class="slow-pronunciation-btn" 
                             onclick="window.playPronunciation('${safeWord}', '${safeLang}', 0.7)"
                             title="Escuchar más lento"
-                            style="cursor:pointer; background:#fdfaf5; border:1px solid #ddd; border-left: none; border-top-right-radius:18px; border-bottom-right-radius:18px; padding:6px 10px; font-size:0.9em; display:flex; align-items:center;">
-                        <span>🐌</span>
+                            style="cursor:pointer; background:#fdfaf5; border:1px solid #ddd; border-left: none; border-top-right-radius:18px; border-bottom-right-radius:18px; padding:6px 10px; font-size:0.85em; display:flex; align-items:center; gap:4px; font-weight: bold; color: var(--color-acento);">
+                        <span style="font-size: 1.2em;">🐌</span>
+                        <span>LENTO</span>
                     </button>
                 </div>
             `;
@@ -43,12 +44,15 @@ export const PRONUNCIATION = window.PRONUNCIATION = {
 
     async play(text, lang, speed = 1.0) {
         try {
+            const mappedLang = this.getLanguageCode(lang);
+            console.log(`TTS Play: "${text}" [${lang} -> ${mappedLang}] speed: ${speed}`);
+
             const response = await fetch('/api/tts', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     text: text,
-                    languageCode: this.getLanguageCode(lang),
+                    languageCode: mappedLang,
                     speakingRate: speed
                 })
             });
@@ -67,27 +71,30 @@ export const PRONUNCIATION = window.PRONUNCIATION = {
     },
 
     getLanguageCode(lang) {
+        // Normalizamos quitando acentos básicos para el mapeo
+        const normalized = lang.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+
         const maps = {
             'en': 'en-US',
             'english': 'en-US',
-            'inglés': 'en-US',
+            'ingles': 'en-US',
             'de': 'de-DE',
-            'alemán': 'de-DE',
+            'aleman': 'de-DE',
             'german': 'de-DE',
             'it': 'it-IT',
             'italiano': 'it-IT',
             'italian': 'it-IT',
             'fr': 'fr-FR',
-            'francés': 'fr-FR',
+            'frances': 'fr-FR',
             'french': 'fr-FR',
             'pt': 'pt-PT',
-            'portugués': 'pt-PT',
+            'portugues': 'pt-PT',
             'portuguese': 'pt-PT',
             'es': 'es-ES',
-            'español': 'es-ES',
+            'espanol': 'es-ES',
             'spanish': 'es-ES'
         };
-        return maps[lang] || 'en-US';
+        return maps[normalized] || 'en-US';
     }
 };
 
