@@ -4,7 +4,8 @@ module.exports = async function handler(req, res) {
     }
 
     const { text, languageCode = 'es-ES', voiceName } = req.body;
-    const apiKey = process.env.GOOGLE_TTS_API_KEY;
+    // Intentamos usar la clave específica de TTS, si no, usamos la de Gemini como fallback
+    const apiKey = process.env.GOOGLE_TTS_API_KEY || process.env.GEMINI_API_KEY;
 
     // Mapa de voces por defecto por idioma (enfocado en calidad Studio/Wavenet)
     const voiceMaps = {
