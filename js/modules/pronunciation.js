@@ -3,7 +3,7 @@
  * Handles [PRONUNCIAR] tags in chat and plays synchronized audio using Google TTS.
  */
 
-export const PRONUNCIATION = {
+export const PRONUNCIATION = window.PRONUNCIATION = {
     init() {
         // This module will be called from main.js when parsing messages
     },
@@ -12,8 +12,8 @@ export const PRONUNCIATION = {
      * Extracts [PRONUNCIAR: word, lang] and replaces it with a Play button
      */
     parseTags(html) {
-        // Regex robusta: maneja escapes opcionales \[ y \] que a veces añade la IA en Markdown
-        const regex = /\\?\[\s*PRONUNCIAR:\s*([^,\]]+),\s*([^\]]+?)\s*\\?\]/gi;
+        // Regex super robusta: maneja [, [[, \[, espacios variados y mayúsculas
+        const regex = /\\?\[{1,2}\s*PRONUNCIAR:\s*([^,\]]+),\s*([^\]]+?)\s*\\?\]{1,2}/gi;
 
         return html.replace(regex, (match, word, lang) => {
             const cleanWord = word.trim();
