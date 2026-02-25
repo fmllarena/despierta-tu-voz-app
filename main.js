@@ -1024,6 +1024,9 @@ ELEMENTS.mainHelpBtn?.addEventListener('click', e => {
     e.stopPropagation();
     ELEMENTS.mainHelpTooltip?.classList.toggle('active');
 });
+document.getElementById('closeHelpBtn')?.addEventListener('click', () => {
+    ELEMENTS.mainHelpTooltip?.classList.remove('active');
+});
 document.addEventListener('click', () => ELEMENTS.mainHelpTooltip?.classList.remove('active'));
 ELEMENTS.mainHelpTooltip?.addEventListener('click', e => e.stopPropagation());
 

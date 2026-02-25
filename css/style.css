@@ -935,6 +935,21 @@ textarea {
     font-weight: normal;
 }
 
+.close-help-btn {
+    position: absolute;
+    right: 15px;
+    top: 10px;
+    font-size: 24px;
+    color: #999;
+    cursor: pointer;
+    transition: color 0.2s;
+    line-height: 1;
+}
+
+.close-help-btn:hover {
+    color: var(--color-acento);
+}
+
 .help-tooltip * {
     font-weight: inherit;
 }
