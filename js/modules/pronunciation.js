@@ -23,7 +23,8 @@ export const PRONUNCIATION = window.PRONUNCIATION = {
             const rawLang = parts.pop().trim();
             const rawWord = parts.join(',').trim();
 
-            const cleanWord = rawWord;
+            // Eliminamos comillas iniciales/finales si existen para mayor seguridad
+            const cleanWord = rawWord.replace(/^["']|["']$/g, '');
             const cleanLang = rawLang.toLowerCase();
 
             // Escapamos comillas simples para el onclick
