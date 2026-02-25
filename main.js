@@ -649,16 +649,18 @@ async function sendMessage() {
             const container = document.getElementById(responseId);
             const resEl = container?.querySelector('.message.ia');
             if (resEl) {
-                // Limpiamos el tag técnico si aparece durante el streaming para que no sea visible
-                // Usamos una regex flexible para capturar escapes de markdown como \_
                 let cleanDisplay = responseText.replace(/\[\s*SESION\\?_?FINAL\s*\]/gi, "").trim();
 
-                // Parsear tags de pronunciación
+                if (window.marked) {
+                    cleanDisplay = window.marked.parse(cleanDisplay + " ▮");
+                }
+
+                // Parsear tags de pronunciación (SOBRE EL HTML GENERADO POR MARKED)
                 if (window.PRONUNCIATION) {
                     cleanDisplay = window.PRONUNCIATION.parseTags(cleanDisplay);
                 }
 
-                resEl.innerHTML = window.marked ? window.marked.parse(cleanDisplay + " ▮") : cleanDisplay;
+                resEl.innerHTML = cleanDisplay;
             }
         });
 
@@ -669,10 +671,13 @@ async function sendMessage() {
         const cleanFinalText = responseText.replace(/\[\s*SESION\\?_?FINAL\s*\]/gi, "").trim();
         if (finalEl) {
             let parsedText = cleanFinalText;
+            if (window.marked) {
+                parsedText = window.marked.parse(parsedText);
+            }
             if (window.PRONUNCIATION) {
                 parsedText = window.PRONUNCIATION.parseTags(parsedText);
             }
-            finalEl.innerHTML = window.marked ? window.marked.parse(parsedText) : parsedText;
+            finalEl.innerHTML = parsedText;
         }
 
         sessionStorage.removeItem('dtv_origin_post');
@@ -955,12 +960,16 @@ function appendMessage(text, type, id = null) {
         // Limpiamos siempre el tag técnico para que el usuario nunca lo vea en la interfaz (vía regex flexible)
         let cleanText = text.replace(/\[\s*SESION\\?_?FINAL\s*\]/gi, "").trim();
 
-        // Parsear tags de pronunciación
+        if (window.marked) {
+            cleanText = window.marked.parse(cleanText);
+        }
+
+        // Parsear tags de pronunciación (SOBRE EL HTML GENERADO POR MARKED)
         if (window.PRONUNCIATION) {
             cleanText = window.PRONUNCIATION.parseTags(cleanText);
         }
 
-        div.innerHTML = window.marked ? window.marked.parse(cleanText) : cleanText;
+        div.innerHTML = cleanText;
 
         if (type !== 'ia-botiquin' && text !== "" && /\[\s*SESION\\?_?FINAL\s*\]/i.test(text)) {
             crearBotonesAccionFinal(div);

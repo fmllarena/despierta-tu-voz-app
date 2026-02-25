@@ -12,16 +12,23 @@ export const PRONUNCIATION = {
      * Extracts [PRONUNCIAR: word, lang] and replaces it with a Play button
      */
     parseTags(html) {
-        // Regex más flexible: permite espacios, mayúsculas/minúsculas y variaciones tras el idioma
-        const regex = /\[PRONUNCIAR:\s*([^,\]]+),\s*([^\]]+?)\s*\]/gi;
+        // Regex robusta: maneja escapes opcionales \[ y \] que a veces añade la IA en Markdown
+        const regex = /\\?\[\s*PRONUNCIAR:\s*([^,\]]+),\s*([^\]]+?)\s*\\?\]/gi;
+
         return html.replace(regex, (match, word, lang) => {
             const cleanWord = word.trim();
             const cleanLang = lang.trim().toLowerCase();
+
+            // Escapamos comillas simples para el onclick
+            const safeWord = cleanWord.replace(/'/g, "\\'");
+            const safeLang = cleanLang.replace(/'/g, "\\'");
+
             return `
-                <div class="pronunciation-widget">
+                <div class="pronunciation-widget" style="display:inline-block; margin: 5px 0;">
                     <button class="play-pronunciation-btn" 
-                            onclick="window.playPronunciation('${cleanWord}', '${cleanLang}')">
-                        <span>🔊 Escuchar pronunciación:</span> <strong>${cleanWord}</strong>
+                            onclick="window.playPronunciation('${safeWord}', '${safeLang}')"
+                            style="cursor:pointer; background:#f8f9fa; border:1px solid #ddd; border-radius:18px; padding:5px 12px; font-size:0.9em; display:flex; align-items:center; gap:8px;">
+                        <span>🔊 Escuchar </span> <strong>${cleanWord}</strong>
                     </button>
                 </div>
             `;
