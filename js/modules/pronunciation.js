@@ -12,12 +12,19 @@ export const PRONUNCIATION = window.PRONUNCIATION = {
      * Extracts [PRONUNCIAR: word, lang] and replaces it with a Play button
      */
     parseTags(html) {
-        // Regex super robusta: maneja [, [[, \[, espacios variados y mayúsculas
-        const regex = /\\?\[{1,2}\s*PRONUNCIAR:\s*([^,\]]+),\s*([^\]]+?)\s*\\?\]{1,2}/gi;
+        // Capturamos todo lo contenido entre [PRONUNCIAR: y ]
+        const regex = /\\?\[{1,2}\s*PRONUNCIAR:\s*([^\]]+?)\s*\\?\]{1,2}/gi;
 
-        return html.replace(regex, (match, word, lang) => {
-            const cleanWord = word.trim();
-            const cleanLang = lang.trim().toLowerCase();
+        return html.replace(regex, (match, content) => {
+            // Dividimos por la última coma para separar la frase del idioma
+            const parts = content.split(',');
+            if (parts.length < 2) return match; // Curación de seguridad
+
+            const rawLang = parts.pop().trim();
+            const rawWord = parts.join(',').trim();
+
+            const cleanWord = rawWord;
+            const cleanLang = rawLang.toLowerCase();
 
             // Escapamos comillas simples para el onclick
             const safeWord = cleanWord.replace(/'/g, "\\'");
