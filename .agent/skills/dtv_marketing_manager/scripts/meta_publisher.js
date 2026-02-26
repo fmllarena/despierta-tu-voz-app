@@ -41,17 +41,29 @@ class MetaPublisher {
             facebook: { status: 'failed', error: 'Not attempted' }
         };
 
+        // En modo borrador (draft), programamos para el DÍA SIGUIENTE a las 10:00 AM para que 100% 
+        // aparezca en "Programados" y nunca se publique accidentalmente si el día de la estrategia es hoy.
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+        const tomorrowName = dayNames[tomorrow.getDay()];
+
+        const scheduledTime = this.calculateScheduledTimeForDay(tomorrowName, '10:00');
+
+        console.log('   ⏳ Iniciando buffer de seguridad de 120s para asegurar despliegue en Vercel...');
+        await new Promise(r => setTimeout(r, 120000));
+
         try {
-            console.log('   📱 Publicando en Instagram (creando contenedor)...');
-            results.instagram = await this.publishInstagramDraft(content);
+            console.log('   📱 Programando borrador en Instagram (aparecerá en Programados)...');
+            results.instagram = await this.publishInstagramScheduled(content, scheduledTime);
         } catch (error) {
             console.error(`   ❌ Error en Instagram: ${error.message}`);
             results.instagram = { status: 'failed', error: error.message };
         }
 
         try {
-            console.log('   📘 Publicando en Facebook como borrador...');
-            results.facebook = await this.publishFacebookDraft(content);
+            console.log('   📘 Programando borrador en Facebook (aparecerá en Programados)...');
+            results.facebook = await this.publishFacebookScheduled(content, scheduledTime);
         } catch (error) {
             console.error(`   ❌ Error en Facebook: ${error.message}`);
             results.facebook = { status: 'failed', error: error.message };
@@ -202,7 +214,7 @@ class MetaPublisher {
      * Publica programado en Instagram
      */
     async publishInstagramScheduled(content, scheduledTime) {
-        const imageUrl = await this.uploadImageToFacebook(content.images.feed);
+        const imageUrl = await this.uploadImageToFacebook(content.images.feed, content);
         const caption = `${content.copy.feed}\n\n${content.copy.hashtags.join(' ')}\n\n🔗 ${content.shortUrl}`;
 
         // Crear container
@@ -221,10 +233,14 @@ class MetaPublisher {
         // Publicar container programado
         const publishData = {
             creation_id: container.id,
-            published: true,
+            // Omitimos 'published: true' explícito para asegurar que prima scheduled_publish_time
             scheduled_publish_time: scheduledTime,
             access_token: this.userToken
         };
+
+        // Delay adicional para el procesado interno de Meta
+        console.log('   ⏳ Esperando 5s para el procesado interno de Meta...');
+        await new Promise(r => setTimeout(r, 5000));
 
         const result = await this.makeGraphAPIRequest(
             `/${this.apiVersion}/${this.instagramAccountId}/media_publish`,
@@ -244,11 +260,12 @@ class MetaPublisher {
      * Publica programado en Facebook
      */
     async publishFacebookScheduled(content, scheduledTime) {
-        const imageUrl = await this.uploadImageToFacebook(content.images.feed);
+        const imageUrl = await this.uploadImageToFacebook(content.images.feed, content);
         const message = `${content.copy.feed}\n\n${content.copy.hashtags.join(' ')}\n\n🔗 ${content.shortUrl}`;
 
+        // Revertimos a /photos porque es lo que mejor funciona para que se vea como "Post de Foto" en el Business Suite
         const postData = {
-            message: message,
+            caption: message, // En /photos es 'caption', no 'message'
             url: imageUrl,
             published: false,
             scheduled_publish_time: scheduledTime,
@@ -270,14 +287,15 @@ class MetaPublisher {
     }
 
     /**
-     * Sube imagen a Facebook y retorna URL
-     * NOTA: Actualmente retorna una URL fija del sitio para que Meta acepte el borrador,
-     * ya que los archivos locales en temp/ no son accesibles desde internet.
+     * Sube imagen a Meta y retorna URL
+     * Usa la URL de producción para asegurar previsualización correcta
      */
-    async uploadImageToFacebook(imagePath) {
-        console.log(`   📸 Usando placeholder público para borrador: https://despiertatuvoz.com/wp-content/themes/dtv-theme/assets/hero-v2.png`);
-        // Usamos el hero del sitio como placeholder para que Meta acepte la creación del post
-        return `https://despiertatuvoz.com/wp-content/themes/dtv-theme/assets/hero-v2.png`;
+    async uploadImageToFacebook(imagePath, content = {}) {
+        const baseUrl = process.env.DTV_BASE_URL || 'https://app.despiertatuvoz.com';
+        const dateStr = content.date || new Date().toISOString().split('T')[0];
+        const imageUrl = `${baseUrl}/assets/social-media/post-${dateStr}.png`;
+        console.log(`   📸 Usando imagen de producción (vía Vercel): ${imageUrl}`);
+        return imageUrl;
     }
 
     /**

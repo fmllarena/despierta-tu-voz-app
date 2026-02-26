@@ -89,6 +89,27 @@ async function main() {
         console.log(`   Feed: ${images.feed}`);
         console.log(`   Story: ${images.story}`);
 
+        // SINCRONIZAR A ASSETS DE PRODUCCIÓN (Con nombre único para evitar cache)
+        const productionAssetsDir = path.join(__dirname, '..', '..', 'assets', 'social-media');
+        if (!fs.existsSync(productionAssetsDir)) {
+            fs.mkdirSync(productionAssetsDir, { recursive: true });
+        }
+        const postDest = path.join(productionAssetsDir, `post-${dateStr}.png`);
+        fs.copyFileSync(images.feed, postDest);
+        console.log(`   🔄 Imagen sincronizada para producción: assets/social-media/post-${dateStr}.png`);
+
+        // AUTO-PUSH A GITHUB
+        console.log(`   📤 Sincronizando con GitHub para desplegar en Vercel...`);
+        try {
+            const { execSync } = require('child_process');
+            execSync(`git add .`, { cwd: path.join(__dirname, '..', '..') });
+            execSync(`git commit -m "Social content update: ${dateStr} 🚀"`, { cwd: path.join(__dirname, '..', '..') });
+            execSync(`git push origin main`, { cwd: path.join(__dirname, '..', '..') });
+            console.log(`   ✅ Sincronización con GitHub completada.`);
+        } catch (gitError) {
+            console.warn(`   ⚠️ Advertencia: Error parcial en git push (puede ser que no haya cambios o red).`);
+        }
+
         // Step 4: Obtener URL fija
         console.log('\n🔗 Step 4: Obteniendo URL de tracking...');
         const shortUrl = await LinkManager.createShortLink(
