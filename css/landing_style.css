@@ -243,11 +243,13 @@ h3 {
 }
 
 .phase-item-top h3 {
-    font-size: 1.3rem;
+    font-size: 1.5rem;
+    /* Igualado al resto */
 }
 
 .phase-item-top p {
-    font-size: 0.95rem;
+    font-size: 1.1rem;
+    /* Igualado al resto */
 }
 
 /* --- APP TOUR INTERACTIVO (HOTSPOTS) --- */
