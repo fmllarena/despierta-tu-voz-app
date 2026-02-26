@@ -41,7 +41,13 @@ if (cliArgs.mode) {
  */
 async function main() {
     const startTime = Date.now();
-    const today = new Date();
+    let today = new Date();
+
+    // Si estamos en modo borrador, el objetivo real es MAÑANA
+    if (CONFIG.mode === 'draft') {
+        today.setDate(today.getDate() + 1);
+    }
+
     const dateStr = today.toISOString().split('T')[0];
 
     console.log('\n🚀 DTV Marketing Manager - Iniciando...\n');
@@ -52,7 +58,9 @@ async function main() {
     try {
         // Step 1: Análisis del contexto
         console.log('\n📊 Step 1: Analizando contexto...');
-        let dayOfWeek = cliArgs.day || CalendarLogic.getCurrentDay();
+        let dayOfWeek = cliArgs.day || (CONFIG.mode === 'draft' ?
+            CalendarLogic.getDayNameForDate(today) :
+            CalendarLogic.getCurrentDay());
         let strategy;
 
         if (cliArgs.niche) {

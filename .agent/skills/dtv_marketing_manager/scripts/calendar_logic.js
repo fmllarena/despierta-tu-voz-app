@@ -24,9 +24,15 @@ class CalendarLogic {
      * Obtiene el día actual en formato lowercase
      */
     getCurrentDay() {
+        return this.getDayNameForDate(new Date());
+    }
+
+    /**
+     * Obtiene el nombre del día para una fecha dada
+     */
+    getDayNameForDate(date) {
         const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
-        const today = new Date();
-        return days[today.getDay()];
+        return days[date.getDay()];
     }
 
     /**

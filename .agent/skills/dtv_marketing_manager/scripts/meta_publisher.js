@@ -206,7 +206,13 @@ class MetaPublisher {
         targetDate.setDate(now.getDate() + daysUntil);
         targetDate.setHours(hours, minutes, 0, 0);
 
-        // Convertir a timestamp Unix
+        // EXTRA SEGURIDAD: Meta requiere timestamps en UTC y con un mínimo de 15-20 min a futuro
+        // Aseguramos que targetDate sea futuro absoluto
+        if (targetDate.getTime() <= now.getTime() + minBuffer) {
+            targetDate.setDate(targetDate.getDate() + 1);
+        }
+
+        // Convertir a timestamp Unix (Segundos)
         return Math.floor(targetDate.getTime() / 1000);
     }
 
@@ -223,6 +229,11 @@ class MetaPublisher {
             caption: caption,
             access_token: this.userToken
         };
+
+        // Si hay una hora programada, la añadimos también al container como precaución
+        if (scheduledTime) {
+            containerData.scheduled_publish_time = scheduledTime;
+        }
 
         const container = await this.makeGraphAPIRequest(
             `/${this.apiVersion}/${this.instagramAccountId}/media`,
