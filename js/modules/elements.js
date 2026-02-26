@@ -1,7 +1,4 @@
-/**
- * DTV UI Elements Module
- * Contiene todas las referencias al DOM utilizadas en la aplicación.
- */
+console.log("🔵 elements.js: Módulo CARGADO.");
 /**
  * DTV UI Elements Module
  * Contiene todas las referencias al DOM utilizadas en la aplicación.

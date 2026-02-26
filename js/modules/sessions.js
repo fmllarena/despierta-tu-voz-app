@@ -1,5 +1,8 @@
+console.log("🔵 sessions.js: Cargando módulo...");
 import { ELEMENTS } from './elements.js';
+console.log("🔵 sessions.js: Import ELEMENTS completado.");
 import { userProfile } from './config.js';
+console.log("🔵 sessions.js: Import userProfile completado.");
 
 export const SESIONES = window.SESIONES = {
     links: {
@@ -184,6 +187,7 @@ export const SESIONES = window.SESIONES = {
                 try {
                     // Limpiar el contenedor justo antes para que no interfiera con Cal.com
                     // pero Cal.com suele preferir gestionar su propio contenido.
+
 
                     window.Cal("inline", {
                         elementOrSelector: calContainer,
