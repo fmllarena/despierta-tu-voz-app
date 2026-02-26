@@ -20,6 +20,7 @@ export const ELEMENTS = window.ELEMENTS = {
         botiquin: document.getElementById('botiquinBtn'),
         logout: document.getElementById('logoutBtn')
     },
+    loginFields: document.getElementById('loginFields'),
     forgotPasswordLink: document.getElementById('forgotPasswordLink'),
     resetPasswordContainer: document.getElementById('resetPasswordContainer'),
     updatePasswordBtn: document.getElementById('updatePasswordBtn'),

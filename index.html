@@ -21,26 +21,49 @@
     <div id="authOverlay" class="overlay">
         <div class="auth-card">
             <h2>Despierta tu Voz</h2>
-            <p>Introduce tus datos para hablar con el Mentor</p>
+            <p id="authIntro">Introduce tus datos para hablar con el Mentor</p>
 
-            <input type="text" id="authName" placeholder="Tu nombre para el Mentor (solo la 1a vez)">
-            <input type="email" id="authEmail" placeholder="Tu correo electrónico">
-            <div class="password-wrapper">
-                <input type="password" id="authPassword" placeholder="Tu contraseña">
-                <button type="button" class="toggle-password" data-target="authPassword">
-                    <svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                        <circle cx="12" cy="12" r="3"></circle>
-                    </svg>
+            <div id="authError" class="error-msg"></div>
+
+            <div class="social-auth-container">
+                <button onclick="authActions.loginWithOAuth('google')" class="btn-social btn-google">
+                    <img src="https://www.gstatic.com/images/branding/product/1x/gsa_512dp.png" alt="Google">
+                    Continuar con Google
+                </button>
+                <button onclick="authActions.loginWithOAuth('facebook')" class="btn-social btn-facebook">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/b/b8/2021_Facebook_icon.svg"
+                        alt="Facebook">
+                    Continuar con Facebook
                 </button>
             </div>
 
-            <div class="auth-buttons">
-                <button id="loginBtn">Entrar</button>
-                <button id="signUpBtn" class="secondary">Registrarme</button>
+            <div class="auth-divider">
+                <span class="divider-line"></span>
+                <span>o usa tu correo electrónico</span>
+                <span class="divider-line"></span>
             </div>
-            <div class="auth-extra">
-                <a href="#" id="forgotPasswordLink">¿Has olvidado tu contraseña?</a>
+
+            <div id="loginFields">
+                <input type="text" id="authName" placeholder="Tu nombre para el Mentor (solo la 1a vez)">
+                <input type="email" id="authEmail" placeholder="Tu correo electrónico">
+                <div class="password-wrapper">
+                    <input type="password" id="authPassword" placeholder="Tu contraseña">
+                    <button type="button" class="toggle-password" data-target="authPassword">
+                        <svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                            <circle cx="12" cy="12" r="3"></circle>
+                        </svg>
+                    </button>
+                </div>
+
+                <div class="auth-buttons">
+                    <button id="loginBtn">Entrar</button>
+                    <button id="signUpBtn" class="secondary">Registrarme</button>
+                </div>
+
+                <div class="auth-extra">
+                    <a href="#" id="forgotPasswordLink">¿Has olvidado tu contraseña?</a>
+                </div>
             </div>
 
             <!-- Sección oculta para resetear contraseña -->
@@ -57,8 +80,6 @@
                 </div>
                 <button id="updatePasswordBtn">Actualizar Contraseña</button>
             </div>
-
-            <p id="authError" class="error-msg"></p>
         </div>
     </div>
 
@@ -625,6 +646,7 @@
 
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script type="module" src="js/services/auth-service.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="js/stripe-checkout.js"></script>
     <script type="module" src="js/modules/config.js"></script>

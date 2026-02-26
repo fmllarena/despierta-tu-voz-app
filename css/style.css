@@ -110,6 +110,84 @@ button#signUpBtn {
     color: #e74c3c;
     font-size: 0.8em;
     margin-top: 10px;
+    min-height: 1.2em;
+}
+
+/* --- SOCIAL AUTH --- */
+.social-auth-container {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin: 20px 0;
+}
+
+.btn-social {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 12px;
+    border-radius: 10px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    border: 1px solid #ddd;
+    background: white !important;
+    color: #444 !important;
+    font-family: inherit;
+    cursor: pointer;
+    width: 100%;
+}
+
+.btn-social img {
+    width: 20px;
+    height: 20px;
+    object-fit: contain;
+}
+
+.btn-google:hover {
+    background: #f8f9fa !important;
+    border-color: #4285F4;
+}
+
+.btn-facebook {
+    background: #1877F2 !important;
+    color: white !important;
+    border: none !important;
+}
+
+.btn-facebook:hover {
+    background: #166fe5 !important;
+    transform: scale(1.02);
+}
+
+.auth-divider {
+    display: flex;
+    align-items: center;
+    text-align: center;
+    margin: 20px 0;
+    color: #888;
+    font-size: 0.85rem;
+}
+
+.divider-line {
+    flex: 1;
+    border-bottom: 1px solid #eee;
+}
+
+.auth-divider span:not(.divider-line) {
+    padding: 0 10px;
+}
+
+.auth-extra {
+    margin-top: 15px;
+}
+
+#resetPasswordContainer {
+    display: none;
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid #eee;
 }
 
 body {

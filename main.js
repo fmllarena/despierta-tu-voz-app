@@ -195,8 +195,7 @@ function setupAuthListener() {
             ELEMENTS.resetPasswordContainer.style.display = 'block';
             ELEMENTS.authError.innerText = "Modo recuperación: Introduce tu nueva contraseña.";
             // Ocultar campos normales de auth para que no confundan
-            document.querySelectorAll('#authOverlay input:not(#newPassword), #authOverlay .auth-buttons, #authOverlay .auth-extra')
-                .forEach(el => el.style.display = 'none');
+            if (ELEMENTS.loginFields) ELEMENTS.loginFields.style.display = 'none';
         }
 
         // Solo actuar si el usuario realmente ha cambiado para evitar borrados accidentales
@@ -418,129 +417,9 @@ async function saludarUsuario(user, perfil) {
     }
 }
 
-const authActions = {
-    async signUp() {
-        const nombre = document.getElementById('authName').value;
-        const email = document.getElementById('authEmail').value;
-        const password = document.getElementById('authPassword').value;
-        if (!email || !password || !nombre) {
-            ELEMENTS.authError.style.color = "red";
-            return ELEMENTS.authError.innerText = "Completa todos los campos.";
-        }
+// El objeto authActions se ha movido a js/services/auth-service.js
+// para centralizar la lógica de autenticación (Email + Social)
 
-        const signUpBtn = document.getElementById('signUpBtn');
-        const loginBtn = document.getElementById('loginBtn');
-        signUpBtn.disabled = true;
-        loginBtn.disabled = true;
-        signUpBtn.innerText = "Registrando...";
-        ELEMENTS.authError.innerText = "";
-
-        try {
-            if (!supabaseClient) await inicializarSupabase();
-            if (!supabaseClient) {
-                const specError = window.supabaseInitError ? `: ${window.supabaseInitError}` : "";
-                throw new Error("No se pudo conectar con el servidor" + specError + ". Por favor, recarga la página.");
-            }
-
-            console.log("Iniciando registro para:", email, "con nombre:", nombre);
-            const { data, error } = await supabaseClient.auth.signUp({
-                email,
-                password,
-                options: {
-                    data: { nombre: nombre },
-                    emailRedirectTo: window.location.origin + '/index.html'
-                }
-            });
-
-            if (error) throw error;
-
-            if (data?.user) {
-                // Verificar si el usuario ya existe (identities vacío = ya registrado)
-                if (data.user.identities && data.user.identities.length === 0) {
-                    throw new Error("Este correo ya está registrado. Por favor, inicia sesión.");
-                }
-
-                console.log("Registro exitoso. Disparando email de bienvenida...");
-
-                // Disparar email de bienvenida/verificación de forma asíncrona (no bloqueante para la UI)
-                fetch('/api/send-verification-email', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        userId: data.user.id,
-                        email: email,
-                        nombre: nombre
-                    })
-                }).catch(err => console.error("Error disparando bienvenida:", err));
-
-                ELEMENTS.authError.style.color = "#2ecc71"; // Verde esmeralda
-                ELEMENTS.authError.innerText = "¡Registro exitoso! Ya puedes iniciar sesión. Revisa tu bandeja de entrada (o spam) para confirmar tu cuenta y recibir tu bienvenida.";
-
-                // Limpiar campos
-                document.getElementById('authPassword').value = "";
-            }
-        } catch (error) {
-            console.error("Error en registro:", error);
-            ELEMENTS.authError.style.color = "red";
-            ELEMENTS.authError.innerText = "Error: " + error.message;
-        } finally {
-            signUpBtn.disabled = false;
-            loginBtn.disabled = false;
-            signUpBtn.innerText = "Registrarme";
-        }
-    },
-    async login() {
-        const email = document.getElementById('authEmail').value;
-        const password = document.getElementById('authPassword').value;
-        if (!email || !password) {
-            ELEMENTS.authError.style.color = "red";
-            return ELEMENTS.authError.innerText = "Completa los campos.";
-        }
-
-        const loginBtn = document.getElementById('loginBtn');
-        const signUpBtn = document.getElementById('signUpBtn');
-        loginBtn.disabled = true;
-        signUpBtn.disabled = true;
-        loginBtn.innerText = "Entrando...";
-        ELEMENTS.authError.innerText = "";
-
-        try {
-            if (!supabaseClient) await inicializarSupabase();
-            const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
-            if (error) throw error;
-        } catch (error) {
-            console.error("Error en login:", error);
-            ELEMENTS.authError.style.color = "red";
-            ELEMENTS.authError.innerText = "Error: " + error.message;
-        } finally {
-            loginBtn.disabled = false;
-            signUpBtn.disabled = false;
-            loginBtn.innerText = "Entrar";
-        }
-    },
-    async resetPassword() {
-        const email = document.getElementById('authEmail').value;
-        if (!email) return ELEMENTS.authError.innerText = "Introduce tu email primero.";
-
-        const { error } = await supabaseClient.auth.resetPasswordForEmail(email, {
-            redirectTo: window.location.origin + '/index.html'
-        });
-        if (error) ELEMENTS.authError.innerText = "Error: " + error.message;
-        else alert("Correo de recuperación enviado. Revisa tu bandeja de entrada.");
-    },
-    async updatePassword() {
-        const newPassword = document.getElementById('newPassword').value;
-        if (!newPassword) return alert("Introduce la nueva contraseña.");
-
-        const { error } = await supabaseClient.auth.updateUser({ password: newPassword });
-        if (error) alert("Error actualizando: " + error.message);
-        else {
-            alert("Contraseña actualizada con éxito.");
-            isRecoveringPassword = false;
-            location.reload();
-        }
-    }
-};
 
 document.getElementById('signUpBtn')?.addEventListener('click', authActions.signUp);
 document.getElementById('loginBtn')?.addEventListener('click', authActions.login);

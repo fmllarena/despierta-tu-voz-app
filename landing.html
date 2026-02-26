@@ -453,7 +453,8 @@
     <!-- MODAL DE REGISTRO / LOGIN AMABLE (LANDING) -->
     <div id="authLandingModal" class="modal">
         <div class="modal-content">
-            <span class="close-modal" onclick="document.getElementById('authLandingModal').style.display='none'">&times;</span>
+            <span class="close-modal"
+                onclick="document.getElementById('authLandingModal').style.display='none'">&times;</span>
             <h2 id="landingAuthTitle">Comienza tu Transformación</h2>
             <p id="landingAuthIntro" class="modal-intro">Crea tu cuenta para guardar tu progreso y acceder a tu Mentor
                 Vocal en cualquier
@@ -601,6 +602,7 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script type="module" src="js/services/auth-service.js"></script>
     <script src="js/stripe-checkout.js"></script>
     <script>
         // Lógica de detección de promo

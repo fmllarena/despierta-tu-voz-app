@@ -89,6 +89,19 @@ export const authActions = {
                     throw new Error("Este correo ya está registrado. Por favor, inicia sesión.");
                 }
 
+                console.log("✅ Registro exitoso. Disparando bienvenida...");
+
+                // Disparar email de bienvenida/verificación de forma asíncrona
+                fetch('/api/send-verification-email', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        userId: data.user.id,
+                        email: email,
+                        nombre: nombre
+                    })
+                }).catch(err => console.error("❌ Error disparando bienvenida:", err));
+
                 ELEMENTS.authError.style.color = "#2ecc71";
                 ELEMENTS.authError.innerText = "¡Registro exitoso! Por favor, REVISA TU EMAIL para confirmar tu cuenta antes de entrar.";
             }
