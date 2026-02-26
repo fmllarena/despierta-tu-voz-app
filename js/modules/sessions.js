@@ -1,7 +1,9 @@
-console.log("🔵 sessions.js: Cargando módulo...");
 import { ELEMENTS } from './elements.js';
-console.log("🔵 sessions.js: Import ELEMENTS completado.");
 import { userProfile } from './config.js';
+
+console.log("🔵 sessions.js: Módulo CARGADO (imports OK)");
+console.log("🔵 sessions.js: Cargando módulo...");
+console.log("🔵 sessions.js: Import ELEMENTS completado.");
 console.log("🔵 sessions.js: Import userProfile completado.");
 
 export const SESIONES = window.SESIONES = {

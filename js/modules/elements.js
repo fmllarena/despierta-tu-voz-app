@@ -1,9 +1,9 @@
-console.log("🔵 elements.js: Módulo CARGADO.");
 /**
  * DTV UI Elements Module
  * Contiene todas las referencias al DOM utilizadas en la aplicación.
  * Se usan getters para asegurar que se obtengan los elementos más recientes si el DOM cambia.
  */
+console.log("🔵 elements.js: Módulo CARGADO.");
 export const ELEMENTS = window.ELEMENTS = {
     get chatBox() { return document.getElementById('chatBox'); },
     get chatInput() { return document.getElementById('chatMentoriaInput'); },
