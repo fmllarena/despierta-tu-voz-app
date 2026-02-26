@@ -218,10 +218,15 @@ export const SESIONES = window.SESIONES = {
 
         if (window.Cal) window.Cal("ui", { theme: "light" });
 
-        ELEMENTS.sesionBtn?.addEventListener('click', () => this.abrirModal());
-        ELEMENTS.closeSesion?.addEventListener('click', () => {
-            if (ELEMENTS.sesionModal) ELEMENTS.sesionModal.style.display = 'none';
-        });
+        if (ELEMENTS.sesionBtn) {
+            console.log("✅ Selector sesionBtn encontrado, añadiendo listener.");
+            ELEMENTS.sesionBtn.addEventListener('click', () => {
+                console.log("Click en sesionBtn (Menú)");
+                this.abrirModal();
+            });
+        } else {
+            console.warn("⚠️ No se encontró sesionBtn para añadir listener en setup()");
+        }
 
         ELEMENTS.book30Btn?.addEventListener('click', (e) => {
             console.log("Click en book30Btn");
