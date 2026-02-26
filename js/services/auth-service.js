@@ -33,7 +33,14 @@ export const authActions = {
 
         try {
             const { error } = await state.supabase.auth.signInWithPassword({ email, password });
-            if (error) throw error;
+            if (error) {
+                if (error.message && (error.message.includes("Email not confirmed") || error.status === 400)) {
+                    // Si el error es falta de confirmación, damos un mensaje constructivo
+                    ELEMENTS.authError.style.color = "#e67e22";
+                    return ELEMENTS.authError.innerText = "Por favor, confirma tu email para entrar. Revisa tu bandeja de entrada o carpeta de Spam.";
+                }
+                throw error;
+            }
             console.log("✅ Supabase respondió sin error.");
         } catch (error) {
             console.error("❌ Error en login:", error);
@@ -82,19 +89,8 @@ export const authActions = {
                     throw new Error("Este correo ya está registrado. Por favor, inicia sesión.");
                 }
 
-                // Disparar email de bienvenida
-                fetch('/api/send-verification-email', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        userId: data.user.id,
-                        email: email,
-                        nombre: nombre
-                    })
-                }).catch(err => console.error("Error disparando bienvenida:", err));
-
                 ELEMENTS.authError.style.color = "#2ecc71";
-                ELEMENTS.authError.innerText = "¡Registro exitoso! Ya puedes iniciar sesión. Revisa tu bandeja de entrada para confirmar tu cuenta.";
+                ELEMENTS.authError.innerText = "¡Registro exitoso! Por favor, REVISA TU EMAIL para confirmar tu cuenta antes de entrar.";
             }
         } catch (error) {
             console.error("Error en registro:", error);

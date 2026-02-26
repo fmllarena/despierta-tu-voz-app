@@ -147,6 +147,17 @@ function setupLandingAuthListeners() {
                 const user = result.data.user;
                 if (!isLoginMode && user.identities && user.identities.length === 0) {
                     throw new Error("Este correo ya está registrado. Por favor, selecciona 'Inicia sesión'.");
+                } else if (!user.email_confirmed_at) {
+                    // SI NO HA CONFIRMADO EMAIL, MOSTRAMOS EL NUEVO MODAL DE VERIFICACIÓN
+                    document.getElementById('authLandingModal').style.display = 'none';
+                    const verificationModal = document.getElementById('verificationLandingModal');
+                    if (verificationModal) {
+                        verificationModal.style.display = 'flex';
+                        setupLandingVerificationListeners(user);
+                    } else {
+                        // Fallback por si el modal no existe, al menos le avisamos
+                        alert("Por favor, confirma tu correo electrónico para continuar.");
+                    }
                 } else {
                     document.getElementById('authLandingModal').style.display = 'none';
                     const legalModal = document.getElementById('legalLandingModal');
@@ -190,6 +201,86 @@ function setupLandingAuthListeners() {
     }
 
     btnRegister.dataset.listenerSet = "true";
+}
+
+let verificationPollingInterval = null;
+
+function setupLandingVerificationListeners(user) {
+    const btnResend = document.getElementById('btnResendVerification');
+    const btnCheck = document.getElementById('btnCheckVerification');
+    const errorDiv = document.getElementById('verificationError');
+
+    // Limpiar intervalo anterior si existe
+    if (verificationPollingInterval) clearInterval(verificationPollingInterval);
+
+    // FUNCIÓN DE COMPROBACIÓN (POLLING)
+    const checkVerificationStatus = async () => {
+        try {
+            if (!supabasePagos) await inicializarSupabase();
+            const { data, error } = await supabasePagos.auth.getUser();
+
+            if (error) throw error;
+
+            if (data?.user?.email_confirmed_at) {
+                console.log("✅ Email confirmado detectado vía polling.");
+                clearInterval(verificationPollingInterval);
+                document.getElementById('verificationLandingModal').style.display = 'none';
+
+                const legalModal = document.getElementById('legalLandingModal');
+                if (legalModal) {
+                    legalModal.style.display = 'flex';
+                    setupLandingLegalListeners(data.user);
+                }
+            }
+        } catch (e) {
+            console.error("Error en polling de verificación:", e);
+        }
+    };
+
+    // Polling cada 5 segundos
+    verificationPollingInterval = setInterval(checkVerificationStatus, 5000);
+
+    // BOTÓN: YA HE VERIFICADO (Manual)
+    if (btnCheck) {
+        btnCheck.onclick = async () => {
+            btnCheck.disabled = true;
+            btnCheck.innerText = "Comprobando...";
+            await checkVerificationStatus();
+            const { data } = await supabasePagos.auth.getUser();
+            if (!data?.user?.email_confirmed_at) {
+                if (errorDiv) {
+                    errorDiv.innerText = "Aún no detectamos la confirmación. Por favor, pulsa el enlace en tu email.";
+                    errorDiv.style.display = 'block';
+                }
+                btnCheck.disabled = false;
+                btnCheck.innerText = "Ya he verificado";
+            }
+        };
+    }
+
+    // BOTÓN: REENVIAR EMAIL
+    if (btnResend) {
+        btnResend.onclick = async () => {
+            btnResend.disabled = true;
+            btnResend.innerText = "Enviando...";
+            try {
+                const { error } = await supabasePagos.auth.resend({
+                    type: 'signup',
+                    email: user.email,
+                    options: {
+                        emailRedirectTo: window.location.origin + '/index.html'
+                    }
+                });
+                if (error) throw error;
+                alert("Email de confirmación reenviado. Revisa tu bandeja de entrada.");
+            } catch (e) {
+                alert("Error al reenviar: " + e.message);
+            } finally {
+                btnResend.disabled = false;
+                btnResend.innerText = "Reenviar Email";
+            }
+        };
+    }
 }
 
 function setupLandingLegalListeners(user) {

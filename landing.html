@@ -515,6 +515,32 @@
         </div>
     </div>
 
+    <!-- MODAL DE VERIFICACIÓN DE EMAIL (LANDING) -->
+    <div id="verificationLandingModal" class="modal">
+        <div class="modal-content">
+            <div class="verification-header">
+                <span class="verification-icon">✉️</span>
+                <h2>Confirma tu Correo</h2>
+            </div>
+            <p class="modal-intro">Hemos enviado un enlace de confirmación a tu email. Por seguridad y para activar tu
+                plan, es necesario que verifiques tu cuenta.</p>
+
+            <div class="verification-status-box">
+                <div class="loader-mini"></div>
+                <p>Esperando confirmación...</p>
+                <small>La ventana avanzará automáticamente al detectar el clic.</small>
+            </div>
+
+            <div id="verificationError" class="error-msg" style="display:none;"></div>
+
+            <div class="modal-actions">
+                <button id="btnResendVerification" class="btn btn-outline">Reenviar Email</button>
+                <button id="btnCheckVerification" class="btn btn-primary">Ya he verificado</button>
+                <p style="margin-top: 15px; font-size: 0.85em; color: #888;">¿Problemas? Revisa tu carpeta de Spam.</p>
+            </div>
+        </div>
+    </div>
+
     <!-- MODAL LEGAL (LANDING) -->
     <div id="legalLandingModal" class="modal">
         <div class="modal-content">
