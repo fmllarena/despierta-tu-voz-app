@@ -149,10 +149,11 @@ export const authActions = {
             const pendingPlan = window.LEGAL?.pendingPlan || sessionStorage.getItem('pendingPlan');
             if (pendingPlan) sessionStorage.setItem('pendingPlan', pendingPlan);
 
+            const currentPath = window.location.pathname === '/' ? '/index.html' : window.location.pathname;
             const { error } = await state.supabase.auth.signInWithOAuth({
                 provider: provider,
                 options: {
-                    redirectTo: window.location.origin + '/landing.html'
+                    redirectTo: window.location.origin + currentPath
                 }
             });
 
