@@ -453,6 +453,7 @@
     <!-- MODAL DE REGISTRO / LOGIN AMABLE (LANDING) -->
     <div id="authLandingModal" class="modal">
         <div class="modal-content">
+            <span class="close-modal" onclick="document.getElementById('authLandingModal').style.display='none'">&times;</span>
             <h2 id="landingAuthTitle">Comienza tu Transformación</h2>
             <p id="landingAuthIntro" class="modal-intro">Crea tu cuenta para guardar tu progreso y acceder a tu Mentor
                 Vocal en cualquier
@@ -477,170 +478,177 @@
             </div>
 
             <div class="form-group">
+                <label for="landingEmail">Correo Electrónico</label>
+                <input type="email" id="landingEmail" placeholder="tu@email.com">
+            </div>
+            <div class="form-group">
+                <label for="landingPassword">Contraseña</label>
+                <input type="password" id="landingPassword" placeholder="Tu contraseña">
+            </div>
 
-                <div class="modal-actions">
-                    <button id="btnLandingRegister" class="btn btn-primary">Registrarme y Continuar</button>
-                    <p class="auth-toggle-text">
-                        <span id="toggleToLogin">¿Ya tienes cuenta? Inicia sesión aquí</span>
-                        <span id="toggleToRegister" style="display:none;">¿Eres nuevo? Crea tu cuenta aquí</span>
-                    </p>
-                    <p id="landingForgotPassWrap" style="display:none; margin-top: 10px; font-size: 0.85em;">
-                        <a href="#" id="landingForgotPassLink"
-                            style="color: var(--color-acento); text-decoration: none;">¿Has olvidado tu contraseña?</a>
-                    </p>
-                    <button onclick="document.getElementById('authLandingModal').style.display='none'"
-                        class="btn btn-secondary">Cancelar</button>
-                </div>
+            <div class="modal-actions">
+                <button id="btnLandingRegister" class="btn btn-primary">Registrarme y Continuar</button>
+                <p class="auth-toggle-text">
+                    <span id="toggleToLogin">¿Ya tienes cuenta? Inicia sesión aquí</span>
+                    <span id="toggleToRegister" style="display:none;">¿Eres nuevo? Crea tu cuenta aquí</span>
+                </p>
+                <p id="landingForgotPassWrap" style="display:none; margin-top: 10px; font-size: 0.85em;">
+                    <a href="#" id="landingForgotPassLink"
+                        style="color: var(--color-acento); text-decoration: none;">¿Has olvidado tu contraseña?</a>
+                </p>
+                <button onclick="document.getElementById('authLandingModal').style.display='none'"
+                    class="btn btn-secondary">Cancelar</button>
             </div>
         </div>
+    </div>
 
-        <!-- MODAL DE VERIFICACIÓN DE EMAIL (LANDING) -->
-        <div id="verificationLandingModal" class="modal">
-            <div class="modal-content">
-                <div class="verification-header">
-                    <span class="verification-icon">✉️</span>
-                    <h2>Confirma tu Correo</h2>
-                </div>
-                <p class="modal-intro">Hemos enviado un enlace de confirmación a tu email. Por seguridad y para activar
-                    tu
-                    plan, es necesario que verifiques tu cuenta.</p>
+    <!-- MODAL DE VERIFICACIÓN DE EMAIL (LANDING) -->
+    <div id="verificationLandingModal" class="modal">
+        <div class="modal-content">
+            <div class="verification-header">
+                <span class="verification-icon">✉️</span>
+                <h2>Confirma tu Correo</h2>
+            </div>
+            <p class="modal-intro">Hemos enviado un enlace de confirmación a tu email. Por seguridad y para activar
+                tu
+                plan, es necesario que verifiques tu cuenta.</p>
 
-                <div class="verification-status-box">
-                    <div class="loader-mini"></div>
-                    <p>Esperando confirmación...</p>
-                    <small>La ventana avanzará automáticamente al detectar el clic.</small>
-                </div>
+            <div class="verification-status-box">
+                <div class="loader-mini"></div>
+                <p>Esperando confirmación...</p>
+                <small>La ventana avanzará automáticamente al detectar el clic.</small>
+            </div>
 
-                <div id="verificationError" class="error-msg" style="display:none;"></div>
+            <div id="verificationError" class="error-msg" style="display:none;"></div>
 
-                <div class="modal-actions">
-                    <button id="btnResendVerification" class="btn btn-outline">Reenviar Email</button>
-                    <button id="btnCheckVerification" class="btn btn-primary">Ya he verificado</button>
-                    <p style="margin-top: 15px; font-size: 0.85em; color: #888;">¿Problemas? Revisa tu carpeta de Spam.
+            <div class="modal-actions">
+                <button id="btnResendVerification" class="btn btn-outline">Reenviar Email</button>
+                <button id="btnCheckVerification" class="btn btn-primary">Ya he verificado</button>
+                <p style="margin-top: 15px; font-size: 0.85em; color: #888;">¿Problemas? Revisa tu carpeta de Spam.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL LEGAL (LANDING) -->
+    <div id="legalLandingModal" class="modal">
+        <div class="modal-content">
+            <h2>Compromiso y Privacidad ✨</h2>
+
+            <!-- Caja Dorada Promo (Visible solo si hay promo activa) -->
+            <div id="promoLegalBox" class="promo-golden-box" style="display: none;">
+                <h3><span class="legal-icon">🎁</span> ¡Oferta DE Promoción MIEMBRO PROMO 1 MES!</h3>
+                <div class="promo-feature">
+                    <span class="legal-icon">📅</span>
+                    <p><strong>30 Días Gratis:</strong> Disfruta de acceso total al Plan Pro sin ningún cargo hoy.
                     </p>
                 </div>
-            </div>
-        </div>
-
-        <!-- MODAL LEGAL (LANDING) -->
-        <div id="legalLandingModal" class="modal">
-            <div class="modal-content">
-                <h2>Compromiso y Privacidad ✨</h2>
-
-                <!-- Caja Dorada Promo (Visible solo si hay promo activa) -->
-                <div id="promoLegalBox" class="promo-golden-box" style="display: none;">
-                    <h3><span class="legal-icon">🎁</span> ¡Oferta DE Promoción MIEMBRO PROMO 1 MES!</h3>
-                    <div class="promo-feature">
-                        <span class="legal-icon">📅</span>
-                        <p><strong>30 Días Gratis:</strong> Disfruta de acceso total al Plan Pro sin ningún cargo hoy.
-                        </p>
-                    </div>
-                    <div class="promo-feature">
-                        <span class="legal-icon">🔒</span>
-                        <p><strong>Tarifa Blindada:</strong> Tu suscripción se mantendrá en 9,90€/mes para siempre.</p>
-                    </div>
-                    <div class="promo-feature">
-                        <span class="legal-icon">🍃</span>
-                        <p><strong>Sin Permanencia:</strong> Puedes cancelar tu suscripción en cualquier momento.</p>
-                    </div>
+                <div class="promo-feature">
+                    <span class="legal-icon">🔒</span>
+                    <p><strong>Tarifa Blindada:</strong> Tu suscripción se mantendrá en 9,90€/mes para siempre.</p>
                 </div>
-
-                <div class="legal-friendly-list">
-                    <div class="legal-item">
-                        <span class="legal-icon">🔐</span>
-                        <p><strong>Privacidad Alquímica:</strong> Tus datos y conversaciones con el Mentor son privados.
-                            Los
-                            usamos únicamente para que la IA te reconozca y personalice tu viaje vocal en cada sesión.
-                        </p>
-                    </div>
-                    <div class="legal-item">
-                        <span class="legal-icon">💎</span>
-                        <p><strong>Propiedad Intelectual:</strong> El método de los 5 Módulos y las respuestas del
-                            Mentor
-                            son propiedad exclusiva de Despierta tu Voz. Se te concede una licencia para uso personal e
-                            intransferible.</p>
-                    </div>
-                    <div class="legal-item">
-                        <span class="legal-icon">🧘‍♂️</span>
-                        <p><strong>Acompañamiento, no Medicina:</strong> El Mentor IA es un apoyo emocional y técnico.
-                            En
-                            ningún caso sustituye el asesoramiento de un profesional médico o logopeda.</p>
-                    </div>
-                </div>
-
-                <div class="legal-scroll-area-mini">
-                    <p style="font-size: 0.8rem; color: #888; text-align: center;">Al confirmar, declaras haber leído y
-                        aceptado nuestros Términos y Condiciones generales.</p>
-                </div>
-
-                <div class="legal-checks">
-                    <label class="check-item">
-                        <input type="checkbox" id="checkTermsLanding">
-                        <span>Acepto los Términos, Condiciones y la Política de Privacidad.</span>
-                    </label>
-                    <label class="check-item">
-                        <input type="checkbox" id="checkMedicalLanding">
-                        <span>Entiendo que el Mentor Vocal IA no sustituye el asesoramiento médico profesional.</span>
-                    </label>
-                </div>
-
-                <div class="modal-actions">
-                    <button id="btnConfirmLegalLanding" class="btn btn-primary" disabled>Confirmar y Seguir</button>
-                    <button onclick="document.getElementById('legalLandingModal').style.display='none'"
-                        class="btn btn-secondary">Cancelar</button>
+                <div class="promo-feature">
+                    <span class="legal-icon">🍃</span>
+                    <p><strong>Sin Permanencia:</strong> Puedes cancelar tu suscripción en cualquier momento.</p>
                 </div>
             </div>
+
+            <div class="legal-friendly-list">
+                <div class="legal-item">
+                    <span class="legal-icon">🔐</span>
+                    <p><strong>Privacidad Alquímica:</strong> Tus datos y conversaciones con el Mentor son privados.
+                        Los
+                        usamos únicamente para que la IA te reconozca y personalice tu viaje vocal en cada sesión.
+                    </p>
+                </div>
+                <div class="legal-item">
+                    <span class="legal-icon">💎</span>
+                    <p><strong>Propiedad Intelectual:</strong> El método de los 5 Módulos y las respuestas del
+                        Mentor
+                        son propiedad exclusiva de Despierta tu Voz. Se te concede una licencia para uso personal e
+                        intransferible.</p>
+                </div>
+                <div class="legal-item">
+                    <span class="legal-icon">🧘‍♂️</span>
+                    <p><strong>Acompañamiento, no Medicina:</strong> El Mentor IA es un apoyo emocional y técnico.
+                        En
+                        ningún caso sustituye el asesoramiento de un profesional médico o logopeda.</p>
+                </div>
+            </div>
+
+            <div class="legal-scroll-area-mini">
+                <p style="font-size: 0.8rem; color: #888; text-align: center;">Al confirmar, declaras haber leído y
+                    aceptado nuestros Términos y Condiciones generales.</p>
+            </div>
+
+            <div class="legal-checks">
+                <label class="check-item">
+                    <input type="checkbox" id="checkTermsLanding">
+                    <span>Acepto los Términos, Condiciones y la Política de Privacidad.</span>
+                </label>
+                <label class="check-item">
+                    <input type="checkbox" id="checkMedicalLanding">
+                    <span>Entiendo que el Mentor Vocal IA no sustituye el asesoramiento médico profesional.</span>
+                </label>
+            </div>
+
+            <div class="modal-actions">
+                <button id="btnConfirmLegalLanding" class="btn btn-primary" disabled>Confirmar y Seguir</button>
+                <button onclick="document.getElementById('legalLandingModal').style.display='none'"
+                    class="btn btn-secondary">Cancelar</button>
+            </div>
         </div>
+    </div>
 
-        <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-        <script src="js/stripe-checkout.js"></script>
-        <script>
-            // Lógica de detección de promo
-            window.addEventListener('load', () => {
-                const params = new URLSearchParams(window.location.search);
-                const promo = params.get('promo');
-                if (promo) {
-                    console.log("🎁 Promo detectada:", promo);
-                    sessionStorage.setItem('dtv_promo_code', promo);
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/stripe-checkout.js"></script>
+    <script>
+        // Lógica de detección de promo
+        window.addEventListener('load', () => {
+            const params = new URLSearchParams(window.location.search);
+            const promo = params.get('promo');
+            if (promo) {
+                console.log("🎁 Promo detectada:", promo);
+                sessionStorage.setItem('dtv_promo_code', promo);
 
-                    // Actualizar la card de Profundiza (Pro)
-                    const proCard = document.querySelector('.pricing-card.featured');
-                    if (proCard) {
-                        const priceEl = proCard.querySelector('.price');
-                        if (priceEl) {
-                            priceEl.innerHTML = `
+                // Actualizar la card de Profundiza (Pro)
+                const proCard = document.querySelector('.pricing-card.featured');
+                if (proCard) {
+                    const priceEl = proCard.querySelector('.price');
+                    if (priceEl) {
+                        priceEl.innerHTML = `
                             <div class="promo-badge" style="background: #8e7d6d; color: white; padding: 5px 10px; border-radius: 20px; font-size: 0.8em; margin-bottom: 10px; display: inline-block; font-weight: 600;">PROMO ACTIVADA</div>
                             <div style="font-size: 2rem; font-weight: 700; line-height: 1.1;">1 MES GRATIS</div>
                             <div style="font-size: 1rem; color: #8e7d6d; font-weight: 800; margin-top: 5px;">SIN TARJETA</div>
                             <div style="font-size: 0.9em; margin-top: 10px; font-weight: 600;">Luego <span style="text-decoration: line-through; opacity: 0.6;">19,90€</span> 9,90€/mes</div>
                             <div style="font-size: 0.4em; color: #8e7d6d; font-weight: 700; font-family: 'Playfair Display', serif; margin-top: 5px;">Tarifa blindada para siempre</div>
                         `;
-                        }
-                        const btn = proCard.querySelector('button');
-                        if (btn) {
-                            btn.innerText = "Activar mi mes gratis ✨";
-                            btn.style.boxShadow = "0 0 20px rgba(142, 125, 109, 0.4)";
-                        }
-
-                        // Mostrar caja dorada de promo también en el resumen legal
-                        const promoLegalBox = document.getElementById('promoLegalBox');
-                        if (promoLegalBox) promoLegalBox.style.display = 'block';
+                    }
+                    const btn = proCard.querySelector('button');
+                    if (btn) {
+                        btn.innerText = "Activar mi mes gratis ✨";
+                        btn.style.boxShadow = "0 0 20px rgba(142, 125, 109, 0.4)";
                     }
 
-                    // Ocultar botones de distracción
-                    const distraciones = [
-                        document.querySelector('.btn-nav'), // Acceso Alumnos
-                        document.querySelector('.hero .btn-primary'), // Empezar mi camino gratis
-                        document.querySelector('.btn-footer-cta') // Footer CTA
-                    ];
-                    distraciones.forEach(el => { if (el) el.style.display = 'none'; });
-
-                    // Opcional: Desplazar suavemente a precios o dejar que ellos naveguen
+                    // Mostrar caja dorada de promo también en el resumen legal
+                    const promoLegalBox = document.getElementById('promoLegalBox');
+                    if (promoLegalBox) promoLegalBox.style.display = 'block';
                 }
-            });
-        </script>
 
-        <script src="nuevo-index/wp-theme/js/ai-support.js"></script>
+                // Ocultar botones de distracción
+                const distraciones = [
+                    document.querySelector('.btn-nav'), // Acceso Alumnos
+                    document.querySelector('.hero .btn-primary'), // Empezar mi camino gratis
+                    document.querySelector('.btn-footer-cta') // Footer CTA
+                ];
+                distraciones.forEach(el => { if (el) el.style.display = 'none'; });
+
+                // Opcional: Desplazar suavemente a precios o dejar que ellos naveguen
+            }
+        });
+    </script>
+
+    <script src="nuevo-index/wp-theme/js/ai-support.js"></script>
 </body>
 
 </html>
