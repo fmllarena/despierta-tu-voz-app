@@ -222,13 +222,14 @@ h3 {
 }
 
 .phase-text h3 {
+    margin: 0;
     margin-bottom: 2px;
-    /* Reducido de 8px */
     font-size: 1.5rem;
     color: var(--color-acento);
 }
 
 .phase-text p {
+    margin: 0;
     font-size: 1.1rem;
     color: #555;
     line-height: 1.5;
@@ -321,7 +322,9 @@ h3 {
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
     width: 200px;
     text-align: center;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
+    /* Ligeramente mÃƒÂ¡s pequeÃƒÂ±o */
+    line-height: 1.4;
     opacity: 0;
     visibility: hidden;
     transition: all 0.3s ease;
@@ -333,7 +336,8 @@ h3 {
 .hotspot-tooltip strong {
     color: var(--color-acento);
     display: block;
-    margin-bottom: 4px;
+    margin-bottom: 0px;
+    /* Reducido al mÃƒÂ­nimo */
 }
 
 .app-hotspot:hover .hotspot-tooltip {
