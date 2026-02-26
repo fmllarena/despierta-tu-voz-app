@@ -76,6 +76,18 @@ const urlUpgrade = urlParams.get('upgrade');
 if (urlUpgrade) {
     sessionStorage.setItem('dtv_auto_upgrade', urlUpgrade); // 'pro' o 'premium'
 }
+
+// Detectar éxito de reserva Cal.com (redirección)
+if (urlParams.get('booking') === 'success') {
+    window.addEventListener('load', () => {
+        setTimeout(() => {
+            if (window.SESIONES?.finalizarReservaExitosa) {
+                window.SESIONES.finalizarReservaExitosa();
+            }
+        }, 2000);
+    });
+}
+
 // Objeto ELEMENTS movido a elements.js
 
 
@@ -244,6 +256,11 @@ async function cargarPerfil(user) {
         window.userProfile = perfil; // Exportar para otros módulos (Mi Viaje)
         // Asegurar que accepted_terms esté presente en el objeto local
         userProfile.accepted_terms = !!perfil.accepted_terms;
+
+        // Actualizar cuota de sesiones si el módulo está listo
+        if (window.SESIONES?.actualizarInfoCuota) {
+            window.SESIONES.actualizarInfoCuota();
+        }
 
         // --- OPTIMIZACIÓN: Calentamiento de API (Warmup) ---
         // Enviamos una señal silenciosa para que Vercel prepare la conexión

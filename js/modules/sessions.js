@@ -179,28 +179,40 @@ window.SESIONES = {
             return;
         }
 
-        // 3. Inicializar Cal.com (Estrategia Híbrida con Namespace)
+        // 3. Inicializar Cal.com (Estrategia Híbrida con Namespace y Defensa)
         const finalUrl = `${url}?embed=true&name=${encodeURIComponent(profile?.nombre || "")}&email=${encodeURIComponent(profile?.email || "")}`;
-
-        // Usamos el namespace "30min" como contenedor principal, ya que es el configurado en tu panel
         const namespace = "30min";
 
         if (window.Cal) {
-            console.log(`🚀 Usando SDK (NS: ${namespace}) para sesión: ${tipo} (${calLink})`);
-            setTimeout(() => {
-                try {
-                    // Inicializar namespace si no existe
-                    window.Cal("init", namespace, { origin: "https://app.cal.com" });
+            console.log(`🚀 Intentando SDK (NS: ${namespace}) para sesión: ${tipo}`);
 
-                    // Configurar UI para este namespace
-                    window.Cal.ns[namespace]("ui", {
+            // Función defensiva para configurar e inyectar
+            const tryInjectWithSDK = (attempts = 0) => {
+                if (attempts > 30) { // Máximo 3 segundos de espera (100ms * 30)
+                    console.warn("🚨 Tiempo de espera del SDK agotado. Forzando Iframe...");
+                    const target = document.getElementById('cal-iframe-target');
+                    if (target) target.innerHTML = `<iframe src="${finalUrl}" style="width:100%; height:100%; border:none;" allowfullscreen></iframe>`;
+                    return;
+                }
+
+                try {
+                    // Si el objeto ns o el namespace no existen aún en este ciclo
+                    if (!window.Cal.ns || !window.Cal.ns[namespace]) {
+                        if (attempts === 0) window.Cal("init", namespace, { origin: "https://app.cal.com" });
+                        setTimeout(() => tryInjectWithSDK(attempts + 1), 100);
+                        return;
+                    }
+
+                    // Si llegamos aquí, window.Cal.ns[namespace] existe
+                    const api = window.Cal.ns[namespace];
+
+                    api("ui", {
                         styles: { branding: { brandColor: "#3a506b" } },
                         hideEventTypeDetails: false,
                         layout: "month_view"
                     });
 
-                    // Cargar el link específico (30min o 1h) en el namespace
-                    window.Cal.ns[namespace]("inline", {
+                    api("inline", {
                         elementOrSelector: "#cal-iframe-target",
                         calLink: calLink,
                         config: {
@@ -211,25 +223,22 @@ window.SESIONES = {
                         }
                     });
 
-                    // Verificación de respaldo: si en 3.5s no hay iframe del SDK, lo inyectamos nosotros
+                    // Si hay éxito, ocultamos el loader tras un momento
                     setTimeout(() => {
-                        const target = document.getElementById('cal-iframe-target');
-                        if (target && !target.querySelector('iframe')) {
-                            console.warn("⚠️ SDK Namespace no respondió. Forzando inyección manual...");
-                            target.innerHTML = `<iframe src="${finalUrl}" style="width:100%; height:100%; border:none;" allowfullscreen></iframe>`;
-                        } else {
-                            // Si el SDK funcionó, quitamos nuestro loader
-                            const loader = document.getElementById('cal-custom-loader');
-                            if (loader) loader.style.display = 'none';
-                        }
-                    }, 3500);
+                        const loader = document.getElementById('cal-custom-loader');
+                        if (loader) loader.style.display = 'none';
+                    }, 2000);
 
                 } catch (err) {
-                    console.error(`❌ Error en Cal.ns[${namespace}]: `, err);
+                    console.error("⚠️ Error crítico en SDK, forzando Iframe:", err);
                     const target = document.getElementById('cal-iframe-target');
-                    if (target) target.innerHTML = `<iframe src="${finalUrl}" style="width:100%; height:100%; border:none;"></iframe>`;
+                    if (target) target.innerHTML = `<iframe src="${finalUrl}" style="width:100%; height:100%; border:none;" allowfullscreen></iframe>`;
                 }
-            }, 300);
+            };
+
+            // Iniciar ciclo de inyección
+            tryInjectWithSDK();
+
         } else {
             // Sin SDK, inyección directa inmediata
             const target = document.getElementById('cal-iframe-target');
@@ -277,16 +286,50 @@ window.SESIONES = {
         });
 
         if (window.Cal) {
-            window.Cal("on", {
-                action: "bookingSuccessful",
-                callback: (e) => {
-                    console.log("✅ Reserva exitosa:", e);
-                    setTimeout(() => {
-                        if (ELEMENTS.sesionModal) ELEMENTS.sesionModal.style.display = 'none';
-                    }, 2000);
+            const handleSuccess = (e) => {
+                console.log("✅ Reserva exitosa detectada por SDK:", e);
+                window.SESIONES.finalizarReservaExitosa();
+            };
+
+            // Listener Global
+            window.Cal("on", { action: "bookingSuccessful", callback: handleSuccess });
+
+            // Listener específico para el namespace (por seguridad extra)
+            const namespace = "30min";
+            setTimeout(() => {
+                if (window.Cal.ns && window.Cal.ns[namespace]) {
+                    window.Cal.ns[namespace]("on", { action: "bookingSuccessful", callback: handleSuccess });
                 }
-            });
+            }, 1000);
         }
+    },
+
+    finalizarReservaExitosa: () => {
+        console.log("🎊 Procesando fin de reserva exitosa...");
+
+        // 1. Mostrar mensaje de éxito
+        const msg = "¡Reserva confirmada! Tu sesión con el Mentor ha sido programada correctamente. En unos segundos verás tu cuota de tiempo actualizada.";
+        if (window.alertCustom) {
+            window.alertCustom(msg);
+        } else {
+            alert(msg);
+        }
+
+        // 2. Cerrar modal y limpiar vista
+        setTimeout(() => {
+            if (window.ELEMENTS?.sesionModal) {
+                window.ELEMENTS.sesionModal.style.display = 'none';
+            }
+
+            // 3. Forzar refresco de perfil para actualizar minutos (si el loader de main.js existe)
+            if (window.userProfile && window.cargarPerfil) {
+                // Obtenemos el ID del usuario actual
+                const userId = window.userProfile.user_id || window.userProfile.id;
+                if (userId) {
+                    window.cargarPerfil({ id: userId });
+                }
+            }
+        }, 1500);
     }
 };
 
