@@ -135,8 +135,8 @@ window.SESIONES = {
 
         // 2. Preparar el contenedor
         if (calContainer) {
-            console.log("📍 Preparando contenedor #cal-embed-container (limpieza total)");
-            // Limpieza absoluta para remover cualquier loader previo
+            console.log("📍 Preparando contenedor #cal-embed-container (Carga Robusta)");
+            // Limpieza absoluta
             while (calContainer.firstChild) {
                 calContainer.removeChild(calContainer.firstChild);
             }
@@ -144,21 +144,38 @@ window.SESIONES = {
             calContainer.style.display = 'block';
             calContainer.style.visibility = 'visible';
             calContainer.style.opacity = '1';
-            calContainer.style.minHeight = '600px';
-            calContainer.style.background = '#f9f9f9';
-            calContainer.style.border = "1px solid #eee";
+            calContainer.style.minHeight = '650px';
+            calContainer.style.background = '#fff';
 
-            // Añadir un pequeño mensaje de "Cargando..." que se sobreescribirá
-            const tempLoader = document.createElement('div');
-            tempLoader.id = 'cal-loading-placeholder';
-            tempLoader.style.padding = '40px';
-            tempLoader.style.textAlign = 'center';
-            tempLoader.innerHTML = `<p>Preparando el calendario del Mentor...</p><br><p style="font-size: 0.8em; opacity: 0.6;">Si no aparece en unos segundos, <a href="${url}" target="_blank" style="color: #3a506b; text-decoration: underline;">haz click aquí para abrir en ventana nueva</a>.</p>`;
-            calContainer.appendChild(tempLoader);
+            // BANNER DE SEGURIDAD (Siempre visible al principio)
+            const safetyBanner = document.createElement('div');
+            safetyBanner.style.padding = '12px';
+            safetyBanner.style.background = '#f8fafc';
+            safetyBanner.style.borderBottom = '1px solid #e2e8f0';
+            safetyBanner.style.textAlign = 'center';
+            safetyBanner.style.fontSize = '0.9em';
+            safetyBanner.style.color = '#475569';
+            safetyBanner.innerHTML = `<span>¿Problemas con el calendario? </span><a href="${url}" target="_blank" style="color: #3182ce; font-weight: bold; text-decoration: underline;">Haz click aquí para abrir en ventana nueva</a>`;
+            calContainer.appendChild(safetyBanner);
+
+            // Contenedor real para el iframe (debajo del banner)
+            const iframeTarget = document.createElement('div');
+            iframeTarget.id = 'cal-iframe-target';
+            iframeTarget.style.width = '100%';
+            iframeTarget.style.minHeight = '600px';
+            iframeTarget.style.position = 'relative';
+            calContainer.appendChild(iframeTarget);
+
+            // Loader temporal dentro del target
+            iframeTarget.innerHTML = `
+                <div style="padding: 60px; text-align: center;" id="cal-custom-loader">
+                    <div class="loader-spin" style="margin: 0 auto 15px;"></div>
+                    <p>Conectando con el Mentor...</p>
+                </div>
+            `;
         } else {
             console.error("❌ No se encontró el contenedor #cal-embed-container");
-            const finalUrl = `${url}?email=${encodeURIComponent(profile?.email || "")}&name=${encodeURIComponent(profile?.nombre || "")}`;
-            window.open(finalUrl, '_blank');
+            window.open(url, '_blank');
             return;
         }
 
@@ -167,10 +184,8 @@ window.SESIONES = {
             console.log(`🚀 Inicializando Cal.com inline para: ${calLink}`);
             setTimeout(() => {
                 try {
-                    // El SDK de Cal.com suele inyectar un iframe. 
-                    // Si el placeholder sigue ahí después de un tiempo, algo falló.
                     window.Cal("inline", {
-                        elementOrSelector: "#cal-embed-container",
+                        elementOrSelector: "#cal-iframe-target",
                         calLink: calLink,
                         config: {
                             name: profile?.nombre || "",
@@ -189,32 +204,19 @@ window.SESIONES = {
 
                     console.log("✅ Cal(\"inline\") invocado. Vigilando inyección...");
 
-                    // Verificación post-inyección: si después de 2s no hay iframe, mostrar botón directo
+                    // Quitar el loader interno tras un tiempo prudencial
                     setTimeout(() => {
-                        const iframe = calContainer.querySelector('iframe');
-                        if (!iframe) {
-                            console.warn("⚠️ No se detectó iframe de Cal.com tras 2 segundos.");
-                            const placeholder = document.getElementById('cal-loading-placeholder');
-                            if (placeholder) {
-                                placeholder.innerHTML = `<p>El calendario está tardando más de lo habitual...</p><br><a href="${url}" target="_blank" class="chat-btn" style="display:inline-block; padding: 10px 20px;">Abrir Calendario Directamente</a>`;
-                            }
-                        } else {
-                            // Si hay iframe, quitar el placeholder de carga
-                            const placeholder = document.getElementById('cal-loading-placeholder');
-                            if (placeholder) placeholder.style.display = 'none';
-                        }
-                    }, 2000);
+                        const loader = document.getElementById('cal-custom-loader');
+                        if (loader) loader.style.display = 'none';
+                    }, 3500);
 
                 } catch (err) {
                     console.error("❌ Error al invocar Cal(\"inline\"): ", err);
-                    calContainer.innerHTML = `<p style="padding: 20px; text-align: center;">Error al cargar el calendario. <br><a href="${url}" target="_blank" class="chat-btn">Abrir en ventana nueva</a></p>`;
                 }
-            }, 300);
+            }, 500);
         } else {
             console.error("❌ Cal.com SDK no detectado");
-            // Fallback backup
-            const finalUrl = `${url}?email=${encodeURIComponent(profile?.email || "")}&name=${encodeURIComponent(profile?.nombre || "")}`;
-            window.open(finalUrl, '_blank');
+            window.open(url, '_blank');
         }
     },
 
