@@ -83,8 +83,14 @@ if (urlParams.get('booking') === 'success') {
         setTimeout(() => {
             if (window.SESIONES?.finalizarReservaExitosa) {
                 window.SESIONES.finalizarReservaExitosa();
+
+                // Mensaje extra del Mentor en el chat para dar continuidad
+                if (typeof appendMessage === 'function') {
+                    const nombre = window.userProfile?.nombre || "viajero/a";
+                    appendMessage(`¡Todo listo, **${nombre}**! Ya he recibido la confirmación de tu reserva. Me alegra mucho que vayamos a tener ese espacio para profundizar juntos. ¿Seguimos con lo que estábamos hablando?`, 'ia');
+                }
             }
-        }, 2000);
+        }, 3000); // Un poco más de delay para que cargue el historial primero
     });
 }
 
@@ -269,8 +275,8 @@ async function cargarPerfil(user) {
         // Actualizar UI con el tier correcto del perfil
         updateUI(user);
 
-        // Al cargar el perfil, recuperamos el historial para el contexto de la IA
-        await cargarHistorialDesdeDB(user.id);
+        // Al cargar el perfil, recuperamos el historial para el contexto de la IA y lo renderizamos
+        await cargarHistorialDesdeDB(user.id, true);
 
         // --- REPARACIÓN AUTOMÁTICA ---
         // Si el perfil está vacío pero tenemos mensajes cargados, disparamos el resumen 
@@ -314,7 +320,7 @@ async function cargarPerfil(user) {
     }
 }
 
-async function cargarHistorialDesdeDB(userId) {
+async function cargarHistorialDesdeDB(userId, render = false) {
     try {
         const { data: mensajes, error } = await supabaseClient
             .from('mensajes')
@@ -333,18 +339,30 @@ async function cargarHistorialDesdeDB(userId) {
             return;
         }
 
-        if (ELEMENTS && ELEMENTS.chatBox) {
+        if (render && ELEMENTS && ELEMENTS.chatBox) {
             ELEMENTS.chatBox.innerHTML = "";
         }
         chatHistory = [];
 
         // Invertimos el array para que queden en orden cronológico (el más antiguo primero)
-        mensajes.reverse().forEach(msg => {
+        const mensajesCronologicos = [...mensajes].reverse();
+
+        mensajesCronologicos.forEach(msg => {
             const role = msg.emisor === 'ia' ? 'model' : 'user';
             chatHistory.push({ role: role, parts: [{ text: msg.texto }] });
+
+            if (render) {
+                appendMessage(msg.texto, msg.emisor);
+            }
         });
 
-        // Historial recuperado para contexto de IA
+        // Autoscroll al final tras renderizar
+        if (render && ELEMENTS.chatBox) {
+            setTimeout(() => {
+                ELEMENTS.chatBox.scrollTop = ELEMENTS.chatBox.scrollHeight;
+            }, 100);
+        }
+
     } catch (e) {
         console.error("Error crítico recuperando historial:", e);
     }
@@ -429,7 +447,10 @@ window.addEventListener('load', () => {
 async function saludarUsuario(user, perfil) {
     if (!ELEMENTS.chatBox) return;
 
-    ELEMENTS.chatBox.innerHTML = "";
+    // Solo limpiar si NO hay mensajes previos (p. ej. error en carga de historial o usuario nuevo)
+    if (chatHistory.length === 0) {
+        ELEMENTS.chatBox.innerHTML = "";
+    }
 
     // Si es la primera vez (no hay resumen previo), mostrar mensaje FIJO de bienvenida
     // Esto evita problemas con variables de nombre en el primer contacto
