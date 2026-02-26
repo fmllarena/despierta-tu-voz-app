@@ -1,10 +1,14 @@
 /* --- MODAL CAL.COM Y PAGOS --- */
-.cal-modal-content {
+.cal-modal-content,
+.sesion-modal-content {
     max-width: 900px !important;
     width: 95% !important;
     padding: 0 !important;
     overflow: hidden !important;
     background: white;
+    min-height: 500px;
+    display: flex;
+    flex-direction: column;
 }
 
 #cal-embed-container {

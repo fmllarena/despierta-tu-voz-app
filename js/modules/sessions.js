@@ -138,23 +138,30 @@ export const SESIONES = window.SESIONES = {
     },
 
     reservar: (tipo) => {
-        console.log(`📅 Reservando sesión tipo: ${tipo}`);
+        console.log(`📅 [SESIONES] Reservando tipo: ${tipo}`);
         const profile = window.userProfile;
         const url = SESIONES.links[tipo];
 
         if (!url || url === "#") {
+            console.error("❌ Error: URL de sesión no definida para", tipo);
             alert("El enlace para esta sesión aún no está configurado.");
             return;
         }
 
         const calLink = url.replace("https://cal.com/", "");
-
-        // Ocultar selección, mostrar calendario
         const selectionUI = document.getElementById('sesionSelection');
         const calContainer = document.getElementById('cal-embed-container');
 
-        // Limpiar contenedor y mostrar loader antes de re-inicializar
+        // 1. Asegurar visibilidad del modal y ocultar selección
+        if (ELEMENTS.sesionModal) {
+            ELEMENTS.sesionModal.style.display = 'block';
+        }
+
+        if (selectionUI) selectionUI.style.display = 'none';
+
+        // 2. Preparar el contenedor
         if (calContainer) {
+            console.log("📍 Preparando contenedor #cal-embed-container");
             calContainer.innerHTML = `
                 <div class="loader-premium">
                     <div class="loader-spin"></div>
@@ -162,29 +169,35 @@ export const SESIONES = window.SESIONES = {
                 </div>
             `;
             calContainer.style.display = 'block';
+            calContainer.style.visibility = 'visible';
+            calContainer.style.opacity = '1';
+        } else {
+            console.error("❌ No se encontró el contenedor #cal-embed-container");
+            return;
         }
 
+        // 3. Inicializar Cal.com con un ligero delay para que el DOM se asiente
         if (window.Cal) {
-            // Eliminar cualquier namespace previo si existiera (opcional, Cal.com suele manejarlo pero por si acaso)
-            // window.Cal("ui", { ... }); // Ya se hace abajo
+            console.log(`🚀 Inicializando Cal.com inline para: ${calLink}`);
+            setTimeout(() => {
+                window.Cal("inline", {
+                    elementOrSelector: "#cal-embed-container",
+                    calLink: calLink,
+                    config: {
+                        name: profile?.nombre || "",
+                        email: profile?.email || "",
+                        metadata: { userId: profile?.user_id }
+                    }
+                });
 
-            window.Cal("inline", {
-                elementOrSelector: "#cal-embed-container",
-                calLink: calLink,
-                config: {
-                    name: profile?.nombre || "",
-                    email: profile?.email || "",
-                    metadata: { userId: profile?.user_id }
-                }
-            });
-
-            window.Cal("ui", {
-                styles: { branding: { brandColor: "#3a506b" } },
-                hideEventTypeDetails: false,
-                layout: "month_view"
-            });
+                window.Cal("ui", {
+                    styles: { branding: { brandColor: "#3a506b" } },
+                    hideEventTypeDetails: false,
+                    layout: "month_view"
+                });
+            }, 200);
         } else {
-            console.error("❌ Cal.com SDK no cargado");
+            console.error("❌ Cal.com SDK no detectado en el objeto 'window'");
             alert("Error al cargar el calendario. Por favor, recarga la página.");
         }
     },
