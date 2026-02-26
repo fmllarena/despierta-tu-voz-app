@@ -135,7 +135,7 @@ window.SESIONES = {
 
         // 2. Preparar el contenedor
         if (calContainer) {
-            console.log("📍 Preparando contenedor #cal-embed-container (Carga Robusta)");
+            console.log("📍 Preparando contenedor #cal-embed-container (Modo Link)");
             // Limpieza absoluta
             while (calContainer.firstChild) {
                 calContainer.removeChild(calContainer.firstChild);
@@ -147,7 +147,7 @@ window.SESIONES = {
             calContainer.style.minHeight = '650px';
             calContainer.style.background = '#fff';
 
-            // BANNER DE SEGURIDAD (Siempre visible al principio)
+            // BANNER DE SEGURIDAD (Siempre visible)
             const safetyBanner = document.createElement('div');
             safetyBanner.style.padding = '12px';
             safetyBanner.style.background = '#f8fafc';
@@ -158,19 +158,18 @@ window.SESIONES = {
             safetyBanner.innerHTML = `<span>¿Problemas con el calendario? </span><a href="${url}" target="_blank" style="color: #3182ce; font-weight: bold; text-decoration: underline;">Haz click aquí para abrir en ventana nueva</a>`;
             calContainer.appendChild(safetyBanner);
 
-            // Contenedor real para el iframe (debajo del banner)
+            // Contenedor para la inyección
             const iframeTarget = document.createElement('div');
             iframeTarget.id = 'cal-iframe-target';
             iframeTarget.style.width = '100%';
             iframeTarget.style.minHeight = '600px';
-            iframeTarget.style.position = 'relative';
             calContainer.appendChild(iframeTarget);
 
-            // Loader temporal dentro del target
+            // Loader inicial
             iframeTarget.innerHTML = `
                 <div style="padding: 60px; text-align: center;" id="cal-custom-loader">
                     <div class="loader-spin" style="margin: 0 auto 15px;"></div>
-                    <p>Conectando con el Mentor...</p>
+                    <p>Sincronizando calendario...</p>
                 </div>
             `;
         } else {
@@ -179,12 +178,13 @@ window.SESIONES = {
             return;
         }
 
-        // 3. Inicializar Cal.com
+        // 3. Inicializar Cal.com (Modo 'link')
         if (window.Cal) {
-            console.log(`🚀 Inicializando Cal.com inline para: ${calLink}`);
+            console.log(`🚀 Solicitando 'link' a Cal.com para: ${calLink}`);
             setTimeout(() => {
                 try {
-                    window.Cal("inline", {
+                    // Usar 'link' en el target dedicado.
+                    window.Cal("link", {
                         elementOrSelector: "#cal-iframe-target",
                         calLink: calLink,
                         config: {
@@ -202,18 +202,16 @@ window.SESIONES = {
                         layout: "month_view"
                     });
 
-                    console.log("✅ Cal(\"inline\") invocado. Vigilando inyección...");
-
-                    // Quitar el loader interno tras un tiempo prudencial
+                    // Limpiar loader tras un tiempo
                     setTimeout(() => {
                         const loader = document.getElementById('cal-custom-loader');
                         if (loader) loader.style.display = 'none';
-                    }, 3500);
+                    }, 4000);
 
                 } catch (err) {
-                    console.error("❌ Error al invocar Cal(\"inline\"): ", err);
+                    console.error("❌ Error en Cal(\"link\"): ", err);
                 }
-            }, 500);
+            }, 300);
         } else {
             console.error("❌ Cal.com SDK no detectado");
             window.open(url, '_blank');
