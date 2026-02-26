@@ -219,13 +219,21 @@ export const SESIONES = window.SESIONES = {
         if (window.Cal) window.Cal("ui", { theme: "light" });
 
         if (ELEMENTS.sesionBtn) {
-            console.log("✅ Selector sesionBtn encontrado, añadiendo listener.");
-            ELEMENTS.sesionBtn.addEventListener('click', () => {
-                console.log("Click en sesionBtn (Menú)");
+            console.log("✅ [DEBUG] sesionBtn detectado, vinculando click.");
+            ELEMENTS.sesionBtn.addEventListener('click', (e) => {
+                console.log("🔥 [DEBUG] CLICK detectado en Sesiones 1-1");
+                // alert("Click en Sesiones 1-1 detectado"); // Debug temporal
                 this.abrirModal();
             });
         } else {
-            console.warn("⚠️ No se encontró sesionBtn para añadir listener en setup()");
+            console.warn("⚠️ [DEBUG] sesionBtn NO encontrado en setup()");
+        }
+
+        if (ELEMENTS.closeSesion) {
+            ELEMENTS.closeSesion.addEventListener('click', () => {
+                console.log("❌ Cerrando modal sesiones");
+                if (ELEMENTS.sesionModal) ELEMENTS.sesionModal.style.display = 'none';
+            });
         }
 
         ELEMENTS.book30Btn?.addEventListener('click', (e) => {
