@@ -135,19 +135,28 @@ window.SESIONES = {
 
         // 2. Preparar el contenedor
         if (calContainer) {
-            console.log("📍 Preparando contenedor #cal-embed-container");
-            calContainer.innerHTML = `
-                <div class="loader-premium" id="cal-loader-internal">
-                    <div class="loader-spin"></div>
-                    <p>Conectando con tu Mentor...</p>
-                </div>
-            `;
+            console.log("📍 Preparando contenedor #cal-embed-container (limpieza total)");
+            // Limpieza absoluta para remover cualquier loader previo
+            while (calContainer.firstChild) {
+                calContainer.removeChild(calContainer.firstChild);
+            }
+
             calContainer.style.display = 'block';
             calContainer.style.visibility = 'visible';
             calContainer.style.opacity = '1';
+            calContainer.style.minHeight = '600px';
+            calContainer.style.background = '#f9f9f9';
+            calContainer.style.border = "1px solid #eee";
+
+            // Añadir un pequeño mensaje de "Cargando..." que se sobreescribirá
+            const tempLoader = document.createElement('div');
+            tempLoader.id = 'cal-loading-placeholder';
+            tempLoader.style.padding = '40px';
+            tempLoader.style.textAlign = 'center';
+            tempLoader.innerHTML = `<p>Preparando el calendario del Mentor...</p><br><p style="font-size: 0.8em; opacity: 0.6;">Si no aparece en unos segundos, <a href="${url}" target="_blank" style="color: #3a506b; text-decoration: underline;">haz click aquí para abrir en ventana nueva</a>.</p>`;
+            calContainer.appendChild(tempLoader);
         } else {
             console.error("❌ No se encontró el contenedor #cal-embed-container");
-            // Fallback al backup: abrir en pestaña nueva
             const finalUrl = `${url}?email=${encodeURIComponent(profile?.email || "")}&name=${encodeURIComponent(profile?.nombre || "")}`;
             window.open(finalUrl, '_blank');
             return;
@@ -158,12 +167,16 @@ window.SESIONES = {
             console.log(`🚀 Inicializando Cal.com inline para: ${calLink}`);
             setTimeout(() => {
                 try {
+                    // El SDK de Cal.com suele inyectar un iframe. 
+                    // Si el placeholder sigue ahí después de un tiempo, algo falló.
                     window.Cal("inline", {
-                        elementOrSelector: calContainer,
+                        elementOrSelector: "#cal-embed-container",
                         calLink: calLink,
                         config: {
                             name: profile?.nombre || "",
                             email: profile?.email || "",
+                            notes: "Reserva desde la App Despierta Tu Voz",
+                            theme: "light",
                             metadata: { userId: profile?.user_id }
                         }
                     });
@@ -174,10 +187,27 @@ window.SESIONES = {
                         layout: "month_view"
                     });
 
-                    console.log("✅ Cal(\"inline\") invocado con éxito.");
+                    console.log("✅ Cal(\"inline\") invocado. Vigilando inyección...");
+
+                    // Verificación post-inyección: si después de 2s no hay iframe, mostrar botón directo
+                    setTimeout(() => {
+                        const iframe = calContainer.querySelector('iframe');
+                        if (!iframe) {
+                            console.warn("⚠️ No se detectó iframe de Cal.com tras 2 segundos.");
+                            const placeholder = document.getElementById('cal-loading-placeholder');
+                            if (placeholder) {
+                                placeholder.innerHTML = `<p>El calendario está tardando más de lo habitual...</p><br><a href="${url}" target="_blank" class="chat-btn" style="display:inline-block; padding: 10px 20px;">Abrir Calendario Directamente</a>`;
+                            }
+                        } else {
+                            // Si hay iframe, quitar el placeholder de carga
+                            const placeholder = document.getElementById('cal-loading-placeholder');
+                            if (placeholder) placeholder.style.display = 'none';
+                        }
+                    }, 2000);
+
                 } catch (err) {
                     console.error("❌ Error al invocar Cal(\"inline\"): ", err);
-                    calContainer.innerHTML = `<p style="padding: 20px; text-align: center;">Error al cargar el calendario (${err.message}).</p>`;
+                    calContainer.innerHTML = `<p style="padding: 20px; text-align: center;">Error al cargar el calendario. <br><a href="${url}" target="_blank" class="chat-btn">Abrir en ventana nueva</a></p>`;
                 }
             }, 300);
         } else {
