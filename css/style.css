@@ -2043,15 +2043,20 @@ textarea {
 
 /* --- ESTILOS MODAL SESIÓN --- */
 .sesion-modal-content {
-    max-width: 600px;
+    max-width: 650px;
+    padding: 30px !important;
+}
+
+.sesion-selection-ui {
+    padding: 0 5px; /* Margen interno para que no pegue a los bordes */
 }
 
 .session-quota-info {
-    margin: 20px 0;
-    padding: 15px;
+    margin: 25px 0;
+    padding: 18px;
     background: #f8f9fa;
-    border-radius: 10px;
-    border-left: 4px solid #1a73e8;
+    border-radius: 12px;
+    border-left: 5px solid #1a73e8;
 }
 
 .quota-badge {
