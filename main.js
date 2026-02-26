@@ -191,9 +191,9 @@ function setupAuthListener() {
 
         if (event === 'PASSWORD_RECOVERY') {
             isRecoveringPassword = true;
-            ELEMENTS.authOverlay.style.display = 'flex';
-            ELEMENTS.resetPasswordContainer.style.display = 'block';
-            ELEMENTS.authError.innerText = "Modo recuperación: Introduce tu nueva contraseña.";
+            if (ELEMENTS.authOverlay) ELEMENTS.authOverlay.style.display = 'flex';
+            if (ELEMENTS.resetPasswordContainer) ELEMENTS.resetPasswordContainer.style.display = 'block';
+            if (ELEMENTS.authError) ELEMENTS.authError.innerText = "Modo recuperación: Introduce tu nueva contraseña.";
             // Ocultar campos normales de auth para que no confundan
             if (ELEMENTS.loginFields) ELEMENTS.loginFields.style.display = 'none';
         }
@@ -316,7 +316,9 @@ async function cargarHistorialDesdeDB(userId) {
             return;
         }
 
-        ELEMENTS.chatBox.innerHTML = "";
+        if (ELEMENTS && ELEMENTS.chatBox) {
+            ELEMENTS.chatBox.innerHTML = "";
+        }
         chatHistory = [];
 
         // Invertimos el array para que queden en orden cronológico (el más antiguo primero)
@@ -332,16 +334,22 @@ async function cargarHistorialDesdeDB(userId) {
 }
 
 function updateUI(user) {
+    if (!ELEMENTS) {
+        console.warn("⚠️ updateUI llamada antes de cargar ELEMENTS");
+        return;
+    }
     const isVisible = user ? 'block' : 'none';
     const isFlex = user ? 'flex' : 'none';
 
-    ELEMENTS.authOverlay.style.display = (user && !isRecoveringPassword) ? 'none' : 'flex';
+    if (ELEMENTS.authOverlay) ELEMENTS.authOverlay.style.display = (user && !isRecoveringPassword) ? 'none' : 'flex';
     if (ELEMENTS.headerButtons) ELEMENTS.headerButtons.style.display = isFlex;
     if (ELEMENTS.mainHelpBtn) ELEMENTS.mainHelpBtn.style.display = isFlex;
 
-    Object.values(ELEMENTS.navButtons).forEach(btn => {
-        if (btn) btn.style.display = isVisible;
-    });
+    if (ELEMENTS && ELEMENTS.navButtons) {
+        Object.values(ELEMENTS.navButtons).forEach(btn => {
+            if (btn) btn.style.display = isVisible;
+        });
+    }
 
     if (user) {
         if (!isRecoveringPassword) {
