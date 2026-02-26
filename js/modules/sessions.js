@@ -50,7 +50,7 @@ window.SESIONES = {
                 ELEMENTS.sessionQuotaInfo.innerHTML = `
                     <div class="quota-badge">
                         <span class="quota-label">Tu tiempo incluido restante:</span>
-                        <span class="quota-value">${remaining} min</span>
+                        <span class="quota-value">${remaining} min / 60 min</span>
                     </div>
                 `;
             }
