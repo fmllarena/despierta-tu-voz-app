@@ -162,8 +162,9 @@ export const SESIONES = window.SESIONES = {
         // 2. Preparar el contenedor
         if (calContainer) {
             console.log("📍 Preparando contenedor #cal-embed-container");
+            // Mantener el loader pero asegurar que el contenedor está listo para recibir el iframe
             calContainer.innerHTML = `
-                <div class="loader-premium">
+                <div class="loader-premium" id="cal-loader-internal">
                     <div class="loader-spin"></div>
                     <p>Conectando con tu Mentor...</p>
                 </div>
@@ -180,22 +181,32 @@ export const SESIONES = window.SESIONES = {
         if (window.Cal) {
             console.log(`🚀 Inicializando Cal.com inline para: ${calLink}`);
             setTimeout(() => {
-                window.Cal("inline", {
-                    elementOrSelector: "#cal-embed-container",
-                    calLink: calLink,
-                    config: {
-                        name: profile?.nombre || "",
-                        email: profile?.email || "",
-                        metadata: { userId: profile?.user_id }
-                    }
-                });
+                try {
+                    // Limpiar el contenedor justo antes para que no interfiera con Cal.com
+                    // pero Cal.com suele preferir gestionar su propio contenido.
 
-                window.Cal("ui", {
-                    styles: { branding: { brandColor: "#3a506b" } },
-                    hideEventTypeDetails: false,
-                    layout: "month_view"
-                });
-            }, 200);
+                    window.Cal("inline", {
+                        elementOrSelector: calContainer,
+                        calLink: calLink,
+                        config: {
+                            name: profile?.nombre || "",
+                            email: profile?.email || "",
+                            metadata: { userId: profile?.user_id }
+                        }
+                    });
+
+                    window.Cal("ui", {
+                        styles: { branding: { brandColor: "#3a506b" } },
+                        hideEventTypeDetails: false,
+                        layout: "month_view"
+                    });
+
+                    console.log("✅ Cal("inline") invocado con éxito.");
+                } catch (err) {
+                    console.error("❌ Error al invocar Cal("inline"): ", err);
+                    calContainer.innerHTML = `<p style="padding: 20px; text-align: center;">Error al cargar el calendario (${err.message}). Por favor, contacta con soporte.</p>`;
+                }
+            }, 500); // Aumentamos un poco el delay
         } else {
             console.error("❌ Cal.com SDK no detectado en el objeto 'window'");
             alert("Error al cargar el calendario. Por favor, recarga la página.");

@@ -644,30 +644,30 @@
     <!-- Modal de Sesiones / Cal.com -->
     <div id="sesionModal" class="modal">
         <div class="modal-content sesion-modal-content">
-            <span class="close close-modal" id="closeSesion">&times;</span>
+            <span class="close-modal close-sesion" id="closeSesion">&times;</span>
             <div id="sesionSelection" class="sesion-selection-ui">
-                <div class="sesion-header" style="text-align: center; margin-bottom: 25px;">
-                    <h2 style="font-family: var(--font-serif); color: var(--color-acento);">Sesiones 1a1</h2>
-                    <p style="color: #666;">Acompañamiento directo con tu Mentor Vocal</p>
+                <h2>Mis Sesiones 1/1</h2>
+                <div id="sessionQuotaInfo" class="session-quota-info">
+                    <!-- Se poblará con los minutos restantes -->
                 </div>
 
-                <div id="sessionQuotaInfo" class="quota-container">
-                    <!-- Se puebla dinámicamente -->
-                </div>
+                <div class="session-actions">
+                    <div class="session-group">
+                        <h3>Sesiones Incluidas</h3>
+                        <p class="session-desc">Dispones de 60 min mensuales (1 de 1h o 2 de 30min).</p>
+                        <div class="booking-options">
+                            <button id="book30Btn" class="btn-booking">Reservar 30 min</button>
+                            <button id="book60Btn" class="btn-booking">Reservar 1 hora</button>
+                        </div>
+                    </div>
 
-                <div class="session-actions" style="display: flex; gap: 15px; margin-top: 25px;">
-                    <button id="book30Btn" class="save-btn" style="flex: 1;">Reservar 30 min</button>
-                    <button id="book60Btn" class="save-btn" style="flex: 1;">Reservar 1 hora</button>
-                </div>
-
-                <div class="extra-sessions" style="margin-top: 40px; border-top: 1px dashed #ddd; padding-top: 25px;">
-                    <p style="text-align: center; font-size: 0.9em; margin-bottom: 15px; color: #888;">Si has agotado tu
-                        cuota o deseas más tiempo:</p>
-                    <div class="extra-actions" style="display: flex; gap: 15px;">
-                        <button id="buyExtra30Btn" class="secondary-btn"
-                            style="flex: 1; padding: 10px; font-size: 0.85em;">+30 min Extra</button>
-                        <button id="buyExtra60Btn" class="secondary-btn"
-                            style="flex: 1; padding: 10px; font-size: 0.85em;">+1 hora Extra</button>
+                    <div class="session-group extra">
+                        <h3>1 Sesión con el Mentor o 1 Sesión extra</h3>
+                        <p class="session-desc">Reserva aquí una sesión extra si has agotado tu cuota.</p>
+                        <div class="booking-options">
+                            <button id="buyExtra30Btn" class="btn-booking btn-extra">Comprar Extra 30 min</button>
+                            <button id="buyExtra60Btn" class="btn-booking btn-extra">Comprar Extra 1 hora</button>
+                        </div>
                     </div>
                 </div>
             </div>
