@@ -189,7 +189,8 @@ h3 {
 
 .phases-app-img {
     max-width: 100%;
-    height: 500px;
+    height: auto;
+    max-height: 700px;
     width: auto;
     object-fit: contain;
     border-radius: 40px;
@@ -211,9 +212,8 @@ h3 {
 
 .phase-icon {
     flex-shrink: 0;
-    width: 80px;
-    /* Reduced from 120px to fit better in vertical layout */
-    height: 80px;
+    width: 50px;
+    height: 50px;
 }
 
 .phase-text h3 {
@@ -237,8 +237,8 @@ h3 {
 
 .app-hotspot {
     position: absolute;
-    width: 30px;
-    height: 30px;
+    width: 14px;
+    height: 14px;
     transform: translate(-50%, -50%);
     cursor: pointer;
     z-index: 10;
@@ -275,8 +275,8 @@ h3 {
     position: absolute;
     top: 50%;
     left: 50%;
-    width: 8px;
-    height: 8px;
+    width: 6px;
+    height: 6px;
     background: var(--color-oro);
     border-radius: 50%;
     transform: translate(-50%, -50%);
@@ -323,7 +323,7 @@ h3 {
     }
 
     100% {
-        transform: scale(2.5);
+        transform: scale(2);
         opacity: 0;
     }
 }
@@ -690,8 +690,8 @@ h3 {
 }
 
 .phase-icon-wrapper {
-    width: 120px;
-    height: 120px;
+    width: 50px;
+    height: 50px;
     background: white;
     border-radius: 50%;
     display: flex;
@@ -700,6 +700,10 @@ h3 {
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
     border: 1px solid #eee;
     flex-shrink: 0;
+}
+
+.phase-icon-wrapper span {
+    font-size: 1.2rem !important;
 }
 
 .phase-icon-svg {
@@ -1208,8 +1212,9 @@ h3 {
         opacity: 1;
         transform: translateY(0);
     }
-}/ *   - - -   V E R I F I C A T I O N   M O D A L   - - -   * / 
+}
 
+/ *   - - -   V E R I F I C A T I O N   M O D A L   - - -   * / 
 /* --- VERIFICATION MODAL --- */
 .verification-header {
     text-align: center;
@@ -1252,8 +1257,13 @@ h3 {
 }
 
 @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
 }
 
 .error-msg {
