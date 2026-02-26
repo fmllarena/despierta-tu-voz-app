@@ -275,8 +275,10 @@ async function cargarPerfil(user) {
         // Actualizar UI con el tier correcto del perfil
         updateUI(user);
 
-        // Al cargar el perfil, recuperamos el historial para el contexto de la IA y lo renderizamos
-        await cargarHistorialDesdeDB(user.id, true);
+        // Al cargar el perfil, recuperamos el historial para el contexto de la IA.
+        // Solo lo renderizamos visualmente si venimos de una reserva exitosa.
+        const isBookingSuccess = urlParams.get('booking') === 'success';
+        await cargarHistorialDesdeDB(user.id, isBookingSuccess);
 
         // --- REPARACIÓN AUTOMÁTICA ---
         // Si el perfil está vacío pero tenemos mensajes cargados, disparamos el resumen 
@@ -447,8 +449,10 @@ window.addEventListener('load', () => {
 async function saludarUsuario(user, perfil) {
     if (!ELEMENTS.chatBox) return;
 
-    // Solo limpiar si NO hay mensajes previos (p. ej. error en carga de historial o usuario nuevo)
-    if (chatHistory.length === 0) {
+    // Solo mantenemos el chat si venimos de una reserva exitosa.
+    // En cualquier otro caso, limpiamos para empezar de cero.
+    const isBookingSuccess = urlParams.get('booking') === 'success';
+    if (!isBookingSuccess) {
         ELEMENTS.chatBox.innerHTML = "";
     }
 
