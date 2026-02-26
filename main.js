@@ -1187,7 +1187,14 @@ NO incluyas comillas. Responde solo con la frase.`;
         else this.mostrarDiario(modal);
     },
     async mostrarDiario(modal) {
-        const { data: { user } } = await supabaseClient.auth.getUser();
+        const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
+        if (!user || authError) {
+            console.warn("⚠️ Usuario no autenticado al abrir diario");
+            const content = document.getElementById('diarioContent');
+            if (content) content.innerHTML = "<p>Debes iniciar sesión para ver tu progreso.</p>";
+            modal.style.display = 'flex';
+            return;
+        }
         const { data: perfil } = await supabaseClient.from('user_profiles').select('*').eq('user_id', user.id).single();
         const content = document.getElementById('diarioContent');
 

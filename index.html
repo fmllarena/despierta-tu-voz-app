@@ -91,6 +91,10 @@
 
                 <div class="auth-extra">
                     <a href="#" id="forgotPasswordLink">¿Has olvidado tu contraseña?</a>
+                    <br><br>
+                    <a href="#" onclick="dtvSystemReset(); event.preventDefault();"
+                        style="font-size: 0.7em; color: #888; text-decoration: underline;">Reiniciar sistema (Solucionar
+                        errores de conexión)</a>
                 </div>
             </div>
 
@@ -722,6 +726,39 @@
     <script type="module" src="js/modules/files.js"></script>
     <script type="module" src="js/modules/pronunciation.js"></script>
     <script src="main.js?v=6.2" defer></script>
+
+    <!-- Script de Diagnóstico DTV (No-módulo para evitar fallos de carga) -->
+    <script>
+        console.log("🛠️ Inciando Diagnóstico DTV...");
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                const health = {
+                    windowSESIONES: !!window.SESIONES,
+                    windowELEMENTS: !!window.ELEMENTS,
+                    windowCal: !!window.Cal,
+                    supabaseReady: !!window.supabaseClient
+                };
+                console.log("📊 Estado de salud DTV:", health);
+                if (!health.windowSESIONES) {
+                    console.error("❌ CRÍTICO: El módulo de SESIONES no se ha cargado en window.");
+                }
+            }, 1000);
+        });
+
+        function dtvSystemReset() {
+            if (confirm("Esto cerrará tu sesión y limpiará el estado de la app para solucionar errores de conexión. ¿Continuar?")) {
+                localStorage.clear();
+                sessionStorage.clear();
+                if (window.supabaseClient) {
+                    window.supabaseClient.auth.signOut().then(() => {
+                        window.location.reload();
+                    });
+                } else {
+                    window.location.reload();
+                }
+            }
+        }
+    </script>
 </body>
 
 
