@@ -1,4 +1,4 @@
-/* --- LANDING PAGE: ALQUIMIA VISUAL --- */
+﻿/* --- LANDING PAGE: ALQUIMIA VISUAL --- */
 :root {
     --color-fondo: #fdfcf8;
     /* Crema suave para reducir fatiga */
@@ -6,7 +6,7 @@
     --color-acento: #3a506b;
     /* Azul profundo (Calma/Autoridad) */
     --color-oro: #d4af37;
-    /* Oro AlquÃ­mico (Progreso) */
+    /* Oro AlquÃƒÂ­mico (Progreso) */
     --color-oro-soft: #f4ece6;
     --font-serif: 'Playfair Display', serif;
     --font-sans: 'Outfit', sans-serif;
@@ -462,7 +462,7 @@ h3 {
 }
 
 .pricing-card ul li::before {
-    content: 'âœ“';
+    content: '\2713';
     color: var(--color-oro);
     font-weight: bold;
 }
