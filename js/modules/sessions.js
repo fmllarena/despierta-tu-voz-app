@@ -135,7 +135,7 @@ window.SESIONES = {
 
         // 2. Preparar el contenedor
         if (calContainer) {
-            console.log("📍 Preparando contenedor #cal-embed-container (Modo Link)");
+            console.log("📍 Preparando contenedor #cal-embed-container (Inyección Directa)");
             // Limpieza absoluta
             while (calContainer.firstChild) {
                 calContainer.removeChild(calContainer.firstChild);
@@ -158,18 +158,19 @@ window.SESIONES = {
             safetyBanner.innerHTML = `<span>¿Problemas con el calendario? </span><a href="${url}" target="_blank" style="color: #3182ce; font-weight: bold; text-decoration: underline;">Haz click aquí para abrir en ventana nueva</a>`;
             calContainer.appendChild(safetyBanner);
 
-            // Contenedor para la inyección
+            // Contenedor para el Iframe
             const iframeTarget = document.createElement('div');
             iframeTarget.id = 'cal-iframe-target';
             iframeTarget.style.width = '100%';
-            iframeTarget.style.minHeight = '600px';
+            iframeTarget.style.height = '600px';
+            iframeTarget.style.overflow = 'hidden';
             calContainer.appendChild(iframeTarget);
 
             // Loader inicial
             iframeTarget.innerHTML = `
                 <div style="padding: 60px; text-align: center;" id="cal-custom-loader">
                     <div class="loader-spin" style="margin: 0 auto 15px;"></div>
-                    <p>Sincronizando calendario...</p>
+                    <p>Cargando calendario del Mentor...</p>
                 </div>
             `;
         } else {
@@ -178,43 +179,47 @@ window.SESIONES = {
             return;
         }
 
-        // 3. Inicializar Cal.com (Modo 'link')
+        // 3. Inicializar Cal.com (Estrategia Híbrida)
+        const finalUrl = `${url}?embed=true&name=${encodeURIComponent(profile?.nombre || "")}&email=${encodeURIComponent(profile?.email || "")}`;
+
         if (window.Cal) {
-            console.log(`🚀 Solicitando 'link' a Cal.com para: ${calLink}`);
+            console.log(`🚀 Usando SDK + Iframe directo para: ${calLink}`);
             setTimeout(() => {
                 try {
-                    // Usar 'link' en el target dedicado.
-                    window.Cal("link", {
+                    // Primero intentamos la vía oficial pero con link directo
+                    window.Cal("inline", {
                         elementOrSelector: "#cal-iframe-target",
                         calLink: calLink,
                         config: {
                             name: profile?.nombre || "",
                             email: profile?.email || "",
-                            notes: "Reserva desde la App Despierta Tu Voz",
-                            theme: "light",
-                            metadata: { userId: profile?.user_id }
+                            theme: "light"
                         }
                     });
 
-                    window.Cal("ui", {
-                        styles: { branding: { brandColor: "#3a506b" } },
-                        hideEventTypeDetails: false,
-                        layout: "month_view"
-                    });
-
-                    // Limpiar loader tras un tiempo
+                    // Verificación de respaldo: si en 3s no hay iframe del SDK, lo inyectamos nosotros
                     setTimeout(() => {
-                        const loader = document.getElementById('cal-custom-loader');
-                        if (loader) loader.style.display = 'none';
-                    }, 4000);
+                        const target = document.getElementById('cal-iframe-target');
+                        if (target && !target.querySelector('iframe')) {
+                            console.warn("⚠️ SDK no inyectó iframe. Forzando inyección manual...");
+                            target.innerHTML = `<iframe src="${finalUrl}" style="width:100%; height:100%; border:none;" allowfullscreen></iframe>`;
+                        } else {
+                            // Si el SDK funcionó, quitamos nuestro loader
+                            const loader = document.getElementById('cal-custom-loader');
+                            if (loader) loader.style.display = 'none';
+                        }
+                    }, 3000);
 
                 } catch (err) {
-                    console.error("❌ Error en Cal(\"link\"): ", err);
+                    console.error("❌ Error en Cal(\"inline\"): ", err);
+                    const target = document.getElementById('cal-iframe-target');
+                    if (target) target.innerHTML = `<iframe src="${finalUrl}" style="width:100%; height:100%; border:none;"></iframe>`;
                 }
             }, 300);
         } else {
-            console.error("❌ Cal.com SDK no detectado");
-            window.open(url, '_blank');
+            // Sin SDK, inyección directa inmediata
+            const target = document.getElementById('cal-iframe-target');
+            if (target) target.innerHTML = `<iframe src="${finalUrl}" style="width:100%; height:100%; border:none;"></iframe>`;
         }
     },
 
