@@ -127,6 +127,29 @@ export const authActions = {
         }
     },
 
+    async loginWithOAuth(provider) {
+        try {
+            if (!state.supabase) await inicializarSupabase();
+
+            // Guardar el plan pendiente si el modal legal lo tenía persistido
+            // o si estaba en medio de un flujo de landing
+            const pendingPlan = window.LEGAL?.pendingPlan || sessionStorage.getItem('pendingPlan');
+            if (pendingPlan) sessionStorage.setItem('pendingPlan', pendingPlan);
+
+            const { error } = await state.supabase.auth.signInWithOAuth({
+                provider: provider,
+                options: {
+                    redirectTo: window.location.origin + '/landing.html'
+                }
+            });
+
+            if (error) throw error;
+        } catch (error) {
+            console.error(`❌ Error en login con ${provider}:`, error);
+            alert(`No se pudo iniciar sesión con ${provider}. Inténtalo con otro método.`);
+        }
+    },
+
     async logout() {
         await state.supabase.auth.signOut();
         location.reload();
