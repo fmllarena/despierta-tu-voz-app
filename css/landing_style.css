@@ -195,6 +195,8 @@ h3 {
     object-fit: contain;
     border-radius: 40px;
     box-shadow: 0 30px 60px rgba(0, 0, 0, 0.15);
+    border: 2px solid var(--color-acento);
+    /* LÃƒÂ­nea azul corporativa */
 }
 
 .phases-list {
@@ -229,6 +231,23 @@ h3 {
     font-size: 1.1rem;
     color: #555;
     line-height: 1.5;
+}
+
+.phase-item-top {
+    margin-bottom: 25px;
+    background: white;
+    padding: 15px 25px;
+    border-radius: 20px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.03);
+    border: 1px border var(--color-oro-soft);
+}
+
+.phase-item-top h3 {
+    font-size: 1.3rem;
+}
+
+.phase-item-top p {
+    font-size: 0.95rem;
 }
 
 /* --- APP TOUR INTERACTIVO (HOTSPOTS) --- */
