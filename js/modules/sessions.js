@@ -1,12 +1,12 @@
-import { ELEMENTS } from './elements.js';
-import { userProfile } from './config.js';
+/**
+ * DTV Sessions Module (Global Version)
+ * Maneja la integración con Cal.com y la lógica de reserva de sesiones.
+ * Esta versión no usa ES modules para asegurar compatibilidad y carga inmediata.
+ */
 
-console.log("🔵 sessions.js: Módulo CARGADO (imports OK)");
-console.log("🔵 sessions.js: Cargando módulo...");
-console.log("🔵 sessions.js: Import ELEMENTS completado.");
-console.log("🔵 sessions.js: Import userProfile completado.");
+console.log("🔵 sessions.js: Iniciando carga (Versión Global)...");
 
-export const SESIONES = window.SESIONES = {
+window.SESIONES = {
     links: {
         normal30: "https://cal.com/fernando-martinez-drmyul/30min",
         normal60: "https://cal.com/fernando-martinez-drmyul/sesion-de-1-h",
@@ -15,7 +15,7 @@ export const SESIONES = window.SESIONES = {
     },
 
     abrirModal: async () => {
-        console.log("🎟️ Abriendo Modal de Sesiones...");
+        console.log("🎟️ Abriendo Modal de Sesiones (Global)...");
         try {
             // Reset a vista inicial (selección)
             const selectionUI = document.getElementById('sesionSelection');
@@ -23,110 +23,78 @@ export const SESIONES = window.SESIONES = {
             if (selectionUI) selectionUI.style.display = 'block';
             if (calContainer) calContainer.style.display = 'none';
 
-            if (ELEMENTS.sesionModal) {
-                ELEMENTS.sesionModal.style.display = 'block';
+            if (window.ELEMENTS && window.ELEMENTS.sesionModal) {
+                window.ELEMENTS.sesionModal.style.display = 'block';
+                window.SESIONES.actualizarInfoCuota();
             } else {
                 console.error("❌ No se encontró sesionModal en el DOM");
             }
-
-            SESIONES.actualizarInfoCuota();
-
-            // Re-fetch del perfil para asegurar datos frescos
-            if (window.supabaseClient && window.userProfile?.user_id) {
-                const { data, error } = await window.supabaseClient
-                    .from('user_profiles')
-                    .select('*')
-                    .eq('user_id', window.userProfile.user_id)
-                    .single();
-
-                if (data && !error) {
-                    window.userProfile = data;
-                    SESIONES.actualizarInfoCuota();
-                }
-            }
         } catch (e) {
-            console.error("Error en abrirModal:", e);
+            console.error("Error abriendo modal sesiones:", e);
         }
     },
 
     actualizarInfoCuota: () => {
         const profile = window.userProfile;
-        const consumed = profile?.sessions_minutes_consumed || 0;
-        const tier = (profile?.subscription_tier || 'free').trim().toLowerCase();
+        const ELEMENTS = window.ELEMENTS;
+        if (!profile || !ELEMENTS) return;
 
-        console.log(`📊 Actualizando cuota. Tier: ${tier}, Consumido: ${consumed}`);
+        const consumed = profile.sessions_minutes_consumed || 0;
+        const tier = profile.subscription_tier || 'free';
+        const remaining = tier === 'premium' ? Math.max(0, 60 - consumed) : 0;
 
-        // Transforma = Premium
-        const isPremium = tier === 'premium' || tier === 'transforma';
-        const isPro = tier === 'pro' || tier === 'profundiza';
+        console.log(`📊 Actualizando cuota. Tier: ${tier}, Consumido: ${consumed}, Restante: ${remaining}`);
 
-        try {
-            if (isPremium) {
-                const total = 60;
-                const remaining = Math.max(0, total - consumed);
-
-                if (ELEMENTS.sessionQuotaInfo) {
-                    ELEMENTS.sessionQuotaInfo.innerHTML = `
-                        <div class="quota-badge">
-                            <span class="quota-label">Tiempo consumido:</span>
-                            <span class="quota-value">${consumed} / ${total} min</span>
-                        </div>
-                    `;
-                }
-
-                if (ELEMENTS.book30Btn) {
-                    ELEMENTS.book30Btn.disabled = remaining < 30;
-                    ELEMENTS.book30Btn.innerText = remaining < 30 ? "Cuota agotada" : "Reservar 30 min";
-                }
-                if (ELEMENTS.book60Btn) {
-                    ELEMENTS.book60Btn.disabled = remaining < 60;
-                    ELEMENTS.book60Btn.innerText = remaining < 60 ? (remaining < 30 ? "Cuota agotada" : "Tiempo insuficiente") : "Reservar 1 hora";
-                }
-            } else if (isPro) {
-                if (ELEMENTS.sessionQuotaInfo) {
-                    ELEMENTS.sessionQuotaInfo.innerHTML = `
-                        <div class="quota-badge">
-                            <span class="quota-label">Tu plan Profundiza no incluye sesiones gratuitas.</span>
-                        </div>
-                    `;
-                }
-                if (ELEMENTS.book30Btn) {
-                    ELEMENTS.book30Btn.disabled = true;
-                    ELEMENTS.book30Btn.innerText = "No incluido";
-                }
-                if (ELEMENTS.book60Btn) {
-                    ELEMENTS.book60Btn.disabled = true;
-                    ELEMENTS.book60Btn.innerText = "No incluido";
-                }
-            } else {
-                if (ELEMENTS.sessionQuotaInfo) {
-                    ELEMENTS.sessionQuotaInfo.innerHTML = `
-                        <div class="quota-badge">
-                            <span class="quota-label">Las sesiones 1/1 requieren el plan Profundiza o Transforma.</span>
-                        </div>
-                    `;
-                }
-                if (ELEMENTS.book30Btn) {
-                    ELEMENTS.book30Btn.disabled = true;
-                    ELEMENTS.book30Btn.innerText = "No incluido";
-                }
-                if (ELEMENTS.book60Btn) {
-                    ELEMENTS.book60Btn.disabled = true;
-                    ELEMENTS.book60Btn.innerText = "No incluido";
-                }
+        if (tier === 'premium' || tier === 'transforma') {
+            if (ELEMENTS.sessionQuotaInfo) {
+                ELEMENTS.sessionQuotaInfo.innerHTML = `
+                    <div class="quota-badge">
+                        <span class="quota-label">Tu tiempo incluido restante:</span>
+                        <span class="quota-value">${remaining} min</span>
+                    </div>
+                `;
             }
-        } catch (e) {
-            console.error("Error actualizando UI de cuota:", e);
+            // Hab/Des botones incluidos
+            if (ELEMENTS.book30Btn) ELEMENTS.book30Btn.disabled = remaining < 30;
+            if (ELEMENTS.book60Btn) ELEMENTS.book60Btn.disabled = remaining < 60;
+
+            if (remaining < 30) {
+                if (ELEMENTS.book30Btn) ELEMENTS.book30Btn.innerText = "Cuota agotada";
+                if (ELEMENTS.book60Btn) ELEMENTS.book60Btn.innerText = "Cuota agotada";
+            } else if (remaining < 60) {
+                if (ELEMENTS.book60Btn) ELEMENTS.book60Btn.innerText = "Tiempo insuficiente";
+            } else {
+                if (ELEMENTS.book30Btn) ELEMENTS.book30Btn.innerText = "Reservar 30 min";
+                if (ELEMENTS.book60Btn) ELEMENTS.book60Btn.innerText = "Reservar 1 hora";
+            }
+        } else {
+            // Caso PRO o FREE
+            if (ELEMENTS.sessionQuotaInfo) {
+                ELEMENTS.sessionQuotaInfo.innerHTML = `
+                    <div class="quota-badge">
+                        <span class="quota-label">Tu plan actual no incluye sesiones 1/1 individuales.</span>
+                    </div>
+                `;
+            }
+            if (ELEMENTS.book30Btn) {
+                ELEMENTS.book30Btn.disabled = true;
+                ELEMENTS.book30Btn.innerText = "No incluido";
+            }
+            if (ELEMENTS.book60Btn) {
+                ELEMENTS.book60Btn.disabled = true;
+                ELEMENTS.book60Btn.innerText = "No incluido";
+            }
         }
     },
 
     comprarExtra: (duracion) => {
         const profile = window.userProfile;
-        const tier = (profile?.subscription_tier || 'free').trim().toLowerCase();
-
+        const tier = profile?.subscription_tier || 'free';
         if (tier === 'free') {
             alert("Las sesiones con el Mentor están reservadas para alumnos de los planes Profundiza (PRO) o Transforma. ¡Mejora tu plan para empezar!");
-            if (ELEMENTS.upgradeModal) ELEMENTS.upgradeModal.style.display = 'flex';
+            if (window.ELEMENTS && window.ELEMENTS.upgradeModal) {
+                window.ELEMENTS.upgradeModal.style.display = 'flex';
+            }
             return;
         }
 
@@ -143,9 +111,10 @@ export const SESIONES = window.SESIONES = {
     },
 
     reservar: (tipo) => {
-        console.log(`📅 [SESIONES] Reservando tipo: ${tipo}`);
+        const ELEMENTS = window.ELEMENTS;
         const profile = window.userProfile;
-        const url = SESIONES.links[tipo];
+        console.log(`📅 [SESIONES] Reservando tipo: ${tipo}`);
+        const url = window.SESIONES.links[tipo];
 
         if (!url || url === "#") {
             console.error("❌ Error: URL de sesión no definida para", tipo);
@@ -158,7 +127,7 @@ export const SESIONES = window.SESIONES = {
         const calContainer = document.getElementById('cal-embed-container');
 
         // 1. Asegurar visibilidad del modal y ocultar selección
-        if (ELEMENTS.sesionModal) {
+        if (ELEMENTS && ELEMENTS.sesionModal) {
             ELEMENTS.sesionModal.style.display = 'block';
         }
 
@@ -167,7 +136,6 @@ export const SESIONES = window.SESIONES = {
         // 2. Preparar el contenedor
         if (calContainer) {
             console.log("📍 Preparando contenedor #cal-embed-container");
-            // Mantener el loader pero asegurar que el contenedor está listo para recibir el iframe
             calContainer.innerHTML = `
                 <div class="loader-premium" id="cal-loader-internal">
                     <div class="loader-spin"></div>
@@ -179,18 +147,17 @@ export const SESIONES = window.SESIONES = {
             calContainer.style.opacity = '1';
         } else {
             console.error("❌ No se encontró el contenedor #cal-embed-container");
+            // Fallback al backup: abrir en pestaña nueva
+            const finalUrl = `${url}?email=${encodeURIComponent(profile?.email || "")}&name=${encodeURIComponent(profile?.nombre || "")}`;
+            window.open(finalUrl, '_blank');
             return;
         }
 
-        // 3. Inicializar Cal.com con un ligero delay para que el DOM se asiente
+        // 3. Inicializar Cal.com
         if (window.Cal) {
             console.log(`🚀 Inicializando Cal.com inline para: ${calLink}`);
             setTimeout(() => {
                 try {
-                    // Limpiar el contenedor justo antes para que no interfiera con Cal.com
-                    // pero Cal.com suele preferir gestionar su propio contenido.
-
-
                     window.Cal("inline", {
                         elementOrSelector: calContainer,
                         calLink: calLink,
@@ -207,55 +174,57 @@ export const SESIONES = window.SESIONES = {
                         layout: "month_view"
                     });
 
-                    console.log("✅ Cal("inline") invocado con éxito.");
+                    console.log("✅ Cal(\"inline\") invocado con éxito.");
                 } catch (err) {
-                    console.error("❌ Error al invocar Cal("inline"): ", err);
-                    calContainer.innerHTML = `<p style="padding: 20px; text-align: center;">Error al cargar el calendario (${err.message}). Por favor, contacta con soporte.</p>`;
+                    console.error("❌ Error al invocar Cal(\"inline\"): ", err);
+                    calContainer.innerHTML = `<p style="padding: 20px; text-align: center;">Error al cargar el calendario (${err.message}).</p>`;
                 }
-            }, 500); // Aumentamos un poco el delay
+            }, 300);
         } else {
-            console.error("❌ Cal.com SDK no detectado en el objeto 'window'");
-            alert("Error al cargar el calendario. Por favor, recarga la página.");
+            console.error("❌ Cal.com SDK no detectado");
+            // Fallback backup
+            const finalUrl = `${url}?email=${encodeURIComponent(profile?.email || "")}&name=${encodeURIComponent(profile?.nombre || "")}`;
+            window.open(finalUrl, '_blank');
         }
     },
 
     setup() {
-        console.log("🛠️ Configurando listeners de SESIONES...");
+        console.log("🛠️ Configurando listeners de SESIONES (Global)...");
+        const ELEMENTS = window.ELEMENTS;
+        if (!ELEMENTS) {
+            console.warn("⚠️ ELEMENTS no disponible en SESIONES.setup(), reintentando...");
+            setTimeout(() => window.SESIONES.setup(), 500);
+            return;
+        }
 
         if (window.Cal) window.Cal("ui", { theme: "light" });
 
         if (ELEMENTS.sesionBtn) {
             console.log("✅ [DEBUG] sesionBtn detectado, vinculando click.");
-            ELEMENTS.sesionBtn.addEventListener('click', (e) => {
+            // Eliminar listeners previos para evitar duplicados
+            const oldBtn = ELEMENTS.sesionBtn;
+            const newBtn = oldBtn.cloneNode(true);
+            oldBtn.parentNode.replaceChild(newBtn, oldBtn);
+
+            newBtn.addEventListener('click', (e) => {
                 console.log("🔥 [DEBUG] CLICK detectado en Sesiones 1-1");
-                // alert("Click en Sesiones 1-1 detectado"); // Debug temporal
-                this.abrirModal();
+                window.SESIONES.abrirModal();
             });
-        } else {
-            console.warn("⚠️ [DEBUG] sesionBtn NO encontrado en setup()");
         }
 
         if (ELEMENTS.closeSesion) {
             ELEMENTS.closeSesion.addEventListener('click', () => {
-                console.log("❌ Cerrando modal sesiones");
                 if (ELEMENTS.sesionModal) ELEMENTS.sesionModal.style.display = 'none';
             });
         }
 
-        ELEMENTS.book30Btn?.addEventListener('click', (e) => {
-            console.log("Click en book30Btn");
-            this.reservar('normal30');
-        });
-        ELEMENTS.book60Btn?.addEventListener('click', (e) => {
-            console.log("Click en book60Btn");
-            this.reservar('normal60');
-        });
-
-        ELEMENTS.buyExtra30Btn?.addEventListener('click', () => this.comprarExtra('30'));
-        ELEMENTS.buyExtra60Btn?.addEventListener('click', () => this.comprarExtra('60'));
+        ELEMENTS.book30Btn?.addEventListener('click', () => window.SESIONES.reservar('normal30'));
+        ELEMENTS.book60Btn?.addEventListener('click', () => window.SESIONES.reservar('normal60'));
+        ELEMENTS.buyExtra30Btn?.addEventListener('click', () => window.SESIONES.comprarExtra('30'));
+        ELEMENTS.buyExtra60Btn?.addEventListener('click', () => window.SESIONES.comprarExtra('60'));
 
         window.addEventListener('click', e => {
-            if (e.target === ELEMENTS.sesionModal) ELEMENTS.sesionModal.style.display = 'none';
+            if (ELEMENTS.sesionModal && e.target === ELEMENTS.sesionModal) ELEMENTS.sesionModal.style.display = 'none';
         });
 
         if (window.Cal) {
@@ -272,9 +241,9 @@ export const SESIONES = window.SESIONES = {
     }
 };
 
-// Inicialización automática
+// Inicialización
 if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => SESIONES.setup());
+    document.addEventListener('DOMContentLoaded', () => window.SESIONES.setup());
 } else {
-    SESIONES.setup();
+    window.SESIONES.setup();
 }
