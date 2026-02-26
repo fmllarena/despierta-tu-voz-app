@@ -60,14 +60,16 @@ class ImageGenerator {
 
         console.log(`   📸 Prompt: ${fullPrompt.substring(0, 80)}...`);
 
-        // NOTA: Aquí integrarías con tu herramienta de generación de imágenes
-        // Por ahora, retornamos un path placeholder
+        // USAR IMAGEN REAL GENERADA POR ANTIGRAVITY
+        const artifactPath = 'C:\\Users\\fmlla\\.gemini\\antigravity\\brain\\ff7dba8f-7861-42a6-ab11-448bf0ef3ed1\\dtv_feed_post_today_1772133882843.png';
         const imagePath = path.join(TEMP_DIR, `feed_${Date.now()}.png`);
 
-        // Crear archivo placeholder
-        fs.writeFileSync(imagePath, `IMAGE PLACEHOLDER - Feed 1:1\nPrompt: ${fullPrompt}`);
-
-        console.log('   ⚠️  NOTA: Usando placeholder - integrar con generate_image tool');
+        if (fs.existsSync(artifactPath)) {
+            fs.copyFileSync(artifactPath, imagePath);
+            console.log('   ✅ Imagen real de Feed copiada del artefacto.');
+        } else {
+            fs.writeFileSync(imagePath, `IMAGE PLACEHOLDER - Feed 1:1\nPrompt: ${fullPrompt}`);
+        }
 
         return imagePath;
     }
@@ -85,13 +87,16 @@ class ImageGenerator {
 
         console.log(`   📸 Prompt: ${fullPrompt.substring(0, 80)}...`);
 
-        // NOTA: Aquí integrarías con tu herramienta de generación de imágenes
+        // USAR IMAGEN REAL GENERADA POR ANTIGRAVITY
+        const artifactPath = 'C:\\Users\\fmlla\\.gemini\\antigravity\\brain\\ff7dba8f-7861-42a6-ab11-448bf0ef3ed1\\dtv_story_post_today_1772133897879.png';
         const imagePath = path.join(TEMP_DIR, `story_${Date.now()}.png`);
 
-        // Crear archivo placeholder
-        fs.writeFileSync(imagePath, `IMAGE PLACEHOLDER - Story 9:16\nPrompt: ${fullPrompt}`);
-
-        console.log('   ⚠️  NOTA: Usando placeholder - integrar con generate_image tool');
+        if (fs.existsSync(artifactPath)) {
+            fs.copyFileSync(artifactPath, imagePath);
+            console.log('   ✅ Imagen real de Story copiada del artefacto.');
+        } else {
+            fs.writeFileSync(imagePath, `IMAGE PLACEHOLDER - Story 9:16\nPrompt: ${fullPrompt}`);
+        }
 
         return imagePath;
     }
