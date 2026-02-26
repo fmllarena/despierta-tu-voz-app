@@ -180,7 +180,8 @@ h3 {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 60px;
-    align-items: center;
+    align-items: start;
+    /* Cambiado de center para alinear arriba */
 }
 
 .phases-visual {
