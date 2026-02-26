@@ -179,39 +179,53 @@ window.SESIONES = {
             return;
         }
 
-        // 3. Inicializar Cal.com (Estrategia Híbrida)
+        // 3. Inicializar Cal.com (Estrategia Híbrida con Namespace)
         const finalUrl = `${url}?embed=true&name=${encodeURIComponent(profile?.nombre || "")}&email=${encodeURIComponent(profile?.email || "")}`;
 
+        // Usamos el namespace "30min" como contenedor principal, ya que es el configurado en tu panel
+        const namespace = "30min";
+
         if (window.Cal) {
-            console.log(`🚀 Usando SDK + Iframe directo para: ${calLink}`);
+            console.log(`🚀 Usando SDK (NS: ${namespace}) para sesión: ${tipo} (${calLink})`);
             setTimeout(() => {
                 try {
-                    // Primero intentamos la vía oficial pero con link directo
-                    window.Cal("inline", {
+                    // Inicializar namespace si no existe
+                    window.Cal("init", namespace, { origin: "https://app.cal.com" });
+
+                    // Configurar UI para este namespace
+                    window.Cal.ns[namespace]("ui", {
+                        styles: { branding: { brandColor: "#3a506b" } },
+                        hideEventTypeDetails: false,
+                        layout: "month_view"
+                    });
+
+                    // Cargar el link específico (30min o 1h) en el namespace
+                    window.Cal.ns[namespace]("inline", {
                         elementOrSelector: "#cal-iframe-target",
                         calLink: calLink,
                         config: {
                             name: profile?.nombre || "",
                             email: profile?.email || "",
-                            theme: "light"
+                            theme: "light",
+                            layout: "month_view"
                         }
                     });
 
-                    // Verificación de respaldo: si en 3s no hay iframe del SDK, lo inyectamos nosotros
+                    // Verificación de respaldo: si en 3.5s no hay iframe del SDK, lo inyectamos nosotros
                     setTimeout(() => {
                         const target = document.getElementById('cal-iframe-target');
                         if (target && !target.querySelector('iframe')) {
-                            console.warn("⚠️ SDK no inyectó iframe. Forzando inyección manual...");
+                            console.warn("⚠️ SDK Namespace no respondió. Forzando inyección manual...");
                             target.innerHTML = `<iframe src="${finalUrl}" style="width:100%; height:100%; border:none;" allowfullscreen></iframe>`;
                         } else {
                             // Si el SDK funcionó, quitamos nuestro loader
                             const loader = document.getElementById('cal-custom-loader');
                             if (loader) loader.style.display = 'none';
                         }
-                    }, 3000);
+                    }, 3500);
 
                 } catch (err) {
-                    console.error("❌ Error en Cal(\"inline\"): ", err);
+                    console.error(`❌ Error en Cal.ns[${namespace}]: `, err);
                     const target = document.getElementById('cal-iframe-target');
                     if (target) target.innerHTML = `<iframe src="${finalUrl}" style="width:100%; height:100%; border:none;"></iframe>`;
                 }
