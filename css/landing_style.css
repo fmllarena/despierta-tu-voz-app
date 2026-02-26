@@ -239,7 +239,7 @@ h3 {
     padding: 15px 25px;
     border-radius: 20px;
     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.03);
-    border: 1px border var(--color-oro-soft);
+    border: 1px solid var(--color-oro-soft);
 }
 
 .phase-item-top h3 {
