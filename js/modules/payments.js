@@ -1,77 +1,162 @@
 import { ELEMENTS } from './elements.js';
-import { SESIONES } from './sessions.js';
-import { userProfile, supabaseClient } from './config.js';
 
+/**
+ * Módulo de Pagos In-App (Stripe Elements)
+ * Gestiona la creación de intents y el procesamiento de pagos sin redirecciones externas.
+ */
 export const PAYMENTS = window.PAYMENTS = {
-    async checkStatus() {
-        const urlParams = new URLSearchParams(window.location.search);
-        if (urlParams.get('payment') === 'success') {
-            const sessionId = urlParams.get('session_id');
-            const planType = urlParams.get('plan');
+    stripe: null,
+    elements: null,
+    clientSecret: null,
 
-            // Limpiamos la URL sin recargar para una experiencia más limpia
-            window.history.replaceState({}, document.title, window.location.pathname);
+    async init() {
+        try {
+            const response = await fetch('/api/config');
+            const { stripe_public_key } = await response.json();
+            this.stripe = window.Stripe(stripe_public_key || 'pk_live_51Qt97kG50D9Xw7I8...placeholder'); // Fallback o env var
+        } catch (e) {
+            console.error("Error inicializando Stripe:", e);
+        }
 
-            // Detectar si es una sesión extra
-            const isExtraSession = planType && planType.startsWith('extra_');
+        // Listeners básicos
+        ELEMENTS.closePayment?.addEventListener('click', () => {
+            ELEMENTS.paymentModal.style.display = 'none';
+        });
 
-            if (sessionId && !isExtraSession) {
-                // Caso Actualización de Plan (Suscripción)
-                alert("¡Tu plan se ha actualizado con éxito! Bienvenido a tu nuevo nivel de transformación.");
+        ELEMENTS.paymentForm?.addEventListener('submit', (e) => this.handleSubmit(e));
+    },
 
-                // Recargamos el perfil para aplicar cambios de UI (tier)
-                // Nota: cargarPerfil está en main.js (global)
-                if (window.cargarPerfil) {
-                    const { data: { user } } = await supabaseClient.auth.getUser();
-                    if (user) await window.cargarPerfil(user);
-                }
-            } else if (isExtraSession) {
-                // Caso Sesión Extra (Pago único) - Abrir Cal.com automáticamente
-                const duracion = planType.includes('30') ? '30' : '60';
+    /**
+     * Inicia el flujo de pago In-App para un plan o sesión extra
+     */
+    async iniciarPagoInApp(planKey) {
+        console.log("💰 Iniciando flujo In-App para:", planKey);
 
-                // Determinar el enlace correcto de Cal.com
-                let calLink = '';
-                if (duracion === '30') {
-                    calLink = SESIONES.links.normal30;
-                } else {
-                    calLink = SESIONES.links.normal60;
-                }
+        this.setLoading(true);
+        ELEMENTS.paymentModal.style.display = 'block';
+        ELEMENTS.paymentMessage.classList.add('hidden');
 
-                // Construir URL con datos del usuario
-                const profile = window.userProfile || userProfile;
-                if (!profile?.email) {
-                    console.warn("⚠️ [Payments] Éxito detectado pero no hay email en el perfil. Esperando login...");
-                    alert("⚠️ Pago detectado. Por favor, asegúrate de estar logueado para reservar.");
-                    return;
-                }
+        try {
+            // 1. Crear el Payment Intent en el servidor
+            const response = await fetch('/api/create-payment-intent', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    planType: planKey,
+                    userId: window.userProfile.user_id,
+                    userEmail: window.userProfile.email
+                })
+            });
 
-                const finalUrl = `${calLink}?email=${encodeURIComponent(profile.email)}&name=${encodeURIComponent(profile.nombre || "")}`;
+            const { clientSecret, error } = await response.json();
+            if (error) throw new Error(error);
 
-                // Abrir Cal.com en nueva pestaña
-                window.open(finalUrl, '_blank');
+            this.clientSecret = clientSecret;
 
-                // Mostrar mensaje de confirmación
-                alert(`✅ ¡Pago confirmado! Se ha abierto el calendario para que reserves tu sesión de ${duracion} minutos.\n\nSi no se abrió automáticamente, haz clic en "Reservar" en el modal de Sesiones 1/1.`);
+            // 2. Configurar Stripe Elements
+            const appearance = {
+                theme: 'stripe',
+                variables: {
+                    colorPrimary: '#3a506b',
+                    colorBackground: '#ffffff',
+                    colorText: '#30313d',
+                    colorDanger: '#df1b41',
+                    fontFamily: 'Inter, system-ui, sans-serif',
+                    spacingUnit: '4px',
+                    borderRadius: '8px',
+                },
+            };
 
-                // Abrir el modal de sesiones para que vea su cuota actualizada
-                SESIONES.abrirModal();
+            this.elements = this.stripe.elements({ appearance, clientSecret });
+
+            const paymentElementOptions = {
+                layout: "tabs",
+            };
+
+            const paymentElement = this.elements.create("payment", paymentElementOptions);
+            paymentElement.mount("#payment-element");
+
+            this.setLoading(false);
+
+        } catch (e) {
+            console.error("Error al preparar el pago:", e);
+            this.showMessage(e.message || "No se pudo conectar con la pasarela de pago.");
+            this.setLoading(false);
+        }
+    },
+
+    async handleSubmit(e) {
+        e.preventDefault();
+        this.setLoading(true);
+
+        const { error } = await this.stripe.confirmPayment({
+            elements: this.elements,
+            confirmParams: {
+                // Redirigir de vuelta a la app con éxito
+                return_url: `${window.location.origin}/index.html?payment=success`,
+            },
+            // IMPORTANTE: Si queremos que NO haya redirección (solo para algunos métodos como tarjeta)
+            // se puede usar redirect: 'if_required'
+            redirect: 'if_required'
+        });
+
+        if (error) {
+            if (error.type === "card_error" || error.type === "validation_error") {
+                this.showMessage(error.message);
+            } else {
+                this.showMessage("Ocurrió un error inesperado.");
             }
-        } else if (urlParams.get('payment') === 'cancel') {
-            window.history.replaceState({}, document.title, window.location.pathname);
-            alert("El proceso de pago fue cancelado.");
+        } else {
+            // El pago se procesó SIN redirección (pago instantáneo)
+            console.log("✅ Pago completado con éxito!");
+            this.handlePaymentSuccess();
         }
 
-        // Detectar si viene desde email de fin de trial (upgrade=pro)
-        const autoUpgrade = sessionStorage.getItem('dtv_auto_upgrade');
-        if (autoUpgrade) {
-            sessionStorage.removeItem('dtv_auto_upgrade'); // Limpiar para que no se repita
-            setTimeout(() => {
-                if (ELEMENTS.upgradeModal) {
-                    ELEMENTS.upgradeModal.style.display = 'flex';
-                }
-            }, 1000);
+        this.setLoading(false);
+    },
+
+    handlePaymentSuccess() {
+        ELEMENTS.paymentModal.style.display = 'none';
+
+        // Disparar automáticamente el modal de Cal.com si era una sesión extra
+        // o mostrar mensaje de éxito general
+        const profile = window.userProfile;
+
+        // Pequeña notificación visual
+        if (window.showCustomAlert) {
+            window.showCustomAlert("¡Pago realizado!", "Tu sesión ha sido confirmada. Ahora puedes elegir el horario en el calendario.");
         }
+
+        // Si el plan era una sesión extra, abrir el calendario
+        if (window.pendingPlan?.includes('extra')) {
+            const duracion = window.pendingPlan.includes('30') ? 'normal30' : 'normal60';
+            setTimeout(() => {
+                if (window.SESIONES) window.SESIONES.reservar(duracion);
+            }, 500);
+        }
+    },
+
+    setLoading(isLoading) {
+        if (isLoading) {
+            ELEMENTS.submitPayment.disabled = true;
+            ELEMENTS.paymentSpinner.classList.remove('hidden');
+            ELEMENTS.buttonText.classList.add('hidden');
+        } else {
+            ELEMENTS.submitPayment.disabled = false;
+            ELEMENTS.paymentSpinner.classList.add('hidden');
+            ELEMENTS.buttonText.classList.remove('hidden');
+        }
+    },
+
+    showMessage(messageText) {
+        ELEMENTS.paymentMessage.classList.remove('hidden');
+        ELEMENTS.paymentMessage.textContent = messageText;
     }
 };
 
-// La inicialización se controla desde main.js tras cargar el perfil
+// Auto-init
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => PAYMENTS.init());
+} else {
+    PAYMENTS.init();
+}

@@ -5,7 +5,35 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Despierta tu Voz - Mentor Vocal</title>
+    <!-- Cal.com SDK -->
+    <script>
+        (function (C, A, L) {
+            let p = function (a, ar) { a.q.push(ar); };
+            let d = C.document;
+            C.Cal = C.Cal || function () {
+                let cal = C.Cal;
+                let ar = arguments;
+                if (!cal.loaded) {
+                    cal.q = [];
+                    cal.loaded = true;
+                }
+                if (ar[0] === L) {
+                    const s = d.createElement("script");
+                    s.src = "https://app.cal.com/embed/embed.js";
+                    d.head.appendChild(s);
+                    return;
+                }
+                p(cal, ar);
+            };
+        })(window, "https://app.cal.com/embed/embed.js", "init");
+        Cal("init", { origin: "https://cal.com" });
+    </script>
+
+    <!-- Stripe SDK -->
+    <script src="https://js.stripe.com/v3/"></script>
+
     <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/modals.css">
     <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="shortcut icon" href="/favicon.ico" />
@@ -640,29 +668,62 @@
             <h4 id="alertTitle">app Mentor DTV</h4>
             <p id="alertMessage"></p>
             <button id="alertConfirmBtn" class="save-btn" style="width: 100%; margin-top: 15px;">Aceptar</button>
+            <!-- Modal de Sesiones / Cal.com -->
+            <div id="sesionModal" class="modal">
+                <div class="modal-content cal-modal-content">
+                    <span class="close" id="closeSesion">&times;</span>
+                    <div id="cal-embed-container" style="width:100%;height:600px;overflow:auto">
+                        <div class="loader-premium">
+                            <div class="loader-spin"></div>
+                            <p>Conectando con tu Mentor...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal de Pago In-App (Stripe Elements) -->
+            <div id="paymentModal" class="modal">
+                <div class="modal-content payment-modal-content">
+                    <span class="close" id="closePayment">&times;</span>
+                    <div class="payment-header" style="text-align: center; margin-bottom: 25px;">
+                        <h2 style="font-family: var(--font-serif); color: var(--color-acento);">Finalizar Reserva</h2>
+                        <p style="color: #666;">Pasarela segura de Alquimia Visual</p>
+                    </div>
+                    <form id="payment-form">
+                        <div id="link-authentication-element"></div>
+                        <div id="payment-element"></div>
+                        <button id="submit-payment" class="save-btn"
+                            style="width: 100%; margin-top: 25px; padding: 15px;">
+                            <div class="spinner hidden" id="payment-spinner"></div>
+                            <span id="button-text">Pagar y Reservar</span>
+                        </button>
+                        <div id="payment-message" class="hidden"
+                            style="margin-top: 15px; text-align: center; color: #e74c3c;"></div>
+                    </form>
+                </div>
+            </div>
         </div>
-    </div>
 
 
 
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script type="module" src="js/services/auth-service.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    <script src="js/stripe-checkout.js"></script>
-    <script type="module" src="js/modules/config.js"></script>
-    <script type="module" src="js/modules/elements.js"></script>
-    <script type="module" src="js/modules/music.js"></script>
-    <script type="module" src="js/modules/voice.js"></script>
-    <script type="module" src="js/modules/legal.js"></script>
-    <script type="module" src="js/modules/support.js"></script>
-    <script type="module" src="js/modules/settings.js"></script>
-    <script type="module" src="js/modules/sessions.js"></script>
-    <script type="module" src="js/modules/payments.js"></script>
-    <script type="module" src="js/modules/email.js"></script>
-    <script type="module" src="js/modules/tour.js"></script>
-    <script type="module" src="js/modules/files.js"></script>
-    <script type="module" src="js/modules/pronunciation.js"></script>
-    <script src="main.js?v=6.2" defer></script>
+        <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+        <script type="module" src="js/services/auth-service.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+        <script src="js/stripe-checkout.js"></script>
+        <script type="module" src="js/modules/config.js"></script>
+        <script type="module" src="js/modules/elements.js"></script>
+        <script type="module" src="js/modules/music.js"></script>
+        <script type="module" src="js/modules/voice.js"></script>
+        <script type="module" src="js/modules/legal.js"></script>
+        <script type="module" src="js/modules/support.js"></script>
+        <script type="module" src="js/modules/settings.js"></script>
+        <script type="module" src="js/modules/sessions.js"></script>
+        <script type="module" src="js/modules/payments.js"></script>
+        <script type="module" src="js/modules/email.js"></script>
+        <script type="module" src="js/modules/tour.js"></script>
+        <script type="module" src="js/modules/files.js"></script>
+        <script type="module" src="js/modules/pronunciation.js"></script>
+        <script src="main.js?v=6.2" defer></script>
 </body>
 
 

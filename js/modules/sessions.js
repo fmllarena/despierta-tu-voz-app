@@ -98,9 +98,11 @@ export const SESIONES = window.SESIONES = {
         }
 
         const planKey = `extra_${duracion}_${tier}`;
-        console.log("Iniciando compra extra a través de Stripe:", planKey);
+        console.log("Iniciando compra extra a través de Stripe (In-App):", planKey);
 
-        if (window.iniciarPago) {
+        if (window.iniciarPagoInApp) {
+            window.iniciarPagoInApp(planKey);
+        } else if (window.iniciarPago) {
             window.iniciarPago(planKey);
         } else {
             alert("El sistema de pagos no está listo. Por favor, recarga la página.");
@@ -110,16 +112,46 @@ export const SESIONES = window.SESIONES = {
     reservar: (tipo) => {
         const profile = window.userProfile;
         const url = SESIONES.links[tipo];
-        if (url && url !== "#") {
-            // Añadimos el email y el user_id para que el Webhook lo reciba directamente
-            const finalUrl = `${url}?email=${encodeURIComponent(profile.email)}&name=${encodeURIComponent(profile.nombre || "")}&userId=${profile.user_id}`;
-            window.open(finalUrl, '_blank');
-        } else {
+
+        if (!url || url === "#") {
             alert("El enlace para esta sesión aún no está configurado.");
+            return;
         }
+
+        // Extraer el slug del calendario de la URL (ej: fernando-martinez-drmyul/30min)
+        const calLink = url.replace("https://cal.com/", "");
+
+        console.log("📅 Iniciando Cal.com Embed para:", calLink);
+
+        // Mostrar Modal DTV
+        ELEMENTS.sesionModal.style.display = 'block';
+
+        // Inicializar Embed en el contenedor
+        window.Cal("ui", {
+            styles: {
+                branding: { brandColor: "#3a506b" }
+            },
+            hideEventTypeDetails: false,
+            layout: "month_view"
+        });
+
+        window.Cal("inline", {
+            elementOrSelector: "#cal-embed-container",
+            calLink: calLink,
+            config: {
+                name: profile.nombre || "",
+                email: profile.email,
+                metadata: {
+                    userId: profile.user_id
+                }
+            }
+        });
     },
 
     setup() {
+        // Estilos para el modal de Cal.com si es necesario
+        window.Cal("ui", { theme: "light" });
+
         // Event Listeners Sesiones
         ELEMENTS.sesionBtn?.addEventListener('click', () => this.abrirModal());
         ELEMENTS.closeSesion?.addEventListener('click', () => {
@@ -134,6 +166,18 @@ export const SESIONES = window.SESIONES = {
         // Cierre al hacer click fuera (modales genéricos)
         window.addEventListener('click', e => {
             if (e.target === ELEMENTS.sesionModal) ELEMENTS.sesionModal.style.display = 'none';
+        });
+
+        // Escuchar eventos de Cal.com por si queremos cerrar al terminar
+        window.Cal("on", {
+            action: "bookingSuccessful",
+            callback: (e) => {
+                console.log("✅ Reserva realizada con éxito:", e);
+                // Opcional: Cerrar automáticamente tras 3 segundos
+                setTimeout(() => {
+                    ELEMENTS.sesionModal.style.display = 'none';
+                }, 3000);
+            }
         });
     }
 };
