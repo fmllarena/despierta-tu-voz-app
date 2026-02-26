@@ -151,18 +151,20 @@ export const SESIONES = window.SESIONES = {
 
         // Ocultar selección, mostrar calendario
         const selectionUI = document.getElementById('sesionSelection');
-        const calContainer = document.getElementById('cal-embed-container');
-        if (selectionUI) selectionUI.style.display = 'none';
-        if (calContainer) calContainer.style.display = 'block';
-
-        if (ELEMENTS.sesionModal) ELEMENTS.sesionModal.style.display = 'block';
+        // Limpiar contenedor y mostrar loader antes de re-inicializar
+        if (calContainer) {
+            calContainer.innerHTML = `
+                <div class="loader-premium">
+                    <div class="loader-spin"></div>
+                    <p>Conectando con tu Mentor...</p>
+                </div>
+            `;
+            calContainer.style.display = 'block';
+        }
 
         if (window.Cal) {
-            window.Cal("ui", {
-                styles: { branding: { brandColor: "#3a506b" } },
-                hideEventTypeDetails: false,
-                layout: "month_view"
-            });
+            // Eliminar cualquier namespace previo si existiera (opcional, Cal.com suele manejarlo pero por si acaso)
+            // window.Cal("ui", { ... }); // Ya se hace abajo
 
             window.Cal("inline", {
                 elementOrSelector: "#cal-embed-container",
@@ -172,6 +174,12 @@ export const SESIONES = window.SESIONES = {
                     email: profile?.email || "",
                     metadata: { userId: profile?.user_id }
                 }
+            });
+
+            window.Cal("ui", {
+                styles: { branding: { brandColor: "#3a506b" } },
+                hideEventTypeDetails: false,
+                layout: "month_view"
             });
         } else {
             console.error("❌ Cal.com SDK no cargado");
