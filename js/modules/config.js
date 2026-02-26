@@ -1,3 +1,4 @@
+console.log("🔵 config.js: Módulo CARGADO.");
 /**
  * DTV Config Module
  * Contiene constantes, configuraciones y estado global de la aplicación.
