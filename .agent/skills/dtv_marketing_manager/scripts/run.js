@@ -90,7 +90,10 @@ async function main() {
         console.log(`   Story: ${images.story}`);
 
         // SINCRONIZAR A ASSETS DE PRODUCCIÓN (Con nombre único para evitar cache)
-        const productionAssetsDir = path.join(__dirname, '..', '..', 'assets', 'social-media');
+        // La raíz del proyecto está 4 niveles arriba de este script (.agent/skills/dtv_marketing_manager/scripts)
+        const projectRoot = path.join(__dirname, '..', '..', '..', '..');
+        const productionAssetsDir = path.join(projectRoot, 'assets', 'social-media');
+
         if (!fs.existsSync(productionAssetsDir)) {
             fs.mkdirSync(productionAssetsDir, { recursive: true });
         }
@@ -102,9 +105,9 @@ async function main() {
         console.log(`   📤 Sincronizando con GitHub para desplegar en Vercel...`);
         try {
             const { execSync } = require('child_process');
-            execSync(`git add .`, { cwd: path.join(__dirname, '..', '..') });
-            execSync(`git commit -m "Social content update: ${dateStr} 🚀"`, { cwd: path.join(__dirname, '..', '..') });
-            execSync(`git push origin main`, { cwd: path.join(__dirname, '..', '..') });
+            execSync(`git add .`, { cwd: projectRoot });
+            execSync(`git commit -m "Social content update: ${dateStr} 🚀"`, { cwd: projectRoot });
+            execSync(`git push origin main`, { cwd: projectRoot });
             console.log(`   ✅ Sincronización con GitHub completada.`);
         } catch (gitError) {
             console.warn(`   ⚠️ Advertencia: Error parcial en git push (puede ser que no haya cambios o red).`);
