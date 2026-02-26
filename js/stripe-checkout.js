@@ -24,20 +24,33 @@ async function resumePurchaseFlow() {
     const pendingPlan = sessionStorage.getItem('pendingPlan');
     if (!pendingPlan) return;
 
-    console.log("🔄 Detectado plan pendiente tras redirect:", pendingPlan);
+    console.log("🔄 Reanudación activa: detectado plan en espera:", pendingPlan);
 
-    // Esperar un momento para asegurar que la sesión de Supabase esté lista
-    setTimeout(async () => {
-        if (!supabasePagos) await inicializarSupabase();
-        const { data: { user } } = await supabasePagos.auth.getUser();
+    if (!supabasePagos) await inicializarSupabase();
 
-        if (user) {
-            console.log("✅ Usuario autenticado, reanudando pago para:", pendingPlan);
-            // Limpiar para no repetir en recargas fortuitas
-            sessionStorage.removeItem('pendingPlan');
-            await iniciarPago(pendingPlan);
+    // Escuchar el cambio de estado para reanudar en cuanto la sesión sea válida
+    const { data: { subscription } } = supabasePagos.auth.onAuthStateChange(async (event, session) => {
+        if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
+            if (session?.user) {
+                console.log("✅ Sesión detectada, reanudando pago para:", pendingPlan);
+                const planToResume = sessionStorage.getItem('pendingPlan');
+                if (planToResume) {
+                    sessionStorage.removeItem('pendingPlan');
+                    subscription.unsubscribe(); // Dejar de escuchar una vez reanudado
+                    await iniciarPago(planToResume);
+                }
+            }
         }
-    }, 1000);
+    });
+
+    // Fallback por si la sesión ya estaba ahí y no dispara evento inicial
+    const { data: { user } } = await supabasePagos.auth.getUser();
+    if (user) {
+        console.log("✅ Usuario ya presente, ejecutando reanudación directa.");
+        sessionStorage.removeItem('pendingPlan');
+        subscription.unsubscribe();
+        await iniciarPago(pendingPlan);
+    }
 }
 
 /**

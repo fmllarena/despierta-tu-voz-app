@@ -144,10 +144,12 @@ export const authActions = {
         try {
             if (!state.supabase) await inicializarSupabase();
 
-            // Guardar el plan pendiente si el modal legal lo tenía persistido
-            // o si estaba en medio de un flujo de landing
-            const pendingPlan = window.LEGAL?.pendingPlan || sessionStorage.getItem('pendingPlan');
-            if (pendingPlan) sessionStorage.setItem('pendingPlan', pendingPlan);
+            // Capurar el plan pendiente de cualquier posible origen (Window global de Stripe o SessionStorage)
+            const pendingPlan = window.pendingPlan || window.LEGAL?.pendingPlan || sessionStorage.getItem('pendingPlan');
+            if (pendingPlan) {
+                console.log("💾 Persistiendo plan pendiente antes de redirect:", pendingPlan);
+                sessionStorage.setItem('pendingPlan', pendingPlan);
+            }
 
             const currentPath = window.location.pathname === '/' ? '/index.html' : window.location.pathname;
             const { error } = await state.supabase.auth.signInWithOAuth({
