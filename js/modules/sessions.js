@@ -10,6 +10,12 @@ export const SESIONES = window.SESIONES = {
     },
 
     abrirModal: async () => {
+        // Reset a vista inicial (selección)
+        const selectionUI = document.getElementById('sesionSelection');
+        const calContainer = document.getElementById('cal-embed-container');
+        if (selectionUI) selectionUI.style.display = 'block';
+        if (calContainer) calContainer.style.display = 'none';
+
         ELEMENTS.sesionModal.style.display = 'block';
         SESIONES.actualizarInfoCuota();
 
@@ -121,7 +127,11 @@ export const SESIONES = window.SESIONES = {
         // Extraer el slug del calendario de la URL (ej: fernando-martinez-drmyul/30min)
         const calLink = url.replace("https://cal.com/", "");
 
-        console.log("📅 Iniciando Cal.com Embed para:", calLink);
+        // Ocultar selección, mostrar calendario
+        const selectionUI = document.getElementById('sesionSelection');
+        const calContainer = document.getElementById('cal-embed-container');
+        if (selectionUI) selectionUI.style.display = 'none';
+        if (calContainer) calContainer.style.display = 'block';
 
         // Mostrar Modal DTV
         ELEMENTS.sesionModal.style.display = 'block';

@@ -668,62 +668,90 @@
             <h4 id="alertTitle">app Mentor DTV</h4>
             <p id="alertMessage"></p>
             <button id="alertConfirmBtn" class="save-btn" style="width: 100%; margin-top: 15px;">Aceptar</button>
-            <!-- Modal de Sesiones / Cal.com -->
-            <div id="sesionModal" class="modal">
-                <div class="modal-content cal-modal-content">
-                    <span class="close" id="closeSesion">&times;</span>
-                    <div id="cal-embed-container" style="width:100%;height:600px;overflow:auto">
-                        <div class="loader-premium">
-                            <div class="loader-spin"></div>
-                            <p>Conectando con tu Mentor...</p>
-                        </div>
+        </div>
+    </div>
+
+    <!-- Modal de Sesiones / Cal.com -->
+    <div id="sesionModal" class="modal">
+        <div class="modal-content sesion-modal-content">
+            <span class="close" id="closeSesion">&times;</span>
+            <div id="sesionSelection" class="sesion-selection-ui">
+                <div class="sesion-header" style="text-align: center; margin-bottom: 25px;">
+                    <h2 style="font-family: var(--font-serif); color: var(--color-acento);">Sesiones 1a1</h2>
+                    <p style="color: #666;">Acompañamiento directo con tu Mentor Vocal</p>
+                </div>
+
+                <div id="sessionQuotaInfo" class="quota-container">
+                    <!-- Se puebla dinámicamente -->
+                </div>
+
+                <div class="session-actions" style="display: flex; gap: 15px; margin-top: 25px;">
+                    <button id="book30Btn" class="save-btn" style="flex: 1;">Reservar 30 min</button>
+                    <button id="book60Btn" class="save-btn" style="flex: 1;">Reservar 1 hora</button>
+                </div>
+
+                <div class="extra-sessions" style="margin-top: 40px; border-top: 1px dashed #ddd; padding-top: 25px;">
+                    <p style="text-align: center; font-size: 0.9em; margin-bottom: 15px; color: #888;">Si has agotado tu
+                        cuota o deseas más tiempo:</p>
+                    <div class="extra-actions" style="display: flex; gap: 15px;">
+                        <button id="buyExtra30Btn" class="secondary-btn"
+                            style="flex: 1; padding: 10px; font-size: 0.85em;">+30 min Extra</button>
+                        <button id="buyExtra60Btn" class="secondary-btn"
+                            style="flex: 1; padding: 10px; font-size: 0.85em;">+1 hora Extra</button>
                     </div>
                 </div>
             </div>
 
-            <!-- Modal de Pago In-App (Stripe Elements) -->
-            <div id="paymentModal" class="modal">
-                <div class="modal-content payment-modal-content">
-                    <span class="close" id="closePayment">&times;</span>
-                    <div class="payment-header" style="text-align: center; margin-bottom: 25px;">
-                        <h2 style="font-family: var(--font-serif); color: var(--color-acento);">Finalizar Reserva</h2>
-                        <p style="color: #666;">Pasarela segura de Alquimia Visual</p>
-                    </div>
-                    <form id="payment-form">
-                        <div id="link-authentication-element"></div>
-                        <div id="payment-element"></div>
-                        <button id="submit-payment" class="save-btn"
-                            style="width: 100%; margin-top: 25px; padding: 15px;">
-                            <div class="spinner hidden" id="payment-spinner"></div>
-                            <span id="button-text">Pagar y Reservar</span>
-                        </button>
-                        <div id="payment-message" class="hidden"
-                            style="margin-top: 15px; text-align: center; color: #e74c3c;"></div>
-                    </form>
+            <div id="cal-embed-container" style="display: none; width:100%; min-height:600px; overflow:auto">
+                <div class="loader-premium">
+                    <div class="loader-spin"></div>
+                    <p>Conectando con tu Mentor...</p>
                 </div>
             </div>
         </div>
+    </div>
+
+    <!-- Modal de Pago In-App (Stripe Elements) -->
+    <div id="paymentModal" class="modal">
+        <div class="modal-content payment-modal-content">
+            <span class="close" id="closePayment">&times;</span>
+            <div class="payment-header" style="text-align: center; margin-bottom: 25px;">
+                <h2 style="font-family: var(--font-serif); color: var(--color-acento);">Finalizar Reserva</h2>
+                <p style="color: #666;">Pasarela segura de Alquimia Visual</p>
+            </div>
+            <form id="payment-form">
+                <div id="link-authentication-element"></div>
+                <div id="payment-element"></div>
+                <button id="submit-payment" class="save-btn" style="width: 100%; margin-top: 25px; padding: 15px;">
+                    <div class="spinner hidden" id="payment-spinner"></div>
+                    <span id="button-text">Pagar y Reservar</span>
+                </button>
+                <div id="payment-message" class="hidden" style="margin-top: 15px; text-align: center; color: #e74c3c;">
+                </div>
+            </form>
+        </div>
+    </div>
 
 
 
-        <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-        <script type="module" src="js/services/auth-service.js"></script>
-        <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-        <script src="js/stripe-checkout.js"></script>
-        <script type="module" src="js/modules/config.js"></script>
-        <script type="module" src="js/modules/elements.js"></script>
-        <script type="module" src="js/modules/music.js"></script>
-        <script type="module" src="js/modules/voice.js"></script>
-        <script type="module" src="js/modules/legal.js"></script>
-        <script type="module" src="js/modules/support.js"></script>
-        <script type="module" src="js/modules/settings.js"></script>
-        <script type="module" src="js/modules/sessions.js"></script>
-        <script type="module" src="js/modules/payments.js"></script>
-        <script type="module" src="js/modules/email.js"></script>
-        <script type="module" src="js/modules/tour.js"></script>
-        <script type="module" src="js/modules/files.js"></script>
-        <script type="module" src="js/modules/pronunciation.js"></script>
-        <script src="main.js?v=6.2" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script type="module" src="js/services/auth-service.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="js/stripe-checkout.js"></script>
+    <script type="module" src="js/modules/config.js"></script>
+    <script type="module" src="js/modules/elements.js"></script>
+    <script type="module" src="js/modules/music.js"></script>
+    <script type="module" src="js/modules/voice.js"></script>
+    <script type="module" src="js/modules/legal.js"></script>
+    <script type="module" src="js/modules/support.js"></script>
+    <script type="module" src="js/modules/settings.js"></script>
+    <script type="module" src="js/modules/sessions.js"></script>
+    <script type="module" src="js/modules/payments.js"></script>
+    <script type="module" src="js/modules/email.js"></script>
+    <script type="module" src="js/modules/tour.js"></script>
+    <script type="module" src="js/modules/files.js"></script>
+    <script type="module" src="js/modules/pronunciation.js"></script>
+    <script src="main.js?v=6.2" defer></script>
 </body>
 
 
