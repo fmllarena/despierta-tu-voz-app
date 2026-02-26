@@ -151,6 +151,8 @@ export const SESIONES = window.SESIONES = {
 
         // Ocultar selección, mostrar calendario
         const selectionUI = document.getElementById('sesionSelection');
+        const calContainer = document.getElementById('cal-embed-container');
+
         // Limpiar contenedor y mostrar loader antes de re-inicializar
         if (calContainer) {
             calContainer.innerHTML = `
