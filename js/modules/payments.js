@@ -9,6 +9,38 @@ export const PAYMENTS = window.PAYMENTS = {
     elements: null,
     clientSecret: null,
 
+    /**
+     * Comprueba si venimos de un proceso de pago exitoso (Stripe Redirect o In-App)
+     */
+    checkStatus() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const paymentStatus = urlParams.get('payment');
+        const plan = urlParams.get('plan');
+
+        if (paymentStatus === 'success') {
+            console.log("✅ Pago detectado como EXITOSO en URL");
+            if (window.showCustomAlert) {
+                window.showCustomAlert("¡Pago realizado con éxito!", "Tu suscripción o sesión extra ha sido activada correctamente.");
+            }
+
+            // Si era una sesión extra, abrir el calendario directamente
+            if (plan?.includes('extra')) {
+                const duracion = plan.includes('30') ? 'normal30' : 'normal60';
+                setTimeout(() => {
+                    if (window.SESIONES) window.SESIONES.reservar(duracion);
+                }, 1000);
+            }
+
+            // Limpiar la URL sin recargar
+            window.history.replaceState({}, document.title, window.location.pathname);
+        } else if (paymentStatus === 'cancel') {
+            if (window.showCustomAlert) {
+                window.showCustomAlert("Pago cancelado", "No se ha realizado ningún cargo.");
+            }
+            window.history.replaceState({}, document.title, window.location.pathname);
+        }
+    },
+
     async init() {
         try {
             const response = await fetch('/api/config');
