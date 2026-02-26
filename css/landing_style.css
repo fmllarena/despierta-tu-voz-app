@@ -235,12 +235,13 @@ h3 {
 }
 
 .phase-item-top {
-    margin-bottom: 25px;
-    background: white;
-    padding: 15px 25px;
-    border-radius: 20px;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.03);
-    border: 1px solid var(--color-oro-soft);
+    margin-bottom: 40px;
+    /* SeparaciÃƒÂ³n de la imagen */
+    background: transparent;
+    padding: 0;
+    border-radius: 0;
+    box-shadow: none;
+    border: none;
 }
 
 .phase-item-top h3 {
