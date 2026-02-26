@@ -13,7 +13,32 @@ async function inicializarSupabase() {
         console.error("Error cargando Supabase en Landing:", e);
     }
 }
-inicializarSupabase();
+inicializarSupabase().then(() => {
+    resumePurchaseFlow();
+});
+
+/**
+ * Reanuda el flujo de compra si venimos de un redirect (OAuth)
+ */
+async function resumePurchaseFlow() {
+    const pendingPlan = sessionStorage.getItem('pendingPlan');
+    if (!pendingPlan) return;
+
+    console.log("🔄 Detectado plan pendiente tras redirect:", pendingPlan);
+
+    // Esperar un momento para asegurar que la sesión de Supabase esté lista
+    setTimeout(async () => {
+        if (!supabasePagos) await inicializarSupabase();
+        const { data: { user } } = await supabasePagos.auth.getUser();
+
+        if (user) {
+            console.log("✅ Usuario autenticado, reanudando pago para:", pendingPlan);
+            // Limpiar para no repetir en recargas fortuitas
+            sessionStorage.removeItem('pendingPlan');
+            await iniciarPago(pendingPlan);
+        }
+    }, 1000);
+}
 
 /**
  * Función para iniciar el pago con Stripe
