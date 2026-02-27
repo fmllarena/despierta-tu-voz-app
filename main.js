@@ -350,6 +350,9 @@ async function cargarHistorialDesdeDB(userId, render = false) {
         const mensajesCronologicos = [...mensajes].reverse();
 
         mensajesCronologicos.forEach(msg => {
+            // Filtrar mensajes técnicos (resumen_diario o sistema) para que no ensucien el chat ni el contexto de la IA
+            if (msg.emisor === 'resumen_diario' || msg.emisor === 'sistema') return;
+
             const role = msg.emisor === 'ia' ? 'model' : 'user';
             chatHistory.push({ role: role, parts: [{ text: msg.texto }] });
 
@@ -948,11 +951,14 @@ function appendMessage(text, type, id = null) {
 
         // Desplazar el chat
         container.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    } else {
+    } else if (type === 'usuario') {
         div.innerText = text;
         div.style.whiteSpace = "pre-wrap";
         ELEMENTS.chatBox.appendChild(div);
         ELEMENTS.chatBox.scrollTop = ELEMENTS.chatBox.scrollHeight;
+    } else {
+        // Cualquier otro tipo (resumen_diario, sistema, etc.) no lo imprimimos en el chat
+        console.log(`[Chat] Mensaje de tipo "${type}" ignorado en la interfaz.`);
     }
 }
 
