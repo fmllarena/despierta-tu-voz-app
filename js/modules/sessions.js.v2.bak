@@ -152,13 +152,13 @@ window.SESIONES = {
             }
         }
 
-        // 3. Ejecución Lógica (Versión Robusta sin Namespace)
+        // 3. Ejecución Lógica usando Namespace Inline
+        const namespace = "dtv-sessions";
+
         if (window.Cal) {
             try {
-                console.log("🚀 Lanzando Cal.com SDK (Global Mode)...");
-
-                // Configuración de estilo
-                Cal("ui", {
+                // Configuración de estilo y comportamiento
+                Cal.ns[namespace]("ui", {
                     theme: "light",
                     styles: {
                         branding: { brandColor: "#8e7d6d" }, // Color Alquimia Visual
@@ -169,7 +169,7 @@ window.SESIONES = {
                 });
 
                 // Inyección Inline
-                Cal("inline", {
+                Cal.ns[namespace]("inline", {
                     elementOrSelector: "#cal-iframe-target",
                     calLink: calLink,
                     config: {
@@ -194,7 +194,7 @@ window.SESIONES = {
                 });
 
             } catch (err) {
-                console.error("⚠️ Fallo en SDK Global In-App:", err);
+                console.error("⚠️ Fallo en SDK Inline:", err);
                 const target = document.getElementById('cal-iframe-target');
                 if (target) {
                     target.style.display = 'block';

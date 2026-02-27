@@ -1,0 +1,110 @@
+/* --- MODAL CAL.COM Y PAGOS --- */
+.cal-modal-content,
+.sesion-modal-content {
+    max-width: 900px !important;
+    width: 95% !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    background: white;
+    min-height: 500px;
+    display: flex;
+    flex-direction: column;
+}
+
+#cal-embed-container {
+    min-height: 600px;
+    background: #fdfdfd;
+    position: relative;
+    border-top: 1px solid rgba(142, 125, 109, 0.1);
+}
+
+#cal-iframe-target {
+    width: 100%;
+    height: 600px;
+    transition: opacity 0.3s ease-in-out;
+}
+
+.loader-premium {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: white;
+    z-index: 10;
+    transition: opacity 0.3s ease-in-out;
+    color: var(--color-acento);
+    font-family: var(--font-serif);
+}
+
+.payment-modal-content {
+    max-width: 450px !important;
+    padding: 40px !important;
+}
+
+.loader-premium {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 400px;
+    color: var(--color-acento);
+}
+
+.loader-spin {
+    width: 40px;
+    height: 40px;
+    border: 3px solid rgba(142, 125, 109, 0.1);
+    border-radius: 50%;
+    border-top-color: var(--color-acento);
+    animation: spin 1s ease-in-out infinite;
+    margin-bottom: 15px;
+}
+
+#payment-form {
+    width: 100%;
+}
+
+#payment-element {
+    margin-bottom: 24px;
+}
+
+.hidden {
+    display: none !important;
+}
+
+#payment-message {
+    color: #df1b41;
+    font-size: 14px;
+    line-height: 20px;
+    padding-top: 12px;
+    text-align: center;
+}
+
+.spinner {
+    width: 20px;
+    height: 20px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    border-top-color: white;
+    animation: spin 1s ease-in-out infinite;
+    display: inline-block;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Ajustes para Stripe Elements In-App */
+.StripeElement {
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+    background: white;
+}

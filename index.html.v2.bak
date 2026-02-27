@@ -27,8 +27,8 @@
             };
         })(window, "https://app.cal.com/embed/embed.js", "init");
 
-        // Inicialización global (sin namespace) para máxima compatibilidad
-        Cal("init", { origin: "https://app.cal.com" });
+        // Inicialización con el namespace propuesto para evitar conflictos
+        Cal("init", "dtv-sessions", { origin: "https://app.cal.com" });
     </script>
 
     <!-- Stripe SDK -->
