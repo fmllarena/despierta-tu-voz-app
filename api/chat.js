@@ -5,7 +5,7 @@ const Anthropic = require('@anthropic-ai/sdk');
 
 // --- SEGURIDAD DE GEMINI ---
 // v1beta es necesario para usar systemInstruction. v1 no soporta ese campo.
-const GEMINI_MODEL = "gemini-2.5-flash";
+const GEMINI_MODEL = "gemini-3.1-pro-preview";
 const GEMINI_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/models";
 
 /**
@@ -153,7 +153,7 @@ async function callGeminiAPI({ intent, prompt, history, stream, res, fileData })
     if (!process.env.GEMINI_API_KEY) throw new Error("Falta API Key de Gemini");
 
     const endpoint = stream ? 'streamGenerateContent' : 'generateContent';
-    const modelToUse = fileData ? "gemini-3.1-pro-preview" : GEMINI_MODEL;
+    const modelToUse = GEMINI_MODEL;
     const url = `${GEMINI_BASE_URL}/${modelToUse}:${endpoint}?key=${process.env.GEMINI_API_KEY}${stream ? '&alt=sse' : ''}`;
 
     const contents = [
