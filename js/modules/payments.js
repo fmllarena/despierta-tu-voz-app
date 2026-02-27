@@ -92,10 +92,22 @@ export const PAYMENTS = window.PAYMENTS = {
                 })
             });
 
-            const { clientSecret, error } = await response.json();
+            const { clientSecret, amount, currency, description, error } = await response.json();
             if (error) throw new Error(error);
 
             this.clientSecret = clientSecret;
+
+            // Actualizar el Resumen del Pedido (UI)
+            const summaryBox = document.getElementById('payment-summary-box');
+            const summaryDesc = document.getElementById('payment-summary-desc');
+            const summaryAmt = document.getElementById('payment-summary-amount');
+
+            if (summaryBox && amount) {
+                const formattedAmt = (amount / 100).toFixed(2).replace('.', ',') + (currency === 'eur' ? ' €' : ` ${currency.toUpperCase()}`);
+                if (summaryDesc) summaryDesc.innerText = description || 'Sesión Extra';
+                if (summaryAmt) summaryAmt.innerText = formattedAmt;
+                summaryBox.style.display = 'block';
+            }
 
             // 2. Configurar Stripe Elements
             const appearance = {

@@ -47,8 +47,15 @@ module.exports = async function handler(req, res) {
             }
         });
 
+        let description = "Sesión Extra de Alquimia Vocal";
+        if (planType === 'extra_30_pro' || planType === 'extra_30_premium') description = "Sesión Extra (30 minutos)";
+        if (planType === 'extra_60_pro' || planType === 'extra_60_premium') description = "Sesión Extra (60 minutos)";
+
         res.status(200).json({
             clientSecret: paymentIntent.client_secret,
+            amount: price.unit_amount,
+            currency: price.currency,
+            description: description
         });
     } catch (err) {
         console.error('Error creando Payment Intent:', err);
