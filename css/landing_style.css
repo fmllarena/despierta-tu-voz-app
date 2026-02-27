@@ -373,8 +373,10 @@ h3 {
     }
 
     .phase-item {
-        flex-direction: column;
-        text-align: center;
+        flex-direction: row;
+        text-align: left;
+        align-items: flex-start;
+        gap: 15px;
     }
 }
 
