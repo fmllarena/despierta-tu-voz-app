@@ -137,6 +137,10 @@ window.SESIONES = {
         if (calContainer) {
             calContainer.style.display = 'block';
 
+            // FORZADO DE ALTURA POR JS (Solución de estabilidad v5)
+            calContainer.style.height = "600px";
+            calContainer.style.minHeight = "600px";
+
             // Limpiar el contenedor por si acaso había un intento fallido previo
             if (iframeTarget) {
                 iframeTarget.innerHTML = '';
@@ -149,47 +153,51 @@ window.SESIONES = {
             }
         }
 
-        // 3. Ejecución Lógica (Versión Robusta confirmada por el usuario)
-        if (typeof cal === "function") {
-            try {
-                console.log("🚀 Llamando al SDK 'cal' (Lowercase mode)...");
+        // 3. Ejecución Lógica con RETRASO para renderizado (200ms)
+        console.log("🚀 Iniciando secuencia de carga con delay...");
 
-                cal("inline", {
-                    elementOrSelector: "#cal-iframe-target", // Usamos nuestro ID existente
-                    calLink: calLink,
-                    config: {
-                        name: profile?.nombre || "",
-                        email: profile?.email || "",
-                        theme: "dark", // Estética premium para DTV
-                        styles: {
-                            branding: {
-                                brandColor: "#8e7d6d", // Color Alquimia Visual
+        setTimeout(() => {
+            if (typeof cal === "function") {
+                try {
+                    console.log("🚀 Llamando al SDK 'cal' (Lowercase mode)...");
+
+                    cal("inline", {
+                        elementOrSelector: "#cal-iframe-target",
+                        calLink: calLink,
+                        config: {
+                            name: profile?.nombre || "",
+                            email: profile?.email || "",
+                            theme: "dark", // Estética premium para DTV
+                            styles: {
+                                branding: {
+                                    brandColor: "#8e7d6d", // Color Alquimia Visual
+                                }
+                            }
+                        },
+                        onIframeReady: () => {
+                            console.log("✅ SDK invocado y renderizado: Mostrando contenido...");
+                            const loader = calContainer.querySelector('.loader-premium');
+                            if (loader) {
+                                loader.style.opacity = '0';
+                                setTimeout(() => { loader.style.display = 'none'; }, 300);
                             }
                         }
-                    },
-                    onIframeReady: () => {
-                        console.log("🎨 Cal.com Iframe Ready: Mostrando contenido...");
-                        const loader = calContainer.querySelector('.loader-premium');
-                        if (loader) {
-                            loader.style.opacity = '0';
-                            setTimeout(() => { loader.style.display = 'none'; }, 300);
-                        }
-                    }
-                });
+                    });
 
-            } catch (err) {
-                console.error("⚠️ Error llamando al SDK cal:", err);
-                if (iframeTarget) {
-                    const finalUrl = `${url}?embed=true&name=${encodeURIComponent(profile?.nombre || "")}&email=${encodeURIComponent(profile?.email || "")}`;
-                    iframeTarget.innerHTML = `<iframe src="${finalUrl}" style="width:100%; height:600px; border:none;" allowfullscreen></iframe>`;
-                    const loader = calContainer.querySelector('.loader-premium');
-                    if (loader) loader.style.display = 'none';
+                } catch (err) {
+                    console.error("⚠️ Error llamando al SDK cal:", err);
+                    if (iframeTarget) {
+                        const finalUrl = `${url}?embed=true&name=${encodeURIComponent(profile?.nombre || "")}&email=${encodeURIComponent(profile?.email || "")}`;
+                        iframeTarget.innerHTML = `<iframe src="${finalUrl}" style="width:100%; height:600px; border:none;" allowfullscreen></iframe>`;
+                        const loader = calContainer.querySelector('.loader-premium');
+                        if (loader) loader.style.display = 'none';
+                    }
                 }
+            } else {
+                console.error("❌ El objeto 'cal' no está definido. Revisa index.html");
+                window.open(url, '_blank');
             }
-        } else {
-            console.error("❌ El objeto 'cal' no está definido. Revisa index.html");
-            window.open(url, '_blank');
-        }
+        }, 200);
     },
 
     setup() {
