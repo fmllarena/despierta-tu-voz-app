@@ -39,7 +39,7 @@ module.exports = async function handler(req, res) {
             amount: price.unit_amount,
             currency: price.currency,
             automatic_payment_methods: { enabled: true },
-            customer_email: userEmail,
+            receipt_email: userEmail,
             metadata: {
                 userId: userId,
                 planType: planType,
