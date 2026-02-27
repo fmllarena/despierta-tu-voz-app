@@ -8,6 +8,7 @@ module.exports = function handler(req, res) {
     // Las guardamos en Vercel para que no estén en el código
     return res.status(200).json({
         url: process.env.SUPABASE_URL,
-        key: process.env.SUPABASE_ANON_KEY
+        key: process.env.SUPABASE_ANON_KEY,
+        stripe_public_key: process.env.STRIPE_PUBLIC_KEY
     });
 }

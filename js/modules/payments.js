@@ -45,7 +45,14 @@ export const PAYMENTS = window.PAYMENTS = {
         try {
             const response = await fetch('/api/config');
             const { stripe_public_key } = await response.json();
-            this.stripe = window.Stripe(stripe_public_key || 'pk_live_51Qt97kG50D9Xw7I8...placeholder'); // Fallback o env var
+
+            if (!stripe_public_key) {
+                console.error("❌ STRIPE_PUBLIC_KEY no encontrada en la configuración.");
+                return;
+            }
+
+            this.stripe = window.Stripe(stripe_public_key);
+            console.log("✅ Stripe inicializado con éxito.");
         } catch (e) {
             console.error("Error inicializando Stripe:", e);
         }
@@ -63,6 +70,11 @@ export const PAYMENTS = window.PAYMENTS = {
      */
     async iniciarPagoInApp(planKey) {
         console.log("💰 Iniciando flujo In-App para:", planKey);
+
+        if (!this.stripe) {
+            this.showMessage("Stripe no ha sido inicializado correctamente. Verifica la configuración.");
+            return;
+        }
 
         this.setLoading(true);
         ELEMENTS.paymentModal.style.display = 'block';
