@@ -113,7 +113,7 @@ window.SESIONES = {
     reservar: (tipo) => {
         const ELEMENTS = window.ELEMENTS;
         const profile = window.userProfile;
-        console.log(`📅 [SESIONES] Reservando tipo: ${tipo} (v4 Robust)`);
+        console.log(`📅 [SESIONES] Reservando tipo: ${tipo} (v3 Inline)`);
 
         const url = window.SESIONES.links[tipo];
         if (!url || url === "#") {
@@ -127,45 +127,56 @@ window.SESIONES = {
         const calContainer = document.getElementById('cal-embed-container');
         const iframeTarget = document.getElementById('cal-iframe-target');
 
-        // 1. Mostrar modal primero (indispensable para que el SDK calcule el ancho)
+        // 1. Mostrar modal y ocultar selección
         if (ELEMENTS && ELEMENTS.sesionModal) {
             ELEMENTS.sesionModal.style.display = 'block';
         }
         if (selectionUI) selectionUI.style.display = 'none';
 
-        // 2. Preparar el contenedor y limpiar intentos previos
+        // 2. Preparar el contenedor y el loader
         if (calContainer) {
             calContainer.style.display = 'block';
 
-            // Limpiar el contenedor por si acaso había un intento fallido previo
-            if (iframeTarget) {
-                iframeTarget.innerHTML = '';
-            }
-
+            // Asegurarnos de que el loader sea visible
             const loader = calContainer.querySelector('.loader-premium');
             if (loader) {
                 loader.style.display = 'flex';
                 loader.style.opacity = '1';
             }
+
+            // Ocultar el target del iframe hasta que esté listo (evita saltos)
+            if (iframeTarget) {
+                iframeTarget.style.display = 'none';
+                // Limpiar contenido previo si lo hubiera
+                iframeTarget.innerHTML = "";
+            }
         }
 
-        // 3. Ejecución Lógica (Versión Robusta confirmada por el usuario)
-        if (typeof cal === "function") {
+        // 3. Ejecución Lógica (Versión Robusta sin Namespace)
+        if (window.Cal) {
             try {
-                console.log("🚀 Llamando al SDK 'cal' (Lowercase mode)...");
+                console.log("🚀 Lanzando Cal.com SDK (Global Mode)...");
 
-                cal("inline", {
-                    elementOrSelector: "#cal-iframe-target", // Usamos nuestro ID existente
+                // Configuración de estilo
+                Cal("ui", {
+                    theme: "light",
+                    styles: {
+                        branding: { brandColor: "#8e7d6d" }, // Color Alquimia Visual
+                        body: { background: "transparent" }
+                    },
+                    hideEventTypeDetails: false,
+                    layout: "month_view"
+                });
+
+                // Inyección Inline
+                Cal("inline", {
+                    elementOrSelector: "#cal-iframe-target",
                     calLink: calLink,
                     config: {
                         name: profile?.nombre || "",
                         email: profile?.email || "",
-                        theme: "dark", // Estética premium para DTV
-                        styles: {
-                            branding: {
-                                brandColor: "#8e7d6d", // Color Alquimia Visual
-                            }
-                        }
+                        theme: "light",
+                        layout: "month_view"
                     },
                     onIframeReady: () => {
                         console.log("🎨 Cal.com Iframe Ready: Mostrando contenido...");
@@ -174,20 +185,27 @@ window.SESIONES = {
                             loader.style.opacity = '0';
                             setTimeout(() => { loader.style.display = 'none'; }, 300);
                         }
+                        if (iframeTarget) {
+                            iframeTarget.style.display = 'block';
+                            iframeTarget.style.opacity = '0';
+                            setTimeout(() => { iframeTarget.style.opacity = '1'; }, 100);
+                        }
                     }
                 });
 
             } catch (err) {
-                console.error("⚠️ Error llamando al SDK cal:", err);
-                if (iframeTarget) {
+                console.error("⚠️ Fallo en SDK Global In-App:", err);
+                const target = document.getElementById('cal-iframe-target');
+                if (target) {
+                    target.style.display = 'block';
                     const finalUrl = `${url}?embed=true&name=${encodeURIComponent(profile?.nombre || "")}&email=${encodeURIComponent(profile?.email || "")}`;
-                    iframeTarget.innerHTML = `<iframe src="${finalUrl}" style="width:100%; height:600px; border:none;" allowfullscreen></iframe>`;
+                    target.innerHTML = `<iframe src="${finalUrl}" style="width:100%; height:600px; border:none;" allowfullscreen></iframe>`;
                     const loader = calContainer.querySelector('.loader-premium');
                     if (loader) loader.style.display = 'none';
                 }
             }
         } else {
-            console.error("❌ El objeto 'cal' no está definido. Revisa index.html");
+            console.warn("⚠️ SDK de Cal no detectado, usando fallback de ventana nueva.");
             window.open(url, '_blank');
         }
     },

@@ -6,21 +6,29 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Despierta tu Voz - Mentor Vocal</title>
     <!-- Cal.com SDK -->
-    <script type="text/javascript">
+    <script>
         (function (C, A, L) {
             let p = function (a, ar) { a.q.push(ar); };
-            let d = C.document; C.cal = C.cal || function () {
-                let a = arguments; if (!a.length) return; p(C.cal, a);
+            let d = C.document;
+            C.Cal = C.Cal || function () {
+                let cal = C.Cal;
+                let ar = arguments;
+                if (!cal.loaded) {
+                    cal.q = [];
+                    cal.loaded = true;
+                }
+                if (ar[0] === L) {
+                    const s = d.createElement("script");
+                    s.src = "https://app.cal.com/embed/embed.js";
+                    d.head.appendChild(s);
+                    return;
+                }
+                p(cal, ar);
             };
-            C.cal.q = C.cal.q || [];
-            fetch("https://api.cal.com/embed/v1.js").then(response => {
-                let s = d.createElement("script"); s.src = response.url;
-                d.body.appendChild(s);
-            });
-        })(window, window.cal, "init");
+        })(window, "https://app.cal.com/embed/embed.js", "init");
 
-        // Inicialización estándar (sin dtv-sessions)
-        cal("init", { origin: "https://cal.com" });
+        // Inicialización global (sin namespace) para máxima compatibilidad
+        Cal("init", { origin: "https://app.cal.com" });
     </script>
 
     <!-- Stripe SDK -->
