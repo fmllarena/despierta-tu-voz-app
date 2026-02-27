@@ -26,9 +26,7 @@
                 p(cal, ar);
             };
         })(window, "https://app.cal.com/embed/embed.js", "init");
-
-        // Inicialización con el namespace propuesto para evitar conflictos
-        Cal("init", "dtv-sessions", { origin: "https://app.cal.com" });
+        Cal("init", "30min", { origin: "https://app.cal.com" });
     </script>
 
     <!-- Stripe SDK -->
