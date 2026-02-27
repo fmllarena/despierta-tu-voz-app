@@ -113,7 +113,7 @@ window.SESIONES = {
     reservar: (tipo) => {
         const ELEMENTS = window.ELEMENTS;
         const profile = window.userProfile;
-        console.log(`📅 [SESIONES] Reservando tipo: ${tipo} (v6 Brute Force)`);
+        console.log(`📅 [SESIONES] Reservando tipo: ${tipo} (v7 Iframe Controlado)`);
 
         const url = window.SESIONES.links[tipo];
         if (!url || url === "#") {
@@ -122,85 +122,72 @@ window.SESIONES = {
             return;
         }
 
-        const calLink = url.replace("https://cal.com/", "");
         const selectionUI = document.getElementById('sesionSelection');
         const calContainer = document.getElementById('cal-embed-container');
         const iframeTarget = document.getElementById('cal-iframe-target');
 
-        // 1. Mostrar el modal primero
+        // 1. Mostrar el modal y ocultar selección
         if (ELEMENTS && ELEMENTS.sesionModal) {
             ELEMENTS.sesionModal.style.display = 'block';
         }
         if (selectionUI) selectionUI.style.display = 'none';
 
-        // 2. Limpiar y preparar el contenedor con dimensiones físicas
-        if (calContainer) {
+        // 2. Construcción de URL con parámetros de incrustación manual para DTV
+        // Pre-llenamos datos de usuario directamente en la URL para evitar fricción
+        const embedUrl = `${url}?embed=true&theme=dark&name=${encodeURIComponent(profile?.nombre || "")}&email=${encodeURIComponent(profile?.email || "")}`;
+
+        // 3. Inyectamos el iframe con esteroides (estilo DTV)
+        if (calContainer && iframeTarget) {
             calContainer.style.display = 'block';
             calContainer.style.height = "650px";
 
-            if (iframeTarget) {
-                // Inyección directa del target limpio
-                iframeTarget.innerHTML = '<div id="cal-target-direct"></div>';
-            }
+            iframeTarget.innerHTML = `
+                <iframe 
+                    src="${embedUrl}" 
+                    id="cal-iframe-dtv"
+                    style="width:100%; height:650px; border:none; border-radius: 8px;" 
+                    allowfullScreen 
+                    title="Agenda tu sesión con tu Mentor">
+                </iframe>
+            `;
 
             const loader = calContainer.querySelector('.loader-premium');
             if (loader) {
-                loader.style.display = 'flex';
-                loader.style.opacity = '1';
+                // El loader desaparece tras el tiempo estimado de carga del iframe
+                setTimeout(() => {
+                    loader.style.opacity = '0';
+                    setTimeout(() => { loader.style.display = 'none'; }, 200);
+                }, 1500);
             }
         }
 
-        console.log("🛠️ Iniciando inyección directa de Cal.com...");
+        console.log("🛠️ Iframe manual inyectado. Configurando observador de eventos...");
 
-        // 3. Reinicialización local (Fuerza bruta para asegurar objeto Cal)
-        if (!window.Cal) {
-            (function (C, A, L) {
-                let p = function (a, ar) { a.q.push(ar); };
-                let d = C.document; C.Cal = C.Cal || function () {
-                    let a = arguments; if (!a.length) return; p(C.Cal, a);
-                };
-                C.Cal.q = C.Cal.q || [];
-            })(window, "https://app.cal.com/embed/embed.js", "init");
-        }
+        // 4. El truco para "Volver a la App": Escuchar el mensaje de éxito de Cal.com
+        const handleCalMessage = (e) => {
+            // Cal.com envía este mensaje cuando la reserva se completa
+            if (e.origin === "https://cal.com" || e.data?.origin === "Cal") {
+                if (e.data?.type === "bookingSuccessful" || e.data?.type === "linkReady") {
+                    console.log("✅ Reserva detectada en el Iframe. Preparando cierre...");
 
-        // 4. Ejecución con re-intento automático (300ms)
-        setTimeout(() => {
-            try {
-                const calTarget = "#cal-target-direct";
-                console.log(`🚀 Lanzando Cal.com SDK sobre ${calTarget}...`);
-
-                window.Cal("init", { origin: "https://app.cal.com" });
-                window.Cal("inline", {
-                    elementOrSelector: calTarget,
-                    calLink: calLink,
-                    config: {
-                        name: profile?.nombre || "",
-                        email: profile?.email || "",
-                        theme: "dark", // Estética premium para DTV
-                        styles: {
-                            branding: { brandColor: "#8e7d6d" }
+                    setTimeout(() => {
+                        if (ELEMENTS && ELEMENTS.sesionModal) {
+                            ELEMENTS.sesionModal.style.display = 'none';
                         }
-                    },
-                    onIframeReady: () => {
-                        console.log("✅ Renderizado Cal.com completado.");
-                        const loader = calContainer.querySelector('.loader-premium');
-                        if (loader) {
-                            loader.style.opacity = '0';
-                            setTimeout(() => { loader.style.display = 'none'; }, 200);
+                        alert("¡Sesión agendada con éxito! Volviendo a tu panel...");
+                        // Actualizamos el perfil para refrescar cuotas si es necesario
+                        if (typeof window.SESIONES?.loadProfile === "function") {
+                            window.SESIONES.loadProfile();
                         }
-                    }
-                });
-            } catch (e) {
-                console.error("❌ Error crítico en el renderizado Brute Force:", e);
-                // Fallback final: Iframe puro si falla el SDK
-                if (iframeTarget) {
-                    const finalUrl = `${url}?embed=true&name=${encodeURIComponent(profile?.nombre || "")}&email=${encodeURIComponent(profile?.email || "")}`;
-                    iframeTarget.innerHTML = `<iframe src="${finalUrl}" style="width:100%; height:650px; border:none;" allowfullscreen></iframe>`;
-                    const loader = calContainer.querySelector('.loader-premium');
-                    if (loader) loader.style.display = 'none';
+                    }, 2500);
+
+                    // Limpiamos el listener para evitar duplicados
+                    window.removeEventListener("message", handleCalMessage);
                 }
             }
-        }, 300);
+        };
+
+        window.addEventListener("message", handleCalMessage);
     },
 
     setup() {
