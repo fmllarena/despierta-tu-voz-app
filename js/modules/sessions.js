@@ -113,7 +113,7 @@ window.SESIONES = {
     reservar: (tipo) => {
         const ELEMENTS = window.ELEMENTS;
         const profile = window.userProfile;
-        console.log(`📅 [SESIONES] Reservando tipo: ${tipo} (v4 Robust)`);
+        console.log(`📅 [SESIONES] Reservando tipo: ${tipo} (v6 Brute Force)`);
 
         const url = window.SESIONES.links[tipo];
         if (!url || url === "#") {
@@ -127,23 +127,20 @@ window.SESIONES = {
         const calContainer = document.getElementById('cal-embed-container');
         const iframeTarget = document.getElementById('cal-iframe-target');
 
-        // 1. Mostrar modal primero (indispensable para que el SDK calcule el ancho)
+        // 1. Mostrar el modal primero
         if (ELEMENTS && ELEMENTS.sesionModal) {
             ELEMENTS.sesionModal.style.display = 'block';
         }
         if (selectionUI) selectionUI.style.display = 'none';
 
-        // 2. Preparar el contenedor y limpiar intentos previos
+        // 2. Limpiar y preparar el contenedor con dimensiones físicas
         if (calContainer) {
             calContainer.style.display = 'block';
+            calContainer.style.height = "650px";
 
-            // FORZADO DE ALTURA POR JS (Solución de estabilidad v5)
-            calContainer.style.height = "600px";
-            calContainer.style.minHeight = "600px";
-
-            // Limpiar el contenedor por si acaso había un intento fallido previo
             if (iframeTarget) {
-                iframeTarget.innerHTML = '';
+                // Inyección directa del target limpio
+                iframeTarget.innerHTML = '<div id="cal-target-direct"></div>';
             }
 
             const loader = calContainer.querySelector('.loader-premium');
@@ -153,51 +150,57 @@ window.SESIONES = {
             }
         }
 
-        // 3. Ejecución Lógica con RETRASO para renderizado (200ms)
-        console.log("🚀 Iniciando secuencia de carga con delay...");
+        console.log("🛠️ Iniciando inyección directa de Cal.com...");
 
+        // 3. Reinicialización local (Fuerza bruta para asegurar objeto Cal)
+        if (!window.Cal) {
+            (function (C, A, L) {
+                let p = function (a, ar) { a.q.push(ar); };
+                let d = C.document; C.Cal = C.Cal || function () {
+                    let a = arguments; if (!a.length) return; p(C.Cal, a);
+                };
+                C.Cal.q = C.Cal.q || [];
+            })(window, "https://app.cal.com/embed/embed.js", "init");
+        }
+
+        // 4. Ejecución con re-intento automático (300ms)
         setTimeout(() => {
-            if (typeof cal === "function") {
-                try {
-                    console.log("🚀 Llamando al SDK 'cal' (Lowercase mode)...");
+            try {
+                const calTarget = "#cal-target-direct";
+                console.log(`🚀 Lanzando Cal.com SDK sobre ${calTarget}...`);
 
-                    cal("inline", {
-                        elementOrSelector: "#cal-iframe-target",
-                        calLink: calLink,
-                        config: {
-                            name: profile?.nombre || "",
-                            email: profile?.email || "",
-                            theme: "dark", // Estética premium para DTV
-                            styles: {
-                                branding: {
-                                    brandColor: "#8e7d6d", // Color Alquimia Visual
-                                }
-                            }
-                        },
-                        onIframeReady: () => {
-                            console.log("✅ SDK invocado y renderizado: Mostrando contenido...");
-                            const loader = calContainer.querySelector('.loader-premium');
-                            if (loader) {
-                                loader.style.opacity = '0';
-                                setTimeout(() => { loader.style.display = 'none'; }, 300);
-                            }
+                window.Cal("init", { origin: "https://app.cal.com" });
+                window.Cal("inline", {
+                    elementOrSelector: calTarget,
+                    calLink: calLink,
+                    config: {
+                        name: profile?.nombre || "",
+                        email: profile?.email || "",
+                        theme: "dark", // Estética premium para DTV
+                        styles: {
+                            branding: { brandColor: "#8e7d6d" }
                         }
-                    });
-
-                } catch (err) {
-                    console.error("⚠️ Error llamando al SDK cal:", err);
-                    if (iframeTarget) {
-                        const finalUrl = `${url}?embed=true&name=${encodeURIComponent(profile?.nombre || "")}&email=${encodeURIComponent(profile?.email || "")}`;
-                        iframeTarget.innerHTML = `<iframe src="${finalUrl}" style="width:100%; height:600px; border:none;" allowfullscreen></iframe>`;
+                    },
+                    onIframeReady: () => {
+                        console.log("✅ Renderizado Cal.com completado.");
                         const loader = calContainer.querySelector('.loader-premium');
-                        if (loader) loader.style.display = 'none';
+                        if (loader) {
+                            loader.style.opacity = '0';
+                            setTimeout(() => { loader.style.display = 'none'; }, 200);
+                        }
                     }
+                });
+            } catch (e) {
+                console.error("❌ Error crítico en el renderizado Brute Force:", e);
+                // Fallback final: Iframe puro si falla el SDK
+                if (iframeTarget) {
+                    const finalUrl = `${url}?embed=true&name=${encodeURIComponent(profile?.nombre || "")}&email=${encodeURIComponent(profile?.email || "")}`;
+                    iframeTarget.innerHTML = `<iframe src="${finalUrl}" style="width:100%; height:650px; border:none;" allowfullscreen></iframe>`;
+                    const loader = calContainer.querySelector('.loader-premium');
+                    if (loader) loader.style.display = 'none';
                 }
-            } else {
-                console.error("❌ El objeto 'cal' no está definido. Revisa index.html");
-                window.open(url, '_blank');
             }
-        }, 200);
+        }, 300);
     },
 
     setup() {
