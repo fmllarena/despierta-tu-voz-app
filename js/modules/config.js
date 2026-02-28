@@ -37,7 +37,15 @@ export const AUDIOS_BOTIQUIN = window.AUDIOS_BOTIQUIN = [
         ]
     },
     { id: 'canciones-ancestrales', title: 'Canciones Ancestrales', file: 'assets/audios/canciones_ancestrales.mp3', desc: 'Conexión con la sabiduría de la voz original.' },
-    { id: 'ecos-tibet', title: 'Ecos del Tíbet', file: 'assets/audios/Ecos del Tíbet.mp3', desc: 'Sonidos inmersivos para la concentración y paz interior.' }
+    {
+        isCategory: true,
+        title: 'Ecos del Tíbet',
+        id: 'cat-tibet',
+        items: [
+            { id: 'ecos-tibet', title: 'Ecos del Tíbet', file: 'assets/audios/Ecos del Tíbet.mp3', desc: 'Sonidos inmersivos para la concentración.' },
+            { id: 'esencia-natural', title: 'Esencia Natural', file: 'assets/audios/Esencia Natural.mp3', desc: 'Conexión pura con el entorno zen.' }
+        ]
+    }
 ];
 
 export let supabaseClient = window.supabaseClient = null;
