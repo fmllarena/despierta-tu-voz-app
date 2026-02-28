@@ -37,11 +37,25 @@ export const APP_MODULES = {
             audioList.className = 'botiquin-audios';
             audioList.innerHTML = `<h3>Música de Apoyo</h3>`;
             AUDIOS_BOTIQUIN.forEach(audio => {
-                const btn = document.createElement('button');
-                btn.className = 'audio-btn';
-                btn.innerHTML = `<span>▶</span> ${audio.title}`;
-                btn.onclick = () => window.MUSICA.seleccionarYReproducir(audio.file, btn);
-                audioList.appendChild(btn);
+                if (audio.isCategory) {
+                    const catDiv = document.createElement('div');
+                    catDiv.className = 'botiquin-audio-category';
+                    catDiv.innerHTML = `<h4 style="margin: 15px 0 5px 0; color: var(--color-acento); font-size: 0.9em;">${audio.title}</h4>`;
+                    audio.items.forEach(subItem => {
+                        const btn = document.createElement('button');
+                        btn.className = 'audio-btn';
+                        btn.innerHTML = `<span>▶</span> ${subItem.title}`;
+                        btn.onclick = () => window.MUSICA.seleccionarYReproducir(subItem.file, btn);
+                        catDiv.appendChild(btn);
+                    });
+                    audioList.appendChild(catDiv);
+                } else {
+                    const btn = document.createElement('button');
+                    btn.className = 'audio-btn';
+                    btn.innerHTML = `<span>▶</span> ${audio.title}`;
+                    btn.onclick = () => window.MUSICA.seleccionarYReproducir(audio.file, btn);
+                    audioList.appendChild(btn);
+                }
             });
             ELEMENTS.botiquinContent.appendChild(audioList);
 

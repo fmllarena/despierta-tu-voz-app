@@ -2636,6 +2636,70 @@ textarea {
     background: #f4ece6;
 }
 
+/* --- MUSIC SUBMENU --- */
+.music-item-container {
+    position: relative;
+    width: 100%;
+}
+
+.music-item.category {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.music-item.category::after {
+    content: "▶";
+    font-size: 0.8em;
+    color: #ccc;
+    margin-left: 10px;
+    transition: transform 0.2s;
+}
+
+.music-item-container.active-submenu .music-item.category::after {
+    transform: rotate(90deg);
+}
+
+.music-submenu {
+    display: none;
+    position: absolute;
+    top: 0;
+    left: 100%;
+    background: white;
+    border: 1px solid #eee;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    width: 240px;
+    z-index: 2200;
+    overflow: hidden;
+}
+
+.music-item-container.active-submenu .music-submenu {
+    display: block;
+}
+
+@media (max-width: 480px) {
+    .music-item-container {
+        position: static;
+    }
+    
+    .music-submenu {
+        position: static;
+        width: 100%;
+        box-shadow: none;
+        border: none;
+        border-top: 1px solid #eee;
+        border-radius: 0;
+        background: #fafafa;
+        padding-left: 15px;
+    }
+    
+    .music-submenu .music-item {
+        border-bottom: 1px solid #f0f0f0;
+    }
+}
+/* -------------------- */
+
 .music-stop-option {
     padding: 12px;
     border: none;

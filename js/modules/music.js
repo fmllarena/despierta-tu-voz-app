@@ -12,15 +12,52 @@ export const MUSICA = window.MUSICA = {
 
     renderMenu: function () {
         if (!ELEMENTS.musicListItems) return;
-        ELEMENTS.musicListItems.innerHTML = AUDIOS_BOTIQUIN.map(audio => `
-            <button class="music-item" onclick="MUSICA.seleccionarYReproducir('${audio.file}', this)">
-                <div class="music-info">
-                    <strong>${audio.title}</strong>
-                    <span class="music-desc">${audio.desc}</span>
+        ELEMENTS.musicListItems.innerHTML = AUDIOS_BOTIQUIN.map(audio => {
+            if (audio.isCategory) {
+                return `
+                <div class="music-item-container">
+                    <button class="music-item category" onclick="MUSICA.toggleSubmenu(this, event)">
+                        <div class="music-info">
+                            <strong>${audio.title}</strong>
+                        </div>
+                    </button>
+                    <div class="music-submenu">
+                        ${audio.items.map(subItem => `
+                            <button class="music-item" onclick="MUSICA.seleccionarYReproducir('${subItem.file}', this)">
+                                <div class="music-info">
+                                    <strong>${subItem.title}</strong>
+                                    <span class="music-desc">${subItem.desc}</span>
+                                </div>
+                                <span class="music-status-icon">▶</span>
+                            </button>
+                        `).join('')}
+                    </div>
                 </div>
-                <span class="music-status-icon">▶</span>
-            </button>
-        `).join('');
+                `;
+            } else {
+                return `
+                <button class="music-item" onclick="MUSICA.seleccionarYReproducir('${audio.file}', this)">
+                    <div class="music-info">
+                        <strong>${audio.title}</strong>
+                        <span class="music-desc">${audio.desc}</span>
+                    </div>
+                    <span class="music-status-icon">▶</span>
+                </button>
+                `;
+            }
+        }).join('');
+    },
+
+    toggleSubmenu: function (btn, event) {
+        event.stopPropagation();
+        const container = btn.parentElement;
+
+        // Cierra otros submenús abiertos
+        document.querySelectorAll('.music-item-container.active-submenu').forEach(el => {
+            if (el !== container) el.classList.remove('active-submenu');
+        });
+
+        container.classList.toggle('active-submenu');
     },
 
     setupListeners: function () {
@@ -41,6 +78,7 @@ export const MUSICA = window.MUSICA = {
         window.addEventListener('click', (e) => {
             if (ELEMENTS.musicMenu && !ELEMENTS.musicMenu.contains(e.target) && e.target !== ELEMENTS.musicToggleBtn) {
                 ELEMENTS.musicMenu.style.display = 'none';
+                document.querySelectorAll('.music-item-container.active-submenu').forEach(el => el.classList.remove('active-submenu'));
             }
         });
     },
