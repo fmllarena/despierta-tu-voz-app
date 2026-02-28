@@ -19,7 +19,8 @@ export const AUDIOS_BOTIQUIN = window.AUDIOS_BOTIQUIN = [
     { id: 'relajacion432', title: 'Relajación 432Hz', file: 'assets/audios/relajacion432.mp3', desc: 'Frecuencia de la naturaleza para calma profunda.' },
     { id: 'relajacion528', title: 'Relajación 528Hz', file: 'assets/audios/relajacion528.mp3', desc: 'Frecuencia de la transformación y reparación (ADN).' },
     { id: 'relajacion-animacion', title: 'Relajarse y animarse', file: 'assets/audios/relajacion-animacion.mp3', desc: 'Equilibrio entre calma y energía.' },
-    { id: 'canciones-ancestrales', title: 'Canciones Ancestrales', file: 'assets/audios/canciones_ancestrales.mp3', desc: 'Conexión con la sabiduría de la voz original.' }
+    { id: 'canciones-ancestrales', title: 'Canciones Ancestrales', file: 'assets/audios/canciones_ancestrales.mp3', desc: 'Conexión con la sabiduría de la voz original.' },
+    { id: 'ecos-tibet', title: 'Ecos del Tíbet', file: 'assets/audios/ecosdeltibet.mp3', desc: 'Sonidos inmersivos para la concentración y paz interior.' }
 ];
 
 export let supabaseClient = window.supabaseClient = null;
