@@ -2048,7 +2048,8 @@ textarea {
 }
 
 .sesion-selection-ui {
-    padding: 0 5px; /* Margen interno para que no pegue a los bordes */
+    padding: 0 5px;
+    /* Margen interno para que no pegue a los bordes */
 }
 
 .session-quota-info {
@@ -2594,7 +2595,6 @@ textarea {
     display: none;
     flex-direction: column;
     z-index: 2100;
-    overflow: hidden;
     text-transform: none;
     font-weight: normal;
 }
@@ -2614,8 +2614,7 @@ textarea {
 }
 
 #musicListItems {
-    max-height: 250px;
-    overflow-y: auto;
+    /* Eliminamos max-height y overflow para que el submenu pueda "escapar" del padre */
 }
 
 .music-item {
@@ -2682,7 +2681,7 @@ textarea {
     .music-item-container {
         position: static;
     }
-    
+
     .music-submenu {
         position: static;
         width: 100%;
@@ -2693,11 +2692,12 @@ textarea {
         background: #fafafa;
         padding-left: 15px;
     }
-    
+
     .music-submenu .music-item {
         border-bottom: 1px solid #f0f0f0;
     }
 }
+
 /* -------------------- */
 
 .music-stop-option {
