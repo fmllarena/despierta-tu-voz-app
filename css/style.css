@@ -2587,6 +2587,7 @@ textarea {
     position: absolute;
     top: 45px;
     right: 0;
+    transform: translateX(-50px);
     background: white;
     border: 1px solid #eee;
     border-radius: 12px;
@@ -2655,7 +2656,7 @@ textarea {
     transition: transform 0.2s;
 }
 
-.music-item-container.active-submenu .music-item.category::after {
+.music-item-container:hover .music-item.category::after {
     transform: rotate(90deg);
 }
 
@@ -2664,6 +2665,7 @@ textarea {
     position: absolute;
     top: 0;
     left: 100%;
+    margin-left: 2px;
     background: white;
     border: 1px solid #eee;
     border-radius: 12px;
@@ -2673,6 +2675,14 @@ textarea {
     overflow: hidden;
 }
 
+/* Mostrar submenu en Hover (Solo Desktop) */
+@media (min-width: 481px) {
+    .music-item-container:hover .music-submenu {
+        display: block;
+    }
+}
+
+/* Opcional: Mantener la clase active-submenu por si se hace click en móvil */
 .music-item-container.active-submenu .music-submenu {
     display: block;
 }
