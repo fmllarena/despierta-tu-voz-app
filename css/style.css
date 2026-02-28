@@ -2587,7 +2587,6 @@ textarea {
     position: absolute;
     top: 45px;
     right: 0;
-    transform: translateX(-50px);
     background: white;
     border: 1px solid #eee;
     border-radius: 12px;
@@ -2662,17 +2661,21 @@ textarea {
 
 .music-submenu {
     display: none;
-    position: absolute;
-    top: 0;
-    left: 100%;
-    margin-left: 2px;
-    background: white;
-    border: 1px solid #eee;
-    border-radius: 12px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-    width: 240px;
-    z-index: 2200;
-    overflow: hidden;
+    position: static;
+    width: 100%;
+    background: #fafafa;
+    border: none;
+    border-top: 1px solid #eee;
+    border-radius: 0;
+    box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.02);
+    padding-left: 10px;
+    box-sizing: border-box;
+}
+
+.music-submenu .music-item {
+    border-bottom: 1px solid #f0f0f0;
+    font-size: 0.8em;
+    padding: 8px 15px;
 }
 
 /* Mostrar submenu en Hover (Solo Desktop) */
