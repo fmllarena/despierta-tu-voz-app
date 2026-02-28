@@ -23,7 +23,8 @@ export const AUDIOS_BOTIQUIN = window.AUDIOS_BOTIQUIN = [
         items: [
             { id: 'relajacion432', title: 'Relajación 432Hz', file: 'assets/audios/relajacion432.mp3', desc: 'Frecuencia de la naturaleza para calma profunda.' },
             { id: 'relajacion528', title: 'Relajación 528Hz', file: 'assets/audios/relajacion528.mp3', desc: 'Frecuencia de la transformación y reparación (ADN).' },
-            { id: 'relajacion-animacion', title: 'Relajarse y animarse', file: 'assets/audios/relajacion-animacion.mp3', desc: 'Equilibrio entre calma y energía.' }
+            { id: 'relajacion-animacion', title: 'Relajarse y animarse', file: 'assets/audios/relajacion-animacion.mp3', desc: 'Equilibrio entre calma y energía.' },
+            { id: 'nube-calma', title: 'Nube de Calma', file: 'assets/audios/Nube de Calma.mp3', desc: 'Meditación guiada para relajar la mente y el cuerpo.' }
         ]
     },
     { id: 'canciones-ancestrales', title: 'Canciones Ancestrales', file: 'assets/audios/canciones_ancestrales.mp3', desc: 'Conexión con la sabiduría de la voz original.' },
