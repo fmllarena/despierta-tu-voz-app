@@ -1102,26 +1102,32 @@ const MODULOS = {
             // Añadir lista de audios al mensaje del botiquín con menú desplegable
             const audioSection = document.createElement('div');
             audioSection.className = 'botiquin-audios';
-            audioSection.innerHTML = `<h4>✨ Recursos de Alquimia Sonora</h4>`;
+            audioSection.innerHTML = `<h4 style="margin-bottom: 15px;">✨ Recursos de Alquimia Sonora</h4>`;
 
-            const audioItem = document.createElement('div');
-            audioItem.className = 'audio-item-stacked';
-            audioItem.innerHTML = `
-                <div class="audio-info">
-                    <strong>Relajación Alquímica</strong>
-                    <span>Elige la frecuencia que necesites oír.</span>
-                </div>
-                <div class="audio-controls-stacked">
-                    <select id="freqSelector" class="audio-select" onchange="if(currentAudio) { currentAudio.pause(); currentAudio=null; if(currentAudioBtn) currentAudioBtn.innerHTML='▶'; } MUSICA.actualizarUI();">
-                        ${AUDIOS_BOTIQUIN.map(audio => `<option value="${audio.file}" title="${audio.desc}">${audio.title}</option>`).join('')}
-                    </select>
-                    <div class="audio-actions">
-                        <button class="audio-loop-btn active" onclick="toggleLoop(this)" title="Repetir infinitamente">🔄</button>
-                        <button class="audio-play-btn" onclick="reproducirAudioBotiquin(document.getElementById('freqSelector').value, this)">▶</button>
-                    </div>
-                </div>
-            `;
-            audioSection.appendChild(audioItem);
+            AUDIOS_BOTIQUIN.forEach(audio => {
+                if (audio.isCategory) {
+                    const catDiv = document.createElement('div');
+                    catDiv.className = 'botiquin-audio-category';
+                    catDiv.innerHTML = `<h4 style="margin: 15px 0 5px 0; color: var(--color-acento); font-size: 0.9em;">${audio.title}</h4>`;
+                    audio.items.forEach(subItem => {
+                        const btn = document.createElement('button');
+                        btn.className = 'action-btn audio-btn';
+                        btn.style.margin = "5px";
+                        btn.innerHTML = `<span class="music-status-icon">▶</span> ${subItem.title}`;
+                        btn.onclick = () => window.MUSICA.seleccionarYReproducir(subItem.file, btn);
+                        catDiv.appendChild(btn);
+                    });
+                    audioSection.appendChild(catDiv);
+                } else {
+                    const btn = document.createElement('button');
+                    btn.className = 'action-btn audio-btn';
+                    btn.style.margin = "5px";
+                    btn.innerHTML = `<span class="music-status-icon">▶</span> ${audio.title}`;
+                    btn.onclick = () => window.MUSICA.seleccionarYReproducir(audio.file, btn);
+                    audioSection.appendChild(btn);
+                }
+            });
+
             ELEMENTS.botiquinContent.appendChild(audioSection);
         } catch (e) {
             console.error(e);
