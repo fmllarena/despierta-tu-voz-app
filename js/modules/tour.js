@@ -66,7 +66,7 @@ export const TOUR = window.TOUR = {
         {
             target: "#quickUploadBtn",
             title: "Tus Archivos",
-            text: "Haz clic aquí para compartir conmigo una partitura en PDF o un audio de tu ensayo. Lo analizaré para darte feedback específico."
+            text: "Haz clic aquí para compartir conmigo una partitura en PDF o un audio de tu ensayo. Lo analizaré para darte feedback específico. Archivos de hasta 3.5 Mb. Recomend: súbelo en modo mono."
         },
         {
             target: "#quickPhoneticsBtn",
