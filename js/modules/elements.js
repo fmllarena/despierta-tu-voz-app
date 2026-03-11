@@ -60,7 +60,7 @@ export const ELEMENTS = window.ELEMENTS = {
     get personalitySlider() { return document.getElementById('personalitySlider'); },
     get lengthSlider() { return document.getElementById('lengthSlider'); },
     get languageSelect() { return document.getElementById('languageSelect'); },
-    get weeklyGoalInput() { return document.getElementById('weeklyGoalInput'); },
+    get tratoPreferidoInput() { return document.getElementById('tratoPreferidoInput'); },
     get upgradeSettingsBtn() { return document.getElementById('upgradeSettingsBtn'); },
 
     // Legal Modal

@@ -119,8 +119,8 @@ async function buildUserContext(userId, intent, originPost = null, originCat = n
     if (!perfil) return context;
 
     context += `\n--- SITUACIÓN ACTUAL ---\n- Nombre: ${perfil.nombre}\n- Último Estado: ${perfil.ultimo_resumen || 'Iniciando'}\n`;
-    if (perfil.weekly_goal) {
-        context += `- Objetivo Semanal: ${perfil.weekly_goal}\n`;
+    if (perfil.mentor_trato_preferido) {
+        context += `- Trato Preferido: ${perfil.mentor_trato_preferido}\n`;
     }
 
     context += `\n--- PREFERENCIAS DE MENTORÍA ---\n`;

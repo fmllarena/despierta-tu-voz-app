@@ -30,7 +30,7 @@ export const MODALS = {
         ELEMENTS.personalitySlider.value = state.userProfile.mentor_personality ?? 5;
         ELEMENTS.lengthSlider.value = state.userProfile.mentor_length ?? 5;
         ELEMENTS.languageSelect.value = state.userProfile.mentor_language || 'es';
-        ELEMENTS.weeklyGoalInput.value = state.userProfile.weekly_goal || '';
+        ELEMENTS.tratoPreferidoInput.value = state.userProfile.mentor_trato_preferido || '';
 
         ELEMENTS.settingsModal.style.display = 'flex';
     },
@@ -45,7 +45,7 @@ export const MODALS = {
                 mentor_personality: parseInt(ELEMENTS.personalitySlider.value),
                 mentor_length: parseInt(ELEMENTS.lengthSlider.value),
                 mentor_language: ELEMENTS.languageSelect.value,
-                weekly_goal: ELEMENTS.weeklyGoalInput.value.trim()
+                mentor_trato_preferido: ELEMENTS.tratoPreferidoInput.value.trim()
             };
             const { error } = await state.supabase.from('user_profiles').update(updates).eq('user_id', state.userProfile.user_id);
             if (error) throw error;

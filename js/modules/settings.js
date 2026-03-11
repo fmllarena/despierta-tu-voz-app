@@ -21,7 +21,7 @@ export const AJUSTES = window.AJUSTES = {
         ELEMENTS.personalitySlider.value = profile.mentor_personality ?? 5;
         ELEMENTS.lengthSlider.value = profile.mentor_length ?? 5;
         ELEMENTS.languageSelect.value = profile.mentor_language || 'es';
-        ELEMENTS.weeklyGoalInput.value = profile.weekly_goal || '';
+        ELEMENTS.tratoPreferidoInput.value = profile.mentor_trato_preferido || '';
 
         if (ELEMENTS.upgradeSettingsBtn) {
             ELEMENTS.upgradeSettingsBtn.style.display = tier === 'premium' ? 'none' : 'block';
@@ -49,7 +49,7 @@ export const AJUSTES = window.AJUSTES = {
                 mentor_personality: parseInt(ELEMENTS.personalitySlider.value),
                 mentor_length: parseInt(ELEMENTS.lengthSlider.value),
                 mentor_language: ELEMENTS.languageSelect.value,
-                weekly_goal: ELEMENTS.weeklyGoalInput.value.trim()
+                mentor_trato_preferido: ELEMENTS.tratoPreferidoInput.value.trim()
             };
 
             const { data: updatedProfile, error } = await db
