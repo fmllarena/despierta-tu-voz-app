@@ -123,6 +123,17 @@ async function buildUserContext(userId, intent, originPost = null, originCat = n
         context += `- Objetivo Semanal: ${perfil.weekly_goal}\n`;
     }
 
+    context += `\n--- PREFERENCIAS DE MENTORÍA ---\n`;
+    if (perfil.mentor_focus !== undefined && perfil.mentor_focus !== null) {
+        context += `- Nivel de Enfoque (1 Técnico, 10 Emocional): ${perfil.mentor_focus}/10\n`;
+    }
+    if (perfil.mentor_personality !== undefined && perfil.mentor_personality !== null) {
+        context += `- Personalidad (1 Neutral, 10 Motivador): ${perfil.mentor_personality}/10\n`;
+    }
+    if (perfil.mentor_length !== undefined && perfil.mentor_length !== null) {
+        context += `- Longitud de Respuesta (1 Breve, 10 Detallada): ${perfil.mentor_length}/10\n`;
+    }
+
     if (intent !== 'inspiracion_dia') {
         context += `- Historia: ${perfil.historia_vocal}\n- Nivel: ${perfil.nivel_alquimia}/10\n`;
         context += `- Transmutaciones (Logros): ${perfil.creencias_transmutadas || 'Ninguna registrada'}\n`;
