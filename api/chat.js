@@ -119,6 +119,9 @@ async function buildUserContext(userId, intent, originPost = null, originCat = n
     if (!perfil) return context;
 
     context += `\n--- SITUACIÓN ACTUAL ---\n- Nombre: ${perfil.nombre}\n- Último Estado: ${perfil.ultimo_resumen || 'Iniciando'}\n`;
+    if (perfil.weekly_goal) {
+        context += `- Objetivo Semanal: ${perfil.weekly_goal}\n`;
+    }
 
     if (intent !== 'inspiracion_dia') {
         context += `- Historia: ${perfil.historia_vocal}\n- Nivel: ${perfil.nivel_alquimia}/10\n`;
