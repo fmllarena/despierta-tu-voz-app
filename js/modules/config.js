@@ -32,7 +32,7 @@ export const AUDIOS_BOTIQUIN = window.AUDIOS_BOTIQUIN = [
         title: 'Chill out',
         id: 'cat-chillout',
         items: [
-            { id: 'dentro-de-mi', title: 'Dentro de mí', file: 'assets/audios/Dentro de mi.mp3', desc: 'Un viaje interior sereno.' },
+            { id: 'dentro-de-mi', title: 'Dentro de mí', file: 'assets/audios/Dentro de Mi.mp3', desc: 'Un viaje interior sereno.' },
             { id: 'conocete', title: 'Conócete', file: 'assets/audios/conocete.mp3', desc: 'Espacio para la introspección.' }
         ]
     },
