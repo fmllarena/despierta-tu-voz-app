@@ -1,9 +1,3 @@
-// --- MANEJO DE ERRORES GLOBAL ---
-window.onerror = function (msg, url, lineNo, columnNo, error) {
-    alert("Error de JS: " + msg + "\nLínea: " + lineNo + "\nArchivo: " + url);
-    return false;
-};
-
 
 // Variables globales movidas a config.js
 
@@ -536,7 +530,7 @@ async function sendMessage() {
     if (!text) return;
 
     appendMessage(text, 'user');
-    await guardarMensajeDB(text, 'user'); // Asegurar el guardado antes de continuar
+    guardarMensajeDB(text, 'user'); // Fire & forget: guardar en paralelo sin bloquear la IA
 
     // Obtener datos de archivo si existen
     const fileData = window.FILES ? await window.FILES.getFileData() : null;
