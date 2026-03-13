@@ -951,7 +951,7 @@ function appendMessage(text, type, id = null) {
 
         // Desplazar el chat
         container.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    } else if (type === 'usuario') {
+    } else if (type === 'user' || type === 'usuario') {
         div.innerText = text;
         div.style.whiteSpace = "pre-wrap";
         ELEMENTS.chatBox.appendChild(div);
