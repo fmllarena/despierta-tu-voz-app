@@ -254,6 +254,7 @@ async function cargarPerfil(user) {
 
         userProfile = perfil;
         window.userProfile = perfil; // Exportar para otros módulos (Mi Viaje)
+        sessionStartTime = new Date().toISOString(); // Marcar inicio de sesión para exportarChatDoc
         // Asegurar que accepted_terms esté presente en el objeto local
         userProfile.accepted_terms = !!perfil.accepted_terms;
 
@@ -682,6 +683,9 @@ async function guardarMensajeDB(texto, emisor, customDate = null) {
     }
 }
 
+// Timestamp de inicio de la sesión actual (se actualiza al cargar el perfil)
+let sessionStartTime = new Date().toISOString();
+
 async function exportarChatDoc() {
     try {
         if (!supabaseClient || !userProfile) {
@@ -691,26 +695,14 @@ async function exportarChatDoc() {
 
         console.log("📥 Generando documento de la sesión actual...");
 
-        // 1. Buscamos el último resumen_diario o crónica para saber dónde empieza "hoy"
-        const { data: ultimoResumen } = await supabaseClient
-            .from('mensajes')
-            .select('created_at')
-            .eq('alumno', userProfile.user_id)
-            .eq('emisor', 'resumen_diario')
-            .order('created_at', { ascending: false })
-            .limit(1);
-
-        let fechaInicioBusqueda = "2024-01-01T00:00:00Z";
-        if (ultimoResumen && ultimoResumen.length > 0) {
-            fechaInicioBusqueda = ultimoResumen[0].created_at;
-        }
-
-        // 2. Obtener los mensajes posteriores a esa última crónica
+        // 1. Obtener todos los mensajes desde el inicio de la sesión actual.
+        //    sessionStartTime se registra cuando el usuario carga su perfil,
+        //    por lo que no se ve afectado por los resúmenes automáticos intermedios.
         const { data: mensajes, error } = await supabaseClient
             .from('mensajes')
             .select('created_at, texto, emisor')
             .eq('alumno', userProfile.user_id)
-            .gt('created_at', fechaInicioBusqueda)
+            .gte('created_at', sessionStartTime)
             .order('created_at', { ascending: true });
 
         if (error) throw error;
