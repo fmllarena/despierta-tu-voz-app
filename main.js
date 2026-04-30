@@ -747,6 +747,7 @@ async function exportarChatDoc() {
             <html>
             <head>
                 <meta charset="utf-8">
+                <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
                 <style>
                     body { font-family: Arial, Helvetica, sans-serif; color: #333; line-height: 1.5; }
                     .header { text-align: center; margin-bottom: 30px; border-bottom: 1px solid #8e7d6d; padding-bottom: 15px; }
@@ -807,8 +808,15 @@ async function exportarChatDoc() {
             </html>
         `;
 
-        // 4. Crear el Blob y descargar (Agregamos BOM para que Word reconozca UTF-8 en Windows)
-        const blob = new Blob(['\ufeff', htmlBody], { type: 'application/msword;charset=utf-8' });
+        // 4. Crear el Blob y descargar con codificación UTF-8 garantizada
+        // Usamos TextEncoder para convertir el HTML a bytes UTF-8 reales (evita problemas con ñ y tildes)
+        const encoder = new TextEncoder(); // TextEncoder siempre usa UTF-8
+        const encodedBody = encoder.encode(htmlBody);
+        const bom = new Uint8Array([0xEF, 0xBB, 0xBF]); // BOM UTF-8 para que Word lo reconozca
+        const finalBytes = new Uint8Array(bom.length + encodedBody.length);
+        finalBytes.set(bom, 0);
+        finalBytes.set(encodedBody, bom.length);
+        const blob = new Blob([finalBytes], { type: 'application/msword' });
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
