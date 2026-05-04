@@ -59,20 +59,29 @@ async function processChat(req, res = null) {
     // --- CADENA DE REINTENTOS CON FALLBACK ---
     const errors = [];
 
-    // Intento 1: Gemini (Siempre primero)
+    // Intento 1: GLM-4-PLUS (Modelo principal temporal)
+    if (process.env.GLM_API_KEY && !fileData) { // GLM no maneja archivos en este flujo
+        try {
+            console.log("🚀 Intentando con GLM-4-PLUS...");
+            return await callGLMAPI({ intent, prompt: finalPrompt, history });
+        } catch (e) {
+            console.warn("⚠️ GLM falló:", e.message);
+            errors.push(`GLM: ${e.message}`);
+        }
+    }
+
+    // Intento 2: Gemini (Fallback 1)
     try {
-        console.log("🚀 Intentando con Gemini...");
+        console.log("🚀 Backup con Gemini...");
         return await callGeminiAPI({ intent, prompt: finalPrompt, history, stream, res, fileData });
     } catch (e) {
         console.warn("⚠️ Gemini falló:", e.message);
         errors.push(`Gemini: ${e.message}`);
-        // Si hay stream y ya se ha escrito algo, no podemos reintentar fácilmente sin confundir al cliente.
-        // Pero normalmente los fallos de API ocurren antes de escribir nada.
         if (stream && res && res.writableEnded) throw e;
     }
 
-    // Intento 2: Groq (Llama 3.3 70B)
-    if (process.env.GROQ_API_KEY && !fileData) { // Groq no maneja archivos en este flujo
+    // Intento 3: Groq (Llama 3.3 70B)
+    if (process.env.GROQ_API_KEY && !fileData) {
         try {
             console.log("🚀 Backup con Groq...");
             return await callGroqAPI({ intent, prompt: finalPrompt, history });
@@ -82,7 +91,7 @@ async function processChat(req, res = null) {
         }
     }
 
-    // Intento 3: Claude (Anthropic)
+    // Intento 4: Claude (Anthropic)
     if (process.env.ANTHROPIC_API_KEY) {
         try {
             console.log("🚀 Backup con Claude...");
@@ -211,6 +220,42 @@ async function callGeminiAPI({ intent, prompt, history, stream, res, fileData })
         const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
         return { text: text, info: modelToUse };
     }
+}
+
+/**
+ * Ejecuta llamada a GLM-4-PLUS (Zhipu AI, compatible con OpenAI)
+ */
+async function callGLMAPI({ intent, prompt, history }) {
+    if (!process.env.GLM_API_KEY) throw new Error("Falta API Key de GLM");
+
+    const response = await fetch("https://api.z.ai/api/paas/v4/chat/completions", {
+        method: "POST",
+        headers: {
+            "Authorization": `Bearer ${process.env.GLM_API_KEY}`,
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            model: "glm-4-plus",
+            messages: [
+                { role: "system", content: SYSTEM_PROMPTS[intent] },
+                ...history.filter(h => h?.parts?.[0]?.text).map(h => ({
+                    role: h.role === 'model' ? 'assistant' : 'user',
+                    content: h.parts[0].text
+                })),
+                { role: "user", content: prompt }
+            ],
+            temperature: 0.7,
+            max_tokens: 1500
+        })
+    });
+
+    if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        throw new Error(`GLM Error ${response.status}: ${errData.error?.message || response.statusText}`);
+    }
+
+    const data = await response.json();
+    return { text: data.choices?.[0]?.message?.content || "", info: "GLM-4-PLUS" };
 }
 
 /**
