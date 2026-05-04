@@ -63,14 +63,16 @@ async function processChat(req, res = null) {
     if (process.env.GLM_API_KEY && !fileData) { // GLM no maneja archivos en este flujo
         try {
             console.log("🚀 Intentando con GLM-4-PLUS...");
-            return await callGLMAPI({ intent, prompt: finalPrompt, history });
+            const result = await callGLMAPI({ intent, prompt: finalPrompt, history });
+            if (stream && res) return sendAsSSE(res, result);
+            return result;
         } catch (e) {
             console.warn("⚠️ GLM falló:", e.message);
             errors.push(`GLM: ${e.message}`);
         }
     }
 
-    // Intento 2: Gemini (Fallback 1)
+    // Intento 2: Gemini (Fallback 1 — soporta streaming nativo)
     try {
         console.log("🚀 Backup con Gemini...");
         return await callGeminiAPI({ intent, prompt: finalPrompt, history, stream, res, fileData });
@@ -84,7 +86,9 @@ async function processChat(req, res = null) {
     if (process.env.GROQ_API_KEY && !fileData) {
         try {
             console.log("🚀 Backup con Groq...");
-            return await callGroqAPI({ intent, prompt: finalPrompt, history });
+            const result = await callGroqAPI({ intent, prompt: finalPrompt, history });
+            if (stream && res) return sendAsSSE(res, result);
+            return result;
         } catch (e) {
             console.warn("⚠️ Groq falló:", e.message);
             errors.push(`Groq: ${e.message}`);
@@ -95,7 +99,9 @@ async function processChat(req, res = null) {
     if (process.env.ANTHROPIC_API_KEY) {
         try {
             console.log("🚀 Backup con Claude...");
-            return await callClaudeAPI({ intent, prompt: finalPrompt, history });
+            const result = await callClaudeAPI({ intent, prompt: finalPrompt, history });
+            if (stream && res) return sendAsSSE(res, result);
+            return result;
         } catch (e) {
             console.warn("⚠️ Claude falló:", e.message);
             errors.push(`Claude: ${e.message}`);
@@ -312,6 +318,16 @@ async function callClaudeAPI({ intent, prompt, history }) {
     });
 
     return { text: response.content[0].text, info: "Claude 3.5 Sonnet" };
+}
+
+/**
+ * Convierte una respuesta no-streaming en formato SSE para el cliente
+ * Usado por modelos que no soportan streaming nativo (GLM, Groq, Claude)
+ */
+function sendAsSSE(res, result) {
+    console.log(`📡 Enviando respuesta de ${result.info || 'modelo'} como SSE`);
+    res.write(`data: ${JSON.stringify({ text: result.text })}\n\n`);
+    res.end();
 }
 
 /**
