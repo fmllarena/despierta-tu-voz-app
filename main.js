@@ -161,6 +161,7 @@ async function llamarGemini(message, history, intent, extraData = {}, onChunk = 
         } else {
             const data = await response.json();
             if (data.error) throw new Error(data.error);
+            if (data.info) console.log(`🤖 Modelo IA usado: ${data.info}`);
             return data.text;
         }
     } catch (e) {
