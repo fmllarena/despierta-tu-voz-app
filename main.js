@@ -1,5 +1,5 @@
 
-// Variables globales movidas a config.js
+//  Variables globales movidas a config.js
 
 
 // --- FILTRO DE PRUDENCIA: Sesiones y Tiempo ---
