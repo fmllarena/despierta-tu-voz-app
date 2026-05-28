@@ -59,22 +59,9 @@ async function processChat(req, res = null) {
     // --- CADENA DE REINTENTOS CON FALLBACK ---
     const errors = [];
 
-    // Intento 1: GLM-4-PLUS (Modelo principal temporal)
-    if (process.env.GLM_API_KEY && !fileData) { // GLM no maneja archivos en este flujo
-        try {
-            console.log("🚀 Intentando con GLM-4-PLUS...");
-            const result = await callGLMAPI({ intent, prompt: finalPrompt, history });
-            if (stream && res) return sendAsSSE(res, result);
-            return result;
-        } catch (e) {
-            console.warn("⚠️ GLM falló:", e.message);
-            errors.push(`GLM: ${e.message}`);
-        }
-    }
-
-    // Intento 2: Gemini (Fallback 1 — soporta streaming nativo)
+    // Intento 1: Gemini (Modelo principal — soporta streaming nativo y archivos)
     try {
-        console.log("🚀 Backup con Gemini...");
+        console.log("🚀 Intentando con Gemini...");
         return await callGeminiAPI({ intent, prompt: finalPrompt, history, stream, res, fileData });
     } catch (e) {
         console.warn("⚠️ Gemini falló:", e.message);
@@ -82,7 +69,7 @@ async function processChat(req, res = null) {
         if (stream && res && res.writableEnded) throw e;
     }
 
-    // Intento 3: Groq (Llama 3.3 70B)
+    // Intento 2: Groq (Llama 3.3 70B)
     if (process.env.GROQ_API_KEY && !fileData) {
         try {
             console.log("🚀 Backup con Groq...");
@@ -95,7 +82,7 @@ async function processChat(req, res = null) {
         }
     }
 
-    // Intento 4: Claude (Anthropic)
+    // Intento 3: Claude (Anthropic)
     if (process.env.ANTHROPIC_API_KEY) {
         try {
             console.log("🚀 Backup con Claude...");

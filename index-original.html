@@ -1,0 +1,768 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Despierta tu Voz - Mentor Vocal</title>
+    <!-- Cal.com SDK -->
+    <script type="text/javascript">
+        (function (C, A, L) {
+            let p = function (a, ar) { a.q.push(ar); };
+            let d = C.document; C.cal = C.cal || function () {
+                let a = arguments; if (!a.length) return; p(C.cal, a);
+            };
+            C.cal.q = C.cal.q || [];
+            fetch("https://api.cal.com/embed/v1.js").then(response => {
+                let s = d.createElement("script"); s.src = response.url;
+                d.body.appendChild(s);
+            });
+        })(window, window.cal, "init");
+
+        // Inicialización estándar (sin dtv-sessions)
+        cal("init", { origin: "https://cal.com" });
+    </script>
+
+    <!-- Stripe SDK -->
+    <script src="https://js.stripe.com/v3/"></script>
+
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/modals.css">
+    <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="shortcut icon" href="/favicon.ico" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#8e7d6d">
+
+</head>
+
+<body>
+    <div id="authOverlay" class="overlay">
+        <div class="auth-card">
+            <h2>Despierta tu Voz</h2>
+            <p id="authIntro">Introduce tus datos para hablar con el Mentor</p>
+
+            <div id="authError" class="error-msg"></div>
+
+            <div class="social-auth-container">
+                <button onclick="authActions.loginWithOAuth('google')" class="btn-social btn-google">
+                    <img src="https://www.gstatic.com/images/branding/product/1x/gsa_512dp.png" alt="Google">
+                    Continuar con Google
+                </button>
+                <button onclick="authActions.loginWithOAuth('facebook')" class="btn-social btn-facebook">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/b/b8/2021_Facebook_icon.svg"
+                        alt="Facebook">
+                    Continuar con Facebook
+                </button>
+            </div>
+
+            <div class="auth-divider">
+                <span class="divider-line"></span>
+                <span>o usa tu correo electrónico</span>
+                <span class="divider-line"></span>
+            </div>
+
+            <div id="loginFields">
+                <input type="text" id="authName" placeholder="Tu nombre para el Mentor (solo la 1a vez)">
+                <input type="email" id="authEmail" placeholder="Tu correo electrónico">
+                <div class="password-wrapper">
+                    <input type="password" id="authPassword" placeholder="Tu contraseña">
+                    <button type="button" class="toggle-password" data-target="authPassword">
+                        <svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                            <circle cx="12" cy="12" r="3"></circle>
+                        </svg>
+                    </button>
+                </div>
+
+                <div class="auth-buttons">
+                    <button id="loginBtn">Entrar</button>
+                    <button id="signUpBtn" class="secondary">Registrarme</button>
+                </div>
+
+                <div class="auth-extra">
+                    <a href="#" id="forgotPasswordLink">¿Has olvidado tu contraseña?</a>
+                    <br><br>
+                    <a href="#" onclick="dtvSystemReset(); event.preventDefault();"
+                        style="font-size: 0.7em; color: #888; text-decoration: underline;">Reiniciar sistema (Solucionar
+                        errores de conexión)</a>
+                </div>
+            </div>
+
+            <!-- Sección oculta para resetear contraseña -->
+            <div id="resetPasswordContainer">
+                <p>Introduce tu nueva contraseña:</p>
+                <div class="password-wrapper">
+                    <input type="password" id="newPassword" placeholder="Nueva contraseña">
+                    <button type="button" class="toggle-password" data-target="newPassword">
+                        <svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                            <circle cx="12" cy="12" r="3"></circle>
+                        </svg>
+                    </button>
+                </div>
+                <button id="updatePasswordBtn">Actualizar Contraseña</button>
+            </div>
+        </div>
+    </div>
+
+    <header>
+        <div class="header-main">
+            <img src="logo-appDTV2.png" alt="Despierta tu Voz Logo" class="app-logo">
+            <h2>Despierta tu Voz</h2>
+        </div>
+        <p>Conexión emocional y técnica 24/7</p>
+    </header>
+
+    <div class="chat-container">
+        <div class="chat-header">
+            <div class="chat-header-top">
+                <span>Sesión con el Mentor</span>
+                <div class="header-top-actions">
+                    <div class="music-player-container">
+                        <button id="musicToggleBtn" class="music-icon-btn" title="Música ambiental">
+                            <img src="assets/musica.png" alt="Música">
+                        </button>
+                        <div id="musicMenu" class="music-menu-dropdown">
+                            <div class="music-menu-header">Música de Alquimia</div>
+                            <div id="musicListItems"></div>
+                            <button id="stopMusicBtn" class="music-stop-option">✕ Detener música</button>
+                        </div>
+                    </div>
+                    <button id="logoutBtn" class="logout-btn" title="Cerrar Sesión">SALIR</button>
+                    <button id="mainHelpBtn" class="help-modulo-btn">?</button>
+                </div>
+            </div>
+            <div id="mainHelpTooltip" class="help-tooltip">
+                <span id="closeHelpBtn" class="close-help-btn">&times;</span>
+                <h5>💡 Guía de la Pantalla Principal</h5>
+                <div class="help-item">
+                    <span class="help-btn-tag"><img src="assets/inspiracion.png" alt="Icono Inspiración"></span>
+                    <div class="help-desc"><strong>Inspiración del Día</strong> – Recibe una frase motivadora
+                        personalizada según tu progreso (Pro/Premium) o frases de músicos famosos (Free).</div>
+                </div>
+                <div class="help-item">
+                    <span class="help-btn-tag"><img src="assets/icon_viaje.png" alt="Icono Mi Viaje"></span>
+                    <div class="help-desc"><strong>Mi Viaje</strong> – Acceso a tu ruta de autoconocimiento dividida en
+                        5 Módulos.</div>
+                </div>
+                <div class="help-item">
+                    <span class="help-btn-tag"><img src="assets/icon_progreso.png" alt="Icono Mi Pregreso"></span>
+                    <div class="help-desc"><strong>Mi Progreso</strong> – Tu Diario de Alquimia. El Mentor registra tus
+                        hitos, miedos transmutados y tu nivel de evolución.</div>
+                </div>
+                <div class="help-item">
+                    <span class="help-btn-tag"><img src="assets/icon_emergencia.png" alt="Icono Emergencia"></span>
+                    <div class="help-desc"><strong>Emergencia</strong> – El Botiquín. Pulsa aquí si te sientes bloqueado
+                        o nervioso antes de cantar para recibir pautas inmediatas.</div>
+                </div>
+                <div class="help-item">
+                    <span class="help-btn-tag"><img src="assets/icon_sesiones.png" alt="Icono Sesiones"></span>
+                    <div class="help-desc"><strong>Sesiones 1/1</strong> – Información sobre tus tutorías personales y
+                        reserva de espacio.</div>
+                </div>
+                <div class="help-item">
+                    <span class="help-btn-tag"><img src="assets/icon_upgrade.png" alt="Icono Mejorar Plan"></span>
+                    <div class="help-desc"><strong>Mejorar Plan</strong> – Sube de nivel para desbloquear más funciones
+                        y soporte del Mentor.</div>
+                </div>
+                <div class="help-item">
+                    <span class="help-btn-tag"><img src="assets/icon_ajustes.png" alt="Icono Ajustes"></span>
+                    <div class="help-desc"><strong>Ajustes</strong> – Personaliza la personalidad del Mentor, el idioma
+                        y tus objetivos técnicos.</div>
+                </div>
+                <div class="help-item">
+                    <span class="help-btn-tag voice">🎤</span>
+                    <div class="help-desc"><strong>Habla conmigo</strong> – Pulsa el micro para transcribir tu voz y
+                        chatear de forma más fluida.</div>
+                </div>
+                <div class="help-item">
+                    <span class="help-btn-tag files">+Añadir...</span>
+                    <div class="help-desc"><strong>Tus Archivos</strong> – Sube PDFs o audios para que el Mentor los
+                        analice y te dé feedback. Archivos de hasta 3.5 Mb. Recomend: súbelo en modo mono.</div>
+                </div>
+                <div class="help-item">
+                    <span class="help-btn-tag phonetics">F▼</span>
+                    <div class="help-desc"><strong>Fonética</strong> – Ayuda técnica de pronunciación en varios idiomas
+                        con audios integrados.</div>
+                </div>
+            </div>
+        </div>
+        <div class="header-buttons" id="mainHeaderButtons">
+            <button id="inspiracionBtn" class="icon-nav-btn" title="Inspiración del Día">
+                <img src="assets/inspiracion.png" alt="Inspiración del Día">
+            </button>
+            <button id="viajeBtn" class="journey-btn icon-nav-btn" title="Mi Viaje">
+                <img src="assets/icon_viaje.png" alt="Mi Viaje">
+            </button>
+            <button id="progresoBtn" class="icon-nav-btn" title="Mi Progreso">
+                <img src="assets/icon_progreso.png" alt="Mi Progreso">
+            </button>
+            <button id="botiquinBtn" class="icon-nav-btn" title="Emergencias">
+                <img src="assets/icon_emergencia.png" alt="Emergencias">
+            </button>
+            <button id="sesionBtn" class="premium-btn icon-nav-btn" title="Sesiones 1/1" style="display: none;">
+                <img src="assets/icon_sesiones.png" alt="Sesiones">
+            </button>
+            <button id="upgradeBtn" class="upgrade-btn icon-nav-btn" title="Mejorar Plan" style="display: none;">
+                <img src="assets/icon_upgrade.png" alt="Mejorar Plan">
+            </button>
+            <button id="ajustesBtn" class="icon-nav-btn" title="Ajustes" style="display: none;">
+                <img src="assets/icon_ajustes.png" alt="Ajustes">
+            </button>
+        </div>
+
+
+        <div class="messages" id="chatBox"></div>
+        <div class="input-area">
+            <textarea id="chatMentoriaInput" placeholder="Chatea aquí con el Mentor..." autocomplete="off"
+                spellcheck="false" rows="1"></textarea>
+            <button id="sendBtn">▶</button>
+            <button id="micBtn">🎤</button>
+        </div>
+        <div class="quick-actions">
+            <button id="quickUploadBtn" class="action-btn">+ Añadir partitura o audio</button>
+            <div class="dropdown">
+                <button id="quickPhoneticsBtn" class="action-btn">Fonética ▼</button>
+                <div id="phoneticsMenu" class="dropdown-content">
+                    <button class="lang-option" data-lang="Inglés">Inglés</button>
+                    <button class="lang-option" data-lang="Alemán">Alemán</button>
+                    <button class="lang-option" data-lang="Italiano">Italiano</button>
+                    <button class="lang-option" data-lang="Francés">Francés</button>
+                    <button class="lang-option" data-lang="Portugués">Portugués</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="diarioModal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <div id="diarioContent"></div>
+        </div>
+    </div>
+
+    <!-- Modal de Inspiración del Día -->
+    <div id="inspiracionModal" class="modal">
+        <div class="modal-content inspiracion-modal-content">
+            <span class="close-modal" id="closeInspiracion">&times;</span>
+            <div class="inspiracion-header">
+                <div class="inspiracion-icon">✨</div>
+                <h2>Inspiración del Día</h2>
+            </div>
+            <div id="inspiracionContent" class="inspiracion-body">
+                <p class="inspiracion-frase"></p>
+                <p class="inspiracion-autor"></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- El modal de Sesiones ha sido consolidado al final del body -->
+    <!-- Modal para elegir Plan (Upgrade) -->
+    <div id="upgradeModal" class="modal">
+        <div class="modal-content upgrade-modal-content">
+            <span class="close-modal close-upgrade">&times;</span>
+            <div class="upgrade-header">
+                <h2>Elige cómo quieres transmutar tu voz</h2>
+                <p>Sube de nivel para desbloquear la memoria profunda y funciones exclusivas.</p>
+            </div>
+            <div class="upgrade-options">
+                <!-- PROFUNDIZA -->
+                <div class="upgrade-card pro">
+                    <div class="upgrade-card-header">
+                        <h3>Plan Profundiza</h3>
+                        <div class="upgrade-price">
+                            <span class="price-old">19,90€</span>
+                            <span class="price-current">9,90€<span>/mes</span></span>
+                        </div>
+                    </div>
+                    <ul class="upgrade-features">
+                        <li><span class="upgrade-check">✓</span> Chat 24/7 ilimitado con el Mentor</li>
+                        <li><span class="upgrade-check">✓</span> Memoria relacional profunda</li>
+                        <li><span class="upgrade-check">✓</span> Acceso a los 5 Módulos de Sanación</li>
+                        <li><span class="upgrade-check">✓</span> Seguimiento de tu progreso emocional</li>
+                    </ul>
+                    <button onclick="iniciarPago('pro')" class="btn-upgrade">Elegir Plan Pro</button>
+                </div>
+                <!-- TRANSFORMA -->
+                <div class="upgrade-card premium">
+                    <div class="upgrade-card-header">
+                        <div class="recommended-badge">Recomendado</div>
+                        <h3>Plan Transforma</h3>
+                        <div class="upgrade-price">
+                            <span class="price-old">99€</span>
+                            <span class="price-current">79,90€<span>/mes</span></span>
+                        </div>
+                    </div>
+                    <ul class="upgrade-features">
+                        <li><span class="upgrade-check">✓</span> Todo lo del Plan Pro</li>
+                        <li><span class="upgrade-check">✓</span> <strong>Sesión individual 1/1</strong> de 1h mensual
+                        </li>
+                        <li><span class="upgrade-check">✓</span> Plan de Alquimia a medida</li>
+                        <li><span class="upgrade-check">✓</span> Acceso preferente a talleres</li>
+                    </ul>
+                    <button onclick="iniciarPago('premium')" class="btn-upgrade">Elegir Transforma</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Mi Viaje (Roadmap) -->
+    <div id="viajeModal" class="modal journey-modal">
+        <div class="modal-content journey-content">
+            <span class="close-modal close-viaje">&times;</span>
+            <div class="journey-header">
+                <h2>El viaje de mi vida</h2>
+                <p>Vamos allá con tu Viaje de Vida personal. Cada paso de este mapa, cada módulo, es una llave para
+                    abrir un cerrojo de tu voz. Respira, confía y comienza a transformar tu historia.</p>
+            </div>
+            <div id="journeyRoadmap" class="roadmap-container">
+                <!-- Se poblará dinámicamente desde mi_viaje/main.js -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Módulo de Coaching -->
+    <div id="moduloModal" class="modal module-modal">
+        <div class="modal-content module-content">
+            <span class="close-modal close-modulo">&times;</span>
+            <div id="moduloContainer">
+                <div id="questionContainer"></div>
+                <div class="module-navigation">
+                    <button id="prevQBtn" class="nav-btn">Anterior</button>
+                    <button id="nextQBtn" class="nav-btn">Siguiente</button>
+                    <button id="finishModuleBtn" class="nav-btn finish-btn">Finalizar
+                        Módulo</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Modal de Ajustes -->
+    <div id="settingsModal" class="modal">
+        <div class="modal-content settings-modal-content">
+            <span class="close-modal close-settings">&times;</span>
+            <h2>Ajustes</h2>
+
+            <div class="settings-section profile-info">
+                <div id="settingsUserName" class="info-value">...</div>
+                <div class="tier-container">
+                    <div id="settingsUserTier" class="info-value">...</div>
+                    <button id="upgradeSettingsBtn" class="upgrade-btn-small">Mejorar Plan</button>
+                </div>
+            </div>
+
+            <div class="settings-section">
+                <h3>Respuesta del Mentor</h3>
+                <div class="slider-group">
+                    <div class="slider-header">Enfoque</div>
+                    <div class="slider-inline">
+                        <span class="slider-label-left">🧪 Técnico</span>
+                        <input type="range" id="focusSlider" min="1" max="10" step="4.5" value="5"
+                            title="Enfoque del Mentor">
+                        <span class="slider-label-right">🧘‍♂️ Emocional</span>
+                    </div>
+                </div>
+                <div class="slider-group">
+                    <div class="slider-header">Personalidad</div>
+                    <div class="slider-inline">
+                        <span class="slider-label-left">🧘 Neutro</span>
+                        <input type="range" id="personalitySlider" min="1" max="10" step="4.5" value="5"
+                            title="Personalidad del Mentor">
+                        <span class="slider-label-right">🔥 Motivador</span>
+                    </div>
+                </div>
+                <div class="slider-group">
+                    <div class="slider-header">Extensión</div>
+                    <div class="slider-inline">
+                        <span class="slider-label-left">⚡ Breve</span>
+                        <input type="range" id="lengthSlider" min="1" max="10" step="4.5" value="5"
+                            title="Extensión de las respuestas">
+                        <span class="slider-label-right">📜 Detallado</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="settings-section">
+                <h3>Preferencias</h3>
+                <div class="setting-item">
+                    <label for="languageSelect">Idioma del Mentor:</label>
+                    <select id="languageSelect">
+                        <option value="es">Español</option>
+                        <option value="en">English</option>
+                        <option value="fr">Français</option>
+                        <option value="it">Italiano</option>
+                        <option value="de">Deutsch</option>
+                        <option value="ca">Català</option>
+                    </select>
+                </div>
+                <div class="setting-item">
+                    <label for="tratoPreferidoInput">Trato Preferido (Opcional):</label>
+                    <textarea id="tratoPreferidoInput"
+                        placeholder="Dime cómo prefieres que sea nuestro trato (ej: Tutéame, sé directo, usa un lenguaje poético...)"></textarea>
+                </div>
+            </div>
+
+            <div class="settings-actions">
+                <button id="clearHistoryBtn" class="danger-btn">Borrar Historial</button>
+                <button id="openPreferencesBtn" class="preferences-btn">Gestionar preferencias de email y cuenta
+                    🌿</button>
+                <button id="saveSettingsBtn" class="save-btn">Guardar Cambios</button>
+                <p class="danger-hint"><strong>⚠️ ADVERTENCIA:</strong> Al borrar el historial se eliminarán todas
+                    tus
+                    conversaciones anteriores con el Mentor, no solo las de esta sesión.</p>
+            </div>
+        </div>
+    </div>
+    <!-- Modal del Botiquín de Emergencia -->
+    <div id="botiquinModal" class="modal">
+        <div class="modal-content botiquin-modal-content">
+            <span class="close-modal close-botiquin">&times;</span>
+            <div class="botiquin-header">
+                <img src="assets/icon_emergencia.png" alt="Emergencia" class="botiquin-icon-title">
+                <h2>Tu Botiquín de Alquimia</h2>
+            </div>
+            <div id="botiquinContent" class="botiquin-body">
+                <!-- Se poblará dinámicamente -->
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DE CONSENTIMIENTO LEGAL -->
+
+    <div id="legalModal" class="modal">
+
+        <div class="modal-content legal-modal-content">
+            <h2>Compromiso y Privacidad</h2>
+            <p class="legal-intro">Al crear tu cuenta, te unes a este viaje de transformación. Para proteger tu
+                privacidad y la esencia de nuestra metodología, te pedimos que aceptes lo siguiente:</p>
+
+            <div class="legal-scroll-area">
+                <div class="legal-section">
+                    <h3>Propiedad del Contenido y Metodología</h3>
+                    <p>El usuario reconoce y acepta que todos los derechos de propiedad intelectual e industrial sobre
+                        los contenidos de la aplicación Despierta tu Voz (incluyendo, de forma enunciativa pero no
+                        limitativa: el nombre de la aplicación, logotipos, código fuente, interfaz de usuario, así
+                        como
+                        los textos, guiones y estructura de los 5 Módulos de Sanación Vocal, ejercicios de "Mi Viaje"
+                        y
+                        las respuestas generadas por el Mentor Vocal IA) son titularidad exclusiva de Despierta tu Voz.
+                    </p>
+
+                    <h3>Licencia de Uso Personal</h3>
+                    <p>Se concede al usuario una licencia de uso personal, no exclusiva e intransferible, para acceder y
+                        utilizar el contenido con fines de autodescubrimiento y formación personal. Queda estrictamente
+                        prohibida la reproducción, distribución, comunicación pública, transformación o cualquier
+                        otra
+                        forma de explotación de estos contenidos para fines comerciales o de formación a terceros sin
+                        el
+                        consentimiento expreso y por escrito del titular.</p>
+
+                    <h3>Protección de la Alquimia Vocal</h3>
+                    <p>La estructura específica del viaje (El Espejo del pasado, Raíces, Personaje, Altar y
+                        Propósito)
+                        constituye una obra original protegida por la Ley de Propiedad Intelectual española. El uso
+                        indebido de esta metodología fuera del entorno de la aplicación podrá dar lugar a las
+                        acciones
+                        legales correspondientes.</p>
+
+                    <div class="privacy-notice-box">
+                        <p><strong>Al aceptar, consientes el tratamiento de los datos que compartas con el Mentor IA
+                                para la personalización de tu proceso de aprendizaje y desbloqueo vocal.</strong></p>
+                    </div>
+
+                    <div id="promoTermsBox" class="promo-terms-box"
+                        style="display: none; background: rgba(142, 125, 109, 0.1); border: 1px solid #8e7d6d; padding: 15px; border-radius: 10px; margin: 20px 0;">
+                        <h3 style="margin-top: 0; color: #8e7d6d;">Términos de la Promoción "Miembro Promo
+                            Inicial"</h3>
+                        <p><strong>1. Periodo de Prueba:</strong> Al activar el código <strong>PROMO1MES</strong>,
+                            disfrutarás de acceso total gratuito al Plan Pro durante 30 días naturales. Sin compromiso
+                            de permanencia.</p>
+                        <p><strong>2. Garantía de Precio Blindado:</strong> Tu tarifa se fija en
+                            <strong>9,90€/mes</strong> (IVA incluido) de forma vitalicia mientras mantengas tu
+                            suscripción activa (PVP oficial: 19,90€).
+                        </p>
+                        <p><strong>3. Renovación:</strong> Finalizado el mes gratuito, podrás mantener este precio
+                            exclusivo al activar tu suscripción.</p>
+                    </div>
+
+                    <h3>Política de Privacidad y Protección de Datos</h3>
+                    <p><strong>1. ¿Quién cuida de tus datos?</strong><br>
+                        El responsable de tus datos es Despierta tu voz. Tratamos tu información con el único fin de
+                        proporcionarte la experiencia de mentoría vocal personalizada que buscas.</p>
+
+                    <p><strong>2. Tu privacidad con la IA (El Mentor Vocal):</strong><br>
+                        - <strong>Privacidad de las charlas:</strong> Tus conversaciones con el Mentor son privadas. No
+                        vendemos tus datos a terceros ni los usamos para publicidad.<br>
+                        - <strong>Uso del historial:</strong> En el Plan Pro/Premium, almacenamos el historial de tus
+                        charlas y los datos de tus Módulos para que la IA pueda tener "memoria" y ofrecerte un
+                        acompañamiento coherente.<br>
+                        - <strong>Entrenamiento:</strong> Los datos se procesan de forma anonimizada para mejorar la
+                        precisión de las respuestas del Mentor, siempre bajo estándares de seguridad de cifrado.</p>
+
+                    <p><strong>3. ¿Qué datos recogemos?</strong><br>
+                        - Datos de registro (Nombre y email).<br>
+                        - Datos de uso (Módulos completados y progreso en "Mi Viaje").<br>
+                        - Datos de pago (Gestionados de forma segura a través de Stripe, nosotros nunca vemos ni
+                        almacenamos tu número de tarjeta).</p>
+
+                    <p><strong>4. Tus derechos:</strong><br>
+                        En cualquier momento puedes escribirnos a app-mentor@despiertatuvoz.com para solicitar el acceso
+                        a tus datos, rectificarlos o pedir que los borremos definitivamente de nuestro sistema (Derecho
+                        al Olvido).</p>
+                </div>
+            </div>
+
+            <div class="legal-checks">
+                <label class="check-item">
+                    <input type="checkbox" id="checkTerms">
+                    <span>He leído y acepto los Términos y Condiciones y la Política de Privacidad.</span>
+                </label>
+                <label class="check-item">
+                    <input type="checkbox" id="checkMedical">
+                    <span>Entiendo que el Mentor Vocal IA es una herramienta de acompañamiento personal y no sustituye
+                        el asesoramiento médico o terapéutico profesional.</span>
+                </label>
+            </div>
+
+            <div class="legal-actions">
+                <button id="cancelLegalBtn" class="cancel-btn">Cancelar</button>
+                <button id="confirmLegalBtn" class="save-btn" disabled>Confirmar y Seguir</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Preferencias de Email y Cuenta -->
+    <div id="preferencesModal" class="modal">
+        <div class="modal-content preferences-modal-content">
+            <span class="close-modal close-preferences">&times;</span>
+            <div class="preferences-header" style="text-align: center; margin-bottom: 25px;">
+                <h2 style="color: var(--color-acento); margin-bottom: 10px;">Gestiona tu conexión 🌿</h2>
+                <p style="font-size: 0.9em; color: #666;">Elige qué tipo de mensajes quieres recibir de nosotros.</p>
+            </div>
+            <div class="preferences-body">
+                <div class="preference-option">
+                    <div class="option-main">
+                        <div class="option-text">
+                            <h3>Inspiración y Comunidad</h3>
+                            <p>Chispas de inspiración y novedades para tu voz.</p>
+                        </div>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" id="marketingToggle" checked
+                            title="Consentimiento de Inspiración y Comunidad">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <div class="preference-option">
+                    <div class="option-main">
+                        <div class="option-text">
+                            <h3>Acompañamiento en el Viaje</h3>
+                            <p>Guía y celebración de tus avances en los módulos.</p>
+                        </div>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" id="lifecycleToggle" checked
+                            title="Consentimiento de Acompañamiento en el Viaje">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <div class="preference-option disabled" style="opacity: 0.6;">
+                    <div class="option-main">
+                        <div class="option-text">
+                            <h3>Solo lo imprescindible</h3>
+                            <p>Comunicaciones técnicas y administrativas necesarias.</p>
+                        </div>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" checked disabled title="Comunicaciones administrativas obligatorias">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <div id="prefStatusMessage" style="margin-top: 15px; text-align: center; display: none;"></div>
+                <button id="savePreferencesBtn" class="save-btn" style="width: 100%; margin-top: 25px;">Guardar
+                    Preferencias</button>
+                <div class="account-deletion-section"
+                    style="margin-top: 35px; border-top: 1px dashed #ddd; padding-top: 20px; text-align: center;">
+                    <p style="font-size: 0.8em; color: #888; margin-bottom: 12px;">¿Deseas cerrar tu bitácora por
+                        completo?</p>
+                    <button id="deleteAccountBtn" class="danger-btn"
+                        style="font-size: 0.8em; padding: 6px 15px; border: 1px solid #e74c3c; background: transparent; color: #e74c3c; border-radius: 20px; cursor: pointer;">Eliminar
+                        mi cuenta y datos</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="app-footer">
+        <p>© 2026 Despierta tu Voz. Todos los derechos reservados. | <a href="cookies.html"
+                style="color: inherit; text-decoration: underline;">Cookies</a></p>
+    </footer>
+
+    <div class="whatsapp-float support-bubble-text" id="supportBubble" title="Asistencia">
+        <div class="whatsapp-tooltip">¿Necesitas ayuda? 🌿</div>
+        <span class="support-label">Asistencia</span>
+    </div>
+
+    <!-- Modal de Soporte Híbrido -->
+    <div id="supportModal" class="modal support-modal">
+        <div class="modal-content support-modal-content">
+            <span class="close-modal close-support">&times;</span>
+            <div class="support-header">
+                <h3>Asistente Técnico</h3>
+                <p>Resuelvo tus dudas sobre el acceso o el funcionamiento de la app al instante.</p>
+            </div>
+            <div id="supportChatBox" class="messages support-messages">
+            </div>
+            <div class="support-input-area">
+                <input type="text" id="supportInput" placeholder="Escribe tu duda..." autocomplete="off">
+                <button id="sendSupportBtn">▶</button>
+            </div>
+            <div id="whatsappSupportLink" class="whatsapp-fallback" style="display: none;">
+                <p>Si prefieres hablar con una persona:</p>
+                <a href="https://wa.me/34644233393?text=Hola,%20estoy%20usando%20la%20App%20y%20necesito%20ayuda%20ténica..."
+                    target="_blank" rel="noopener" class="btn-whatsapp-direct">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" alt="WhatsApp">
+                    Chatear por WhatsApp
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Alerta Personalizado -->
+    <div id="customAlert" class="modal alert-modal" style="z-index: 9999;">
+        <div class="modal-content alert-content">
+            <h4 id="alertTitle">app Mentor DTV</h4>
+            <p id="alertMessage"></p>
+            <button id="alertConfirmBtn" class="save-btn" style="width: 100%; margin-top: 15px;">Aceptar</button>
+        </div>
+    </div>
+
+    <!-- Modal de Sesiones / Cal.com -->
+    <div id="sesionModal" class="modal">
+        <div class="modal-content sesion-modal-content">
+            <span class="close-modal close-sesion" id="closeSesion">&times;</span>
+            <div id="sesionSelection" class="sesion-selection-ui">
+                <h2>Mis Sesiones 1/1</h2>
+                <div id="sessionQuotaInfo" class="session-quota-info">
+                    <!-- Se poblará con los minutos restantes -->
+                </div>
+
+                <div class="session-actions">
+                    <div class="session-group">
+                        <h3>Sesiones Incluidas</h3>
+                        <p class="session-desc">Dispones de 60 min mensuales (1 de 1h o 2 de 30min).</p>
+                        <div class="booking-options">
+                            <button id="book30Btn" class="btn-booking">Reservar 30 min</button>
+                            <button id="book60Btn" class="btn-booking">Reservar 1 hora</button>
+                        </div>
+                    </div>
+
+                    <div class="session-group extra">
+                        <h3>1 Sesión con el Mentor o 1 Sesión extra</h3>
+                        <p class="session-desc">Reserva aquí una sesión extra si has agotado tu cuota.</p>
+                        <div class="booking-options">
+                            <button id="buyExtra30Btn" class="btn-booking btn-extra">Comprar Extra 30 min</button>
+                            <button id="buyExtra60Btn" class="btn-booking btn-extra">Comprar Extra 1 hora</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="cal-embed-container" style="display: none; width:100%; min-height:600px; overflow:auto">
+                <div class="loader-premium">
+                    <div class="loader-spin"></div>
+                    <p>Conectando con tu Mentor...</p>
+                </div>
+                <!-- Target para el SDK de Cal.com -->
+                <div id="cal-iframe-target"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Pago In-App (Stripe Elements) -->
+    <div id="paymentModal" class="modal">
+        <div class="modal-content payment-modal-content">
+            <span class="close" id="closePayment">&times;</span>
+            <div class="payment-header" style="text-align: center; margin-bottom: 25px;">
+                <h2 style="font-family: var(--font-serif); color: var(--color-acento);">Finalizar Reserva</h2>
+                <p style="color: #666;">Pasarela segura de Alquimia Visual</p>
+            </div>
+            <form id="payment-form">
+                <div id="payment-summary-box"
+                    style="margin-bottom: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px; text-align: center; border: 1px solid #eee; display: none;">
+                    <h3 id="payment-summary-desc" style="margin: 0 0 10px 0; color: #3a506b; font-size: 1.1rem;">Resumen
+                        de Compra</h3>
+                    <p id="payment-summary-amount"
+                        style="font-size: 1.6rem; font-weight: bold; margin: 0; color: #2c3e50;">-- €</p>
+                </div>
+                <div id="link-authentication-element"></div>
+                <div id="payment-element"></div>
+                <button id="submit-payment" class="save-btn" style="width: 100%; margin-top: 25px; padding: 15px;">
+                    <div class="spinner hidden" id="payment-spinner"></div>
+                    <span id="button-text">Pagar y Reservar</span>
+                </button>
+                <div id="payment-message" class="hidden" style="margin-top: 15px; text-align: center; color: #e74c3c;">
+                </div>
+            </form>
+        </div>
+    </div>
+
+
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script type="module" src="js/services/auth-service.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="js/stripe-checkout.js"></script>
+    <script type="module" src="js/modules/config.js?v=7.1"></script>
+    <script type="module" src="js/modules/elements.js?v=7.1"></script>
+    <script type="module" src="js/modules/music.js?v=7.1"></script>
+    <script type="module" src="js/modules/voice.js?v=7.1"></script>
+    <script type="module" src="js/modules/legal.js?v=7.1"></script>
+    <script type="module" src="js/modules/support.js?v=7.1"></script>
+    <script type="module" src="js/modules/settings.js?v=7.1"></script>
+    <script src="js/modules/sessions.js?v=7.2" defer></script>
+    <script type="module" src="js/modules/payments.js?v=7.1"></script>
+    <script type="module" src="js/modules/email.js?v=7.1"></script>
+    <script type="module" src="js/modules/tour.js?v=7.1"></script>
+    <script type="module" src="js/modules/files.js?v=7.1"></script>
+    <script type="module" src="js/modules/pronunciation.js?v=7.1"></script>
+    <script src="main.js?v=7.2" defer></script>
+
+    <!-- Script de Diagnóstico DTV (No-módulo para evitar fallos de carga) -->
+    <script>
+        console.log("🛠️ Inciando Diagnóstico DTV...");
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                const health = {
+                    windowSESIONES: !!window.SESIONES,
+                    windowELEMENTS: !!window.ELEMENTS,
+                    windowCal: !!window.Cal,
+                    supabaseReady: !!window.supabaseClient
+                };
+                console.log("📊 Estado de salud DTV:", health);
+                if (!health.windowSESIONES) {
+                    console.error("❌ CRÍTICO: El módulo de SESIONES no se ha cargado en window.");
+                }
+            }, 1000);
+        });
+
+        function dtvSystemReset() {
+            if (confirm("Esto cerrará tu sesión y limpiará el estado de la app para solucionar errores de conexión. ¿Continuar?")) {
+                localStorage.clear();
+                sessionStorage.clear();
+                if (window.supabaseClient) {
+                    window.supabaseClient.auth.signOut().then(() => {
+                        window.location.reload();
+                    });
+                } else {
+                    window.location.reload();
+                }
+            }
+        }
+    </script>
+</body>
+
+
+</html>
