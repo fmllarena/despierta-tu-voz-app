@@ -337,5 +337,4 @@ function buildScorePrompt(question, numPages, context) {
 
     return prompt;
 }
-export default handler;
 
