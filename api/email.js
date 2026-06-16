@@ -2,6 +2,9 @@
 // POST /api/email  → envía email de verificación al usuario
 // GET  /api/email  → verifica el token del email y redirige
 
+const crypto = require('crypto');
+const { createClient } = require('@supabase/supabase-js');
+
 module.exports = async function handler(req, res) {
     // ── POST: enviar email de verificación ──────────────────────────────────
     if (req.method === 'POST') {
@@ -12,11 +15,9 @@ module.exports = async function handler(req, res) {
         }
 
         try {
-            const crypto = require('crypto');
             const verificationToken = crypto.randomBytes(32).toString('hex');
             const verificationLink = `${process.env.NEXT_PUBLIC_APP_URL || 'https://app.despiertatuvoz.com'}/api/email?token=${verificationToken}&userId=${userId}`;
 
-            const { createClient } = require('@supabase/supabase-js');
             const supabase = createClient(
                 process.env.SUPABASE_URL,
                 process.env.SUPABASE_SERVICE_ROLE_KEY
@@ -83,7 +84,6 @@ module.exports = async function handler(req, res) {
         }
 
         try {
-            const { createClient } = require('@supabase/supabase-js');
             const supabase = createClient(
                 process.env.SUPABASE_URL,
                 process.env.SUPABASE_SERVICE_ROLE_KEY

@@ -15,6 +15,7 @@ module.exports = async function handler(req, res) {
     // ── Checkout Session ─────────────────────────────────────────────────────
     if (type === 'checkout') {
         try {
+            const origin = req.headers.origin || `https://${req.headers.host}` || 'https://app.despiertatuvoz.com';
             const { priceId: planType, userId, userEmail } = req.body;
 
             if (!planType || !userId) {
@@ -53,8 +54,8 @@ module.exports = async function handler(req, res) {
                 line_items: [{ price: stripePriceId, quantity: 1 }],
                 mode,
                 allow_promotion_codes: true,
-                success_url: `${req.headers.origin}/index.html?session_id={CHECKOUT_SESSION_ID}&payment=success&plan=${planType}`,
-                cancel_url: `${req.headers.origin}/landing.html?payment=cancel`,
+                success_url: `${origin}/index.html?session_id={CHECKOUT_SESSION_ID}&payment=success&plan=${planType}`,
+                cancel_url: `${origin}/landing.html?payment=cancel`,
                 customer_email: userEmail,
                 client_reference_id: userId,
                 metadata: {
