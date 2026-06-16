@@ -458,12 +458,6 @@ window.addEventListener('load', () => {
     inicializarSupabase();
     revisarRedireccion();
 
-    // Botón de Ajustes — listener directo usando window.AJUSTES (módulo cargado antes que este script)
-    ELEMENTS.ajustesBtn?.addEventListener('click', () => {
-        if (window.AJUSTES) {
-            window.AJUSTES.abrirModal();
-        }
-    });
 });
 
 async function saludarUsuario(user, perfil) {
