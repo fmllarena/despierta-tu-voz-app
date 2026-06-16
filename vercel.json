@@ -1,1 +1,12 @@
-{"version":2,"functions":{"api/**/*.js":{"maxDuration":300}}}
+{
+  "version": 2,
+  "functions": {
+    "api/**/*.js": {
+      "maxDuration": 300
+    },
+    "api/score.js": {
+      "maxDuration": 60,
+      "memory": 512
+    }
+  }
+}

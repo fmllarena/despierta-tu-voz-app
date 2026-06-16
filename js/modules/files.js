@@ -89,6 +89,43 @@ export const FILES = window.FILES = {
     async getFileData() {
         if (!this.selectedFile) return null;
 
+        if (this.selectedFile.type === 'application/pdf') {
+            try {
+                const arrayBuffer = await this.selectedFile.arrayBuffer();
+                if (!window.pdfjsLib) {
+                    throw new Error("Librería PDF.js no cargada en el cliente.");
+                }
+                const pdf = await window.pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+                const maxPages = Math.min(pdf.numPages, 6); // Límite de 6 páginas
+                const pages = [];
+
+                for (let i = 1; i <= maxPages; i++) {
+                    const page = await pdf.getPage(i);
+                    // Usar escala 1.0 para mantener el peso bajo y evitar límites de Vercel (Hobby 1MB, Pro 4.5MB)
+                    const viewport = page.getViewport({ scale: 1.0 });
+
+                    const canvas = document.createElement('canvas');
+                    canvas.width = viewport.width;
+                    canvas.height = viewport.height;
+                    const ctx = canvas.getContext('2d');
+
+                    await page.render({ canvasContext: ctx, viewport }).promise;
+
+                    // Convertir canvas a JPEG de calidad media-alta (0.8)
+                    const base64 = canvas.toDataURL('image/jpeg', 0.8).split(',')[1];
+                    pages.push({
+                        mimeType: 'image/jpeg',
+                        data: base64,
+                        name: `${this.selectedFile.name} (Pág ${i})`
+                    });
+                }
+                return pages;
+            } catch (err) {
+                console.error("Error al procesar PDF en el navegador:", err);
+                throw new Error("No se pudo procesar el archivo PDF. Inténtalo de nuevo o sube una imagen de la partitura.");
+            }
+        }
+
         return new Promise((resolve, reject) => {
             const reader = new FileReader();
             reader.onload = () => {

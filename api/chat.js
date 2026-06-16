@@ -3,9 +3,12 @@ const { SYSTEM_PROMPTS } = require('./_lib/prompts');
 const { sanitizeGeminiHistory } = require('./_lib/utils');
 const Anthropic = require('@anthropic-ai/sdk');
 
-// --- SEGURIDAD DE GEMINI ---
-// v1beta es necesario para usar systemInstruction. v1 no soporta ese campo.
-const GEMINI_MODEL = "gemini-3.1-pro-preview";
+// --- CONFIGURACIÓN QWEN (Alibaba Cloud Model Studio — Workspace Privado) ---
+const QWEN_MODEL = "qwen3.5-flash";
+const QWEN_BASE_URL = process.env.QWEN_BASE_URL || "https://ws-vc3dtuyb2mo8tyf8.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1";
+
+// --- CONFIGURACIÓN GEMINI ---
+const GEMINI_MODEL = "gemini-3.5-flash";
 const GEMINI_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/models";
 
 /**
@@ -59,26 +62,29 @@ async function processChat(req, res = null) {
     // --- CADENA DE REINTENTOS CON FALLBACK ---
     const errors = [];
 
-    // Intento 1: Gemini (Modelo principal — soporta streaming nativo y archivos)
-    try {
-        console.log("🚀 Intentando con Gemini...");
-        return await callGeminiAPI({ intent, prompt: finalPrompt, history, stream, res, fileData });
-    } catch (e) {
-        console.warn("⚠️ Gemini falló:", e.message);
-        errors.push(`Gemini: ${e.message}`);
-        if (stream && res && res.writableEnded) throw e;
+    // Intento 1: Qwen (Motor principal — Alibaba Cloud Model Studio)
+    if (process.env.QWEN_API_KEY) {
+        try {
+            console.log("🚀 Intentando con Qwen...");
+            return await callQwenAPI({ intent, prompt: finalPrompt, history, stream, res, fileData });
+        } catch (e) {
+            console.warn("⚠️ Qwen falló:", e.message);
+            errors.push(`Qwen: ${e.message}`);
+            if (stream && res && res.writableEnded) throw e;
+        }
     }
 
-    // Intento 2: Groq (Llama 3.3 70B)
-    if (process.env.GROQ_API_KEY && !fileData) {
+    // Intento 2: Gemini (Google)
+    if (process.env.GEMINI_API_KEY) {
         try {
-            console.log("🚀 Backup con Groq...");
-            const result = await callGroqAPI({ intent, prompt: finalPrompt, history });
-            if (stream && res) return sendAsSSE(res, result);
+            console.log("🚀 Backup con Gemini...");
+            const result = await callGeminiAPI({ intent, prompt: finalPrompt, history, stream, res, fileData });
+            if (stream && res) return;
             return result;
         } catch (e) {
-            console.warn("⚠️ Groq falló:", e.message);
-            errors.push(`Groq: ${e.message}`);
+            console.warn("⚠️ Gemini falló:", e.message);
+            errors.push(`Gemini: ${e.message}`);
+            if (stream && res && res.writableEnded) throw e;
         }
     }
 
@@ -166,7 +172,113 @@ async function buildUserContext(userId, intent, originPost = null, originCat = n
 }
 
 /**
- * Ejecuta la llamada REST a Gemini
+ * Ejecuta la llamada a Qwen (Alibaba Cloud Model Studio — OpenAI-compatible)
+ * Soporta: texto + imágenes (partituras renderizadas desde PDF en el navegador)
+ * - fileData: { mimeType, data }         → imagen única (base64)
+ * - fileData: [{ mimeType, data }, ...]  → múltiples páginas de partitura
+ */
+async function callQwenAPI({ intent, prompt, history, stream, res, fileData }) {
+    if (!process.env.QWEN_API_KEY) throw new Error("Falta API Key de Qwen");
+
+    // Detectar si hay audio o imágenes
+    const hasAudio = fileData && fileData.mimeType && fileData.mimeType.startsWith('audio/');
+    const hasImages = !hasAudio && fileData && (Array.isArray(fileData) ? fileData.length > 0 : fileData.data);
+    const modelToUse = hasAudio ? "qwen3.5-omni-flash" : (hasImages ? "qwen3-vl-plus" : QWEN_MODEL);
+
+    // Construir contenido del mensaje de usuario (multimodal)
+    let userContent;
+    if (hasAudio) {
+        const audioFormat = fileData.mimeType.includes('wav') ? 'wav' : 'mp3';
+        userContent = [
+            {
+                type: "input_audio",
+                input_audio: {
+                    data: `data:${fileData.mimeType};base64,${fileData.data}`,
+                    format: audioFormat
+                }
+            },
+            { type: "text", text: prompt }
+        ];
+    } else if (hasImages) {
+        const pages = Array.isArray(fileData) ? fileData : [fileData];
+        userContent = [
+            // Páginas de partitura como imágenes base64
+            ...pages.map(page => ({
+                type: "image_url",
+                image_url: {
+                    url: `data:${page.mimeType};base64,${page.data}`
+                }
+            })),
+            // Texto/pregunta del usuario
+            { type: "text", text: prompt }
+        ];
+    } else {
+        userContent = prompt;
+    }
+
+    const messages = [
+        { role: "system", content: SYSTEM_PROMPTS[intent] },
+        ...history.filter(h => h?.parts?.[0]?.text).map(h => ({
+            role: h.role === 'model' ? 'assistant' : 'user',
+            content: h.parts[0].text
+        })),
+        { role: "user", content: userContent }
+    ];
+
+    const requestBody = {
+        model: modelToUse,
+        messages,
+        temperature: 0.7,
+        max_tokens: (hasImages || hasAudio) ? 2000 : 1500,
+        stream: !!stream
+    };
+
+    const response = await fetch(`${QWEN_BASE_URL}/chat/completions`, {
+        method: 'POST',
+        headers: {
+            'Authorization': `Bearer ${process.env.QWEN_API_KEY}`,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(requestBody)
+    });
+
+    if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        throw new Error(`Qwen Error ${response.status}: ${errData.error?.message || 'Unknown'}`);
+    }
+
+    if (stream && res) {
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        try {
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                const chunk = decoder.decode(value);
+                const lines = chunk.split('\n');
+                for (const line of lines) {
+                    if (line.startsWith('data: ') && line !== 'data: [DONE]') {
+                        try {
+                            const data = JSON.parse(line.substring(6));
+                            const text = data.choices?.[0]?.delta?.content;
+                            if (text) res.write(`data: ${JSON.stringify({ text })}\n\n`);
+                        } catch (e) { /* chunk incompleto */ }
+                    }
+                }
+            }
+        } finally {
+            res.end();
+        }
+        return;
+    } else {
+        const data = await response.json();
+        const text = data.choices?.[0]?.message?.content || "";
+        return { text, info: `Qwen Vision (${modelToUse})` };
+    }
+}
+
+/**
+ * Ejecuta la llamada REST a Gemini (mantenido como fallback opcional)
  */
 async function callGeminiAPI({ intent, prompt, history, stream, res, fileData }) {
     if (!process.env.GEMINI_API_KEY) throw new Error("Falta API Key de Gemini");
@@ -182,12 +294,15 @@ async function callGeminiAPI({ intent, prompt, history, stream, res, fileData })
 
     if (fileData) {
         const lastContent = contents[contents.length - 1];
-        lastContent.parts.push({
-            inlineData: {
-                mimeType: fileData.mimeType,
-                data: fileData.data
-            }
-        });
+        const files = Array.isArray(fileData) ? fileData : [fileData];
+        for (const file of files) {
+            lastContent.parts.push({
+                inlineData: {
+                    mimeType: file.mimeType,
+                    data: file.data
+                }
+            });
+        }
     }
 
     const requestBody = {
@@ -295,7 +410,7 @@ async function callClaudeAPI({ intent, prompt, history }) {
 
     const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
     const response = await anthropic.messages.create({
-        model: "claude-3-5-sonnet-latest",
+        model: "claude-sonnet-4-6",
         max_tokens: 1500,
         system: SYSTEM_PROMPTS[intent],
         messages: history.filter(h => h?.parts?.[0]?.text).map(h => ({

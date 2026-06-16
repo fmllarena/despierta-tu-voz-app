@@ -124,10 +124,31 @@ async function llamarGemini(message, history, intent, extraData = {}, onChunk = 
             body.fileData = extraData.fileData;
         }
 
-        const response = await fetch('/api/chat', {
+        // Si es un PDF o contiene páginas/imágenes de partituras, redirigir a /api/score
+        const isScore = extraData.fileData && (
+            Array.isArray(extraData.fileData) || 
+            (extraData.fileData.mimeType && (extraData.fileData.mimeType === 'application/pdf' || extraData.fileData.mimeType.startsWith('image/'))) ||
+            (extraData.fileData.name && (extraData.fileData.name.toLowerCase().endsWith('.pdf') || /\.(png|jpe?g|webp)$/i.test(extraData.fileData.name)))
+        );
+
+        const endpoint = isScore ? '/api/score' : '/api/chat';
+        let requestBody;
+
+        if (isScore) {
+            requestBody = {
+                pages: Array.isArray(extraData.fileData) ? extraData.fileData : [extraData.fileData],
+                question: message,
+                stream: stream,
+                context: "" // Podría añadirse contexto si fuera necesario
+            };
+        } else {
+            requestBody = body;
+        }
+
+        const response = await fetch(endpoint, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(body)
+            body: JSON.stringify(requestBody)
         });
 
         if (stream) {
@@ -528,8 +549,24 @@ document.querySelectorAll('#authEmail, #authPassword').forEach(el => {
 
 
 async function sendMessage() {
-    const text = ELEMENTS.chatInput.value.trim();
-    if (!text) return;
+    let text = ELEMENTS.chatInput.value.trim();
+    const hasFile = window.FILES && window.FILES.selectedFile;
+    if (!text && !hasFile) return;
+
+    if (!text && hasFile) {
+        const fileType = window.FILES.selectedFile.type || '';
+        const fileName = window.FILES.selectedFile.name || '';
+        const isScoreFile = fileType.includes('pdf') || fileType.startsWith('image/') || 
+                            fileName.toLowerCase().endsWith('.pdf') || /\.(png|jpe?g|webp)$/i.test(fileName);
+        
+        if (isScoreFile) {
+            text = "Analiza esta partitura musical por favor.";
+        } else if (fileType.startsWith('audio/')) {
+            text = "Analiza esta grabación de voz por favor.";
+        } else {
+            text = "Analiza este archivo por favor.";
+        }
+    }
 
     appendMessage(text, 'user');
     guardarMensajeDB(text, 'user'); // Fire & forget: guardar en paralelo sin bloquear la IA
