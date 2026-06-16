@@ -97,6 +97,7 @@ export const ELEMENTS = window.ELEMENTS = {
     get closePreferences() { return document.querySelector('.close-preferences'); },
     get marketingToggle() { return document.getElementById('marketingToggle'); },
     get lifecycleToggle() { return document.getElementById('lifecycleToggle'); },
+    get dailyChallengeToggle() { return document.getElementById('dailyChallengeToggle'); },
     get savePreferencesBtn() { return document.getElementById('savePreferencesBtn'); },
     get prefStatusMessage() { return document.getElementById('prefStatusMessage'); },
     get deleteAccountBtn() { return document.getElementById('deleteAccountBtn'); },

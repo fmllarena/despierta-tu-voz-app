@@ -2,7 +2,8 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
 
 const BREVO_API_KEY = Deno.env.get("BREVO_API_KEY") || ""
-const RETO_TEMPLATE_ID = Number(Deno.env.get("RETO_DIARIO_TEMPLATE_ID") || "0")
+const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY") || ""
+const RETO_TEMPLATE_ID = Number(Deno.env.get("RETO_DIARIO_TEMPLATE_ID") || "28")
 const APP_URL = Deno.env.get("APP_URL") || "https://despierta-tu-voz-app.vercel.app"
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL") || ""
@@ -11,59 +12,43 @@ const supabase = createClient(supabaseUrl, supabaseServiceRoleKey)
 
 serve(async (req) => {
   try {
-    // 1. Seleccionar un reto aleatorio activo
-    const { data: retos, error: retoError } = await supabase
+    const { data: retosFallback, error: retoError } = await supabase
       .from("retos_diarios")
       .select("*")
       .eq("activo", true)
 
-    if (retoError || !retos || retos.length === 0) {
-      console.error("[Reto Diario] No hay retos activos en la tabla retos_diarios")
+    if (retoError || !retosFallback || retosFallback.length === 0) {
       return new Response(JSON.stringify({ error: "No hay retos activos" }), { status: 404 })
     }
 
-    const reto = retos[Math.floor(Math.random() * retos.length)]
-    console.log(`[Reto Diario] Reto seleccionado: "${reto.titulo}"`)
-
-    // 2. Usuarios que reciben retos diarios
     const { data: users, error: userError } = await supabase
       .from("user_profiles")
-      .select("user_id, email, nombre, racha_dias, total_retos, ultimo_reto_enviado_at, consent_marketing")
+      .select("user_id, email, nombre, racha_dias, total_retos, ultimo_reto_enviado_at")
       .eq("receive_daily_challenges", true)
       .eq("consent_marketing", true)
 
     if (userError) throw new Error(userError.message)
-    console.log(`[Reto Diario] ${users.length} usuarios para enviar`)
 
     const fecha = new Date().toLocaleDateString("es-ES", {
       weekday: "long", day: "numeric", month: "long", year: "numeric"
     })
-
     const hoyStr = new Date().toISOString().slice(0, 10)
-    let sent = 0
-    let skipped = 0
+    let sent = 0, skipped = 0
 
     for (const user of users) {
-      // Omitir si ya se envió hoy
-      if (user.ultimo_reto_enviado_at?.slice(0, 10) === hoyStr) {
-        skipped++
-        continue
-      }
+      if (user.ultimo_reto_enviado_at?.slice(0, 10) === hoyStr) { skipped++; continue }
 
-      // Calcular racha
       const ayer = new Date()
       ayer.setDate(ayer.getDate() - 1)
-      const ayerStr = ayer.toISOString().slice(0, 10)
-      const nuevaRacha = user.ultimo_reto_enviado_at?.slice(0, 10) === ayerStr
-        ? (user.racha_dias || 0) + 1
-        : 1
+      const nuevaRacha = user.ultimo_reto_enviado_at?.slice(0, 10) === ayer.toISOString().slice(0, 10)
+        ? (user.racha_dias || 0) + 1 : 1
+
+      // Generar reto personalizado por IA o usar fallback
+      const reto = await generarRetoIA(user.user_id, user.nombre, nuevaRacha, retosFallback)
 
       const res = await fetch("https://api.brevo.com/v3/smtp/email", {
         method: "POST",
-        headers: {
-          "api-key": BREVO_API_KEY,
-          "Content-Type": "application/json"
-        },
+        headers: { "api-key": BREVO_API_KEY, "Content-Type": "application/json" },
         body: JSON.stringify({
           to: [{ email: user.email, name: user.nombre || user.email.split("@")[0] }],
           templateId: RETO_TEMPLATE_ID,
@@ -88,13 +73,9 @@ serve(async (req) => {
           ultimo_reto_enviado_at: new Date().toISOString()
         }).eq("user_id", user.user_id)
         sent++
-      } else {
-        const errBody = await res.text()
-        console.error(`[Reto Diario] Error Brevo para ${user.email}:`, errBody)
       }
     }
 
-    console.log(`[Reto Diario] Enviados: ${sent}, Omitidos (ya enviados hoy): ${skipped}`)
     return new Response(JSON.stringify({ sent, skipped, total: users.length }), { status: 200 })
 
   } catch (error) {
@@ -102,3 +83,74 @@ serve(async (req) => {
     return new Response(JSON.stringify({ error: error.message }), { status: 500 })
   }
 })
+
+async function generarRetoIA(userId: string, nombre: string | null, racha: number, fallback: any[]) {
+  try {
+    // Últimos mensajes del usuario (máx 10, última semana)
+    const semanaAtras = new Date()
+    semanaAtras.setDate(semanaAtras.getDate() - 7)
+
+    const { data: mensajes } = await supabase
+      .from("mensajes")
+      .select("texto, emisor, created_at")
+      .eq("alumno", userId)
+      .gte("created_at", semanaAtras.toISOString())
+      .order("created_at", { ascending: false })
+      .limit(10)
+
+    const historial = mensajes?.length
+      ? mensajes.reverse().map(m => `[${m.emisor}] ${m.texto}`).join("\n")
+      : "El usuario acaba de empezar, no hay historial reciente."
+
+    const prompt = `Eres un coach vocal que crea retos personalizados.
+Basándote en el historial del alumno, genera un reto vocal en JSON exacto:
+{
+  "titulo": "título corto",
+  "descripcion": "descripción del ejercicio (2-3 frases)",
+  "tiempo": "duración (ej: 5 min)",
+  "reflexion": "frase inspiradora relacionada"
+}
+
+Reglas:
+- Reto concreto, práctico, que se haga en menos de 10 min
+- Si el historial muestra un tema específico (respiración, afinación, emoción), enfócate en eso
+- Si no hay historial, elige un ejercicio de calentamiento básico
+- Responde ÚNICAMENTE el JSON, sin markdown ni explicaciones
+
+Historial del alumno (${nombre || "sin nombre"}, racha: ${racha} días):
+${historial}`
+
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: { temperature: 0.7, maxOutputTokens: 300 }
+        })
+      }
+    )
+
+    if (!res.ok) throw new Error(`Gemini ${res.status}`)
+
+    const data = await res.json()
+    const text = data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim()
+    if (!text) throw new Error("Respuesta vacía de Gemini")
+
+    // Extraer JSON del texto
+    const jsonMatch = text.match(/\{[\s\S]*\}/)
+    if (!jsonMatch) throw new Error("No se encontró JSON en la respuesta")
+
+    const reto = JSON.parse(jsonMatch[0])
+    if (!reto.titulo || !reto.descripcion || !reto.tiempo || !reto.reflexion) {
+      throw new Error("JSON incompleto")
+    }
+
+    return reto
+  } catch (e) {
+    console.error(`[Reto Diario IA] Falló generación para ${userId}:`, e.message)
+    // Fallback aleatorio
+    return fallback[Math.floor(Math.random() * fallback.length)]
+  }
+}

@@ -131,6 +131,7 @@ export const PREFERENCIAS = window.PREFERENCIAS = {
 
         ELEMENTS.marketingToggle.checked = perfil.consent_marketing !== false;
         ELEMENTS.lifecycleToggle.checked = perfil.consent_lifecycle !== false;
+        ELEMENTS.dailyChallengeToggle.checked = perfil.receive_daily_challenges !== false;
         ELEMENTS.prefStatusMessage.style.display = 'none';
 
         ELEMENTS.preferencesModal.style.display = 'flex';
@@ -149,6 +150,7 @@ export const PREFERENCIAS = window.PREFERENCIAS = {
             const updates = {
                 consent_marketing: ELEMENTS.marketingToggle.checked,
                 consent_lifecycle: ELEMENTS.lifecycleToggle.checked,
+                receive_daily_challenges: ELEMENTS.dailyChallengeToggle.checked,
                 last_active_at: new Date().toISOString()
             };
 
