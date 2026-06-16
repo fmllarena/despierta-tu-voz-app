@@ -82,10 +82,11 @@ export const PAYMENTS = window.PAYMENTS = {
 
         try {
             // 1. Crear el Payment Intent en el servidor
-            const response = await fetch('/api/create-payment-intent', {
+            const response = await fetch('/api/payments', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
+                    type: 'payment-intent',
                     planType: planKey,
                     userId: window.userProfile.user_id,
                     userEmail: window.userProfile.email

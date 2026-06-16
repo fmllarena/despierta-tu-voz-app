@@ -401,10 +401,11 @@ async function ejecutarPago(planType, user) {
 
     // FLUJO NORMAL: Stripe Checkout
     try {
-        const response = await fetch('/api/create-checkout-session', {
+        const response = await fetch('/api/payments', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
+                type: 'checkout',
                 priceId: planType,
                 userId: user.id,
                 userEmail: user.email,

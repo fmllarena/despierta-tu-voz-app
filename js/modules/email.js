@@ -50,7 +50,7 @@ export const EMAIL = window.EMAIL_VERIFICATION = {
         try {
             const { data: { user } } = await supabaseClient.auth.getUser();
 
-            const response = await fetch('/api/send-verification-email', {
+            const response = await fetch('/api/email', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({

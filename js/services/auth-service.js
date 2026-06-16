@@ -92,7 +92,7 @@ export const authActions = {
                 console.log("✅ Registro exitoso. Disparando bienvenida...");
 
                 // Disparar email de bienvenida/verificación de forma asíncrona
-                fetch('/api/send-verification-email', {
+                fetch('/api/email', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
