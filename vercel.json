@@ -4,7 +4,7 @@
     "api/**/*.js": {
       "maxDuration": 300
     },
-    "api/score.js": {
+    "api/*.js": {
       "maxDuration": 60,
       "memory": 512
     }
