@@ -2,7 +2,8 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
 
 const BREVO_API_KEY = Deno.env.get("BREVO_API_KEY") || ""
-const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY") || ""
+const QWEN_API_KEY = Deno.env.get("QWEN_API_KEY") || ""
+const QWEN_BASE_URL = Deno.env.get("QWEN_BASE_URL") || "https://ws-vc3dtuyb2mo8tyf8.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1"
 const RETO_TEMPLATE_ID = Number(Deno.env.get("RETO_DIARIO_TEMPLATE_ID") || "28")
 const APP_URL = Deno.env.get("APP_URL") || "https://despierta-tu-voz-app.vercel.app"
 
@@ -86,7 +87,6 @@ serve(async (req) => {
 
 async function generarRetoIA(userId: string, nombre: string | null, racha: number, fallback: any[]) {
   try {
-    // Últimos mensajes del usuario (máx 10, última semana)
     const semanaAtras = new Date()
     semanaAtras.setDate(semanaAtras.getDate() - 7)
 
@@ -120,25 +120,29 @@ Reglas:
 Historial del alumno (${nombre || "sin nombre"}, racha: ${racha} días):
 ${historial}`
 
-    const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: { temperature: 0.7, maxOutputTokens: 300 }
-        })
-      }
-    )
+    const res = await fetch(`${QWEN_BASE_URL}/chat/completions`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${QWEN_API_KEY}`
+      },
+      body: JSON.stringify({
+        model: "qwen-plus",
+        messages: [
+          { role: "system", content: "Eres un coach vocal experto. Respondes siempre en JSON válido." },
+          { role: "user", content: prompt }
+        ],
+        temperature: 0.7,
+        max_tokens: 300
+      })
+    })
 
-    if (!res.ok) throw new Error(`Gemini ${res.status}`)
+    if (!res.ok) throw new Error(`Qwen ${res.status}`)
 
     const data = await res.json()
-    const text = data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim()
-    if (!text) throw new Error("Respuesta vacía de Gemini")
+    const text = data?.choices?.[0]?.message?.content?.trim()
+    if (!text) throw new Error("Respuesta vacía de Qwen")
 
-    // Extraer JSON del texto
     const jsonMatch = text.match(/\{[\s\S]*\}/)
     if (!jsonMatch) throw new Error("No se encontró JSON en la respuesta")
 
@@ -150,7 +154,6 @@ ${historial}`
     return reto
   } catch (e) {
     console.error(`[Reto Diario IA] Falló generación para ${userId}:`, e.message)
-    // Fallback aleatorio
     return fallback[Math.floor(Math.random() * fallback.length)]
   }
 }
