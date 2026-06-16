@@ -10,6 +10,7 @@ export const ELEMENTS = window.ELEMENTS = {
     get chatInputArea() { return document.querySelector('.input-area'); },
     get sendBtn() { return document.getElementById('sendBtn'); },
     get micBtn() { return document.getElementById('micBtn'); },
+    get singBtn() { return document.getElementById('singBtn'); },
     get authOverlay() { return document.getElementById('authOverlay'); },
     get authError() { return document.getElementById('authError'); },
     get mainHelpBtn() { return document.getElementById('mainHelpBtn'); },

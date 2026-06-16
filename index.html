@@ -229,7 +229,8 @@
             <textarea id="chatMentoriaInput" placeholder="Chatea aquí con el Mentor..." autocomplete="off"
                 spellcheck="false" rows="1"></textarea>
             <button id="sendBtn">▶</button>
-            <button id="micBtn">🎤</button>
+            <button id="micBtn" title="Transcribir voz a texto">🎤</button>
+            <button id="singBtn" title="Analizar canto">🎵</button>
         </div>
         <div class="quick-actions">
             <button id="quickUploadBtn" class="action-btn">+ Añadir partitura o audio</button>
@@ -736,6 +737,7 @@
     <script type="module" src="js/services/auth-service.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+    <script src="https://cdn.jsdelivr.net/npm/tone@14.7.77/build/Tone.js"></script>
     <script src="js/stripe-checkout.js"></script>
     <script type="module" src="js/modules/config.js?v=7.1"></script>
     <script type="module" src="js/modules/elements.js?v=7.1"></script>

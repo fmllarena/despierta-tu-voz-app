@@ -554,6 +554,32 @@ textarea {
     background: #e0e0e0;
 }
 
+#singBtn {
+    background: #fef0e0;
+    border: 1px solid #e8d5b0;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 1.2em;
+}
+
+#singBtn:hover {
+    background: #fce4c8;
+}
+
+#singBtn.recording {
+    background: #ffcccc;
+    border-color: #e88;
+    animation: pulse-record 1s infinite;
+}
+
+@keyframes pulse-record {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(200, 50, 50, 0.4); }
+    50% { box-shadow: 0 0 0 8px rgba(200, 50, 50, 0); }
+}
+
 .header-buttons {
     display: none;
     gap: 12px;
