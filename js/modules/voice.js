@@ -115,7 +115,12 @@ export const VOICE = window.VOICE = {
             alert("Tu navegador no soporta grabación de audio.");
             return;
         }
-        if (this.isSinging) return;
+
+        // Si ya está grabando, detener la grabación
+        if (this.isSinging) {
+            await this.stopSinging();
+            return;
+        }
 
         this.isSinging = true;
         this.singFrames = [];
@@ -123,7 +128,6 @@ export const VOICE = window.VOICE = {
         ELEMENTS.singBtn.textContent = '🔴';
 
         try {
-            // Iniciar contexto de audio via Tone.js si está disponible
             if (window.Tone) {
                 await Tone.start();
                 this.audioContext = Tone.context.rawContext;
@@ -134,24 +138,21 @@ export const VOICE = window.VOICE = {
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
             this.singStream = stream;
 
-            // Configurar analyser con mayor resolución para el espectrograma
             const analyser = this.audioContext.createAnalyser();
             analyser.fftSize = 1024;
             const dataArray = new Uint8Array(analyser.frequencyBinCount);
             const source = this.audioContext.createMediaStreamSource(stream);
             source.connect(analyser);
 
-            // Configurar MediaRecorder
             const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
                 ? 'audio/webm;codecs=opus' : 'audio/webm';
             this.mediaRecorder = new MediaRecorder(stream, { mimeType });
-            const chunks = [];
+            this.singChunks = [];
 
             this.mediaRecorder.ondataavailable = e => {
-                if (e.data.size > 0) chunks.push(e.data);
+                if (e.data.size > 0) this.singChunks.push(e.data);
             };
 
-            // Colectar frames para el espectrograma
             const collectFrames = () => {
                 if (!this.isSinging) return;
                 analyser.getByteFrequencyData(dataArray);
@@ -159,53 +160,50 @@ export const VOICE = window.VOICE = {
                 requestAnimationFrame(collectFrames);
             };
 
-            // Iniciar grabación
             this.mediaRecorder.start();
             collectFrames();
 
-            // Auto-detener después de 10 segundos
-            await new Promise(resolve => setTimeout(resolve, 10000));
-            if (!this.isSinging) return;
-            this.isSinging = false;
+        } catch (err) {
+            console.error('Error al iniciar grabación:', err);
+            this.cleanupSinging();
+            alert("Error al acceder al micrófono.");
+        }
+    },
 
+    async stopSinging() {
+        this.isSinging = false;
+        ELEMENTS.singBtn.classList.remove('recording');
+        ELEMENTS.singBtn.classList.add('processing');
+        ELEMENTS.singBtn.textContent = '⏳';
+        ELEMENTS.singBtn.disabled = true;
+
+        try {
             const mediaRecorderStop = new Promise(resolve => {
                 this.mediaRecorder.onstop = resolve;
             });
             this.mediaRecorder.stop();
-            stream.getTracks().forEach(t => t.stop());
-
-            // Esperar a que MediaRecorder termine de procesar
+            this.singStream.getTracks().forEach(t => t.stop());
             await mediaRecorderStop;
 
-            // Procesar el audio grabado
-            const blob = new Blob(chunks, { type: mimeType });
+            const blob = new Blob(this.singChunks, { type: this.mediaRecorder.mimeType });
             if (blob.size < 1000) {
-                ELEMENTS.singBtn.classList.remove('recording');
-                ELEMENTS.singBtn.textContent = '🎵';
-                alert("No se detectó audio. ¿Concediste permiso al micrófono?");
+                this.cleanupSinging();
+                alert("No se detectó audio. Asegúrate de que el micrófono capte tu voz.");
                 return;
             }
 
-            // Mostrar pensando en el chat
             if (window.appendMessage) {
                 window.appendMessage('🎵 Analizando mi voz...', 'user');
                 window.appendMessage('Analizando tu canto...', 'ia thinking', 'msg-sing-thinking');
             }
 
-            // Decodificar audio
             const arrayBuffer = await blob.arrayBuffer();
             const audioBuffer = await this.audioContext.decodeAudioData(arrayBuffer);
 
-            // Analizar tono con Tone.js
             const pitchData = this.detectPitch(audioBuffer);
-
-            // Generar espectrograma como imagen base64
             const spectrogramData = this.generateSpectrogram(400, 200);
-
-            // Preparar datos para el análisis por IA
             const analysisText = this.buildSingPrompt(pitchData);
 
-            // Enviar a /api/score
             const response = await fetch('/api/score', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -219,7 +217,6 @@ export const VOICE = window.VOICE = {
                 })
             });
 
-            // Eliminar el pensando
             const thinkingEl = document.getElementById('msg-sing-thinking');
             if (thinkingEl) thinkingEl.remove();
 
@@ -241,12 +238,19 @@ export const VOICE = window.VOICE = {
                 window.appendMessage(`Error al analizar el canto: ${err.message}`, 'ia');
             }
         } finally {
-            ELEMENTS.singBtn.classList.remove('recording');
-            ELEMENTS.singBtn.textContent = '🎵';
-            if (this.singStream) {
-                this.singStream.getTracks().forEach(t => t.stop());
-                this.singStream = null;
-            }
+            this.cleanupSinging();
+        }
+    },
+
+    cleanupSinging() {
+        this.isSinging = false;
+        this.singChunks = [];
+        ELEMENTS.singBtn.classList.remove('recording', 'processing');
+        ELEMENTS.singBtn.textContent = '🎵';
+        ELEMENTS.singBtn.disabled = false;
+        if (this.singStream) {
+            this.singStream.getTracks().forEach(t => t.stop());
+            this.singStream = null;
         }
     },
 
