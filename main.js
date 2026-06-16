@@ -1446,6 +1446,7 @@ window.addEventListener('click', e => {
     if (e.target === ELEMENTS.botiquinModal) ELEMENTS.botiquinModal.style.display = 'none';
     if (e.target === ELEMENTS.preferencesModal) ELEMENTS.preferencesModal.style.display = 'none';
     if (e.target.id === 'diarioModal') document.getElementById('diarioModal').style.display = 'none';
+    if (e.target.id === 'progresoModal') document.getElementById('progresoModal').style.display = 'none';
 });
 
 // Cerrar modales genéricos al pulsar la X

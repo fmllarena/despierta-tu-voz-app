@@ -688,6 +688,14 @@
         </div>
     </div>
 
+    <!-- Modal de Progreso / Estadísticas -->
+    <div id="progresoModal" class="modal">
+        <div class="modal-content progreso-modal-content">
+            <span class="close-modal" id="closeProgreso">&times;</span>
+            <div id="progresoContent"></div>
+        </div>
+    </div>
+
     <!-- Modal de Pago In-App (Stripe Elements) -->
     <div id="paymentModal" class="modal">
         <div class="modal-content payment-modal-content">
@@ -727,6 +735,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script type="module" src="js/services/auth-service.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
     <script src="js/stripe-checkout.js"></script>
     <script type="module" src="js/modules/config.js?v=7.1"></script>
     <script type="module" src="js/modules/elements.js?v=7.1"></script>
@@ -738,6 +747,7 @@
     <script src="js/modules/sessions.js?v=7.2" defer></script>
     <script type="module" src="js/modules/payments.js?v=7.1"></script>
     <script type="module" src="js/modules/email.js?v=7.1"></script>
+    <script type="module" src="js/modules/progress.js?v=7.1"></script>
     <script type="module" src="js/modules/tour.js?v=7.1"></script>
     <script type="module" src="js/modules/files.js?v=7.1"></script>
     <script type="module" src="js/modules/pronunciation.js?v=7.1"></script>

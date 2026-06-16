@@ -112,9 +112,14 @@ export const APP_MODULES = {
     },
 
     async toggleProgreso() {
+        if (window.PROGRESO) {
+            window.PROGRESO.abrir();
+        }
+    },
+
+    async abrirBitacora() {
         const modal = document.getElementById('diarioModal');
         if (!modal) return;
-
         if (modal.style.display === 'flex') {
             modal.style.display = 'none';
         } else {

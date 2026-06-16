@@ -123,3 +123,224 @@
     border: 1px solid #ddd;
     background: white;
 }
+
+/* --- MODAL DE PROGRESO --- */
+.progreso-modal-content {
+    max-width: 700px !important;
+    padding: 35px 40px !important;
+    max-height: 85vh;
+    overflow-y: auto;
+}
+
+.progreso-header {
+    margin-bottom: 25px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #f0e8e0;
+}
+
+.progreso-greeting {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.progreso-greeting h2 {
+    margin: 0;
+    font-size: 22px;
+    color: #4a3f35;
+    font-family: var(--font-serif);
+}
+
+.progreso-tier {
+    display: inline-block;
+    padding: 3px 12px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.tier-free { background: #f0e8e0; color: #8e7d6d; }
+.tier-pro { background: #e0d7cf; color: #6a5d50; }
+.tier-premium { background: #4a3f35; color: #f5f1ed; }
+
+.progreso-subtitle {
+    margin: 10px 0 0;
+    font-size: 13px;
+    color: #a89585;
+}
+
+.progreso-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 12px;
+    margin-bottom: 25px;
+}
+
+.stat-card {
+    background: #fcf9f5;
+    border: 1px solid #f0e8e0;
+    border-radius: 12px;
+    padding: 20px 15px;
+    text-align: center;
+}
+
+.stat-value {
+    font-size: 28px;
+    font-weight: 700;
+    color: #4a3f35;
+    margin-bottom: 5px;
+}
+
+.stat-label {
+    font-size: 12px;
+    color: #8e7d6d;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.progreso-section {
+    margin-bottom: 25px;
+}
+
+.progreso-section h3 {
+    font-size: 16px;
+    color: #4a3f35;
+    margin: 0 0 15px;
+    font-weight: 600;
+}
+
+.chart-container {
+    position: relative;
+    height: 200px;
+    background: #fcf9f5;
+    border: 1px solid #f0e8e0;
+    border-radius: 12px;
+    padding: 15px;
+}
+
+.progreso-modulos {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.modulo-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 15px;
+    background: #fcf9f5;
+    border: 1px solid #f0e8e0;
+    border-radius: 10px;
+    font-size: 14px;
+    color: #5a5a5a;
+    transition: all 0.2s;
+}
+
+.modulo-row.completed {
+    background: #f5f8f2;
+    border-color: #c4d4b5;
+    color: #4a6a3f;
+}
+
+.modulo-check {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 700;
+    flex-shrink: 0;
+    border: 2px solid #d0c8c0;
+    color: #d0c8c0;
+}
+
+.modulo-row.completed .modulo-check {
+    background: #8e7d6d;
+    border-color: #8e7d6d;
+    color: white;
+}
+
+.sesiones-bar-container {
+    background: #fcf9f5;
+    border: 1px solid #f0e8e0;
+    border-radius: 12px;
+    padding: 20px;
+}
+
+.sesiones-bar {
+    width: 100%;
+    height: 12px;
+    background: #f0e8e0;
+    border-radius: 6px;
+    overflow: hidden;
+    margin-bottom: 10px;
+}
+
+.sesiones-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #8e7d6d, #c4b5a5);
+    border-radius: 6px;
+    transition: width 0.5s ease;
+}
+
+.sesiones-label {
+    font-size: 13px;
+    color: #8e7d6d;
+    text-align: center;
+    margin: 0;
+}
+
+.progreso-upgrade {
+    text-align: center;
+    padding: 25px;
+    background: #fcf9f5;
+    border: 1px solid #f0e8e0;
+    border-radius: 12px;
+}
+
+.progreso-upgrade p {
+    color: #8e7d6d;
+    font-size: 14px;
+    margin: 0 0 15px;
+}
+
+.progreso-upgrade .upgrade-btn {
+    background: linear-gradient(135deg, #8e7d6d 0%, #a89585 100%);
+    color: white;
+    border: none;
+    padding: 12px 30px;
+    border-radius: 25px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.progreso-upgrade .upgrade-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(142, 125, 109, 0.3);
+}
+
+#openBitacoraBtn {
+    width: 100%;
+    padding: 14px;
+    font-size: 15px;
+}
+
+@media (max-width: 600px) {
+    .progreso-modal-content {
+        padding: 25px 20px !important;
+    }
+    .progreso-stats {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    .stat-value {
+        font-size: 22px;
+    }
+}
