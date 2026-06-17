@@ -120,24 +120,30 @@ Reglas:
 Historial del alumno (${nombre || "sin nombre"}, racha: ${racha} días):
 ${historial}`
 
+    const body = JSON.stringify({
+      model: "qwen3.5-flash",
+      messages: [
+        { role: "system", content: "Eres un coach vocal experto. Respondes siempre en JSON válido." },
+        { role: "user", content: prompt }
+      ],
+      temperature: 0.7,
+      max_tokens: 300
+    })
+
     const res = await fetch(`${QWEN_BASE_URL}/chat/completions`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         "Authorization": `Bearer ${QWEN_API_KEY}`
       },
-      body: JSON.stringify({
-        model: "qwen-plus",
-        messages: [
-          { role: "system", content: "Eres un coach vocal experto. Respondes siempre en JSON válido." },
-          { role: "user", content: prompt }
-        ],
-        temperature: 0.7,
-        max_tokens: 300
-      })
+      body
     })
 
-    if (!res.ok) throw new Error(`Qwen ${res.status}`)
+    if (!res.ok) {
+      const errBody = await res.text()
+      console.error(`[Qwen API] ${res.status}: ${errBody.slice(0, 500)}`)
+      throw new Error(`Qwen ${res.status}`)
+    }
 
     const data = await res.json()
     const text = data?.choices?.[0]?.message?.content?.trim()
