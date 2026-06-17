@@ -74,6 +74,8 @@ serve(async (req) => {
       })
 
       if (res.ok) {
+        const brevoBody = await res.text()
+        console.log(`[Brevo OK] ${user.email}: ${brevoBody.slice(0, 300)}`)
         await supabase.from("user_profiles").update({
           racha_dias: nuevaRacha,
           total_retos: (user.total_retos || 0) + 1,
