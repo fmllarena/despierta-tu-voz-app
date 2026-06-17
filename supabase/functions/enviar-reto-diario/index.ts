@@ -128,7 +128,7 @@ Basándote en el historial del alumno, genera un reto vocal en JSON exacto:
 }
 
 Reglas:
-- descripcion debe contener 3-6 pasos concretos, numerados (1. 2. 3.), separados por saltos de línea
+- descripcion debe contener 3-6 pasos concretos, cada uno empezando con número y punto (1. Paso 2. Paso 3. Paso...), UNO POR LÍNEA
 - Reto práctico que se haga en menos de 10 min
 - Si el historial muestra un tema específico (respiración, afinación, emoción), enfócate en eso
 - Si no hay historial, elige un ejercicio de calentamiento básico
