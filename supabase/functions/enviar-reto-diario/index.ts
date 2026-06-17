@@ -49,6 +49,10 @@ serve(async (req) => {
 
       // Asegurar formato correcto (fallback no tiene estos campos)
       if (!reto.palabras_clave) reto.palabras_clave = "vocalización, calentamiento, técnica"
+      if (!reto.paso_1) {
+        const pasos = (reto.descripcion || "").split(/\n+/).filter(Boolean)
+        for (let i = 0; i < 6; i++) reto[`paso_${i + 1}`] = pasos[i] || ""
+      }
 
       const res = await fetch("https://api.brevo.com/v3/smtp/email", {
         method: "POST",
@@ -59,9 +63,14 @@ serve(async (req) => {
           params: {
             NOMBRE: user.nombre || user.email.split("@")[0],
             FECHA: fecha,
-            PALABRAS_CLAVE: reto.palabras_clave || "respiración, presencia, conexión",
+            PALABRAS_CLAVE: reto.palabras_clave || "vocalización, calentamiento, técnica",
             RETO_TITULO: reto.titulo,
-            RETO_DESCRIPCION: reto.descripcion,
+            PASO_1: reto.paso_1 || "",
+            PASO_2: reto.paso_2 || "",
+            PASO_3: reto.paso_3 || "",
+            PASO_4: reto.paso_4 || "",
+            PASO_5: reto.paso_5 || "",
+            PASO_6: reto.paso_6 || "",
             RETO_TIEMPO: reto.tiempo,
             RETO_REFLEXION: reto.reflexion,
             LINK_APP: APP_URL,
@@ -113,7 +122,7 @@ Basándote en el historial del alumno, genera un reto vocal en JSON exacto:
 {
   "palabras_clave": "3-5 palabras separadas por coma sobre lo trabajado (ej: apoyo, color de voz, agudos, proyección, resonancia)",
   "titulo": "título corto del reto",
-  "descripcion": "texto con los pasos del ejercicio separados por saltos de línea (ej: 1. Párate con los pies separados\n2. Inspira profundamente\n3. Suelta con un suspiro sonoro en Ahhh)",
+  "descripcion": "texto con 3-6 pasos del ejercicio, UNO POR LÍNEA, numerados (1. Paso uno\n2. Paso dos\n3. Paso tres\n4. Paso cuatro)",
   "tiempo": "duración (ej: 5 min)",
   "reflexion": "frase inspiradora relacionada"
 }
@@ -165,13 +174,12 @@ ${historial}`
       throw new Error("JSON incompleto")
     }
 
-    // Si descripcion es array, unirlo con saltos de línea
-    if (Array.isArray(reto.descripcion)) {
-      reto.descripcion = reto.descripcion.join("\n")
-    }
-    // Convertir saltos de línea a <br> para compatibilidad con email
-    if (reto.descripcion) {
-      reto.descripcion = reto.descripcion.replace(/\n+/g, "<br>")
+    // Dividir descripción en pasos individuales para la plantilla
+    const pasos = reto.descripcion
+      ? reto.descripcion.split(/\n+/).filter(Boolean)
+      : []
+    for (let i = 0; i < 6; i++) {
+      reto[`paso_${i + 1}`] = pasos[i] || ""
     }
 
     return reto

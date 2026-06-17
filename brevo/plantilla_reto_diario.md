@@ -89,9 +89,14 @@
                                         <h2 style="color: #4a3f35; font-size: 22px; margin: 0 0 15px; text-align: center; font-weight: 500;">
                                             {{ params.RETO_TITULO }}
                                         </h2>
-                                        <div style="color: #5a5a5a; font-size: 15px; line-height: 1.8; margin: 0 0 20px; text-align: left;">
-                                            {{ params.RETO_DESCRIPCION }}
-                                        </div>
+                                        <ol style="color: #5a5a5a; font-size: 15px; line-height: 1.9; margin: 0 0 20px; padding-left: 22px; text-align: left;">
+                                            <li>{{ params.PASO_1 }}</li>
+                                            <li>{{ params.PASO_2 }}</li>
+                                            <li>{{ params.PASO_3 }}</li>
+                                            <li>{{ params.PASO_4 }}</li>
+                                            <li>{{ params.PASO_5 }}</li>
+                                            <li>{{ params.PASO_6 }}</li>
+                                        </ol>
                                         <table width="100%" cellpadding="0" cellspacing="0">
                                             <tr>
                                                 <td align="center">
