@@ -1,5 +1,5 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
+import { serve } from "https://deno.land/std@0.224.0/http/server.ts"
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.1"
 
 const BREVO_API_KEY = Deno.env.get("BREVO_API_KEY") || ""
 const QWEN_API_KEY = Deno.env.get("QWEN_API_KEY") || ""
