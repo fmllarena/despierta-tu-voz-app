@@ -169,6 +169,10 @@ ${historial}`
     if (Array.isArray(reto.descripcion)) {
       reto.descripcion = reto.descripcion.join("\n")
     }
+    // Convertir saltos de línea a <br> para compatibilidad con email
+    if (reto.descripcion) {
+      reto.descripcion = reto.descripcion.replace(/\n+/g, "<br>")
+    }
 
     return reto
   } catch (e) {

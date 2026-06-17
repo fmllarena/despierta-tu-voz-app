@@ -89,9 +89,9 @@
                                         <h2 style="color: #4a3f35; font-size: 22px; margin: 0 0 15px; text-align: center; font-weight: 500;">
                                             {{ params.RETO_TITULO }}
                                         </h2>
-                                        <p style="color: #5a5a5a; font-size: 15px; line-height: 1.8; margin: 0 0 20px; text-align: left; white-space: pre-line;">
+                                        <div style="color: #5a5a5a; font-size: 15px; line-height: 1.8; margin: 0 0 20px; text-align: left;">
                                             {{ params.RETO_DESCRIPCION }}
-                                        </p>
+                                        </div>
                                         <table width="100%" cellpadding="0" cellspacing="0">
                                             <tr>
                                                 <td align="center">
