@@ -90,7 +90,7 @@
                                             {{ params.RETO_TITULO }}
                                         </h2>
                                         <ul style="color: #5a5a5a; font-size: 15px; line-height: 1.8; margin: 0 0 20px; padding-left: 22px; text-align: left; list-style-type: disc;">
-                                            {{ params.RETO_DESCRIPCION }}
+                                            {{{ params.RETO_DESCRIPCION }}}
                                         </ul>
                                         <table width="100%" cellpadding="0" cellspacing="0">
                                             <tr>
