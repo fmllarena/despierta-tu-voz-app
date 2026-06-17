@@ -45,7 +45,12 @@ serve(async (req) => {
         ? (user.racha_dias || 0) + 1 : 1
 
       // Generar reto personalizado por IA o usar fallback
-      const reto = await generarRetoIA(user.user_id, user.nombre, nuevaRacha, retosFallback)
+      let reto = await generarRetoIA(user.user_id, user.nombre, nuevaRacha, retosFallback)
+
+      // Asegurar formato correcto (fallback no tiene estos campos)
+      if (!reto.palabras_clave) reto.palabras_clave = "vocalización, calentamiento, técnica"
+      if (!reto.descripcion?.startsWith("<li>"))
+        reto.descripcion = `<li>${reto.descripcion || "Ejercicio de calentamiento vocal"}</li>`
 
       const res = await fetch("https://api.brevo.com/v3/smtp/email", {
         method: "POST",
@@ -56,6 +61,7 @@ serve(async (req) => {
           params: {
             NOMBRE: user.nombre || user.email.split("@")[0],
             FECHA: fecha,
+            PALABRAS_CLAVE: reto.palabras_clave || "respiración, presencia, conexión",
             RETO_TITULO: reto.titulo,
             RETO_DESCRIPCION: reto.descripcion,
             RETO_TIEMPO: reto.tiempo,
@@ -105,14 +111,16 @@ async function generarRetoIA(userId: string, nombre: string | null, racha: numbe
     const prompt = `Eres un coach vocal que crea retos personalizados.
 Basándote en el historial del alumno, genera un reto vocal en JSON exacto:
 {
-  "titulo": "título corto",
-  "descripcion": "descripción del ejercicio (2-3 frases)",
+  "palabras_clave": "3-5 palabras separadas por coma sobre lo trabajado (ej: apoyo, color de voz, agudos, proyección, resonancia)",
+  "titulo": "título corto del reto",
+  "descripcion": "array de pasos del ejercicio en HTML con <li>, sin <ul> ni <ol> (ej: <li>Párate con los pies separados</li><li>Inspira profundamente</li><li>Suelta con un suspiro sonoro en Ahhh</li>)",
   "tiempo": "duración (ej: 5 min)",
   "reflexion": "frase inspiradora relacionada"
 }
 
 Reglas:
-- Reto concreto, práctico, que se haga en menos de 10 min
+- descripcion debe contener 3-6 pasos concretos, cada uno dentro de un <li>
+- Reto práctico que se haga en menos de 10 min
 - Si el historial muestra un tema específico (respiración, afinación, emoción), enfócate en eso
 - Si no hay historial, elige un ejercicio de calentamiento básico
 - Responde ÚNICAMENTE el JSON, sin markdown ni explicaciones
@@ -155,6 +163,11 @@ ${historial}`
     const reto = JSON.parse(jsonMatch[0])
     if (!reto.titulo || !reto.descripcion || !reto.tiempo || !reto.reflexion) {
       throw new Error("JSON incompleto")
+    }
+
+    // Si descripcion es array, unirlo como HTML; si es string HTML, usarlo directamente
+    if (Array.isArray(reto.descripcion)) {
+      reto.descripcion = reto.descripcion.join("")
     }
 
     return reto

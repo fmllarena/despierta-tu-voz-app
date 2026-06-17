@@ -59,6 +59,24 @@
                         </td>
                     </tr>
 
+                    <!-- Palabras Clave de lo trabajado -->
+                    <tr>
+                        <td style="padding: 0 30px 15px;">
+                            <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #fef8f2; border-radius: 12px; border: 1px solid #e8ddd0;">
+                                <tr>
+                                    <td style="padding: 18px 22px;">
+                                        <p style="color: #8e7d6d; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; margin: 0 0 8px;">
+                                            🏷️ Palabras Clave de tu trabajo reciente
+                                        </p>
+                                        <p style="color: #6a5d50; font-size: 15px; line-height: 1.7; margin: 0; font-weight: 500;">
+                                            {{ params.PALABRAS_CLAVE }}
+                                        </p>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+
                     <!-- Tarjeta del Reto -->
                     <tr>
                         <td style="padding: 0 30px 25px;">
@@ -71,9 +89,9 @@
                                         <h2 style="color: #4a3f35; font-size: 22px; margin: 0 0 15px; text-align: center; font-weight: 500;">
                                             {{ params.RETO_TITULO }}
                                         </h2>
-                                        <p style="color: #5a5a5a; font-size: 16px; line-height: 1.7; margin: 0 0 20px; text-align: center;">
+                                        <ul style="color: #5a5a5a; font-size: 15px; line-height: 1.8; margin: 0 0 20px; padding-left: 22px; text-align: left; list-style-type: disc;">
                                             {{ params.RETO_DESCRIPCION }}
-                                        </p>
+                                        </ul>
                                         <table width="100%" cellpadding="0" cellspacing="0">
                                             <tr>
                                                 <td align="center">
@@ -180,13 +198,14 @@
 
 1. **{{ params.NOMBRE }}** — Nombre del usuario
 2. **{{ params.FECHA }}** — Fecha del día (ej: "Martes 16 de Junio, 2026")
-3. **{{ params.RETO_TITULO }}** — Título del reto (ej: "Resonancia en la Máscara")
-4. **{{ params.RETO_DESCRIPCION }}** — Descripción del ejercicio (1-3 párrafos)
-5. **{{ params.RETO_TIEMPO }}** — Duración estimada (ej: "5 minutos")
-6. **{{ params.RETO_REFLEXION }}** — Frase de reflexión inspiradora
-7. **{{ params.LINK_APP }}** — URL directa a la app
-8. **{{ params.RACHA_DIAS }}** — Días consecutivos practicando
-9. **{{ params.TOTAL_RETOS }}** — Total de retos completados
+3. **{{ params.PALABRAS_CLAVE }}** — Palabras clave de lo trabajado (ej: "apoyo, color de voz, agudos, proyección")
+4. **{{ params.RETO_TITULO }}** — Título del reto (ej: "Resonancia en la Máscara")
+5. **{{ params.RETO_DESCRIPCION }}** — Pasos del ejercicio en HTML con `<li>` (ej: `<li>Coloca las manos...</li><li>Tararea...</li>`)
+6. **{{ params.RETO_TIEMPO }}** — Duración estimada (ej: "5 minutos")
+7. **{{ params.RETO_REFLEXION }}** — Frase de reflexión inspiradora
+8. **{{ params.LINK_APP }}** — URL directa a la app
+9. **{{ params.RACHA_DIAS }}** — Días consecutivos practicando
+10. **{{ params.TOTAL_RETOS }}** — Total de retos completados
 
 ---
 
