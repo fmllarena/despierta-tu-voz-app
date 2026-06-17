@@ -1,2 +1,2 @@
 [functions.enviar-reto-diario]
-max_duration = 60
+verify_jwt = false
