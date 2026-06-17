@@ -3,7 +3,7 @@ console.log("🔵 config.js: Módulo CARGADO.");
  * DTV Config Module
  * Contiene constantes, configuraciones y estado global de la aplicación.
  */
-export const MENSAJE_BIENVENIDA = window.MENSAJE_BIENVENIDA = `<p>Hola, ¡qué alegría que estés aquí! Soy tu Mentor Vocal.</p><br><p>Mi misión es acompañarte a descubrir todo el potencial de tu voz, desde la técnica hasta lo que sientes al cantar. Para empezar con buen pie... ¿hay algo específico que te haya traído hoy aquí o algún bloqueo que te gustaría trabajar conmigo?</p>`;
+export const MENSAJE_BIENVENIDA = window.MENSAJE_BIENVENIDA = `<p>¡Qué alegría que estés aquí! Soy tu Mentor Vocal.</p><br><p>Mi misión es acompañarte a descubrir todo el potencial de tu voz, desde la técnica hasta lo que sientes al cantar. Para empezar con buen pie... ¿hay algo específico que te haya traído hoy aquí o algún bloqueo que te gustaría trabajar conmigo?</p>`;
 
 export const LOGO_URL = 'https://despiertatuvoz.com/wp-content/uploads/2024/12/LOGO-BLANCO-WEBP-ACTUAL.webp';
 

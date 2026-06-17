@@ -477,7 +477,7 @@ async function saludarUsuario(user, perfil) {
     } else {
         const nombre = perfil?.nombre || (user.email || "viajero/a").split('@')[0];
         const nombreCap = nombre.charAt(0).toUpperCase() + nombre.slice(1);
-        appendMessage(`¡Hola, <strong>${nombreCap}</strong>! Qué alegría encontrarte de nuevo. ¿Cómo te sientes hoy?`, 'ia');
+        appendMessage(`Qué alegría encontrarte de nuevo, <strong>${nombreCap}</strong>. ¿Cómo te sientes hoy?`, 'ia');
     }
 }
 
