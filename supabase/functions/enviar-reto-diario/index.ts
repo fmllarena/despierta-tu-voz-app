@@ -49,8 +49,6 @@ serve(async (req) => {
 
       // Asegurar formato correcto (fallback no tiene estos campos)
       if (!reto.palabras_clave) reto.palabras_clave = "vocalización, calentamiento, técnica"
-      if (!reto.descripcion?.startsWith("<li>"))
-        reto.descripcion = `<li>${reto.descripcion || "Ejercicio de calentamiento vocal"}</li>`
 
       const res = await fetch("https://api.brevo.com/v3/smtp/email", {
         method: "POST",
@@ -115,13 +113,13 @@ Basándote en el historial del alumno, genera un reto vocal en JSON exacto:
 {
   "palabras_clave": "3-5 palabras separadas por coma sobre lo trabajado (ej: apoyo, color de voz, agudos, proyección, resonancia)",
   "titulo": "título corto del reto",
-  "descripcion": "array de pasos del ejercicio en HTML con <li>, sin <ul> ni <ol> (ej: <li>Párate con los pies separados</li><li>Inspira profundamente</li><li>Suelta con un suspiro sonoro en Ahhh</li>)",
+  "descripcion": "texto con los pasos del ejercicio separados por saltos de línea (ej: 1. Párate con los pies separados\n2. Inspira profundamente\n3. Suelta con un suspiro sonoro en Ahhh)",
   "tiempo": "duración (ej: 5 min)",
   "reflexion": "frase inspiradora relacionada"
 }
 
 Reglas:
-- descripcion debe contener 3-6 pasos concretos, cada uno dentro de un <li>
+- descripcion debe contener 3-6 pasos concretos, numerados (1. 2. 3.), separados por saltos de línea
 - Reto práctico que se haga en menos de 10 min
 - Si el historial muestra un tema específico (respiración, afinación, emoción), enfócate en eso
 - Si no hay historial, elige un ejercicio de calentamiento básico
@@ -167,9 +165,9 @@ ${historial}`
       throw new Error("JSON incompleto")
     }
 
-    // Si descripcion es array, unirlo como HTML; si es string HTML, usarlo directamente
+    // Si descripcion es array, unirlo con saltos de línea
     if (Array.isArray(reto.descripcion)) {
-      reto.descripcion = reto.descripcion.join("")
+      reto.descripcion = reto.descripcion.join("\n")
     }
 
     return reto
