@@ -4089,6 +4089,11 @@ html[data-theme="dark"] textarea {
     color: var(--color-texto);
 }
 
+html[data-theme="dark"] input::placeholder,
+html[data-theme="dark"] textarea::placeholder {
+    color: #e0e0e0;
+}
+
 html[data-theme="dark"] #micBtn {
     background: #7a6b5d;
     border-color: #9e8d7d;
