@@ -2342,6 +2342,12 @@ textarea {
     resize: none;
 }
 
+.setting-item.switch-row {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+}
+
 /* Actions */
 .settings-actions {
     display: flex;
@@ -3978,4 +3984,675 @@ input:disabled+.slider {
         opacity: 1;
         transform: scale(1) translateY(0);
     }
+}
+
+/* ========================================
+   DARK MODE
+   ======================================== */
+html[data-theme="dark"] {
+    --color-fondo: #1a1a2e;
+    --color-texto: #e0e0e0;
+    --color-acento: #b8a08e;
+    --chat-bg: #16213e;
+    --chat-border: #2a2a4a;
+    --msg-ia-bg: #1e2a3a;
+    --msg-ia-color: #c8c8d0;
+    --msg-ia-border: #2a2a4a;
+    --input-bg: #1a1a2e;
+    --input-border: #2a2a4a;
+    --card-bg: #16213e;
+    --card-border: #2a2a4a;
+    --header-bg: #0f3460;
+    --hover-bg: #1a1a3e;
+    --white-bg: #16213e;
+    --shadow-color: rgba(0, 0, 0, 0.4);
+}
+
+html[data-theme="dark"] body {
+    background-color: var(--color-fondo);
+    color: var(--color-texto);
+}
+
+html[data-theme="dark"] .chat-container {
+    background: var(--chat-bg);
+    box-shadow: 0 10px 40px var(--shadow-color);
+}
+
+html[data-theme="dark"] .chat-header {
+    background: var(--header-bg);
+    border-bottom: 1px solid var(--chat-border);
+}
+
+html[data-theme="dark"] .messages {
+    background: var(--chat-bg);
+}
+
+html[data-theme="dark"] .ia {
+    background: var(--msg-ia-bg);
+    color: var(--msg-ia-color);
+    border: 1px solid var(--msg-ia-border);
+}
+
+html[data-theme="dark"] .ia.thinking {
+    background: var(--msg-ia-bg);
+    color: #999;
+}
+
+html[data-theme="dark"] .ia-botiquin {
+    background: #2a1a1a !important;
+    border-color: #3a2a2a !important;
+}
+
+html[data-theme="dark"] .input-area {
+    background: var(--chat-bg);
+    border-top: 1px solid var(--chat-border);
+}
+
+html[data-theme="dark"] .quick-actions {
+    background: var(--chat-bg);
+}
+
+html[data-theme="dark"] .action-btn {
+    background: #2a2a4a;
+    border-color: #3a3a5a;
+    color: var(--color-texto);
+}
+
+html[data-theme="dark"] .action-btn:hover {
+    background: #3a3a5a;
+}
+
+html[data-theme="dark"] input,
+html[data-theme="dark"] textarea {
+    background: var(--input-bg);
+    border: 1px solid var(--input-border);
+    color: var(--color-texto);
+}
+
+html[data-theme="dark"] #micBtn {
+    background: #2a2a4a;
+    border-color: #3a3a5a;
+}
+
+html[data-theme="dark"] #singBtn {
+    background: #2a1a1a;
+    border-color: #4a2a2a;
+}
+
+html[data-theme="dark"] #singBtn:hover {
+    background: #3a2a2a;
+}
+
+html[data-theme="dark"] #sendBtn {
+    color: var(--color-acento);
+}
+
+html[data-theme="dark"] .icon-nav-btn:hover {
+    background: var(--hover-bg) !important;
+}
+
+html[data-theme="dark"] header p {
+    color: #999;
+}
+
+html[data-theme="dark"] .modal-content {
+    background: var(--chat-bg);
+    color: var(--color-texto);
+}
+
+html[data-theme="dark"] .modal-content h2,
+html[data-theme="dark"] .modal-content h3,
+html[data-theme="dark"] .modal-content h4 {
+    color: var(--color-texto);
+}
+
+html[data-theme="dark"] .settings-section {
+    border-bottom-color: var(--chat-border);
+}
+
+html[data-theme="dark"] .profile-info {
+    background: var(--card-bg);
+    border-color: var(--card-border);
+}
+
+html[data-theme="dark"] #settingsUserTier {
+    color: #999;
+}
+
+html[data-theme="dark"] .slider-group {
+    background: var(--card-bg);
+    border-color: var(--card-border);
+}
+
+html[data-theme="dark"] .slider-header {
+    color: var(--color-acento);
+}
+
+html[data-theme="dark"] .slider-label-left,
+html[data-theme="dark"] .slider-label-right {
+    color: #999;
+}
+
+html[data-theme="dark"] .settings-section input[type="range"] {
+    background: #3a3a5a;
+}
+
+html[data-theme="dark"] .setting-item label {
+    color: var(--color-texto);
+}
+
+html[data-theme="dark"] .setting-item select,
+html[data-theme="dark"] .setting-item textarea {
+    background: var(--input-bg);
+    border-color: var(--input-border);
+    color: var(--color-texto);
+}
+
+html[data-theme="dark"] .preferences-btn {
+    background: #2a2a4a;
+    border-color: #3a3a5a;
+    color: var(--color-acento);
+}
+
+html[data-theme="dark"] .preferences-btn:hover {
+    background: #3a3a5a;
+}
+
+html[data-theme="dark"] .danger-hint {
+    background: #2a2a1a;
+    border-color: #4a4a2a;
+    color: #999;
+}
+
+html[data-theme="dark"] .session-quota-info {
+    background: var(--card-bg);
+    border-left-color: #1a73e8;
+}
+
+html[data-theme="dark"] .session-group {
+    border-color: var(--card-border);
+}
+
+html[data-theme="dark"] .session-group.extra {
+    background: #2a2a1a;
+    border-color: #4a4a2a;
+}
+
+html[data-theme="dark"] .session-desc {
+    color: #999;
+}
+
+html[data-theme="dark"] .btn-booking {
+    background: var(--card-bg);
+    border-color: #1a73e8;
+    color: #5a9af8;
+}
+
+html[data-theme="dark"] .btn-booking:hover:not(:disabled) {
+    background: #1a73e8;
+    color: white;
+}
+
+html[data-theme="dark"] .btn-extra {
+    border-color: #b8860b;
+    color: #d4af37;
+}
+
+html[data-theme="dark"] #msg-bienvenida {
+    background: #0f3460;
+}
+
+html[data-theme="dark"] .app-footer {
+    color: #666;
+}
+
+html[data-theme="dark"] .app-footer a {
+    color: #999;
+}
+
+html[data-theme="dark"] .whatsapp-float {
+    background: #2a2a4a;
+}
+
+html[data-theme="dark"] .whatsapp-float:hover {
+    background: #3a3a5a;
+}
+
+html[data-theme="dark"] .whatsapp-tooltip {
+    background: var(--chat-bg);
+    color: var(--color-texto);
+    border-color: var(--chat-border);
+}
+
+html[data-theme="dark"] .music-menu-dropdown {
+    background: var(--chat-bg);
+    border-color: var(--chat-border);
+}
+
+html[data-theme="dark"] .music-menu-header {
+    background: var(--card-bg);
+    border-bottom-color: var(--chat-border);
+}
+
+html[data-theme="dark"] .music-item {
+    color: var(--color-texto);
+    border-bottom-color: var(--chat-border);
+}
+
+html[data-theme="dark"] .music-item:hover {
+    background: var(--hover-bg);
+}
+
+html[data-theme="dark"] .music-stop-option {
+    background: var(--chat-bg);
+    border-top-color: var(--chat-border);
+}
+
+html[data-theme="dark"] .music-stop-option:hover {
+    background: #2a1a1a;
+}
+
+html[data-theme="dark"] .music-submenu {
+    background: var(--card-bg);
+}
+
+html[data-theme="dark"] .music-info strong {
+    color: var(--color-texto);
+}
+
+html[data-theme="dark"] .music-desc {
+    color: #888;
+}
+
+html[data-theme="dark"] .dropdown-content {
+    background: var(--chat-bg);
+    border-color: var(--chat-border);
+}
+
+html[data-theme="dark"] .dropdown-content button {
+    color: var(--color-texto);
+}
+
+html[data-theme="dark"] .dropdown-content button:hover {
+    background: var(--hover-bg);
+}
+
+html[data-theme="dark"] .help-tooltip {
+    background: var(--chat-bg);
+    border-color: var(--color-acento);
+}
+
+html[data-theme="dark"] .help-tooltip h5 {
+    color: var(--color-acento);
+}
+
+html[data-theme="dark"] .help-desc {
+    color: var(--color-texto);
+}
+
+html[data-theme="dark"] .help-btn-tag {
+    background: var(--card-bg);
+    border-color: var(--card-border);
+}
+
+html[data-theme="dark"] .help-btn-tag.voice {
+    background: var(--card-bg);
+}
+
+html[data-theme="dark"] .help-btn-tag.sing {
+    background: #2a1a1a;
+}
+
+html[data-theme="dark"] .help-btn-tag.files,
+html[data-theme="dark"] .help-btn-tag.phonetics {
+    background: var(--card-bg);
+}
+
+html[data-theme="dark"] .help-item {
+    border-bottom-color: var(--chat-border);
+}
+
+html[data-theme="dark"] #voiceSelect {
+    background: var(--input-bg);
+    border-color: var(--input-border);
+    color: var(--color-texto);
+}
+
+html[data-theme="dark"] .support-messages {
+    background: var(--chat-bg);
+}
+
+html[data-theme="dark"] .support-input-area {
+    background: var(--chat-bg);
+    border-top-color: var(--chat-border);
+}
+
+html[data-theme="dark"] .support-input-area input {
+    background: var(--input-bg);
+    border-color: var(--input-border);
+    color: var(--color-texto);
+}
+
+html[data-theme="dark"] .whatsapp-fallback {
+    background: var(--chat-bg);
+    border-top-color: var(--chat-border);
+}
+
+html[data-theme="dark"] .whatsapp-fallback p {
+    color: #999;
+}
+
+html[data-theme="dark"] .progreso-header {
+    border-bottom-color: var(--chat-border);
+}
+
+html[data-theme="dark"] .progreso-greeting h2 {
+    color: var(--color-texto);
+}
+
+html[data-theme="dark"] .stat-card {
+    background: var(--card-bg);
+    border-color: var(--card-border);
+}
+
+html[data-theme="dark"] .stat-value {
+    color: var(--color-texto);
+}
+
+html[data-theme="dark"] .stat-label {
+    color: #999;
+}
+
+html[data-theme="dark"] .progreso-section h3 {
+    color: var(--color-texto);
+}
+
+html[data-theme="dark"] .chart-container {
+    background: var(--card-bg);
+    border-color: var(--card-border);
+}
+
+html[data-theme="dark"] .modulo-row {
+    background: var(--card-bg);
+    border-color: var(--card-border);
+    color: var(--color-texto);
+}
+
+html[data-theme="dark"] .modulo-row.completed {
+    background: #1a2a1a;
+    border-color: #2a4a2a;
+    color: #8ab87a;
+}
+
+html[data-theme="dark"] .modulo-check {
+    border-color: #4a4a5a;
+    color: #4a4a5a;
+}
+
+html[data-theme="dark"] .sesiones-bar-container {
+    background: var(--card-bg);
+    border-color: var(--card-border);
+}
+
+html[data-theme="dark"] .sesiones-bar {
+    background: #3a3a5a;
+}
+
+html[data-theme="dark"] .progreso-upgrade {
+    background: var(--card-bg);
+    border-color: var(--card-border);
+}
+
+html[data-theme="dark"] .legal-scroll-area {
+    background: var(--card-bg);
+    border-color: var(--card-border);
+}
+
+html[data-theme="dark"] .check-item {
+    color: var(--color-texto);
+}
+
+html[data-theme="dark"] .privacy-notice-box {
+    background: #2a2a1a;
+    color: var(--color-texto);
+}
+
+html[data-theme="dark"] #promoTermsBox {
+    background: rgba(142, 125, 109, 0.15) !important;
+    border-color: var(--color-acento) !important;
+}
+
+html[data-theme="dark"] #promoTermsBox h3 {
+    color: var(--color-acento) !important;
+}
+
+html[data-theme="dark"] .preference-option {
+    border-color: var(--chat-border);
+}
+
+html[data-theme="dark"] .preference-option h3 {
+    color: var(--color-texto);
+}
+
+html[data-theme="dark"] .preference-option p {
+    color: #999;
+}
+
+html[data-theme="dark"] .account-deletion-section {
+    border-top-color: var(--chat-border) !important;
+}
+
+html[data-theme="dark"] .account-deletion-section p {
+    color: #999 !important;
+}
+
+html[data-theme="dark"] .switch-row {
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+}
+
+html[data-theme="dark"] .switch-row label:first-child {
+    margin-bottom: 0 !important;
+}
+
+html[data-theme="dark"] .close-modal {
+    color: #888;
+}
+
+html[data-theme="dark"] .close-modal:hover {
+    color: var(--color-texto);
+}
+
+html[data-theme="dark"] #payment-summary-box {
+    background: var(--card-bg) !important;
+    border-color: var(--card-border) !important;
+}
+
+html[data-theme="dark"] #payment-summary-desc {
+    color: var(--color-texto) !important;
+}
+
+html[data-theme="dark"] #payment-summary-amount {
+    color: var(--color-texto) !important;
+}
+
+html[data-theme="dark"] .loader-premium {
+    background: var(--chat-bg);
+}
+
+html[data-theme="dark"] .upgrade-modal-content {
+    background: var(--chat-bg);
+}
+
+html[data-theme="dark"] .upgrade-card {
+    background: var(--card-bg) !important;
+    border-color: var(--card-border) !important;
+}
+
+html[data-theme="dark"] .upgrade-card h3 {
+    color: var(--color-texto) !important;
+}
+
+html[data-theme="dark"] .upgrade-card.pro {
+    background: #1a1a2a !important;
+}
+
+html[data-theme="dark"] .upgrade-card.premium {
+    background: #1a1a2a !important;
+}
+
+html[data-theme="dark"] .upgrade-features li {
+    color: var(--color-texto) !important;
+}
+
+html[data-theme="dark"] .upgrade-header p {
+    color: #999;
+}
+
+html[data-theme="dark"] .price-old {
+    color: #888;
+}
+
+html[data-theme="dark"] .price-current span {
+    color: #999;
+}
+
+html[data-theme="dark"] .btn-whatsapp-direct {
+    background: #075e54;
+}
+
+html[data-theme="dark"] .btn-whatsapp-direct:hover {
+    background: #128c7e;
+}
+
+html[data-theme="dark"] .botiquin-modal-content {
+    background: #2a1a1a !important;
+    border-color: #3a2a2a !important;
+}
+
+html[data-theme="dark"] .botiquin-response {
+    color: var(--color-texto);
+}
+
+html[data-theme="dark"] .botiquin-audios {
+    background: var(--card-bg);
+    border-top-color: var(--chat-border);
+}
+
+html[data-theme="dark"] .audio-item-stacked {
+    background: var(--chat-bg);
+    border-color: var(--card-border);
+}
+
+html[data-theme="dark"] .audio-info strong {
+    color: var(--color-texto);
+}
+
+html[data-theme="dark"] .audio-select {
+    background: var(--input-bg);
+    border-color: var(--input-border);
+    color: var(--color-texto);
+}
+
+html[data-theme="dark"] .audio-loop-btn,
+html[data-theme="dark"] .audio-play-btn {
+    background: var(--card-bg);
+    border-color: var(--card-border);
+}
+
+html[data-theme="dark"] .progreso-modal-content {
+    background: var(--chat-bg);
+}
+
+html[data-theme="dark"] .overlay {
+    background: rgba(15, 15, 30, 0.96);
+}
+
+html[data-theme="dark"] .auth-card {
+    background: var(--chat-bg);
+}
+
+html[data-theme="dark"] .auth-card h2 {
+    color: var(--color-texto);
+}
+
+html[data-theme="dark"] .auth-card input {
+    background: var(--input-bg);
+    border-color: var(--input-border);
+    color: var(--color-texto);
+}
+
+html[data-theme="dark"] .btn-social {
+    background: var(--card-bg) !important;
+    border-color: var(--card-border) !important;
+    color: var(--color-texto) !important;
+}
+
+html[data-theme="dark"] .btn-google:hover {
+    background: var(--hover-bg) !important;
+}
+
+html[data-theme="dark"] .btn-facebook {
+    background: #1877F2 !important;
+    color: white !important;
+}
+
+html[data-theme="dark"] .auth-divider {
+    color: #888;
+}
+
+html[data-theme="dark"] .divider-line {
+    border-bottom-color: var(--card-border);
+}
+
+html[data-theme="dark"] #forgotPasswordLink {
+    color: var(--color-acento);
+}
+
+html[data-theme="dark"] #resetPasswordContainer {
+    border-top-color: var(--card-border);
+}
+
+html[data-theme="dark"] .StripeElement {
+    background: var(--input-bg);
+    border-color: var(--input-border);
+}
+
+html[data-theme="dark"] #submit-payment:disabled {
+    background: #444;
+}
+
+html[data-theme="dark"] .support-header {
+    background: var(--header-bg);
+}
+
+html[data-theme="dark"] .help-modulo-btn {
+    background: var(--card-bg);
+    border-color: var(--card-border);
+    color: var(--color-acento);
+}
+
+html[data-theme="dark"] .help-modulo-btn:hover {
+    background: var(--color-acento);
+    color: var(--white-bg);
+}
+
+html[data-theme="dark"] .logout-btn {
+    color: #ff6b6b !important;
+}
+
+html[data-theme="dark"] .logout-btn:hover {
+    background: #ff6b6b !important;
+    color: white !important;
+}
+
+html[data-theme="dark"] .cancel-btn {
+    background: var(--card-bg);
+    border-color: var(--card-border);
+    color: var(--color-texto);
+}
+
+html[data-theme="dark"] .cancel-btn:hover {
+    background: var(--hover-bg);
 }

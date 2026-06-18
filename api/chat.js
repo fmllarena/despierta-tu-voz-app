@@ -1,11 +1,12 @@
 const { createClient } = require('@supabase/supabase-js');
 const { SYSTEM_PROMPTS } = require('./_lib/prompts');
 const { sanitizeGeminiHistory } = require('./_lib/utils');
-const Anthropic = require('@anthropic-ai/sdk');
 
 // --- CONFIGURACIÓN QWEN (Alibaba Cloud Model Studio — Workspace Privado) ---
 const QWEN_MODEL = "qwen3.5-flash";
 const QWEN_BASE_URL = process.env.QWEN_BASE_URL || "https://ws-vc3dtuyb2mo8tyf8.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1";
+
+// --- CONFIGURACIÓN QWEN API KEY 2 (fallback por cuota) ---
 
 // --- CONFIGURACIÓN GEMINI ---
 const GEMINI_MODEL = "gemini-3.5-flash";
@@ -74,10 +75,24 @@ async function processChat(req, res = null) {
         }
     }
 
-    // Intento 2: Gemini (Google)
+    // Intento 2: Qwen API Key 2 (fallback por cuota agotada)
+    if (process.env.QWEN_API_KEY_2) {
+        try {
+            console.log("🚀 Fallback con Qwen (key 2)...");
+            const result = await callQwenAPI2({ intent, prompt: finalPrompt, history, stream, res, fileData });
+            if (stream && res) return;
+            return result;
+        } catch (e) {
+            console.warn("⚠️ Qwen (key 2) falló:", e.message);
+            errors.push(`Qwen2: ${e.message}`);
+            if (stream && res && res.writableEnded) throw e;
+        }
+    }
+
+    // Intento 3: Gemini (Google)
     if (process.env.GEMINI_API_KEY) {
         try {
-            console.log("🚀 Backup con Gemini...");
+            console.log("🚀 Fallback con Gemini...");
             const result = await callGeminiAPI({ intent, prompt: finalPrompt, history, stream, res, fileData });
             if (stream && res) return;
             return result;
@@ -85,19 +100,6 @@ async function processChat(req, res = null) {
             console.warn("⚠️ Gemini falló:", e.message);
             errors.push(`Gemini: ${e.message}`);
             if (stream && res && res.writableEnded) throw e;
-        }
-    }
-
-    // Intento 3: Claude (Anthropic)
-    if (process.env.ANTHROPIC_API_KEY) {
-        try {
-            console.log("🚀 Backup con Claude...");
-            const result = await callClaudeAPI({ intent, prompt: finalPrompt, history });
-            if (stream && res) return sendAsSSE(res, result);
-            return result;
-        } catch (e) {
-            console.warn("⚠️ Claude falló:", e.message);
-            errors.push(`Claude: ${e.message}`);
         }
     }
 
@@ -278,6 +280,93 @@ async function callQwenAPI({ intent, prompt, history, stream, res, fileData }) {
 }
 
 /**
+ * Ejecuta la llamada a Qwen con la API Key 2 (fallback por cuota)
+ * Mismo endpoint y modelo que Qwen principal, distinta key
+ */
+async function callQwenAPI2({ intent, prompt, history, stream, res, fileData }) {
+    if (!process.env.QWEN_API_KEY_2) throw new Error("Falta QWEN_API_KEY_2");
+
+    const hasAudio = fileData && fileData.mimeType && fileData.mimeType.startsWith('audio/');
+    const hasImages = !hasAudio && fileData && (Array.isArray(fileData) ? fileData.length > 0 : fileData.data);
+    const modelToUse = hasAudio ? "qwen3.5-omni-flash" : (hasImages ? "qwen3-vl-plus" : QWEN_MODEL);
+
+    let userContent;
+    if (hasAudio) {
+        const audioFormat = fileData.mimeType.includes('wav') ? 'wav' : 'mp3';
+        userContent = [{
+            type: "input_audio",
+            input_audio: { data: `data:${fileData.mimeType};base64,${fileData.data}`, format: audioFormat }
+        }, { type: "text", text: prompt }];
+    } else if (hasImages) {
+        const pages = Array.isArray(fileData) ? fileData : [fileData];
+        userContent = [
+            ...pages.map(page => ({ type: "image_url", image_url: { url: `data:${page.mimeType};base64,${page.data}` } })),
+            { type: "text", text: prompt }
+        ];
+    } else {
+        userContent = prompt;
+    }
+
+    const messages = [
+        { role: "system", content: SYSTEM_PROMPTS[intent] },
+        ...history.filter(h => h?.parts?.[0]?.text).map(h => ({
+            role: h.role === 'model' ? 'assistant' : 'user',
+            content: h.parts[0].text
+        })),
+        { role: "user", content: userContent }
+    ];
+
+    const requestBody = {
+        model: modelToUse, messages,
+        temperature: 0.7,
+        max_tokens: (hasImages || hasAudio) ? 2000 : 1500,
+        stream: !!stream
+    };
+
+    const baseUrl = process.env.QWEN_BASE_URL_2 || QWEN_BASE_URL;
+    const response = await fetch(`${baseUrl}/chat/completions`, {
+        method: 'POST',
+        headers: {
+            'Authorization': `Bearer ${process.env.QWEN_API_KEY_2}`,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(requestBody)
+    });
+
+    if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        throw new Error(`Qwen2 Error ${response.status}: ${errData.error?.message || 'Unknown'}`);
+    }
+
+    if (stream && res) {
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        try {
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                const chunk = decoder.decode(value);
+                const lines = chunk.split('\n');
+                for (const line of lines) {
+                    if (line.startsWith('data: ') && line !== 'data: [DONE]') {
+                        try {
+                            const data = JSON.parse(line.substring(6));
+                            const text = data.choices?.[0]?.delta?.content;
+                            if (text) res.write(`data: ${JSON.stringify({ text })}\n\n`);
+                        } catch (e) { /* chunk incompleto */ }
+                    }
+                }
+            }
+        } finally { res.end(); }
+        return;
+    } else {
+        const data = await response.json();
+        const text = data.choices?.[0]?.message?.content || "";
+        return { text, info: `Qwen (key2) ${modelToUse}` };
+    }
+}
+
+/**
  * Ejecuta la llamada REST a Gemini (mantenido como fallback opcional)
  */
 async function callGeminiAPI({ intent, prompt, history, stream, res, fileData }) {
@@ -331,108 +420,6 @@ async function callGeminiAPI({ intent, prompt, history, stream, res, fileData })
 }
 
 /**
- * Ejecuta llamada a GLM-4-PLUS (Zhipu AI, compatible con OpenAI)
- */
-async function callGLMAPI({ intent, prompt, history }) {
-    if (!process.env.GLM_API_KEY) throw new Error("Falta API Key de GLM");
-
-    const response = await fetch("https://api.z.ai/api/paas/v4/chat/completions", {
-        method: "POST",
-        headers: {
-            "Authorization": `Bearer ${process.env.GLM_API_KEY}`,
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-            model: "glm-4-plus",
-            messages: [
-                { role: "system", content: SYSTEM_PROMPTS[intent] },
-                ...history.filter(h => h?.parts?.[0]?.text).map(h => ({
-                    role: h.role === 'model' ? 'assistant' : 'user',
-                    content: h.parts[0].text
-                })),
-                { role: "user", content: prompt }
-            ],
-            temperature: 0.7,
-            max_tokens: 1500
-        })
-    });
-
-    if (!response.ok) {
-        const errData = await response.json().catch(() => ({}));
-        throw new Error(`GLM Error ${response.status}: ${errData.error?.message || response.statusText}`);
-    }
-
-    const data = await response.json();
-    return { text: data.choices?.[0]?.message?.content || "", info: "GLM-4-PLUS" };
-}
-
-/**
- * Ejecuta fallback con Groq (REST)
- */
-async function callGroqAPI({ intent, prompt, history }) {
-    if (!process.env.GROQ_API_KEY) throw new Error("Falta API Key de Groq");
-
-    const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-        method: "POST",
-        headers: {
-            "Authorization": `Bearer ${process.env.GROQ_API_KEY}`,
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-            model: "llama-3.3-70b-versatile",
-            messages: [
-                { role: "system", content: SYSTEM_PROMPTS[intent] },
-                ...history.filter(h => h?.parts?.[0]?.text).map(h => ({
-                    role: h.role === 'model' ? 'assistant' : 'user',
-                    content: h.parts[0].text
-                })),
-                { role: "user", content: prompt }
-            ],
-            temperature: 0.7,
-            max_tokens: 1500
-        })
-    });
-
-    if (!response.ok) {
-        const errData = await response.json();
-        throw new Error(`Groq Error: ${errData.error?.message || response.statusText}`);
-    }
-
-    const data = await response.json();
-    return { text: data.choices?.[0]?.message?.content || "", info: "Groq (Llama 3.3)" };
-}
-
-/**
- * Ejecuta fallback con Claude (SDK)
- */
-async function callClaudeAPI({ intent, prompt, history }) {
-    if (!process.env.ANTHROPIC_API_KEY) throw new Error("Falta API Key de Claude");
-
-    const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-    const response = await anthropic.messages.create({
-        model: "claude-sonnet-4-6",
-        max_tokens: 1500,
-        system: SYSTEM_PROMPTS[intent],
-        messages: history.filter(h => h?.parts?.[0]?.text).map(h => ({
-            role: h.role === 'model' ? 'assistant' : 'user',
-            content: h.parts[0].text
-        })).concat([{ role: "user", content: prompt }]),
-    });
-
-    return { text: response.content[0].text, info: "Claude 3.5 Sonnet" };
-}
-
-/**
- * Convierte una respuesta no-streaming en formato SSE para el cliente
- * Usado por modelos que no soportan streaming nativo (GLM, Groq, Claude)
- */
-function sendAsSSE(res, result) {
-    console.log(`📡 Enviando respuesta de ${result.info || 'modelo'} como SSE`);
-    res.write(`data: ${JSON.stringify({ text: result.text })}\n\n`);
-    res.end();
-}
-
-/**
  * Maneja el flujo de datos SSE para streaming
  */
 async function handleStreamResponse(response, res) {
@@ -474,7 +461,7 @@ function handleError(error, res, stream) {
     console.error("⛔ [Backend Chat Error]:", error);
     if (res.writableEnded) return;
 
-    const msg = error.message.includes("Gemini Error") || error.message.includes("Groq") || error.message.includes("Claude")
+    const msg = error.message.includes("Gemini Error") || error.message.includes("Qwen2")
         ? "El Mentor está meditando profundamente... Prueba de nuevo."
         : "Error técnico temporal.";
 

@@ -64,6 +64,11 @@ export const TOUR = window.TOUR = {
             text: "Si no te apetece escribir, pulsa el micro y transcribiré tus palabras para que nuestra charla sea más fluida."
         },
         {
+            target: "#singBtn",
+            title: "Analiza tu Canto 🎵",
+            text: "Graba tu voz cantando con este botón. El Mentor escuchará y te dará feedback sobre tu afinación, resonancia y proyección vocal."
+        },
+        {
             target: "#quickUploadBtn",
             title: "Tus Archivos",
             text: "Haz clic aquí para compartir conmigo una partitura en PDF o un audio de tu ensayo. Lo analizaré para darte feedback específico. Archivos de hasta 3.5 Mb. Recomend: súbelo en modo mono."

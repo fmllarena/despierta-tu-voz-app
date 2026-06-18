@@ -346,7 +346,7 @@ async function cargarHistorialDesdeDB(userId, render = false) {
             .select('*')
             .eq('alumno', userId)
             .order('created_at', { ascending: false })
-            .limit(15);
+            .limit(10);
 
         if (error) {
             console.error("Error Supabase (select):", error);

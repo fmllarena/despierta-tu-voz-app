@@ -101,6 +101,7 @@ export const ELEMENTS = window.ELEMENTS = {
     get savePreferencesBtn() { return document.getElementById('savePreferencesBtn'); },
     get prefStatusMessage() { return document.getElementById('prefStatusMessage'); },
     get deleteAccountBtn() { return document.getElementById('deleteAccountBtn'); },
+    get darkModeToggle() { return document.getElementById('darkModeToggle'); },
 
     // Alert Custom
     get customAlert() { return document.getElementById('customAlert'); },

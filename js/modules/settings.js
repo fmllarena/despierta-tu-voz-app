@@ -2,6 +2,16 @@ import { ELEMENTS } from './elements.js';
 import { supabaseClient, userProfile, chatHistory } from './config.js';
 import { alertCustom } from './utils.js';
 
+function aplicarModoOscuro(activo) {
+    if (activo) {
+        document.documentElement.setAttribute('data-theme', 'dark');
+    } else {
+        document.documentElement.removeAttribute('data-theme');
+    }
+    localStorage.setItem('dtv_dark_mode', activo ? 'true' : 'false');
+}
+window.aplicarModoOscuro = aplicarModoOscuro;
+
 export const AJUSTES = window.AJUSTES = {
     abrirModal() {
         // Usar siempre window.userProfile — actualizado por main.js tras el login
@@ -22,6 +32,7 @@ export const AJUSTES = window.AJUSTES = {
         ELEMENTS.lengthSlider.value = profile.mentor_length ?? 5;
         ELEMENTS.languageSelect.value = profile.mentor_language || 'es';
         ELEMENTS.tratoPreferidoInput.value = profile.mentor_trato_preferido || '';
+        ELEMENTS.darkModeToggle.checked = localStorage.getItem('dtv_dark_mode') === 'true';
 
         if (ELEMENTS.upgradeSettingsBtn) {
             ELEMENTS.upgradeSettingsBtn.style.display = tier === 'premium' ? 'none' : 'block';
@@ -51,6 +62,8 @@ export const AJUSTES = window.AJUSTES = {
                 mentor_language: ELEMENTS.languageSelect.value,
                 mentor_trato_preferido: ELEMENTS.tratoPreferidoInput.value.trim()
             };
+
+            aplicarModoOscuro(ELEMENTS.darkModeToggle.checked);
 
             const { data: updatedProfile, error } = await db
                 .from('user_profiles')
@@ -121,7 +134,12 @@ export const AJUSTES = window.AJUSTES = {
             this.cerrarModal();
             ELEMENTS.upgradeModal.style.display = 'flex';
         });
+
+        ELEMENTS.darkModeToggle?.addEventListener('change', (e) => {
+            aplicarModoOscuro(e.target.checked);
+        });
     }
+
 };
 
 export const PREFERENCIAS = window.PREFERENCIAS = {
@@ -216,13 +234,20 @@ export const PREFERENCIAS = window.PREFERENCIAS = {
     }
 };
 
+function initDarkMode() {
+    const darkMode = localStorage.getItem('dtv_dark_mode') === 'true';
+    aplicarModoOscuro(darkMode);
+}
+
 // Inicialización automática
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
+        initDarkMode();
         AJUSTES.setup();
         PREFERENCIAS.setup();
     });
 } else {
+    initDarkMode();
     AJUSTES.setup();
     PREFERENCIAS.setup();
 }
