@@ -4,6 +4,8 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.1"
 const BREVO_API_KEY = Deno.env.get("BREVO_API_KEY") || ""
 const QWEN_API_KEY = Deno.env.get("QWEN_API_KEY") || ""
 const QWEN_BASE_URL = Deno.env.get("QWEN_BASE_URL") || "https://ws-vc3dtuyb2mo8tyf8.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1"
+const QWEN_API_KEY_2 = Deno.env.get("QWEN_API_KEY_2") || ""
+const QWEN_BASE_URL_2 = Deno.env.get("QWEN_BASE_URL_2") || ""
 const RETO_TEMPLATE_ID = Number(Deno.env.get("RETO_DIARIO_TEMPLATE_ID") || "28")
 const APP_URL = Deno.env.get("APP_URL") || "https://despierta-tu-voz-app.vercel.app"
 
@@ -99,23 +101,22 @@ serve(async (req) => {
 })
 
 async function generarRetoIA(userId: string, nombre: string | null, racha: number, fallback: any[]) {
-  try {
-    const semanaAtras = new Date()
-    semanaAtras.setDate(semanaAtras.getDate() - 7)
+  const semanaAtras = new Date()
+  semanaAtras.setDate(semanaAtras.getDate() - 7)
 
-    const { data: mensajes } = await supabase
-      .from("mensajes")
-      .select("texto, emisor, created_at")
-      .eq("alumno", userId)
-      .gte("created_at", semanaAtras.toISOString())
-      .order("created_at", { ascending: false })
-      .limit(10)
+  const { data: mensajes } = await supabase
+    .from("mensajes")
+    .select("texto, emisor, created_at")
+    .eq("alumno", userId)
+    .gte("created_at", semanaAtras.toISOString())
+    .order("created_at", { ascending: false })
+    .limit(10)
 
-    const historial = mensajes?.length
-      ? mensajes.reverse().map(m => `[${m.emisor}] ${m.texto}`).join("\n")
-      : "El usuario acaba de empezar, no hay historial reciente."
+  const historial = mensajes?.length
+    ? mensajes.reverse().map(m => `[${m.emisor}] ${m.texto}`).join("\n")
+    : "El usuario acaba de empezar, no hay historial reciente."
 
-    const prompt = `Eres un coach vocal que crea retos personalizados.
+  const prompt = `Eres un coach vocal que crea retos personalizados.
 Basándote en el historial del alumno, genera un reto vocal en JSON exacto:
 {
   "palabras_clave": "3-5 palabras separadas por coma (ej: apoyo, color de voz, agudos, proyección, resonancia)",
@@ -135,6 +136,25 @@ Reglas:
 Historial del alumno (${nombre || "sin nombre"}, racha: ${racha} días):
 ${historial}`
 
+  const keys = [
+    { key: QWEN_API_KEY, url: QWEN_BASE_URL },
+    { key: QWEN_API_KEY_2, url: QWEN_BASE_URL_2 || QWEN_BASE_URL }
+  ]
+
+  for (const { key, url } of keys) {
+    if (!key || !url) continue
+    try {
+      return await qwenRequest(key, url, prompt)
+    } catch (e) {
+      console.error(`[Qwen ${key.slice(0, 8)}...] ${e.message}`)
+    }
+  }
+
+  console.error(`[Reto Diario IA] Falló generación para ${userId}, usando fallback`)
+  return fallback[Math.floor(Math.random() * fallback.length)]
+}
+
+async function qwenRequest(apiKey: string, baseUrl: string, prompt: string) {
     const body = JSON.stringify({
       model: "qwen3.5-flash",
       messages: [
@@ -145,11 +165,11 @@ ${historial}`
       max_tokens: 300
     })
 
-    const res = await fetch(`${QWEN_BASE_URL}/chat/completions`, {
+    const res = await fetch(`${baseUrl}/chat/completions`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${QWEN_API_KEY}`
+        "Authorization": `Bearer ${apiKey}`
       },
       body
     })
@@ -181,8 +201,4 @@ ${historial}`
     }
 
     return reto
-  } catch (e) {
-    console.error(`[Reto Diario IA] Falló generación para ${userId}:`, e.message)
-    return fallback[Math.floor(Math.random() * fallback.length)]
-  }
 }
