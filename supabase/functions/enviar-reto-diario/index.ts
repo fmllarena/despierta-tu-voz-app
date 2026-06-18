@@ -47,12 +47,10 @@ serve(async (req) => {
       // Generar reto personalizado por IA o usar fallback
       let reto = await generarRetoIA(user.user_id, user.nombre, nuevaRacha, retosFallback)
 
-      // Asegurar formato correcto (fallback no tiene estos campos)
+      // Asegurar formato correcto: dividir descripcion en 6 pasos siempre
       if (!reto.palabras_clave) reto.palabras_clave = "vocalización, calentamiento, técnica"
-      if (!reto.paso_1) {
-        const pasos = (reto.descripcion || "").split(/\n+/).filter(Boolean)
-        for (let i = 0; i < 6; i++) reto[`paso_${i + 1}`] = pasos[i] || ""
-      }
+      const pasos = (reto.descripcion || "").split(/\n+/).filter(Boolean)
+      for (let i = 0; i < 6; i++) reto[`paso_${i + 1}`] = pasos[i] || ""
 
       const res = await fetch("https://api.brevo.com/v3/smtp/email", {
         method: "POST",
@@ -120,15 +118,15 @@ async function generarRetoIA(userId: string, nombre: string | null, racha: numbe
     const prompt = `Eres un coach vocal que crea retos personalizados.
 Basándote en el historial del alumno, genera un reto vocal en JSON exacto:
 {
-  "palabras_clave": "3-5 palabras separadas por coma sobre lo trabajado (ej: apoyo, color de voz, agudos, proyección, resonancia)",
+  "palabras_clave": "3-5 palabras separadas por coma (ej: apoyo, color de voz, agudos, proyección, resonancia)",
   "titulo": "título corto del reto",
-  "descripcion": "texto con 3-6 pasos del ejercicio, UNO POR LÍNEA, numerados (1. Paso uno\n2. Paso dos\n3. Paso tres\n4. Paso cuatro)",
+  "descripcion": "EXACTAMENTE 6 PASOS, cada uno en su propia línea, empezando con número y punto (1. Paso uno\n2. Paso dos\n3. Paso tres\n4. Paso cuatro\n5. Paso cinco\n6. Paso seis)",
   "tiempo": "duración (ej: 5 min)",
   "reflexion": "frase inspiradora relacionada"
 }
 
 Reglas:
-- descripcion debe contener 3-6 pasos concretos, cada uno empezando con número y punto (1. Paso 2. Paso 3. Paso...), UNO POR LÍNEA
+- descripcion DEBE contener EXACTAMENTE 6 líneas, cada una con un paso numerado (1. a 6.)
 - Reto práctico que se haga en menos de 10 min
 - Si el historial muestra un tema específico (respiración, afinación, emoción), enfócate en eso
 - Si no hay historial, elige un ejercicio de calentamiento básico
