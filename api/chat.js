@@ -63,28 +63,28 @@ async function processChat(req, res = null) {
     // --- CADENA DE REINTENTOS CON FALLBACK ---
     const errors = [];
 
-    // Intento 1: Qwen (Motor principal — Alibaba Cloud Model Studio)
-    if (process.env.QWEN_API_KEY) {
-        try {
-            console.log("🚀 Intentando con Qwen...");
-            return await callQwenAPI({ intent, prompt: finalPrompt, history, stream, res, fileData });
-        } catch (e) {
-            console.warn("⚠️ Qwen falló:", e.message);
-            errors.push(`Qwen: ${e.message}`);
-            if (stream && res && res.writableEnded) throw e;
-        }
-    }
-
-    // Intento 2: Qwen API Key 2 (fallback por cuota agotada)
+    // Intento 1: Qwen Key 2 (principal — funciona correctamente)
     if (process.env.QWEN_API_KEY_2) {
         try {
-            console.log("🚀 Fallback con Qwen (key 2)...");
+            console.log("🚀 Intentando con Qwen (key 2)...");
             const result = await callQwenAPI2({ intent, prompt: finalPrompt, history, stream, res, fileData });
             if (stream && res) return;
             return result;
         } catch (e) {
             console.warn("⚠️ Qwen (key 2) falló:", e.message);
             errors.push(`Qwen2: ${e.message}`);
+            if (stream && res && res.writableEnded) throw e;
+        }
+    }
+
+    // Intento 2: Qwen Key 1 (fallback)
+    if (process.env.QWEN_API_KEY) {
+        try {
+            console.log("🚀 Fallback con Qwen (key 1)...");
+            return await callQwenAPI({ intent, prompt: finalPrompt, history, stream, res, fileData });
+        } catch (e) {
+            console.warn("⚠️ Qwen (key 1) falló:", e.message);
+            errors.push(`Qwen: ${e.message}`);
             if (stream && res && res.writableEnded) throw e;
         }
     }
