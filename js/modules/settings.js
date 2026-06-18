@@ -9,6 +9,10 @@ function aplicarModoOscuro(activo) {
         document.documentElement.removeAttribute('data-theme');
     }
     localStorage.setItem('dtv_dark_mode', activo ? 'true' : 'false');
+    const logo = document.querySelector('.app-logo');
+    if (logo) {
+        logo.src = activo ? 'web-app-manifest-512x512_invert.png' : 'logo-appDTV2.png';
+    }
 }
 window.aplicarModoOscuro = aplicarModoOscuro;
 
