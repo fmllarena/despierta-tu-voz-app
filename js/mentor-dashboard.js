@@ -159,6 +159,9 @@ async function generateBriefing() {
         } else {
             ELEMENTS.reportContent.innerText = briefingData.text;
         }
+        if (ELEMENTS.reportStatus) {
+            ELEMENTS.reportStatus.innerText = `✨ ${briefingData.info || 'IA'}`;
+        }
         ELEMENTS.reportContainer.style.display = 'block';
 
     } catch (e) {
@@ -217,7 +220,7 @@ async function consultarAsesor() {
 
         if (data.error) throw new Error(data.error);
 
-        appendChatMessage('ia', data.text);
+        appendChatMessage('ia', `${data.text}\n\n— *${data.info || 'IA'}*`);
 
     } catch (e) {
         console.error("Error consulta asesor:", e);
