@@ -4183,6 +4183,14 @@ html[data-theme="dark"] .preferences-btn:hover {
     background: var(--hover-bg);
 }
 
+html[data-theme="dark"] .diario-seccion {
+    border-bottom-color: #a09080;
+}
+
+html[data-theme="dark"] .diario-seccion p {
+    color: #e0e0e0;
+}
+
 html[data-theme="dark"] .danger-hint {
     background: #3a2a1a;
     border-color: #5a4a2a;
