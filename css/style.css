@@ -3990,21 +3990,21 @@ input:disabled+.slider {
    DARK MODE
    ======================================== */
 html[data-theme="dark"] {
-    --color-fondo: #1a1a2e;
+    --color-fondo: #1a1a1a;
     --color-texto: #e0e0e0;
-    --color-acento: #b8a08e;
-    --chat-bg: #16213e;
-    --chat-border: #2a2a4a;
-    --msg-ia-bg: #1e2a3a;
-    --msg-ia-color: #c8c8d0;
-    --msg-ia-border: #2a2a4a;
-    --input-bg: #1a1a2e;
-    --input-border: #2a2a4a;
-    --card-bg: #16213e;
-    --card-border: #2a2a4a;
-    --header-bg: #0f3460;
-    --hover-bg: #1a1a3e;
-    --white-bg: #16213e;
+    --color-acento: #d4af37;
+    --chat-bg: #8e7d6d;
+    --chat-border: #a09080;
+    --msg-ia-bg: #9e8d7d;
+    --msg-ia-color: #1a1a1a;
+    --msg-ia-border: #ae9d8d;
+    --input-bg: #6a5b4d;
+    --input-border: #9e8d7d;
+    --card-bg: #7a6b5d;
+    --card-border: #9e8d7d;
+    --header-bg: #d4af37;
+    --hover-bg: #a09080;
+    --white-bg: #8e7d6d;
     --shadow-color: rgba(0, 0, 0, 0.4);
 }
 
@@ -4020,7 +4020,26 @@ html[data-theme="dark"] .chat-container {
 
 html[data-theme="dark"] .chat-header {
     background: var(--header-bg);
-    border-bottom: 1px solid var(--chat-border);
+    border-bottom: 1px solid #c49a2e;
+    color: #1a1a1a;
+}
+
+html[data-theme="dark"] .chat-header .logout-btn {
+    color: #1a1a1a !important;
+}
+
+html[data-theme="dark"] .chat-header .logout-btn:hover {
+    background: #1a1a1a !important;
+    color: #d4af37 !important;
+}
+
+html[data-theme="dark"] .chat-header #mainHelpBtn {
+    color: #1a1a1a;
+}
+
+html[data-theme="dark"] .chat-header #mainHelpBtn:hover {
+    color: #1a1a1a;
+    opacity: 0.8;
 }
 
 html[data-theme="dark"] .messages {
@@ -4035,12 +4054,13 @@ html[data-theme="dark"] .ia {
 
 html[data-theme="dark"] .ia.thinking {
     background: var(--msg-ia-bg);
-    color: #999;
+    color: #1a1a1a;
+    opacity: 0.8;
 }
 
 html[data-theme="dark"] .ia-botiquin {
-    background: #2a1a1a !important;
-    border-color: #3a2a2a !important;
+    background: #7a6b5d !important;
+    border-color: #8a7b6d !important;
 }
 
 html[data-theme="dark"] .input-area {
@@ -4053,13 +4073,13 @@ html[data-theme="dark"] .quick-actions {
 }
 
 html[data-theme="dark"] .action-btn {
-    background: #2a2a4a;
-    border-color: #3a3a5a;
+    background: #7a6b5d;
+    border-color: #9e8d7d;
     color: var(--color-texto);
 }
 
 html[data-theme="dark"] .action-btn:hover {
-    background: #3a3a5a;
+    background: #8a7b6d;
 }
 
 html[data-theme="dark"] input,
@@ -4070,17 +4090,17 @@ html[data-theme="dark"] textarea {
 }
 
 html[data-theme="dark"] #micBtn {
-    background: #2a2a4a;
-    border-color: #3a3a5a;
+    background: #7a6b5d;
+    border-color: #9e8d7d;
 }
 
 html[data-theme="dark"] #singBtn {
-    background: #2a1a1a;
-    border-color: #4a2a2a;
+    background: #7a6b5d;
+    border-color: #9e8d7d;
 }
 
 html[data-theme="dark"] #singBtn:hover {
-    background: #3a2a2a;
+    background: #8a7b6d;
 }
 
 html[data-theme="dark"] #sendBtn {
@@ -4092,11 +4112,11 @@ html[data-theme="dark"] .icon-nav-btn:hover {
 }
 
 html[data-theme="dark"] header p {
-    color: #999;
+    color: #b0a090;
 }
 
 html[data-theme="dark"] .modal-content {
-    background: var(--chat-bg);
+    background: var(--card-bg);
     color: var(--color-texto);
 }
 
@@ -4116,7 +4136,7 @@ html[data-theme="dark"] .profile-info {
 }
 
 html[data-theme="dark"] #settingsUserTier {
-    color: #999;
+    color: #b0a090;
 }
 
 html[data-theme="dark"] .slider-group {
@@ -4130,11 +4150,11 @@ html[data-theme="dark"] .slider-header {
 
 html[data-theme="dark"] .slider-label-left,
 html[data-theme="dark"] .slider-label-right {
-    color: #999;
+    color: #b0a090;
 }
 
 html[data-theme="dark"] .settings-section input[type="range"] {
-    background: #3a3a5a;
+    background: #5a4d3d;
 }
 
 html[data-theme="dark"] .setting-item label {
@@ -4149,24 +4169,24 @@ html[data-theme="dark"] .setting-item textarea {
 }
 
 html[data-theme="dark"] .preferences-btn {
-    background: #2a2a4a;
-    border-color: #3a3a5a;
+    background: var(--input-bg);
+    border-color: var(--chat-border);
     color: var(--color-acento);
 }
 
 html[data-theme="dark"] .preferences-btn:hover {
-    background: #3a3a5a;
+    background: var(--hover-bg);
 }
 
 html[data-theme="dark"] .danger-hint {
-    background: #2a2a1a;
-    border-color: #4a4a2a;
-    color: #999;
+    background: #3a2a1a;
+    border-color: #5a4a2a;
+    color: #b0a090;
 }
 
 html[data-theme="dark"] .session-quota-info {
     background: var(--card-bg);
-    border-left-color: #1a73e8;
+    border-left-color: var(--color-acento);
 }
 
 html[data-theme="dark"] .session-group {
@@ -4174,32 +4194,33 @@ html[data-theme="dark"] .session-group {
 }
 
 html[data-theme="dark"] .session-group.extra {
-    background: #2a2a1a;
-    border-color: #4a4a2a;
+    background: #3a3a1a;
+    border-color: #5a5a2a;
 }
 
 html[data-theme="dark"] .session-desc {
-    color: #999;
+    color: #b0a090;
 }
 
 html[data-theme="dark"] .btn-booking {
     background: var(--card-bg);
-    border-color: #1a73e8;
-    color: #5a9af8;
+    border-color: var(--color-acento);
+    color: var(--color-acento);
 }
 
 html[data-theme="dark"] .btn-booking:hover:not(:disabled) {
-    background: #1a73e8;
-    color: white;
+    background: var(--color-acento);
+    color: #1a1a1a;
 }
 
 html[data-theme="dark"] .btn-extra {
-    border-color: #b8860b;
-    color: #d4af37;
+    border-color: var(--color-acento);
+    color: var(--color-acento);
 }
 
 html[data-theme="dark"] #msg-bienvenida {
-    background: #0f3460;
+    background: #5a4d3d;
+    color: var(--color-texto);
 }
 
 html[data-theme="dark"] .app-footer {
@@ -4207,25 +4228,25 @@ html[data-theme="dark"] .app-footer {
 }
 
 html[data-theme="dark"] .app-footer a {
-    color: #999;
+    color: #b0a090;
 }
 
 html[data-theme="dark"] .whatsapp-float {
-    background: #2a2a4a;
+    background: #6a5b4d;
 }
 
 html[data-theme="dark"] .whatsapp-float:hover {
-    background: #3a3a5a;
+    background: #7a6b5d;
 }
 
 html[data-theme="dark"] .whatsapp-tooltip {
-    background: var(--chat-bg);
+    background: var(--card-bg);
     color: var(--color-texto);
     border-color: var(--chat-border);
 }
 
 html[data-theme="dark"] .music-menu-dropdown {
-    background: var(--chat-bg);
+    background: var(--card-bg);
     border-color: var(--chat-border);
 }
 
@@ -4244,12 +4265,12 @@ html[data-theme="dark"] .music-item:hover {
 }
 
 html[data-theme="dark"] .music-stop-option {
-    background: var(--chat-bg);
+    background: var(--card-bg);
     border-top-color: var(--chat-border);
 }
 
 html[data-theme="dark"] .music-stop-option:hover {
-    background: #2a1a1a;
+    background: #5a4d3d;
 }
 
 html[data-theme="dark"] .music-submenu {
@@ -4261,11 +4282,11 @@ html[data-theme="dark"] .music-info strong {
 }
 
 html[data-theme="dark"] .music-desc {
-    color: #888;
+    color: #b0a090;
 }
 
 html[data-theme="dark"] .dropdown-content {
-    background: var(--chat-bg);
+    background: var(--card-bg);
     border-color: var(--chat-border);
 }
 
@@ -4278,7 +4299,7 @@ html[data-theme="dark"] .dropdown-content button:hover {
 }
 
 html[data-theme="dark"] .help-tooltip {
-    background: var(--chat-bg);
+    background: var(--card-bg);
     border-color: var(--color-acento);
 }
 
@@ -4300,7 +4321,7 @@ html[data-theme="dark"] .help-btn-tag.voice {
 }
 
 html[data-theme="dark"] .help-btn-tag.sing {
-    background: #2a1a1a;
+    background: #5a4d3d;
 }
 
 html[data-theme="dark"] .help-btn-tag.files,
@@ -4319,11 +4340,11 @@ html[data-theme="dark"] #voiceSelect {
 }
 
 html[data-theme="dark"] .support-messages {
-    background: var(--chat-bg);
+    background: var(--card-bg);
 }
 
 html[data-theme="dark"] .support-input-area {
-    background: var(--chat-bg);
+    background: var(--card-bg);
     border-top-color: var(--chat-border);
 }
 
@@ -4334,12 +4355,12 @@ html[data-theme="dark"] .support-input-area input {
 }
 
 html[data-theme="dark"] .whatsapp-fallback {
-    background: var(--chat-bg);
+    background: var(--card-bg);
     border-top-color: var(--chat-border);
 }
 
 html[data-theme="dark"] .whatsapp-fallback p {
-    color: #999;
+    color: #b0a090;
 }
 
 html[data-theme="dark"] .progreso-header {
@@ -4360,7 +4381,7 @@ html[data-theme="dark"] .stat-value {
 }
 
 html[data-theme="dark"] .stat-label {
-    color: #999;
+    color: #b0a090;
 }
 
 html[data-theme="dark"] .progreso-section h3 {
@@ -4379,14 +4400,14 @@ html[data-theme="dark"] .modulo-row {
 }
 
 html[data-theme="dark"] .modulo-row.completed {
-    background: #1a2a1a;
-    border-color: #2a4a2a;
+    background: #2a3a2a;
+    border-color: #3a5a3a;
     color: #8ab87a;
 }
 
 html[data-theme="dark"] .modulo-check {
-    border-color: #4a4a5a;
-    color: #4a4a5a;
+    border-color: #6a5b4d;
+    color: #6a5b4d;
 }
 
 html[data-theme="dark"] .sesiones-bar-container {
@@ -4395,7 +4416,7 @@ html[data-theme="dark"] .sesiones-bar-container {
 }
 
 html[data-theme="dark"] .sesiones-bar {
-    background: #3a3a5a;
+    background: #6a5b4d;
 }
 
 html[data-theme="dark"] .progreso-upgrade {
@@ -4413,12 +4434,12 @@ html[data-theme="dark"] .check-item {
 }
 
 html[data-theme="dark"] .privacy-notice-box {
-    background: #2a2a1a;
+    background: #3a3a1a;
     color: var(--color-texto);
 }
 
 html[data-theme="dark"] #promoTermsBox {
-    background: rgba(142, 125, 109, 0.15) !important;
+    background: rgba(212, 175, 55, 0.15) !important;
     border-color: var(--color-acento) !important;
 }
 
@@ -4435,7 +4456,7 @@ html[data-theme="dark"] .preference-option h3 {
 }
 
 html[data-theme="dark"] .preference-option p {
-    color: #999;
+    color: #b0a090;
 }
 
 html[data-theme="dark"] .account-deletion-section {
@@ -4443,7 +4464,7 @@ html[data-theme="dark"] .account-deletion-section {
 }
 
 html[data-theme="dark"] .account-deletion-section p {
-    color: #999 !important;
+    color: #b0a090 !important;
 }
 
 html[data-theme="dark"] .switch-row {
@@ -4457,7 +4478,7 @@ html[data-theme="dark"] .switch-row label:first-child {
 }
 
 html[data-theme="dark"] .close-modal {
-    color: #888;
+    color: #b0a090;
 }
 
 html[data-theme="dark"] .close-modal:hover {
@@ -4478,11 +4499,11 @@ html[data-theme="dark"] #payment-summary-amount {
 }
 
 html[data-theme="dark"] .loader-premium {
-    background: var(--chat-bg);
+    background: var(--card-bg);
 }
 
 html[data-theme="dark"] .upgrade-modal-content {
-    background: var(--chat-bg);
+    background: var(--card-bg);
 }
 
 html[data-theme="dark"] .upgrade-card {
@@ -4495,11 +4516,11 @@ html[data-theme="dark"] .upgrade-card h3 {
 }
 
 html[data-theme="dark"] .upgrade-card.pro {
-    background: #1a1a2a !important;
+    background: #2a2a1a !important;
 }
 
 html[data-theme="dark"] .upgrade-card.premium {
-    background: #1a1a2a !important;
+    background: #2a2a1a !important;
 }
 
 html[data-theme="dark"] .upgrade-features li {
@@ -4507,15 +4528,15 @@ html[data-theme="dark"] .upgrade-features li {
 }
 
 html[data-theme="dark"] .upgrade-header p {
-    color: #999;
+    color: #b0a090;
 }
 
 html[data-theme="dark"] .price-old {
-    color: #888;
+    color: #b0a090;
 }
 
 html[data-theme="dark"] .price-current span {
-    color: #999;
+    color: #b0a090;
 }
 
 html[data-theme="dark"] .btn-whatsapp-direct {
@@ -4527,8 +4548,8 @@ html[data-theme="dark"] .btn-whatsapp-direct:hover {
 }
 
 html[data-theme="dark"] .botiquin-modal-content {
-    background: #2a1a1a !important;
-    border-color: #3a2a2a !important;
+    background: #5a4d3d !important;
+    border-color: #7a6b5d !important;
 }
 
 html[data-theme="dark"] .botiquin-response {
@@ -4541,7 +4562,7 @@ html[data-theme="dark"] .botiquin-audios {
 }
 
 html[data-theme="dark"] .audio-item-stacked {
-    background: var(--chat-bg);
+    background: var(--card-bg);
     border-color: var(--card-border);
 }
 
@@ -4562,15 +4583,15 @@ html[data-theme="dark"] .audio-play-btn {
 }
 
 html[data-theme="dark"] .progreso-modal-content {
-    background: var(--chat-bg);
+    background: var(--card-bg);
 }
 
 html[data-theme="dark"] .overlay {
-    background: rgba(15, 15, 30, 0.96);
+    background: rgba(26, 26, 26, 0.96);
 }
 
 html[data-theme="dark"] .auth-card {
-    background: var(--chat-bg);
+    background: var(--card-bg);
 }
 
 html[data-theme="dark"] .auth-card h2 {
@@ -4599,7 +4620,7 @@ html[data-theme="dark"] .btn-facebook {
 }
 
 html[data-theme="dark"] .auth-divider {
-    color: #888;
+    color: #b0a090;
 }
 
 html[data-theme="dark"] .divider-line {
@@ -4620,7 +4641,7 @@ html[data-theme="dark"] .StripeElement {
 }
 
 html[data-theme="dark"] #submit-payment:disabled {
-    background: #444;
+    background: #5a4d3d;
 }
 
 html[data-theme="dark"] .support-header {
@@ -4635,7 +4656,7 @@ html[data-theme="dark"] .help-modulo-btn {
 
 html[data-theme="dark"] .help-modulo-btn:hover {
     background: var(--color-acento);
-    color: var(--white-bg);
+    color: #1a1a1a;
 }
 
 html[data-theme="dark"] .logout-btn {
