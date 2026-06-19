@@ -1,28 +1,37 @@
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm'
 
 let supabase;
-let alumnosMap = {}; // Mapa para guardar email -> user_id
 let currentStudentId = null;
-const MENTOR_EMAIL = 'fernando@despiertatuvoz.com';
+let currentStudentName = null;
 
 const ELEMENTS = {
+    loginSection: document.getElementById('loginSection'),
+    loginEmail: document.getElementById('loginEmail'),
+    loginPassword: document.getElementById('loginPassword'),
+    loginBtn: document.getElementById('loginBtn'),
+    loginError: document.getElementById('loginError'),
+    dashboardSection: document.getElementById('dashboardSection'),
+    dashUserEmail: document.getElementById('dashUserEmail'),
+    logoutBtnDash: document.getElementById('logoutBtnDash'),
     studentEmail: document.getElementById('studentEmail'),
     studentList: document.getElementById('studentList'),
     searchStatus: document.getElementById('searchStatus'),
     reloadStudentsBtn: document.getElementById('reloadStudentsBtn'),
-    mentorPass: document.getElementById('mentorPass'),
-    generateBtn: document.getElementById('generateBtn'),
+    selectStudentBtn: document.getElementById('selectStudentBtn'),
+    studentInfo: document.getElementById('studentInfo'),
+    studentInfoText: document.getElementById('studentInfoText'),
+    changeStudentBtn: document.getElementById('changeStudentBtn'),
     loading: document.getElementById('loading'),
     reportContainer: document.getElementById('reportContainer'),
     reportContent: document.getElementById('reportContent'),
+    reportStatus: document.getElementById('reportStatus'),
+    generateBtn: document.getElementById('generateBtn'),
+    advisorChatBox: document.getElementById('advisorChatBox'),
+    advisorInput: document.getElementById('advisorInput'),
+    sendAdvisorBtn: document.getElementById('sendAdvisorBtn'),
     mentorNotes: document.getElementById('mentorNotes'),
     saveNotesBtn: document.getElementById('saveNotesBtn'),
     customQuery: document.getElementById('customQuery'),
-    debugInfo: document.getElementById('debugInfo'),
-    // Elementos del nuevo Chat Consultivo
-    advisorChatBox: document.getElementById('advisorChatBox'),
-    advisorInput: document.getElementById('advisorInput'),
-    sendAdvisorBtn: document.getElementById('sendAdvisorBtn')
 };
 
 async function init() {
@@ -31,37 +40,75 @@ async function init() {
         const config = await response.json();
         supabase = createClient(config.url, config.key);
 
+        ELEMENTS.loginBtn.onclick = login;
+        ELEMENTS.loginPassword.onkeypress = (e) => { if (e.key === 'Enter') login(); };
+
         const { data: { session } } = await supabase.auth.getSession();
-        const currentEmail = session?.user?.email?.toLowerCase();
-        console.log("Sesión activa:", currentEmail);
-
-        if (ELEMENTS.debugInfo) {
-            ELEMENTS.debugInfo.innerText = `Sesión: ${currentEmail || 'No iniciada'}`;
+        if (session?.user?.email?.toLowerCase() === 'fernando@despiertatuvoz.com') {
+            mostrarDashboard(session.user.email);
         }
-
-        if (!session || currentEmail !== MENTOR_EMAIL.toLowerCase()) {
-            if (ELEMENTS.searchStatus) ELEMENTS.searchStatus.innerText = `⚠️ Acceso restringido: Debes ser ${MENTOR_EMAIL}.`;
-            setTimeout(() => {
-                if (!session) alert("No hay sesión activa. Por favor, logueate primero.");
-                else alert(`Acceso denegado. Estás como: ${currentEmail}.`);
-                window.location.href = 'index.html';
-            }, 3000);
-            return;
-        }
-
-        ELEMENTS.generateBtn.onclick = generateBriefing;
-        ELEMENTS.saveNotesBtn.onclick = saveNotes;
-        if (ELEMENTS.reloadStudentsBtn) ELEMENTS.reloadStudentsBtn.onclick = cargarListaAlumnos;
-
-        // Listeners del Chat Consultivo
-        ELEMENTS.sendAdvisorBtn.onclick = consultarAsesor;
-        ELEMENTS.advisorInput.onkeypress = (e) => { if (e.key === 'Enter') consultarAsesor(); };
-
-        await cargarListaAlumnos();
     } catch (e) {
-        console.error("Error inicializando dashboard:", e);
-        alert("❌ Error al conectar con el servidor: " + e.message);
+        console.error("Error inicializando:", e);
+        ELEMENTS.loginError.innerText = "Error al conectar con el servidor.";
     }
+}
+
+async function login() {
+    const email = ELEMENTS.loginEmail.value.trim();
+    const password = ELEMENTS.loginPassword.value.trim();
+
+    if (!email || !password) {
+        ELEMENTS.loginError.innerText = "Introduce email y contraseña.";
+        return;
+    }
+
+    ELEMENTS.loginBtn.disabled = true;
+    ELEMENTS.loginBtn.innerText = "Entrando...";
+    ELEMENTS.loginError.innerText = "";
+
+    try {
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) throw error;
+
+        if (data.user?.email?.toLowerCase() !== 'fernando@despiertatuvoz.com') {
+            await supabase.auth.signOut();
+            throw new Error("Acceso denegado. Este panel es solo para el mentor.");
+        }
+
+        mostrarDashboard(data.user.email);
+    } catch (e) {
+        console.error("Error login:", e);
+        ELEMENTS.loginError.innerText = e.message;
+        ELEMENTS.loginBtn.disabled = false;
+        ELEMENTS.loginBtn.innerText = "Entrar";
+    }
+}
+
+async function mostrarDashboard(email) {
+    ELEMENTS.loginSection.style.display = 'none';
+    ELEMENTS.dashboardSection.style.display = 'block';
+    ELEMENTS.dashUserEmail.innerText = `Sesión: ${email}`;
+
+    ELEMENTS.logoutBtnDash.onclick = logout;
+    ELEMENTS.reloadStudentsBtn.onclick = cargarListaAlumnos;
+    ELEMENTS.selectStudentBtn.onclick = seleccionarAlumno;
+    ELEMENTS.studentEmail.onkeypress = (e) => { if (e.key === 'Enter') seleccionarAlumno(); };
+    ELEMENTS.generateBtn.onclick = generateBriefing;
+    ELEMENTS.saveNotesBtn.onclick = saveNotes;
+    ELEMENTS.sendAdvisorBtn.onclick = consultarAsesor;
+    ELEMENTS.advisorInput.onkeypress = (e) => { if (e.key === 'Enter') consultarAsesor(); };
+    ELEMENTS.changeStudentBtn.onclick = cambiarAlumno;
+
+    await cargarListaAlumnos();
+}
+
+async function logout() {
+    await supabase.auth.signOut();
+    currentStudentId = null;
+    ELEMENTS.dashboardSection.style.display = 'none';
+    ELEMENTS.loginSection.style.display = 'block';
+    ELEMENTS.loginBtn.disabled = false;
+    ELEMENTS.loginBtn.innerText = "Entrar";
 }
 
 async function cargarListaAlumnos() {
@@ -88,51 +135,61 @@ async function cargarListaAlumnos() {
 
         if (ELEMENTS.searchStatus) ELEMENTS.searchStatus.innerText = `✅ ${data.length} alumnos cargados.`;
     } catch (e) {
-        console.error("Error crítico lista alumnos:", e);
+        console.error("Error lista alumnos:", e);
         if (ELEMENTS.searchStatus) ELEMENTS.searchStatus.innerText = "❌ Error al cargar lista.";
     }
 }
 
-async function generateBriefing() {
+async function seleccionarAlumno() {
     const email = ELEMENTS.studentEmail.value.trim();
-    const pass = ELEMENTS.mentorPass.value.trim();
-
-    if (!email) return alert("Por favor, introduce el email del alumno.");
-    if (!pass) return alert("Por favor, introduce tu clave de mentor.");
-
-    ELEMENTS.generateBtn.disabled = true;
-    ELEMENTS.loading.style.display = 'block';
-    ELEMENTS.reportContainer.style.display = 'none';
-
-    // Resetear info previa si existe
-    if (ELEMENTS.reportContent) ELEMENTS.reportContent.innerText = "";
+    if (!email) return alert("Introduce el email del alumno.");
 
     try {
-        // 1. PASO 1: Búsqueda rápida (Reducimos variables para evitar timeout)
-        const emailLower = email.toLowerCase();
-
-        // Buscamos solo lo esencial primero
         const { data: userData, error: userError } = await supabase
             .from('user_profiles')
             .select('user_id, nombre, nivel_alquimia, mentor_notes')
-            .eq('email', emailLower)
+            .eq('email', email.toLowerCase())
             .maybeSingle();
 
         if (userError) throw userError;
-        if (!userData) throw new Error("Alumno no encontrado. Revisa si el email es correcto.");
+        if (!userData) throw new Error("Alumno no encontrado.");
 
         currentStudentId = userData.user_id;
+        currentStudentName = userData.nombre || email;
         ELEMENTS.mentorNotes.value = userData.mentor_notes || '';
+        ELEMENTS.studentInfoText.innerText = `👤 ${currentStudentName} (Nivel ${userData.nivel_alquimia || 1}/10)`;
+        ELEMENTS.studentInfo.style.display = 'flex';
+        ELEMENTS.reportContainer.style.display = 'block';
+        ELEMENTS.reportContent.innerHTML = '<p class="report-placeholder">Alumno cargado. Puedes chatear o solicitar un informe.</p>';
+        ELEMENTS.advisorChatBox.innerHTML = `<div class="chat-msg ia">Alumno seleccionado: <strong>${currentStudentName}</strong>. ¿Qué quieres consultar?</div>`;
+        console.log(`Alumno seleccionado: ${currentStudentName} (${currentStudentId})`);
+    } catch (e) {
+        alert(e.message);
+    }
+}
 
-        // Actualizar UI con información rápida
-        ELEMENTS.loading.innerHTML = `<p>✅ Alumno encontrado: <strong>${userData.nombre || 'Sin nombre'}</strong> (Nivel ${userData.nivel_alquimia || 1}/10)</p>
-                                    <p>🔮 Generando ahora el informe estratégico... Esto puede tardar unos segundos.</p>`;
+function cambiarAlumno() {
+    currentStudentId = null;
+    currentStudentName = null;
+    ELEMENTS.studentInfo.style.display = 'none';
+    ELEMENTS.studentEmail.value = '';
+    ELEMENTS.studentEmail.focus();
+    ELEMENTS.reportContainer.style.display = 'none';
+    ELEMENTS.mentorNotes.value = '';
+}
 
-        // 2. PASO 2: Llamada a la API de Briefing (Este es el proceso pesado)
+async function generateBriefing() {
+    if (!currentStudentId) return alert("Primero selecciona un alumno.");
+
+    ELEMENTS.generateBtn.disabled = true;
+    ELEMENTS.loading.style.display = 'block';
+    ELEMENTS.reportContent.innerHTML = '<p class="report-placeholder">Generando informe...</p>';
+
+    try {
         const customQ = ELEMENTS.customQuery.value.trim();
         const finalMessage = customQ
-            ? `CONSULTA ESPECÍFICA: ${customQ}\n(Para el alumno ${email})`
-            : `Genera el informe para ${email}`;
+            ? `CONSULTA ESPECÍFICA: ${customQ}\n(Para el alumno ${ELEMENTS.studentEmail.value.trim()})`
+            : `Genera el informe para ${ELEMENTS.studentEmail.value.trim()}`;
 
         const briefingResponse = await fetch('/api/chat', {
             method: 'POST',
@@ -140,8 +197,7 @@ async function generateBriefing() {
             body: JSON.stringify({
                 intent: 'mentor_briefing',
                 message: finalMessage,
-                userId: currentStudentId,
-                mentorPassword: pass
+                userId: currentStudentId
             })
         });
 
@@ -149,7 +205,7 @@ async function generateBriefing() {
 
         if (briefingData.error) {
             if (briefingData.isTimeout) {
-                throw new Error("El servidor ha tardado demasiado en recopilar toda la historia vocal. Prueba de nuevo en unos segundos, ¡a veces el Mentor necesita un segundo resuello!");
+                throw new Error("El servidor ha tardado demasiado. Prueba de nuevo.");
             }
             throw new Error(briefingData.error);
         }
@@ -162,39 +218,25 @@ async function generateBriefing() {
         if (ELEMENTS.reportStatus) {
             ELEMENTS.reportStatus.innerText = `✨ ${briefingData.info || 'IA'}`;
         }
-        ELEMENTS.reportContainer.style.display = 'block';
-
     } catch (e) {
-        console.error("Error en el proceso:", e);
-        alert("Aviso: " + e.message);
+        console.error("Error generando informe:", e);
+        alert("Error: " + e.message);
         ELEMENTS.loading.innerHTML = `<p style="color: #e74c3c;">❌ Error: ${e.message}</p>`;
     } finally {
         ELEMENTS.generateBtn.disabled = false;
-        if (ELEMENTS.reportContainer.style.display === 'block' || ELEMENTS.loading.innerHTML.includes('❌')) {
-            ELEMENTS.loading.style.display = 'none';
-        }
-        setTimeout(() => {
-            if (ELEMENTS.loading.style.display === 'none') {
-                ELEMENTS.loading.innerHTML = '<p>🔮 Conectando con la sabiduría del Mentor... Analizando historial...</p>';
-            }
-        }, 3000);
+        ELEMENTS.loading.style.display = 'none';
     }
 }
 
 async function consultarAsesor() {
     const query = ELEMENTS.advisorInput.value.trim();
-    const pass = ELEMENTS.mentorPass.value.trim();
-
     if (!query) return;
-    if (!currentStudentId) return alert("Primero debes generar el informe de un alumno para tener contexto.");
-    if (!pass) return alert("Introduce tu clave de mentor para consultar al asesor.");
+    if (!currentStudentId) return alert("Primero selecciona un alumno.");
 
-    // Añadir mensaje del mentor a la UI
     appendChatMessage('mentor', query);
     ELEMENTS.advisorInput.value = "";
-    ELEMENTS.advisorInput.disabled = true;
+    ELEMENTS.sendAdvisorBtn.disabled = true;
 
-    // Indicador de "pensando" en el chat
     const thinkingId = 'thinking-' + Date.now();
     const thinkingDiv = document.createElement('div');
     thinkingDiv.id = thinkingId;
@@ -210,8 +252,7 @@ async function consultarAsesor() {
             body: JSON.stringify({
                 intent: 'mentor_advisor',
                 message: query,
-                userId: currentStudentId,
-                mentorPassword: pass
+                userId: currentStudentId
             })
         });
 
@@ -220,14 +261,15 @@ async function consultarAsesor() {
 
         if (data.error) throw new Error(data.error);
 
-        appendChatMessage('ia', `${data.text}\n\n— *${data.info || 'IA'}*`);
+        console.log(`[Modelo IA] ${data.info || 'desconocido'}`);
+        appendChatMessage('ia', data.text);
 
     } catch (e) {
         console.error("Error consulta asesor:", e);
         document.getElementById(thinkingId)?.remove();
         appendChatMessage('ia', "❌ Error: " + e.message);
     } finally {
-        ELEMENTS.advisorInput.disabled = false;
+        ELEMENTS.sendAdvisorBtn.disabled = false;
         ELEMENTS.advisorInput.focus();
     }
 }
@@ -247,7 +289,7 @@ function appendChatMessage(role, text) {
 }
 
 async function saveNotes() {
-    if (!currentStudentId) return alert("Primero debes generar el informe de un alumno.");
+    if (!currentStudentId) return alert("Primero selecciona un alumno.");
 
     ELEMENTS.saveNotesBtn.disabled = true;
     ELEMENTS.saveNotesBtn.innerText = "Guardando...";
@@ -262,7 +304,7 @@ async function saveNotes() {
             .eq('user_id', currentStudentId);
 
         if (error) throw error;
-        alert("Anotaciones guardadas correctamente. La IA las tendrá en cuenta en el próximo encuentro. ✨");
+        alert("Anotaciones guardadas correctamente. ✨");
 
     } catch (e) {
         console.error("Error guardando notas:", e);
