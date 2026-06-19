@@ -96,7 +96,8 @@ async function mostrarDashboard(email) {
     ELEMENTS.generateBtn.onclick = generateBriefing;
     ELEMENTS.saveNotesBtn.onclick = saveNotes;
     ELEMENTS.sendAdvisorBtn.onclick = consultarAsesor;
-    ELEMENTS.advisorInput.onkeypress = (e) => { if (e.key === 'Enter') consultarAsesor(); };
+    ELEMENTS.advisorInput.onkeydown = (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); consultarAsesor(); } };
+    ELEMENTS.advisorInput.oninput = autoResizeInput;
     ELEMENTS.changeStudentBtn.onclick = cambiarAlumno;
 
     await cargarListaAlumnos();
@@ -272,6 +273,11 @@ async function consultarAsesor() {
         ELEMENTS.sendAdvisorBtn.disabled = false;
         ELEMENTS.advisorInput.focus();
     }
+}
+
+function autoResizeInput() {
+    ELEMENTS.advisorInput.style.height = 'auto';
+    ELEMENTS.advisorInput.style.height = Math.min(ELEMENTS.advisorInput.scrollHeight, 120) + 'px';
 }
 
 function appendChatMessage(role, text) {

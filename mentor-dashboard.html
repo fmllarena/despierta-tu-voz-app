@@ -349,12 +349,18 @@
             gap: 10px;
         }
 
-        .chat-input-area input {
+        .chat-input-area textarea {
             flex: 1;
             padding: 10px 15px;
             border: 1px solid #ddd;
             border-radius: 10px;
             font-size: 0.9rem;
+            font-family: inherit;
+            resize: none;
+            outline: none;
+            line-height: 1.4;
+            max-height: 120px;
+            overflow-y: auto;
         }
 
         .chat-send-btn {
@@ -571,7 +577,7 @@
                             <div class="chat-msg ia">Bienvenido. Selecciona un alumno para empezar a consultar.</div>
                         </div>
                         <div class="chat-input-area">
-                            <input type="text" id="advisorInput" placeholder="Haz una consulta sobre el alumno...">
+                            <textarea id="advisorInput" placeholder="Haz una consulta sobre el alumno..." rows="1"></textarea>
                             <button id="sendAdvisorBtn" class="chat-send-btn">➤</button>
                         </div>
                     </div>
