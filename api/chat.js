@@ -2,11 +2,13 @@ const { createClient } = require('@supabase/supabase-js');
 const { SYSTEM_PROMPTS } = require('./_lib/prompts');
 const { sanitizeGeminiHistory } = require('./_lib/utils');
 
-// --- CONFIGURACIÓN QWEN (Alibaba Cloud Model Studio — Workspace Privado) ---
+// --- CONFIGURACIÓN MISTRAL (primario — servidores UE, Francia) ---
+const MISTRAL_MODEL = "mistral-small-latest";
+const MISTRAL_BASE_URL = "https://api.mistral.ai/v1";
+
+// --- CONFIGURACIÓN QWEN (Alibaba Cloud Model Studio) ---
 const QWEN_MODEL = "qwen3.5-flash";
 const QWEN_BASE_URL = process.env.QWEN_BASE_URL || "https://ws-vc3dtuyb2mo8tyf8.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1";
-
-// --- CONFIGURACIÓN QWEN API KEY 2 (fallback por cuota) ---
 
 // --- CONFIGURACIÓN GEMINI ---
 const GEMINI_MODEL = "gemini-3.5-flash";
@@ -63,10 +65,24 @@ async function processChat(req, res = null) {
     // --- CADENA DE REINTENTOS CON FALLBACK ---
     const errors = [];
 
-    // Intento 1: Qwen Key 2 (principal — funciona correctamente)
+    // Intento 1: Mistral (primario — servidores UE, Francia)
+    if (process.env.MISTRAL_API_KEY) {
+        try {
+            console.log("🚀 Intentando con Mistral...");
+            const result = await callMistralAPI({ intent, prompt: finalPrompt, history, stream, res, fileData });
+            if (stream && res) return;
+            return result;
+        } catch (e) {
+            console.warn("⚠️ Mistral falló:", e.message);
+            errors.push(`Mistral: ${e.message}`);
+            if (stream && res && res.writableEnded) throw e;
+        }
+    }
+
+    // Intento 2: Qwen Key 2
     if (process.env.QWEN_API_KEY_2) {
         try {
-            console.log("🚀 Intentando con Qwen (key 2)...");
+            console.log("🚀 Fallback con Qwen (key 2)...");
             const result = await callQwenAPI2({ intent, prompt: finalPrompt, history, stream, res, fileData });
             if (stream && res) return;
             return result;
@@ -77,7 +93,7 @@ async function processChat(req, res = null) {
         }
     }
 
-    // Intento 2: Qwen Key 1 (fallback)
+    // Intento 3: Qwen Key 1
     if (process.env.QWEN_API_KEY) {
         try {
             console.log("🚀 Fallback con Qwen (key 1)...");
@@ -89,7 +105,7 @@ async function processChat(req, res = null) {
         }
     }
 
-    // Intento 3: Gemini (Google)
+    // Intento 4: Gemini (Google)
     if (process.env.GEMINI_API_KEY) {
         try {
             console.log("🚀 Fallback con Gemini...");
@@ -451,6 +467,76 @@ async function handleStreamResponse(response, res) {
     }
 }
 
+/**
+ * Ejecuta la llamada a Mistral AI (primario — servidores UE)
+ */
+async function callMistralAPI({ intent, prompt, history, stream, res, fileData }) {
+    if (!process.env.MISTRAL_API_KEY) throw new Error("Falta API Key de Mistral");
+
+    const hasAudio = fileData && fileData.mimeType && fileData.mimeType.startsWith('audio/');
+    const hasImages = !hasAudio && fileData && (Array.isArray(fileData) ? fileData.length > 0 : fileData.data);
+
+    const messages = [
+        { role: "system", content: SYSTEM_PROMPTS[intent] },
+        ...history.filter(h => h?.parts?.[0]?.text).map(h => ({
+            role: h.role === 'model' ? 'assistant' : 'user',
+            content: h.parts[0].text
+        })),
+        { role: "user", content: prompt }
+    ];
+
+    const requestBody = {
+        model: MISTRAL_MODEL,
+        messages,
+        temperature: 0.7,
+        max_tokens: 1500,
+        stream: !!stream
+    };
+
+    const response = await fetch(`${MISTRAL_BASE_URL}/chat/completions`, {
+        method: 'POST',
+        headers: {
+            'Authorization': `Bearer ${process.env.MISTRAL_API_KEY}`,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(requestBody)
+    });
+
+    if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        throw new Error(`Mistral Error ${response.status}: ${errData.error?.message || 'Unknown'}`);
+    }
+
+    if (stream && res) {
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        try {
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                const chunk = decoder.decode(value);
+                const lines = chunk.split('\n');
+                for (const line of lines) {
+                    if (line.startsWith('data: ') && line !== 'data: [DONE]') {
+                        try {
+                            const data = JSON.parse(line.substring(6));
+                            const text = data.choices?.[0]?.delta?.content;
+                            if (text) res.write(`data: ${JSON.stringify({ text })}\n\n`);
+                        } catch (e) { /* chunk incompleto */ }
+                    }
+                }
+            }
+        } finally {
+            res.end();
+        }
+        return;
+    } else {
+        const data = await response.json();
+        const text = data.choices?.[0]?.message?.content || "";
+        return { text, info: `${MISTRAL_MODEL} (UE)` };
+    }
+}
+
 function setupStreamHeaders(res) {
     res.setHeader('Content-Type', 'text/event-stream');
     res.setHeader('Cache-Control', 'no-cache');
@@ -461,7 +547,7 @@ function handleError(error, res, stream) {
     console.error("⛔ [Backend Chat Error]:", error);
     if (res.writableEnded) return;
 
-    const msg = error.message.includes("Gemini Error") || error.message.includes("Qwen2")
+    const msg = error.message.includes("Gemini Error") || error.message.includes("Qwen2") || error.message.includes("Mistral Error")
         ? "El Mentor está meditando profundamente... Prueba de nuevo."
         : "Error técnico temporal.";
 
