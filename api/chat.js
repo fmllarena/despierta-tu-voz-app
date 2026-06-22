@@ -6,10 +6,6 @@ const { sanitizeGeminiHistory } = require('./_lib/utils');
 const MISTRAL_MODEL = "mistral-small-latest";
 const MISTRAL_BASE_URL = "https://api.mistral.ai/v1";
 
-// --- CONFIGURACIÓN QWEN (Alibaba Cloud Model Studio) ---
-const QWEN_MODEL = "qwen3.5-flash";
-const QWEN_BASE_URL = process.env.QWEN_BASE_URL || "https://ws-vc3dtuyb2mo8tyf8.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1";
-
 // --- CONFIGURACIÓN GEMINI ---
 const GEMINI_MODEL = "gemini-3.5-flash";
 const GEMINI_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/models";
@@ -64,9 +60,10 @@ async function processChat(req, res = null) {
 
     // --- CADENA DE REINTENTOS CON FALLBACK ---
     const errors = [];
+    const hasMedia = fileData && ((fileData.mimeType && fileData.mimeType.startsWith('audio/')) || (fileData.data || (Array.isArray(fileData) && fileData.length > 0)));
 
-    // Intento 1: Mistral (primario — servidores UE, Francia)
-    if (process.env.MISTRAL_API_KEY) {
+    // Intento 1: Mistral (primario — servidores UE, Francia) — solo texto
+    if (!hasMedia && process.env.MISTRAL_API_KEY) {
         try {
             console.log("🚀 Intentando con Mistral...");
             const result = await callMistralAPI({ intent, prompt: finalPrompt, history, stream, res, fileData });
@@ -79,36 +76,10 @@ async function processChat(req, res = null) {
         }
     }
 
-    // Intento 2: Qwen Key 2
-    if (process.env.QWEN_API_KEY_2) {
-        try {
-            console.log("🚀 Fallback con Qwen (key 2)...");
-            const result = await callQwenAPI2({ intent, prompt: finalPrompt, history, stream, res, fileData });
-            if (stream && res) return;
-            return result;
-        } catch (e) {
-            console.warn("⚠️ Qwen (key 2) falló:", e.message);
-            errors.push(`Qwen2: ${e.message}`);
-            if (stream && res && res.writableEnded) throw e;
-        }
-    }
-
-    // Intento 3: Qwen Key 1
-    if (process.env.QWEN_API_KEY) {
-        try {
-            console.log("🚀 Fallback con Qwen (key 1)...");
-            return await callQwenAPI({ intent, prompt: finalPrompt, history, stream, res, fileData });
-        } catch (e) {
-            console.warn("⚠️ Qwen (key 1) falló:", e.message);
-            errors.push(`Qwen: ${e.message}`);
-            if (stream && res && res.writableEnded) throw e;
-        }
-    }
-
-    // Intento 4: Gemini (Google)
+    // Intento 2: Gemini (Google) — texto + audio + imágenes
     if (process.env.GEMINI_API_KEY) {
         try {
-            console.log("🚀 Fallback con Gemini...");
+            console.log("🚀 Intentando con Gemini...");
             const result = await callGeminiAPI({ intent, prompt: finalPrompt, history, stream, res, fileData });
             if (stream && res) return;
             return result;
@@ -187,199 +158,6 @@ async function buildUserContext(userId, intent, originPost = null, originCat = n
     }
 
     return context;
-}
-
-/**
- * Ejecuta la llamada a Qwen (Alibaba Cloud Model Studio — OpenAI-compatible)
- * Soporta: texto + imágenes (partituras renderizadas desde PDF en el navegador)
- * - fileData: { mimeType, data }         → imagen única (base64)
- * - fileData: [{ mimeType, data }, ...]  → múltiples páginas de partitura
- */
-async function callQwenAPI({ intent, prompt, history, stream, res, fileData }) {
-    if (!process.env.QWEN_API_KEY) throw new Error("Falta API Key de Qwen");
-
-    // Detectar si hay audio o imágenes
-    const hasAudio = fileData && fileData.mimeType && fileData.mimeType.startsWith('audio/');
-    const hasImages = !hasAudio && fileData && (Array.isArray(fileData) ? fileData.length > 0 : fileData.data);
-    const modelToUse = hasAudio ? "qwen3.5-omni-flash" : (hasImages ? "qwen3-vl-plus" : QWEN_MODEL);
-
-    // Construir contenido del mensaje de usuario (multimodal)
-    let userContent;
-    if (hasAudio) {
-        const audioFormat = fileData.mimeType.includes('wav') ? 'wav' : 'mp3';
-        userContent = [
-            {
-                type: "input_audio",
-                input_audio: {
-                    data: `data:${fileData.mimeType};base64,${fileData.data}`,
-                    format: audioFormat
-                }
-            },
-            { type: "text", text: prompt }
-        ];
-    } else if (hasImages) {
-        const pages = Array.isArray(fileData) ? fileData : [fileData];
-        userContent = [
-            // Páginas de partitura como imágenes base64
-            ...pages.map(page => ({
-                type: "image_url",
-                image_url: {
-                    url: `data:${page.mimeType};base64,${page.data}`
-                }
-            })),
-            // Texto/pregunta del usuario
-            { type: "text", text: prompt }
-        ];
-    } else {
-        userContent = prompt;
-    }
-
-    const messages = [
-        { role: "system", content: SYSTEM_PROMPTS[intent] },
-        ...history.filter(h => h?.parts?.[0]?.text).map(h => ({
-            role: h.role === 'model' ? 'assistant' : 'user',
-            content: h.parts[0].text
-        })),
-        { role: "user", content: userContent }
-    ];
-
-    const requestBody = {
-        model: modelToUse,
-        messages,
-        temperature: 0.7,
-        max_tokens: (hasImages || hasAudio) ? 2000 : 1500,
-        stream: !!stream
-    };
-
-    const response = await fetch(`${QWEN_BASE_URL}/chat/completions`, {
-        method: 'POST',
-        headers: {
-            'Authorization': `Bearer ${process.env.QWEN_API_KEY}`,
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(requestBody)
-    });
-
-    if (!response.ok) {
-        const errData = await response.json().catch(() => ({}));
-        throw new Error(`Qwen Error ${response.status}: ${errData.error?.message || 'Unknown'}`);
-    }
-
-    if (stream && res) {
-        const reader = response.body.getReader();
-        const decoder = new TextDecoder();
-        try {
-            while (true) {
-                const { done, value } = await reader.read();
-                if (done) break;
-                const chunk = decoder.decode(value);
-                const lines = chunk.split('\n');
-                for (const line of lines) {
-                    if (line.startsWith('data: ') && line !== 'data: [DONE]') {
-                        try {
-                            const data = JSON.parse(line.substring(6));
-                            const text = data.choices?.[0]?.delta?.content;
-                            if (text) res.write(`data: ${JSON.stringify({ text })}\n\n`);
-                        } catch (e) { /* chunk incompleto */ }
-                    }
-                }
-            }
-        } finally {
-            res.end();
-        }
-        return;
-    } else {
-        const data = await response.json();
-        const text = data.choices?.[0]?.message?.content || "";
-        return { text, info: `Qwen Vision (${modelToUse})` };
-    }
-}
-
-/**
- * Ejecuta la llamada a Qwen con la API Key 2 (fallback por cuota)
- * Mismo endpoint y modelo que Qwen principal, distinta key
- */
-async function callQwenAPI2({ intent, prompt, history, stream, res, fileData }) {
-    if (!process.env.QWEN_API_KEY_2) throw new Error("Falta QWEN_API_KEY_2");
-
-    const hasAudio = fileData && fileData.mimeType && fileData.mimeType.startsWith('audio/');
-    const hasImages = !hasAudio && fileData && (Array.isArray(fileData) ? fileData.length > 0 : fileData.data);
-    const modelToUse = hasAudio ? "qwen3.5-omni-flash" : (hasImages ? "qwen3-vl-plus" : QWEN_MODEL);
-
-    let userContent;
-    if (hasAudio) {
-        const audioFormat = fileData.mimeType.includes('wav') ? 'wav' : 'mp3';
-        userContent = [{
-            type: "input_audio",
-            input_audio: { data: `data:${fileData.mimeType};base64,${fileData.data}`, format: audioFormat }
-        }, { type: "text", text: prompt }];
-    } else if (hasImages) {
-        const pages = Array.isArray(fileData) ? fileData : [fileData];
-        userContent = [
-            ...pages.map(page => ({ type: "image_url", image_url: { url: `data:${page.mimeType};base64,${page.data}` } })),
-            { type: "text", text: prompt }
-        ];
-    } else {
-        userContent = prompt;
-    }
-
-    const messages = [
-        { role: "system", content: SYSTEM_PROMPTS[intent] },
-        ...history.filter(h => h?.parts?.[0]?.text).map(h => ({
-            role: h.role === 'model' ? 'assistant' : 'user',
-            content: h.parts[0].text
-        })),
-        { role: "user", content: userContent }
-    ];
-
-    const requestBody = {
-        model: modelToUse, messages,
-        temperature: 0.7,
-        max_tokens: (hasImages || hasAudio) ? 2000 : 1500,
-        stream: !!stream
-    };
-
-    const baseUrl = process.env.QWEN_BASE_URL_2 || QWEN_BASE_URL;
-    const response = await fetch(`${baseUrl}/chat/completions`, {
-        method: 'POST',
-        headers: {
-            'Authorization': `Bearer ${process.env.QWEN_API_KEY_2}`,
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(requestBody)
-    });
-
-    if (!response.ok) {
-        const errData = await response.json().catch(() => ({}));
-        throw new Error(`Qwen2 Error ${response.status}: ${errData.error?.message || 'Unknown'}`);
-    }
-
-    if (stream && res) {
-        const reader = response.body.getReader();
-        const decoder = new TextDecoder();
-        try {
-            while (true) {
-                const { done, value } = await reader.read();
-                if (done) break;
-                const chunk = decoder.decode(value);
-                const lines = chunk.split('\n');
-                for (const line of lines) {
-                    if (line.startsWith('data: ') && line !== 'data: [DONE]') {
-                        try {
-                            const data = JSON.parse(line.substring(6));
-                            const text = data.choices?.[0]?.delta?.content;
-                            if (text) res.write(`data: ${JSON.stringify({ text })}\n\n`);
-                        } catch (e) { /* chunk incompleto */ }
-                    }
-                }
-            }
-        } finally { res.end(); }
-        return;
-    } else {
-        const data = await response.json();
-        const text = data.choices?.[0]?.message?.content || "";
-        return { text, info: `Qwen (key2) ${modelToUse}` };
-    }
 }
 
 /**
@@ -547,7 +325,7 @@ function handleError(error, res, stream) {
     console.error("⛔ [Backend Chat Error]:", error);
     if (res.writableEnded) return;
 
-    const msg = error.message.includes("Gemini Error") || error.message.includes("Qwen2") || error.message.includes("Mistral Error")
+    const msg = error.message.includes("Gemini Error") || error.message.includes("Mistral Error")
         ? "El Mentor está meditando profundamente... Prueba de nuevo."
         : "Error técnico temporal.";
 

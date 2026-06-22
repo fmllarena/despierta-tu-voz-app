@@ -130,6 +130,7 @@ export const authActions = {
     async updatePassword() {
         const newPassword = document.getElementById('newPassword').value;
         if (!newPassword) return alert("Introduce la nueva contraseña.");
+        if (!state.supabase) await inicializarSupabase();
 
         const { error } = await state.supabase.auth.updateUser({ password: newPassword });
         if (error) alert("Error actualizando: " + error.message);

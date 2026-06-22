@@ -2,10 +2,8 @@ import { serve } from "https://deno.land/std@0.224.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.1"
 
 const BREVO_API_KEY = Deno.env.get("BREVO_API_KEY") || ""
-const QWEN_API_KEY = Deno.env.get("QWEN_API_KEY") || ""
-const QWEN_BASE_URL = Deno.env.get("QWEN_BASE_URL") || "https://ws-vc3dtuyb2mo8tyf8.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1"
-const QWEN_API_KEY_2 = Deno.env.get("QWEN_API_KEY_2") || ""
-const QWEN_BASE_URL_2 = Deno.env.get("QWEN_BASE_URL_2") || ""
+const MISTRAL_API_KEY = Deno.env.get("MISTRAL_API_KEY") || ""
+const MISTRAL_BASE_URL = "https://api.mistral.ai/v1"
 const RETO_TEMPLATE_ID = Number(Deno.env.get("RETO_DIARIO_TEMPLATE_ID") || "28")
 const APP_URL = Deno.env.get("APP_URL") || "https://despierta-tu-voz-app.vercel.app"
 
@@ -26,7 +24,7 @@ serve(async (req) => {
 
     const { data: users, error: userError } = await supabase
       .from("user_profiles")
-      .select("user_id, email, nombre, racha_dias, total_retos, ultimo_reto_enviado_at")
+      .select("user_id, email, nombre, racha_dias, total_retos, ultimo_reto_enviado_at, historia_vocal, creencias_transmutadas, mentor_trato_preferido")
       .eq("receive_daily_challenges", true)
       .eq("consent_marketing", true)
 
@@ -47,7 +45,7 @@ serve(async (req) => {
         ? (user.racha_dias || 0) + 1 : 1
 
       // Generar reto personalizado por IA o usar fallback
-      let reto = await generarRetoIA(user.user_id, user.nombre, nuevaRacha, retosFallback)
+      let reto = await generarRetoIA(user.user_id, user.nombre, nuevaRacha, user.historia_vocal, user.creencias_transmutadas, user.mentor_trato_preferido, retosFallback)
 
       // Asegurar formato correcto: dividir descripcion en 6 pasos siempre
       if (!reto.palabras_clave) reto.palabras_clave = "vocalización, calentamiento, técnica"
@@ -100,7 +98,7 @@ serve(async (req) => {
   }
 })
 
-async function generarRetoIA(userId: string, nombre: string | null, racha: number, fallback: any[]) {
+async function generarRetoIA(userId: string, nombre: string | null, racha: number, historiaVocal: string | null, creenciasTransmutadas: string | null, mentorTratoPreferido: string | null, fallback: any[]) {
   const semanaAtras = new Date()
   semanaAtras.setDate(semanaAtras.getDate() - 7)
 
@@ -133,20 +131,22 @@ Reglas:
 - Si no hay historial, elige un ejercicio de calentamiento básico
 - Responde ÚNICAMENTE el JSON, sin markdown ni explicaciones
 
-Historial del alumno (${nombre || "sin nombre"}, racha: ${racha} días):
+Perfil del alumno:
+- Nombre: ${nombre || "sin nombre"}
+- Racha: ${racha} días
+- Historia vocal: ${historiaVocal || "en construcción"}
+- Creencias transmutadas: ${creenciasTransmutadas || "ninguna registrada"}
+- Trato preferido: ${mentorTratoPreferido || "neutro"}
+
+Historial de mensajes recientes:
 ${historial}`
 
-  const keys = [
-    { key: QWEN_API_KEY, url: QWEN_BASE_URL },
-    { key: QWEN_API_KEY_2, url: QWEN_BASE_URL_2 || QWEN_BASE_URL }
-  ]
-
-  for (const { key, url } of keys) {
-    if (!key || !url) continue
+  // Mistral (primario)
+  if (MISTRAL_API_KEY) {
     try {
-      return await qwenRequest(key, url, prompt)
+      return await mistralRequest(prompt)
     } catch (e) {
-      console.error(`[Qwen ${key.slice(0, 8)}...] ${e.message}`)
+      console.error(`[Mistral] ${e.message}`)
     }
   }
 
@@ -154,9 +154,9 @@ ${historial}`
   return fallback[Math.floor(Math.random() * fallback.length)]
 }
 
-async function qwenRequest(apiKey: string, baseUrl: string, prompt: string) {
+async function mistralRequest(prompt: string) {
     const body = JSON.stringify({
-      model: "qwen3.5-flash",
+      model: "mistral-small-latest",
       messages: [
         { role: "system", content: "Eres un coach vocal experto. Respondes siempre en JSON válido." },
         { role: "user", content: prompt }
@@ -165,24 +165,24 @@ async function qwenRequest(apiKey: string, baseUrl: string, prompt: string) {
       max_tokens: 300
     })
 
-    const res = await fetch(`${baseUrl}/chat/completions`, {
+    const res = await fetch(`${MISTRAL_BASE_URL}/chat/completions`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${apiKey}`
+        "Authorization": `Bearer ${MISTRAL_API_KEY}`
       },
       body
     })
 
     if (!res.ok) {
       const errBody = await res.text()
-      console.error(`[Qwen API] ${res.status}: ${errBody.slice(0, 500)}`)
-      throw new Error(`Qwen ${res.status}`)
+      console.error(`[Mistral API] ${res.status}: ${errBody.slice(0, 500)}`)
+      throw new Error(`Mistral ${res.status}`)
     }
 
     const data = await res.json()
     const text = data?.choices?.[0]?.message?.content?.trim()
-    if (!text) throw new Error("Respuesta vacía de Qwen")
+    if (!text) throw new Error("Respuesta vacía de Mistral")
 
     const jsonMatch = text.match(/\{[\s\S]*\}/)
     if (!jsonMatch) throw new Error("No se encontró JSON en la respuesta")
@@ -192,7 +192,6 @@ async function qwenRequest(apiKey: string, baseUrl: string, prompt: string) {
       throw new Error("JSON incompleto")
     }
 
-    // Dividir descripción en pasos individuales para la plantilla
     const pasos = reto.descripcion
       ? reto.descripcion.split(/\n+/).filter(Boolean)
       : []
