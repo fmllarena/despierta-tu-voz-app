@@ -13,6 +13,13 @@
             --color-acento: #8e7d6d;
             --color-texto: #333;
             --glass-bg: rgba(255, 255, 255, 0.95);
+            --dark-bg: #1a1a1a;
+            --dark-card: #2a2a2a;
+            --dark-panel: #333;
+            --dark-text: #e0d8cc;
+            --dark-input: #3a3a3a;
+            --dark-border: #444;
+            --dark-acento: #d4af37;
         }
 
         .mentor-container {
@@ -489,6 +496,174 @@
                 transform: translateY(0);
             }
         }
+
+        /* --- DARK MODE --- */
+        html[data-theme="dark"] .mentor-container {
+            background: var(--dark-bg);
+            border-color: var(--dark-border);
+        }
+
+        html[data-theme="dark"] h1 {
+            color: var(--dark-acento);
+        }
+
+        html[data-theme="dark"] .subtitle {
+            color: #b0a090;
+        }
+
+        html[data-theme="dark"] .login-section {
+            background: var(--dark-card);
+        }
+
+        html[data-theme="dark"] .login-section h2 {
+            color: var(--dark-acento);
+        }
+
+        html[data-theme="dark"] input,
+        html[data-theme="dark"] textarea {
+            background: var(--dark-input);
+            border-color: var(--dark-border);
+            color: var(--dark-text);
+        }
+
+        html[data-theme="dark"] input:focus,
+        html[data-theme="dark"] textarea:focus {
+            border-color: var(--dark-acento);
+            box-shadow: 0 0 0 4px rgba(212, 175, 55, 0.15);
+        }
+
+        html[data-theme="dark"] .search-section {
+            background: var(--dark-card);
+        }
+
+        html[data-theme="dark"] .input-group label {
+            color: #b0a090;
+        }
+
+        html[data-theme="dark"] .search-status {
+            color: #888;
+        }
+
+        html[data-theme="dark"] .student-info {
+            background: var(--dark-card);
+            color: var(--dark-acento);
+        }
+
+        html[data-theme="dark"] .student-info .change-btn {
+            color: #b0a090;
+        }
+
+        html[data-theme="dark"] .panel-left,
+        html[data-theme="dark"] .panel-right {
+            background: var(--dark-panel);
+            border-color: var(--dark-border);
+        }
+
+        html[data-theme="dark"] .panel-header {
+            background: var(--dark-card);
+            border-bottom-color: var(--dark-border);
+            color: var(--dark-acento);
+        }
+
+        html[data-theme="dark"] .report-card {
+            color: var(--dark-text);
+        }
+
+        html[data-theme="dark"] .report-card h3 {
+            color: var(--dark-acento);
+        }
+
+        html[data-theme="dark"] .report-placeholder {
+            color: #888;
+        }
+
+        html[data-theme="dark"] .advisor-chat-box {
+            background: #222;
+        }
+
+        html[data-theme="dark"] .chat-msg.ia {
+            background: var(--dark-card);
+            color: var(--dark-text);
+            border-color: var(--dark-border);
+        }
+
+        html[data-theme="dark"] .chat-input-area {
+            background: var(--dark-panel);
+            border-top-color: var(--dark-border);
+        }
+
+        html[data-theme="dark"] .chat-input-area textarea {
+            background: var(--dark-input);
+            border-color: var(--dark-border);
+            color: var(--dark-text);
+        }
+
+        html[data-theme="dark"] .notes-area {
+            border-top-color: var(--dark-border);
+        }
+
+        html[data-theme="dark"] .notes-area h3 {
+            color: var(--dark-acento);
+        }
+
+        html[data-theme="dark"] .notes-description {
+            color: #b0a090;
+        }
+
+        html[data-theme="dark"] .save-btn {
+            background: var(--dark-acento);
+            color: #1a1a1a;
+            box-shadow: 0 4px 12px rgba(212, 175, 55, 0.2);
+        }
+
+        html[data-theme="dark"] .footer-nav a {
+            color: #666;
+        }
+
+        html[data-theme="dark"] .footer-nav a:hover {
+            color: var(--dark-acento);
+        }
+
+        html[data-theme="dark"] #dashUserEmail {
+            color: #b0a090 !important;
+        }
+
+        html[data-theme="dark"] .main-btn {
+            box-shadow: 0 4px 15px rgba(212, 175, 55, 0.2);
+        }
+
+        html[data-theme="dark"] .main-btn.secondary {
+            background: #555;
+            box-shadow: 0 4px 15px rgba(85, 85, 85, 0.3);
+        }
+
+        html[data-theme="dark"] .toggle-dark-mode {
+            color: var(--dark-acento);
+            border-color: var(--dark-acento);
+        }
+
+        .toggle-dark-mode {
+            background: transparent;
+            border: 1px solid var(--color-acento);
+            color: var(--color-acento);
+            padding: 6px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+            margin-right: 8px;
+        }
+
+        .toggle-dark-mode:hover {
+            background: var(--color-acento);
+            color: white;
+        }
+
+        html[data-theme="dark"] .toggle-dark-mode:hover {
+            background: var(--dark-acento);
+            color: #1a1a1a;
+        }
     </style>
 </head>
 
@@ -516,7 +691,10 @@
         <div id="dashboardSection" class="dashboard-section">
             <div class="dashboard-header">
                 <span id="dashUserEmail" style="font-size: 0.85rem; color: #888;"></span>
-                <button id="logoutBtnDash" class="logout-btn-dash">Cerrar Sesión</button>
+                <div>
+                    <button id="toggleDarkMode" class="toggle-dark-mode">🌙</button>
+                    <button id="logoutBtnDash" class="logout-btn-dash">Cerrar Sesión</button>
+                </div>
             </div>
 
             <div class="search-section">

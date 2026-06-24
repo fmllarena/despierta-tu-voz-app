@@ -35,6 +35,7 @@ const ELEMENTS = {
 };
 
 async function init() {
+    aplicarModoOscuro();
     try {
         const response = await fetch('/api/config');
         const config = await response.json();
@@ -88,6 +89,10 @@ async function mostrarDashboard(email) {
     ELEMENTS.loginSection.style.display = 'none';
     ELEMENTS.dashboardSection.style.display = 'block';
     ELEMENTS.dashUserEmail.innerText = `Sesión: ${email}`;
+
+    aplicarModoOscuro();
+    ELEMENTS.toggleDarkMode = document.getElementById('toggleDarkMode');
+    if (ELEMENTS.toggleDarkMode) ELEMENTS.toggleDarkMode.onclick = toggleDarkMode;
 
     ELEMENTS.logoutBtnDash.onclick = logout;
     ELEMENTS.reloadStudentsBtn.onclick = cargarListaAlumnos;
@@ -273,6 +278,19 @@ async function consultarAsesor() {
         ELEMENTS.sendAdvisorBtn.disabled = false;
         ELEMENTS.advisorInput.focus();
     }
+}
+
+function aplicarModoOscuro() {
+    const isDark = localStorage.getItem('mentorDarkMode') === 'true';
+    document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+    const btn = document.getElementById('toggleDarkMode');
+    if (btn) btn.textContent = isDark ? '☀️' : '🌙';
+}
+
+function toggleDarkMode() {
+    const isDark = localStorage.getItem('mentorDarkMode') !== 'true';
+    localStorage.setItem('mentorDarkMode', isDark);
+    aplicarModoOscuro();
 }
 
 function autoResizeInput() {
