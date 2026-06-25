@@ -34,10 +34,13 @@ export const authActions = {
         try {
             const { error } = await state.supabase.auth.signInWithPassword({ email, password });
             if (error) {
-                if (error.message && (error.message.includes("Email not confirmed") || error.status === 400)) {
-                    // Si el error es falta de confirmación, damos un mensaje constructivo
+                if (error.message && error.message.includes("Email not confirmed")) {
                     ELEMENTS.authError.style.color = "#e67e22";
                     return ELEMENTS.authError.innerText = "Por favor, confirma tu email para entrar. Revisa tu bandeja de entrada o carpeta de Spam.";
+                }
+                if (error.message && error.message.includes("Invalid login credentials")) {
+                    ELEMENTS.authError.style.color = "#e74c3c";
+                    return ELEMENTS.authError.innerText = "Contraseña incorrecta. Si no recuerdas tu contraseña, usa 'He olvidado mi contraseña'.";
                 }
                 throw error;
             }
