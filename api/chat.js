@@ -146,7 +146,7 @@ async function buildUserContext(userId, intent, originPost = null, originCat = n
             .eq('alumno', userId)
             .eq('emisor', 'resumen_diario')
             .order('created_at', { ascending: false })
-            .limit(5);
+            .limit(7);
 
         if (cronicas?.length > 0) {
             context += `\n--- MEMORIA RECIENTE (Crónicas de Alquimia) ---\n`;
