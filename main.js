@@ -1038,70 +1038,48 @@ if (ELEMENTS.chatInput) {
         }
     });
 }
-let sessionSaved = false;
+let saveCounter = 0;
 if (ELEMENTS.navButtons.logout) {
     ELEMENTS.navButtons.logout.addEventListener('click', async () => {
-        if (!sessionSaved) {
-            ELEMENTS.navButtons.logout.innerText = "Guardando...";
+        ELEMENTS.navButtons.logout.innerText = "Guardando...";
+        saveCounter++;
 
-            if (chatHistory.length >= 2) {
-                console.log("📝 Generando crónica final de la sesión antes de cerrar...");
-                await MODULOS.generarCronicaSesion();
-            }
-
-            await MODULOS.generarYGuardarResumen();
-
-            appendMessage(`✨ Sesión guardada con éxito.\n\nPuedes seguir explorando Mi Viaje, tu Diario de Alquimia, revisar esta conversación o cerrar la app cuando quieras.`, 'ia', 'msg-sesion-guardada');
-
-            setTimeout(() => {
-                const containerGuardada = document.getElementById('msg-sesion-guardada');
-                const msgInner = containerGuardada?.querySelector('.message.ia');
-                if (msgInner) {
-                    const downloadBtn = document.createElement('button');
-                    downloadBtn.className = 'chat-download-btn';
-                    downloadBtn.style.marginTop = '15px';
-                    downloadBtn.style.display = 'block';
-                    downloadBtn.innerHTML = '📥 Descargar sesión (.doc)';
-                    downloadBtn.onclick = (e) => { e.stopPropagation(); exportarChatDoc(); };
-                    msgInner.appendChild(downloadBtn);
-
-                    const logoutRealBtn = document.createElement('button');
-                    logoutRealBtn.className = 'chat-logout-btn';
-                    logoutRealBtn.style.marginTop = '10px';
-                    logoutRealBtn.style.display = 'block';
-                    logoutRealBtn.innerHTML = '🚪 Cerrar sesión y salir';
-                    logoutRealBtn.onclick = async () => {
-                        logoutRealBtn.innerHTML = '⌛ Cerrando...';
-                        logoutRealBtn.disabled = true;
-                        await supabaseClient.auth.signOut();
-                        location.reload();
-                    };
-                    msgInner.appendChild(logoutRealBtn);
-                }
-            }, 100);
-
-            sessionSaved = true;
-        } else {
-            appendMessage(`Puedes cerrar sesión cuando quieras:`, 'ia');
-            setTimeout(() => {
-                const msgs = document.querySelectorAll('.ia-container:last-child .message.ia');
-                const msgInner = msgs[msgs.length - 1];
-                if (msgInner) {
-                    const logoutRealBtn = document.createElement('button');
-                    logoutRealBtn.className = 'chat-logout-btn';
-                    logoutRealBtn.style.marginTop = '10px';
-                    logoutRealBtn.style.display = 'block';
-                    logoutRealBtn.innerHTML = '🚪 Cerrar sesión y salir';
-                    logoutRealBtn.onclick = async () => {
-                        logoutRealBtn.innerHTML = '⌛ Cerrando...';
-                        logoutRealBtn.disabled = true;
-                        await supabaseClient.auth.signOut();
-                        location.reload();
-                    };
-                    msgInner.appendChild(logoutRealBtn);
-                }
-            }, 100);
+        if (chatHistory.length >= 2) {
+            console.log("📝 Generando crónica final de la sesión antes de cerrar...");
+            await MODULOS.generarCronicaSesion();
         }
+
+        await MODULOS.generarYGuardarResumen();
+
+        const msgId = 'msg-sesion-guardada-' + saveCounter;
+        appendMessage(`✨ Sesión guardada con éxito.\n\nPuedes seguir explorando Mi Viaje, tu Diario de Alquimia, revisar esta conversación o cerrar la app cuando quieras.`, 'ia', msgId);
+
+        setTimeout(() => {
+            const containerGuardada = document.getElementById(msgId);
+            const msgInner = containerGuardada?.querySelector('.message.ia');
+            if (msgInner) {
+                const downloadBtn = document.createElement('button');
+                downloadBtn.className = 'chat-download-btn';
+                downloadBtn.style.marginTop = '15px';
+                downloadBtn.style.display = 'block';
+                downloadBtn.innerHTML = '📥 Descargar sesión (.doc)';
+                downloadBtn.onclick = (e) => { e.stopPropagation(); exportarChatDoc(); };
+                msgInner.appendChild(downloadBtn);
+
+                const logoutRealBtn = document.createElement('button');
+                logoutRealBtn.className = 'chat-logout-btn';
+                logoutRealBtn.style.marginTop = '10px';
+                logoutRealBtn.style.display = 'block';
+                logoutRealBtn.innerHTML = '🚪 Cerrar sesión y salir';
+                logoutRealBtn.onclick = async () => {
+                    logoutRealBtn.innerHTML = '⌛ Cerrando...';
+                    logoutRealBtn.disabled = true;
+                    await supabaseClient.auth.signOut();
+                    location.reload();
+                };
+                msgInner.appendChild(logoutRealBtn);
+            }
+        }, 100);
 
         ELEMENTS.navButtons.logout.innerText = "SALIR";
     });
