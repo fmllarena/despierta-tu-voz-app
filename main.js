@@ -664,7 +664,8 @@ async function sendMessage() {
         const sessionFinalRegex = /\[\s*SESION\\?_?FINAL\s*\]/i;
         if (responseText && sessionFinalRegex.test(responseText)) {
             console.log("✅ [Protocolo Cierre] Tag [SESION_FINAL] detectado (vía regex). Disparando botones.");
-            if (finalEl) crearBotonesAccionFinal(finalEl);
+            const targetEl = finalEl || document.getElementById(responseId)?.querySelector('.message.ia');
+            if (targetEl) crearBotonesAccionFinal(targetEl);
         }
     } catch (e) {
         document.getElementById(thinkingId)?.remove();
