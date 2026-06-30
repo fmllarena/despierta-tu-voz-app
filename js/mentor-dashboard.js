@@ -325,7 +325,11 @@ function appendChatMessage(role, text) {
     }
 
     ELEMENTS.advisorChatBox.appendChild(msgDiv);
-    ELEMENTS.advisorChatBox.scrollTop = ELEMENTS.advisorChatBox.scrollHeight;
+    if (role === 'ia') {
+        msgDiv.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } else {
+        ELEMENTS.advisorChatBox.scrollTop = ELEMENTS.advisorChatBox.scrollHeight;
+    }
 }
 
 async function saveNotes() {
