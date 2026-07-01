@@ -4709,7 +4709,8 @@ html[data-theme="dark"] .cancel-btn:hover {
     z-index: 10;
 }
 .ia-container:hover .copy-msg-btn,
-.message.user:hover .copy-msg-btn {
+.message.user:hover .copy-msg-btn,
+.chat-msg:hover .copy-msg-btn {
     opacity: 1;
 }
 .copy-msg-btn:hover {
@@ -4717,7 +4718,8 @@ html[data-theme="dark"] .cancel-btn:hover {
 }
 html[data-theme="dark"] .copy-msg-btn {
     color: #d4af37;
+    background: rgba(255,255,255,0.08);
 }
 html[data-theme="dark"] .copy-msg-btn:hover {
-    background: rgba(212,175,55,0.2);
+    background: rgba(212,175,55,0.3);
 }
