@@ -184,6 +184,15 @@ async function seleccionarAlumno() {
         ELEMENTS.reportContainer.style.display = 'block';
         ELEMENTS.reportContent.innerHTML = '<p class="report-placeholder">Alumno cargado. Puedes chatear o solicitar un informe.</p>';
         ELEMENTS.advisorChatBox.innerHTML = `<div class="chat-msg ia">Alumno seleccionado: <strong>${currentStudentName}</strong>. ¿Qué quieres consultar?</div>`;
+
+        // Si hay consulta específica escrita, enviarla automáticamente al chat asesor
+        const queryText = ELEMENTS.customQuery.value.trim();
+        if (queryText) {
+            ELEMENTS.advisorInput.value = queryText;
+            ELEMENTS.customQuery.value = '';
+            consultarAsesor();
+        }
+
         console.log(`Alumno seleccionado: ${currentStudentName} (${currentStudentId})`);
     } catch (e) {
         alert(e.message);
