@@ -4695,7 +4695,7 @@ html[data-theme="dark"] .cancel-btn:hover {
 
 .copy-msg-btn {
     position: absolute;
-    top: 4px;
+    bottom: 4px;
     right: 4px;
     background: rgba(128,128,128,0.1);
     border: none;
