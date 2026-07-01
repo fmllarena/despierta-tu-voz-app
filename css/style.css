@@ -291,6 +291,7 @@ header p {
     border-radius: 20px;
     font-size: 0.95em;
     line-height: 1.4;
+    position: relative;
 }
 
 .ia-container {
@@ -299,6 +300,7 @@ header p {
     gap: 12px;
     margin-bottom: 4px;
     width: 100%;
+    position: relative;
 }
 
 .ia-avatar {
@@ -4689,4 +4691,33 @@ html[data-theme="dark"] .cancel-btn {
 
 html[data-theme="dark"] .cancel-btn:hover {
     background: var(--hover-bg);
+}
+
+.copy-msg-btn {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    background: rgba(128,128,128,0.1);
+    border: none;
+    border-radius: 6px;
+    padding: 4px 6px;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.2s, background 0.2s;
+    color: var(--color-acento, #8e7d6d);
+    line-height: 1;
+    z-index: 10;
+}
+.ia-container:hover .copy-msg-btn,
+.message.user:hover .copy-msg-btn {
+    opacity: 1;
+}
+.copy-msg-btn:hover {
+    background: rgba(128,128,128,0.25);
+}
+html[data-theme="dark"] .copy-msg-btn {
+    color: #d4af37;
+}
+html[data-theme="dark"] .copy-msg-btn:hover {
+    background: rgba(212,175,55,0.2);
 }

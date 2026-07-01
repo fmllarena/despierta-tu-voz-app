@@ -974,6 +974,21 @@ function appendMessage(text, type, id = null) {
         container.appendChild(avatar);
         container.appendChild(div);
 
+        const copyBtn = document.createElement('button');
+        copyBtn.className = 'copy-msg-btn';
+        copyBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>`;
+        copyBtn.title = 'Copiar mensaje';
+        copyBtn.onclick = (e) => {
+            e.stopPropagation();
+            navigator.clipboard.writeText(text.replace(/\[\s*SESION\\?_?FINAL\s*\]/gi, "").trim()).then(() => {
+                copyBtn.innerHTML = '<span style="font-size:11px">✓ Copiado</span>';
+                setTimeout(() => {
+                    copyBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>`;
+                }, 2000);
+            });
+        };
+        container.appendChild(copyBtn);
+
         ELEMENTS.chatBox.appendChild(container);
 
         // Desplazar el chat
@@ -982,6 +997,20 @@ function appendMessage(text, type, id = null) {
         div.innerText = text;
         div.style.whiteSpace = "pre-wrap";
         ELEMENTS.chatBox.appendChild(div);
+        const copyBtn = document.createElement('button');
+        copyBtn.className = 'copy-msg-btn';
+        copyBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>`;
+        copyBtn.title = 'Copiar mensaje';
+        copyBtn.onclick = (e) => {
+            e.stopPropagation();
+            navigator.clipboard.writeText(text).then(() => {
+                copyBtn.innerHTML = '<span style="font-size:11px">✓ Copiado</span>';
+                setTimeout(() => {
+                    copyBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>`;
+                }, 2000);
+            });
+        };
+        div.appendChild(copyBtn);
         ELEMENTS.chatBox.scrollTop = ELEMENTS.chatBox.scrollHeight;
     } else {
         // Cualquier otro tipo (resumen_diario, sistema, etc.) no lo imprimimos en el chat
