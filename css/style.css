@@ -2760,18 +2760,26 @@ textarea {
 
 /* -------------------- */
 
+.music-playall-option,
 .music-stop-option {
     padding: 12px;
     border: none;
     background: #fff;
-    color: #e74c3c;
     font-weight: bold;
     font-size: 0.8em;
     cursor: pointer;
     width: 100%;
     border-top: 1px solid #eee;
 }
-
+.music-playall-option {
+    color: var(--color-acento, #8e7d6d);
+}
+.music-playall-option:hover {
+    background: #f4ece6;
+}
+.music-stop-option {
+    color: #e74c3c;
+}
 .music-stop-option:hover {
     background: #fdf2f2;
 }
@@ -4279,11 +4287,18 @@ html[data-theme="dark"] .music-item:hover {
     background: var(--hover-bg);
 }
 
+html[data-theme="dark"] .music-playall-option {
+    background: var(--card-bg);
+    border-top-color: var(--chat-border);
+    color: #d4af37;
+}
+html[data-theme="dark"] .music-playall-option:hover {
+    background: #5a4d3d;
+}
 html[data-theme="dark"] .music-stop-option {
     background: var(--card-bg);
     border-top-color: var(--chat-border);
 }
-
 html[data-theme="dark"] .music-stop-option:hover {
     background: #5a4d3d;
 }

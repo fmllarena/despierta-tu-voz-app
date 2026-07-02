@@ -3,6 +3,9 @@ import { AUDIOS_BOTIQUIN } from './config.js';
 
 let currentAudio = null;
 let currentAudioBtn = null;
+let playlist = [];
+let playlistIndex = -1;
+let isPlayAll = false;
 
 export const MUSICA = window.MUSICA = {
     init: function () {
@@ -74,6 +77,12 @@ export const MUSICA = window.MUSICA = {
             ELEMENTS.musicMenu.style.display = 'none';
         });
 
+        // Reproducir todo
+        ELEMENTS.playAllBtn?.addEventListener('click', () => {
+            this.reproducirTodo();
+            ELEMENTS.musicMenu.style.display = 'none';
+        });
+
         // Cerrar al pulsar fuera
         window.addEventListener('click', (e) => {
             if (ELEMENTS.musicMenu && !ELEMENTS.musicMenu.contains(e.target) && e.target !== ELEMENTS.musicToggleBtn) {
@@ -84,11 +93,71 @@ export const MUSICA = window.MUSICA = {
     },
 
     seleccionarYReproducir: function (file, itemBtn) {
+        isPlayAll = false;
+        playlist = [];
+        playlistIndex = -1;
         reproducirAudioBotiquin(file, itemBtn, true);
         ELEMENTS.musicMenu.style.display = 'none';
     },
 
+    obtenerListaCompleta: function () {
+        const flat = [];
+        AUDIOS_BOTIQUIN.forEach(item => {
+            if (item.isCategory && item.items) {
+                item.items.forEach(sub => flat.push(sub));
+            } else {
+                flat.push(item);
+            }
+        });
+        return flat;
+    },
+
+    reproducirTodo: function () {
+        const lista = this.obtenerListaCompleta();
+        if (!lista.length) return;
+        isPlayAll = true;
+        playlist = lista;
+        playlistIndex = 0;
+        this.reproducirPlaylistActual();
+    },
+
+    reproducirPlaylistActual: function () {
+        if (!isPlayAll || playlistIndex < 0 || playlistIndex >= playlist.length) return;
+        const item = playlist[playlistIndex];
+        const tempBtn = document.createElement('button');
+        tempBtn.className = 'music-item';
+        tempBtn.innerHTML = `<span class="music-status-icon">▶</span>`;
+        const statusIcon = tempBtn.querySelector('.music-status-icon');
+        reproducirAudioBotiquin(item.file, tempBtn, true);
+        const isActive = currentAudio && currentAudio.src.includes(item.file.split('/').pop());
+
+        // Sobrescribir onended para pasar a la siguiente
+        if (currentAudio) {
+            currentAudio.loop = false;
+            const originalEnded = currentAudio.onended;
+            currentAudio.onended = () => {
+                setAudioBtnIcon(tempBtn, '▶');
+                currentAudio = null;
+                currentAudioBtn = null;
+                if (isPlayAll) {
+                    playlistIndex = (playlistIndex + 1) % playlist.length;
+                    this.reproducirPlaylistActual();
+                }
+                MUSICA.actualizarUI();
+            };
+        }
+
+        // Mostrar en el toggle qué canción suena
+        const toggleImg = ELEMENTS.musicToggleBtn?.querySelector('img');
+        if (toggleImg) toggleImg.src = 'assets/ondas-sonoras.png';
+        ELEMENTS.musicToggleBtn?.classList.add('playing');
+        ELEMENTS.musicToggleBtn.title = `🎵 ${item.title}`;
+    },
+
     detenerTodo: function () {
+        isPlayAll = false;
+        playlist = [];
+        playlistIndex = -1;
         if (currentAudio) {
             currentAudio.pause();
             currentAudio = null;
@@ -97,6 +166,7 @@ export const MUSICA = window.MUSICA = {
             setAudioBtnIcon(currentAudioBtn, '▶');
             currentAudioBtn = null;
         }
+        if (ELEMENTS.musicToggleBtn) ELEMENTS.musicToggleBtn.title = 'Música ambiental';
         this.actualizarUI();
     },
 
