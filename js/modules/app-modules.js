@@ -59,6 +59,22 @@ export const APP_MODULES = {
             });
             ELEMENTS.botiquinContent.appendChild(audioList);
 
+            // Botones de control de reproducción
+            const controlRow = document.createElement('div');
+            controlRow.style.cssText = 'display:flex;gap:10px;margin-top:15px;';
+            const playAllBtn = document.createElement('button');
+            playAllBtn.className = 'audio-btn';
+            playAllBtn.innerHTML = '▶ Reproducir todo';
+            playAllBtn.onclick = () => window.MUSICA.reproducirTodo();
+            const stopBtn = document.createElement('button');
+            stopBtn.className = 'audio-btn';
+            stopBtn.style.cssText = 'background:#e74c3c !important;color:#fff !important;';
+            stopBtn.innerHTML = '✕ Detener reproducción';
+            stopBtn.onclick = () => window.MUSICA.detenerTodo();
+            controlRow.appendChild(playAllBtn);
+            controlRow.appendChild(stopBtn);
+            ELEMENTS.botiquinContent.appendChild(controlRow);
+
         } catch (e) {
             console.error(e);
             ELEMENTS.botiquinContent.innerHTML = `<p class="error-msg">Error al preparar el botiquín. Inténtalo de nuevo.</p>`;
