@@ -39,7 +39,9 @@ async function init() {
     try {
         const response = await fetch('/api/config');
         const config = await response.json();
-        supabase = createClient(config.url, config.key);
+        supabase = createClient(config.url, config.key, {
+            auth: { storageKey: 'sb-mentor-auth-token' }
+        });
 
         ELEMENTS.loginBtn.onclick = login;
         ELEMENTS.loginPassword.onkeypress = (e) => { if (e.key === 'Enter') login(); };
