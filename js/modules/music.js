@@ -11,6 +11,7 @@ export const MUSICA = window.MUSICA = {
     init: function () {
         this.renderMenu();
         this.setupListeners();
+        this.cargarVolumen();
     },
 
     renderMenu: function () {
@@ -75,6 +76,13 @@ export const MUSICA = window.MUSICA = {
         ELEMENTS.stopMusicBtn?.addEventListener('click', () => {
             this.detenerTodo();
             ELEMENTS.musicMenu.style.display = 'none';
+        });
+
+        // Control de volumen
+        ELEMENTS.volumeSlider?.addEventListener('input', (e) => {
+            const vol = parseFloat(e.target.value);
+            if (currentAudio) currentAudio.volume = vol;
+            localStorage.setItem('dtv_volume', vol);
         });
 
         // Reproducir todo
@@ -170,6 +178,15 @@ export const MUSICA = window.MUSICA = {
         this.actualizarUI();
     },
 
+    cargarVolumen: function () {
+        const saved = localStorage.getItem('dtv_volume');
+        if (saved !== null) {
+            const vol = parseFloat(saved);
+            if (ELEMENTS.volumeSlider) ELEMENTS.volumeSlider.value = vol;
+            if (currentAudio) currentAudio.volume = vol;
+        }
+    },
+
     actualizarUI: function () {
         const toggleImg = ELEMENTS.musicToggleBtn?.querySelector('img');
         if (currentAudio && !currentAudio.paused) {
@@ -230,6 +247,7 @@ export function reproducirAudioBotiquin(file, btn, isFromGlobalMenu = false) {
 
     currentAudio = new Audio(file);
     currentAudio.loop = isLooping;
+    currentAudio.volume = parseFloat(localStorage.getItem('dtv_volume') || '0.5');
     currentAudioBtn = btn;
 
     currentAudio.play()

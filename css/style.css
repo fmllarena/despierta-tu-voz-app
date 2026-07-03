@@ -2630,6 +2630,39 @@ textarea {
     transform: scale(1.1);
 }
 
+.volume-slider {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 55px;
+    height: 4px;
+    border-radius: 2px;
+    background: #ddd;
+    outline: none;
+    cursor: pointer;
+    margin-right: 6px;
+    flex-shrink: 0;
+}
+
+.volume-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--color-acento, #8e7d6d);
+    cursor: pointer;
+    border: none;
+}
+
+.volume-slider::-moz-range-thumb {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--color-acento, #8e7d6d);
+    cursor: pointer;
+    border: none;
+}
+
 .music-menu-dropdown {
     position: absolute;
     top: 45px;
@@ -4285,6 +4318,18 @@ html[data-theme="dark"] .music-item {
 
 html[data-theme="dark"] .music-item:hover {
     background: var(--hover-bg);
+}
+
+html[data-theme="dark"] .volume-slider {
+    background: var(--chat-border, #555);
+}
+
+html[data-theme="dark"] .volume-slider::-webkit-slider-thumb {
+    background: #d4af37;
+}
+
+html[data-theme="dark"] .volume-slider::-moz-range-thumb {
+    background: #d4af37;
 }
 
 html[data-theme="dark"] .music-playall-option {

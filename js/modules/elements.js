@@ -115,6 +115,7 @@ export const ELEMENTS = window.ELEMENTS = {
     get musicListItems() { return document.getElementById('musicListItems'); },
     get stopMusicBtn() { return document.getElementById('stopMusicBtn'); },
     get playAllBtn() { return document.getElementById('playAllBtn'); },
+    get volumeSlider() { return document.getElementById('volumeSlider'); },
 
     // Quick Actions
     get quickUploadBtn() { return document.getElementById('quickUploadBtn'); },
