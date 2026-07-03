@@ -2636,7 +2636,9 @@ textarea {
     width: 110px;
     height: 2px;
     background: transparent;
+    border: none;
     outline: none;
+    box-shadow: none;
     cursor: pointer;
     margin-right: 6px;
     flex-shrink: 0;
@@ -2645,13 +2647,17 @@ textarea {
 .volume-slider::-webkit-slider-runnable-track {
     height: 2px;
     background: #ccc;
+    border: none;
     border-radius: 1px;
+    box-shadow: none;
 }
 
 .volume-slider::-moz-range-track {
     height: 2px;
     background: #ccc;
+    border: none;
     border-radius: 1px;
+    box-shadow: none;
 }
 
 .volume-slider::-webkit-slider-thumb {
