@@ -4779,7 +4779,7 @@ html[data-theme="dark"] .cancel-btn:hover {
     position: absolute;
     bottom: 4px;
     right: 4px;
-    background: rgba(128,128,128,0.1);
+    background: rgba(128,128,128,0.15);
     border: none;
     border-radius: 6px;
     padding: 4px 6px;
@@ -4790,6 +4790,10 @@ html[data-theme="dark"] .cancel-btn:hover {
     line-height: 1;
     z-index: 10;
 }
+.user .copy-msg-btn {
+    color: #fff;
+    background: rgba(255,255,255,0.15);
+}
 .copy-msg-btn:hover {
     opacity: 1;
     background: rgba(128,128,128,0.25);
@@ -4797,6 +4801,10 @@ html[data-theme="dark"] .cancel-btn:hover {
 html[data-theme="dark"] .copy-msg-btn {
     color: #d4af37;
     background: rgba(255,255,255,0.08);
+}
+html[data-theme="dark"] .user .copy-msg-btn {
+    color: #fff;
+    background: rgba(255,255,255,0.2);
 }
 html[data-theme="dark"] .copy-msg-btn:hover {
     opacity: 1;
