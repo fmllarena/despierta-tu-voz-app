@@ -2633,14 +2633,25 @@ textarea {
 .volume-slider {
     -webkit-appearance: none;
     appearance: none;
-    width: 55px;
-    height: 4px;
-    border-radius: 2px;
-    background: #ddd;
+    width: 110px;
+    height: 2px;
+    background: transparent;
     outline: none;
     cursor: pointer;
     margin-right: 6px;
     flex-shrink: 0;
+}
+
+.volume-slider::-webkit-slider-runnable-track {
+    height: 2px;
+    background: #ccc;
+    border-radius: 1px;
+}
+
+.volume-slider::-moz-range-track {
+    height: 2px;
+    background: #ccc;
+    border-radius: 1px;
 }
 
 .volume-slider::-webkit-slider-thumb {
@@ -2649,16 +2660,17 @@ textarea {
     width: 12px;
     height: 12px;
     border-radius: 50%;
-    background: var(--color-acento, #8e7d6d);
+    background: #888;
     cursor: pointer;
     border: none;
+    margin-top: -5px;
 }
 
 .volume-slider::-moz-range-thumb {
     width: 12px;
     height: 12px;
     border-radius: 50%;
-    background: var(--color-acento, #8e7d6d);
+    background: #888;
     cursor: pointer;
     border: none;
 }
@@ -4320,16 +4332,20 @@ html[data-theme="dark"] .music-item:hover {
     background: var(--hover-bg);
 }
 
-html[data-theme="dark"] .volume-slider {
+html[data-theme="dark"] .volume-slider::-webkit-slider-runnable-track {
+    background: var(--chat-border, #555);
+}
+
+html[data-theme="dark"] .volume-slider::-moz-range-track {
     background: var(--chat-border, #555);
 }
 
 html[data-theme="dark"] .volume-slider::-webkit-slider-thumb {
-    background: #d4af37;
+    background: #aaa;
 }
 
 html[data-theme="dark"] .volume-slider::-moz-range-thumb {
-    background: #d4af37;
+    background: #aaa;
 }
 
 html[data-theme="dark"] .music-playall-option {
