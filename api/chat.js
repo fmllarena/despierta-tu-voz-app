@@ -219,14 +219,16 @@ async function callGeminiAPI({ intent, prompt, history, stream, res, fileData })
 async function handleStreamResponse(response, res) {
     const reader = response.body.getReader();
     const decoder = new TextDecoder();
+    let buffer = "";
 
     try {
         while (true) {
             const { done, value } = await reader.read();
             if (done) break;
 
-            const chunk = decoder.decode(value);
-            const lines = chunk.split('\n');
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split('\n');
+            buffer = lines.pop();
 
             for (const line of lines) {
                 if (line.startsWith('data: ')) {
@@ -288,12 +290,14 @@ async function callMistralAPI({ intent, prompt, history, stream, res, fileData }
     if (stream && res) {
         const reader = response.body.getReader();
         const decoder = new TextDecoder();
+        let buffer = "";
         try {
             while (true) {
                 const { done, value } = await reader.read();
                 if (done) break;
-                const chunk = decoder.decode(value);
-                const lines = chunk.split('\n');
+                buffer += decoder.decode(value, { stream: true });
+                const lines = buffer.split('\n');
+                buffer = lines.pop();
                 for (const line of lines) {
                     if (line.startsWith('data: ') && line !== 'data: [DONE]') {
                         try {
