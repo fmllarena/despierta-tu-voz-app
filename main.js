@@ -980,12 +980,7 @@ function appendMessage(text, type, id = null) {
         copyBtn.title = 'Copiar mensaje';
         copyBtn.onclick = (e) => {
             e.stopPropagation();
-            navigator.clipboard.writeText(text.replace(/\[\s*SESION\\?_?FINAL\s*\]/gi, "").trim()).then(() => {
-                copyBtn.innerHTML = '<span style="font-size:11px">✓ Copiado</span>';
-                setTimeout(() => {
-                    copyBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>`;
-                }, 2000);
-            });
+            copiarConFormato(div, text.replace(/\[\s*SESION\\?_?FINAL\s*\]/gi, "").trim(), copyBtn);
         };
         container.appendChild(copyBtn);
 
@@ -1003,18 +998,44 @@ function appendMessage(text, type, id = null) {
         copyBtn.title = 'Copiar mensaje';
         copyBtn.onclick = (e) => {
             e.stopPropagation();
-            navigator.clipboard.writeText(text).then(() => {
-                copyBtn.innerHTML = '<span style="font-size:11px">✓ Copiado</span>';
-                setTimeout(() => {
-                    copyBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>`;
-                }, 2000);
-            });
+            copiarConFormato(div, text, copyBtn);
         };
         div.appendChild(copyBtn);
         ELEMENTS.chatBox.scrollTop = ELEMENTS.chatBox.scrollHeight;
     } else {
         // Cualquier otro tipo (resumen_diario, sistema, etc.) no lo imprimimos en el chat
         console.log(`[Chat] Mensaje de tipo "${type}" ignorado en la interfaz.`);
+    }
+}
+
+function copiarConFormato(msgDiv, plainText, copyBtn) {
+    const htmlContent = msgDiv.innerHTML;
+    const fallback = () => {
+        navigator.clipboard.writeText(plainText).then(() => {
+            copyBtn.innerHTML = '<span style="font-size:11px">✓ Copiado</span>';
+            setTimeout(() => {
+                copyBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>`;
+            }, 2000);
+        });
+    };
+    try {
+        if (navigator.clipboard.write) {
+            navigator.clipboard.write([
+                new ClipboardItem({
+                    'text/html': new Blob([htmlContent], { type: 'text/html' }),
+                    'text/plain': new Blob([plainText], { type: 'text/plain' })
+                })
+            ]).then(() => {
+                copyBtn.innerHTML = '<span style="font-size:11px">✓ Copiado</span>';
+                setTimeout(() => {
+                    copyBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>`;
+                }, 2000);
+            }).catch(fallback);
+        } else {
+            fallback();
+        }
+    } catch (e) {
+        fallback();
     }
 }
 
