@@ -267,7 +267,7 @@ async function callMistralAPI({ intent, prompt, history, stream, res, fileData }
         model: MISTRAL_MODEL,
         messages,
         temperature: 0.7,
-        max_tokens: 1500,
+        max_tokens: 4096,
         stream: !!stream
     };
 
