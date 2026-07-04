@@ -3,6 +3,7 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
 let supabase;
 let currentStudentId = null;
 let currentStudentName = null;
+let advisorHistory = [];
 
 const ELEMENTS = {
     loginSection: document.getElementById('loginSection'),
@@ -180,6 +181,7 @@ async function seleccionarAlumno() {
 
         currentStudentId = userData.user_id;
         currentStudentName = userData.nombre || email;
+        advisorHistory = [];
         ELEMENTS.mentorNotes.value = userData.mentor_notes || '';
         ELEMENTS.studentInfoText.innerText = `👤 ${currentStudentName} (Nivel ${userData.nivel_alquimia || 1}/10)`;
         ELEMENTS.studentInfo.style.display = 'flex';
@@ -204,6 +206,7 @@ async function seleccionarAlumno() {
 function cambiarAlumno() {
     currentStudentId = null;
     currentStudentName = null;
+    advisorHistory = [];
     ELEMENTS.studentInfo.style.display = 'none';
     ELEMENTS.studentEmail.value = '';
     ELEMENTS.studentEmail.focus();
@@ -285,6 +288,7 @@ async function consultarAsesor() {
             body: JSON.stringify({
                 intent: 'mentor_advisor',
                 message: query,
+                history: advisorHistory,
                 userId: currentStudentId
             })
         });
@@ -296,6 +300,8 @@ async function consultarAsesor() {
 
         console.log(`[Modelo IA] ${data.info || 'desconocido'}`);
         appendChatMessage('ia', data.text);
+        advisorHistory.push({ role: 'user', parts: [{ text: query }] });
+        advisorHistory.push({ role: 'model', parts: [{ text: data.text }] });
 
     } catch (e) {
         console.error("Error consulta asesor:", e);
