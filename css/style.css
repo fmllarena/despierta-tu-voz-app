@@ -4244,6 +4244,11 @@ html[data-theme="dark"] .preferences-btn:hover {
     background: var(--hover-bg);
 }
 
+html[data-theme="dark"] .question-slide p {
+    background: var(--card-bg) !important;
+    color: var(--color-texto) !important;
+}
+
 html[data-theme="dark"] .diario-seccion {
     border-bottom-color: #a09080;
 }

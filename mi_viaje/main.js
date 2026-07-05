@@ -1241,7 +1241,7 @@ async function finishModuleWithAI(supabase, user, skipInputCheck = false) {
         container.innerHTML = `
             <div class="question-slide">
                 <h3 style="color:var(--color-acento)">✨ Tu Lectura de Alquimia</h3>
-                <p style="font-size:1.1em; line-height:1.6; padding:15px; background:#f9f9f9; border-radius:10px;">
+                <p style="font-size:1.1em; line-height:1.6; padding:15px; border-radius:10px;">
                     ${fixedLogoText} ${data.text}
                 </p>
                 <button id="closeModuleBtn" class="journey-btn" style="width:100%; margin-top:20px;">
