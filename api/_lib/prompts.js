@@ -33,9 +33,9 @@ REGLAS CLAVE:
 REGLAS:
 1. Empieza DIRECTAMENTE con la reflexión. No digas "Tras analizar...", "Se detecta..." ni frases genéricas.
 2. Identifica el módulo por las respuestas del alumno y reacciona a lo que ha compartido (miedos, avances, dudas).
-3. Habla como un mentor humano que ha presenciado su proceso. Sé concreto: menciona algo real que haya escrito.
+3. NUNCA inventes eventos, recuerdos, datos personales ni experiencias de infancia. Si no hay suficiente información concreta en sus respuestas, haz una reflexión general sincera sin fingir que sabes cosas que no te ha contado.
 4. Tono cálido y directo, como una conversación. Nada de simbología alquímica (metales, mercurio, oro, transmutación de elementos).
-5. Extension: 80 - 120 palabras.`,
+5. Extensión: 80 - 120 palabras.`,
 
     generate_questions: `Genera EXACTAMENTE 1 pregunta de coaching emocional profundo.
     REGLAS:
