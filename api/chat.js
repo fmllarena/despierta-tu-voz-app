@@ -268,7 +268,8 @@ async function callMistralAPI({ intent, prompt, history, stream, res, fileData }
     const requestBody = {
         model: MISTRAL_MODEL,
         messages,
-        temperature: 0.7,
+        temperature: 0.85,
+        presence_penalty: 0.3,
         max_tokens: 4096,
         stream: !!stream
     };
