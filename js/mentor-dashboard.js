@@ -352,6 +352,35 @@ function autoResizeInput() {
     ELEMENTS.advisorInput.style.height = Math.min(ELEMENTS.advisorInput.scrollHeight, 120) + 'px';
 }
 
+function appendChatMessage(role, text) {
+    const msgDiv = document.createElement('div');
+    msgDiv.className = `chat-msg ${role}`;
+
+    if (role === 'ia' && window.marked) {
+        msgDiv.innerHTML = window.marked.parse(text);
+    } else {
+        msgDiv.innerText = text;
+    }
+
+    const copyBtn = document.createElement('button');
+    copyBtn.className = 'copy-msg-btn';
+    copyBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>`;
+    copyBtn.title = 'Copiar mensaje';
+    copyBtn.onclick = (e) => {
+        e.stopPropagation();
+        copiarConFormato(msgDiv, text, copyBtn);
+    };
+    msgDiv.style.position = 'relative';
+    msgDiv.appendChild(copyBtn);
+
+    ELEMENTS.advisorChatBox.appendChild(msgDiv);
+    if (role === 'ia') {
+        msgDiv.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } else {
+        ELEMENTS.advisorChatBox.scrollTop = ELEMENTS.advisorChatBox.scrollHeight;
+    }
+}
+
 function initAdvisorUpload() {
     const input = document.createElement('input');
     input.type = 'file';
