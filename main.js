@@ -550,11 +550,13 @@ async function sendMessage() {
     if (!text && hasFile) {
         const fileType = window.FILES.selectedFile.type || '';
         const fileName = window.FILES.selectedFile.name || '';
-        const isScoreFile = fileType.includes('pdf') || fileType.startsWith('image/') || 
-                            fileName.toLowerCase().endsWith('.pdf') || /\.(png|jpe?g|webp)$/i.test(fileName);
+        const isPdf = fileType.includes('pdf') || fileName.toLowerCase().endsWith('.pdf');
+        const isImage = fileType.startsWith('image/') || /\.(png|jpe?g|webp)$/i.test(fileName);
         
-        if (isScoreFile) {
+        if (isPdf) {
             text = "Analiza esta partitura musical por favor.";
+        } else if (isImage) {
+            text = "Analiza esta imagen.";
         } else if (fileType.startsWith('audio/')) {
             text = "Analiza esta grabación de voz por favor.";
         } else {
