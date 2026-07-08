@@ -124,11 +124,11 @@ async function llamarGemini(message, history, intent, extraData = {}, onChunk = 
             body.fileData = extraData.fileData;
         }
 
-        // Si es un PDF o contiene páginas/imágenes de partituras, redirigir a /api/score
+        // Solo PDFs van a /api/score; imágenes normales a /api/chat
         const isScore = extraData.fileData && (
             Array.isArray(extraData.fileData) || 
-            (extraData.fileData.mimeType && (extraData.fileData.mimeType === 'application/pdf' || extraData.fileData.mimeType.startsWith('image/'))) ||
-            (extraData.fileData.name && (extraData.fileData.name.toLowerCase().endsWith('.pdf') || /\.(png|jpe?g|webp)$/i.test(extraData.fileData.name)))
+            (extraData.fileData.mimeType && extraData.fileData.mimeType === 'application/pdf') ||
+            (extraData.fileData.name && extraData.fileData.name.toLowerCase().endsWith('.pdf'))
         );
 
         const endpoint = isScore ? '/api/score' : '/api/chat';

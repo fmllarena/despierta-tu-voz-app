@@ -62,8 +62,8 @@ async function processChat(req, res = null) {
     const errors = [];
     const hasMedia = fileData && ((fileData.mimeType && fileData.mimeType.startsWith('audio/')) || (fileData.data || (Array.isArray(fileData) && fileData.length > 0)));
 
-    // Intento 1: Mistral (primario — servidores UE, Francia)
-    if (process.env.MISTRAL_API_KEY && !(fileData && fileData.mimeType && fileData.mimeType.startsWith('audio/'))) {
+    // Mistral (texto + imágenes)
+    if (process.env.MISTRAL_API_KEY) {
         try {
             console.log("🚀 Intentando con Mistral...");
             const result = await callMistralAPI({ intent, prompt: finalPrompt, history, stream, res, fileData });
