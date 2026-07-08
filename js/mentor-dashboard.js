@@ -381,62 +381,6 @@ function initAdvisorUpload() {
 }
 
 function copiarConFormato(msgDiv, plainText, copyBtn) {
-    const msgDiv = document.createElement('div');
-    msgDiv.className = `chat-msg ${role}`;
-
-    if (role === 'ia' && window.marked) {
-        msgDiv.innerHTML = window.marked.parse(text);
-    } else {
-        msgDiv.innerText = text;
-    }
-
-    const copyBtn = document.createElement('button');
-    copyBtn.className = 'copy-msg-btn';
-    copyBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>`;
-    copyBtn.title = 'Copiar mensaje';
-    copyBtn.onclick = (e) => {
-        e.stopPropagation();
-        copiarConFormato(msgDiv, text, copyBtn);
-    };
-    msgDiv.style.position = 'relative';
-    msgDiv.appendChild(copyBtn);
-
-    ELEMENTS.advisorChatBox.appendChild(msgDiv);
-    if (role === 'ia') {
-        msgDiv.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    } else {
-        ELEMENTS.advisorChatBox.scrollTop = ELEMENTS.advisorChatBox.scrollHeight;
-    }
-}
-
-async function saveNotes() {
-    if (!currentStudentId) return alert("Primero selecciona un alumno.");
-
-    ELEMENTS.saveNotesBtn.disabled = true;
-    ELEMENTS.saveNotesBtn.innerText = "Guardando...";
-
-    try {
-        const { error } = await supabase
-            .from('user_profiles')
-            .update({
-                mentor_notes: ELEMENTS.mentorNotes.value.trim(),
-                last_active_at: new Date().toISOString()
-            })
-            .eq('user_id', currentStudentId);
-
-        if (error) throw error;
-        alert("Anotaciones guardadas correctamente. ✨");
-
-    } catch (e) {
-        console.error("Error guardando notas:", e);
-        alert("No se pudieron guardar las notas: " + e.message);
-    } finally {
-        ELEMENTS.saveNotesBtn.disabled = false;
-        ELEMENTS.saveNotesBtn.innerText = "Guardar Anotaciones ✨";
-    }
-}
-
-function copiarConFormato(msgDiv, plainText, copyBtn) {
     const htmlContent = msgDiv.innerHTML;
     const fallback = () => {
         navigator.clipboard.writeText(plainText).then(() => {
@@ -464,6 +408,33 @@ function copiarConFormato(msgDiv, plainText, copyBtn) {
         }
     } catch (e) {
         fallback();
+    }
+}
+
+async function saveNotes() {
+    if (!currentStudentId) return alert("Primero selecciona un alumno.");
+
+    ELEMENTS.saveNotesBtn.disabled = true;
+    ELEMENTS.saveNotesBtn.innerText = "Guardando...";
+
+    try {
+        const { error } = await supabase
+            .from('user_profiles')
+            .update({
+                mentor_notes: ELEMENTS.mentorNotes.value.trim(),
+                last_active_at: new Date().toISOString()
+            })
+            .eq('user_id', currentStudentId);
+
+        if (error) throw error;
+        alert("Anotaciones guardadas correctamente. ✨");
+
+    } catch (e) {
+        console.error("Error guardando notas:", e);
+        alert("No se pudieron guardar las notas: " + e.message);
+    } finally {
+        ELEMENTS.saveNotesBtn.disabled = false;
+        ELEMENTS.saveNotesBtn.innerText = "Guardar Anotaciones ✨";
     }
 }
 
