@@ -1,13 +1,7 @@
 /**
  * api/score.js
- * Endpoint de análisis de partituras musicales con Gemini 3.5 Flash
- * y fallback a Claude Sonnet.
- *
- * Flujo:
- *   1. El cliente renderiza el PDF con PDF.js (navegador) → páginas como PNG base64
- *   2. Envía { pages: [{mimeType, data}], question, context } a este endpoint
- *   3. El backend envía las imágenes a la cadena de IAs (Gemini -> Claude) para análisis musical
- *   4. Retorna el análisis en texto o streaming SSE
+ * Endpoint de análisis de partituras musicales.
+ * Temporalmente solo Mistral (imágenes/partituras).
  */
 
 // Límites de seguridad
@@ -35,7 +29,7 @@ module.exports = async function handler(req, res) {
     if (req.method === 'OPTIONS') return res.status(200).end();
     if (req.method !== 'POST') return res.status(405).json({ error: 'Método no permitido' });
 
-    if (!process.env.GEMINI_API_KEY && !process.env.ANTHROPIC_API_KEY) {
+    if (!process.env.MISTRAL_API_KEY && !process.env.ANTHROPIC_API_KEY) {
         return res.status(500).json({ error: 'Ninguna API Key de IA configurada' });
     }
 
@@ -65,18 +59,18 @@ module.exports = async function handler(req, res) {
         const userText = buildScorePrompt(question, pages.length, context);
         const errors = [];
 
-        // Intento 1: Gemini (gemini-3.5-flash)
-        if (process.env.GEMINI_API_KEY) {
+        // Intento 1: Mistral
+        if (process.env.MISTRAL_API_KEY) {
             try {
-                console.log(`🚀 [Score API] Backup con Gemini (${pages.length} págs)...`);
-                const resultText = await callGeminiScore({ pages, userText, stream, res });
+                console.log(`🚀 [Score API] Mistral (${pages.length} págs)...`);
+                const resultText = await callMistralScore({ pages, userText, stream, res });
                 if (!stream) {
-                    return res.status(200).json({ text: resultText, pages: pages.length, model: "gemini-3.5-flash" });
+                    return res.status(200).json({ text: resultText, pages: pages.length, model: "mistral-small-latest" });
                 }
                 return;
             } catch (e) {
-                console.warn("⚠️ Gemini falló en score:", e.message);
-                errors.push(`Gemini: ${e.message}`);
+                console.warn("⚠️ Mistral falló en score:", e.message);
+                errors.push(`Mistral: ${e.message}`);
                 if (stream && res && res.writableEnded) return;
             }
         }
@@ -111,34 +105,37 @@ module.exports = async function handler(req, res) {
 /**
  * Llama a Gemini API
  */
-async function callGeminiScore({ pages, userText, stream, res }) {
-    const endpoint = stream ? 'streamGenerateContent' : 'generateContent';
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:${endpoint}?key=${process.env.GEMINI_API_KEY}${stream ? '&alt=sse' : ''}`;
+async function callMistralScore({ pages, userText, stream, res }) {
+    const content = [
+        ...pages.map(p => ({ type: 'image_url', image_url: `data:${p.mimeType};base64,${p.data}` })),
+        { type: 'text', text: userText }
+    ];
 
-    const parts = [
-        ...pages.map(page => ({
-            inlineData: {
-                mimeType: page.mimeType,
-                data: page.data
-            }
-        })),
-        { text: userText }
+    const messages = [
+        { role: 'system', content: SCORE_SYSTEM_PROMPT },
+        { role: 'user', content }
     ];
 
     const requestBody = {
-        contents: [{ role: "user", parts }],
-        systemInstruction: { parts: [{ text: SCORE_SYSTEM_PROMPT }] }
+        model: process.env.MISTRAL_MODEL || 'mistral-small-latest',
+        messages,
+        temperature: 0.7,
+        max_tokens: 2500,
+        stream: !!stream
     };
 
-    const response = await fetch(url, {
+    const response = await fetch('https://api.mistral.ai/v1/chat/completions', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+            'Authorization': `Bearer ${process.env.MISTRAL_API_KEY}`,
+            'Content-Type': 'application/json'
+        },
         body: JSON.stringify(requestBody)
     });
 
     if (!response.ok) {
         const errData = await response.json().catch(() => ({}));
-        throw new Error(`Gemini Error ${response.status}: ${errData.error?.message || 'Unknown'}`);
+        throw new Error(`Mistral Error ${response.status}: ${errData.error?.message || 'Unknown'}`);
     }
 
     if (stream && res) {
@@ -149,17 +146,19 @@ async function callGeminiScore({ pages, userText, stream, res }) {
         }
         const reader = response.body.getReader();
         const decoder = new TextDecoder();
+        let buffer = "";
         try {
             while (true) {
                 const { done, value } = await reader.read();
                 if (done) break;
-                const chunk = decoder.decode(value);
-                const lines = chunk.split('\n');
+                buffer += decoder.decode(value, { stream: true });
+                const lines = buffer.split('\n');
+                buffer = lines.pop();
                 for (const line of lines) {
-                    if (line.startsWith('data: ')) {
+                    if (line.startsWith('data: ') && line !== 'data: [DONE]') {
                         try {
                             const data = JSON.parse(line.substring(6));
-                            const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+                            const text = data.choices?.[0]?.delta?.content;
                             if (text) res.write(`data: ${JSON.stringify({ text })}\n\n`);
                         } catch (e) { /* chunk incompleto */ }
                     }
@@ -170,7 +169,7 @@ async function callGeminiScore({ pages, userText, stream, res }) {
         }
     } else {
         const data = await response.json();
-        return data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+        return data.choices?.[0]?.message?.content || "";
     }
 }
 

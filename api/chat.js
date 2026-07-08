@@ -76,19 +76,7 @@ async function processChat(req, res = null) {
         }
     }
 
-    // Intento 2: Gemini (Google) — texto + audio + imágenes
-    if (process.env.GEMINI_API_KEY) {
-        try {
-            console.log("🚀 Intentando con Gemini...");
-            const result = await callGeminiAPI({ intent, prompt: finalPrompt, history, stream, res, fileData });
-            if (stream && res) return;
-            return result;
-        } catch (e) {
-            console.warn("⚠️ Gemini falló:", e.message);
-            errors.push(`Gemini: ${e.message}`);
-            if (stream && res && res.writableEnded) throw e;
-        }
-    }
+    // Gemini eliminado temporalmente
 
     throw new Error(`Todos los modelos fallaron: ${errors.join(" | ")}`);
 }
