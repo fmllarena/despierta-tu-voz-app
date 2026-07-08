@@ -62,8 +62,8 @@ async function processChat(req, res = null) {
     const errors = [];
     const hasMedia = fileData && ((fileData.mimeType && fileData.mimeType.startsWith('audio/')) || (fileData.data || (Array.isArray(fileData) && fileData.length > 0)));
 
-    // Intento 1: Mistral (primario — servidores UE, Francia) — solo texto
-    if (!hasMedia && process.env.MISTRAL_API_KEY) {
+    // Intento 1: Mistral (primario — servidores UE, Francia)
+    if (process.env.MISTRAL_API_KEY && !(fileData && fileData.mimeType && fileData.mimeType.startsWith('audio/'))) {
         try {
             console.log("🚀 Intentando con Mistral...");
             const result = await callMistralAPI({ intent, prompt: finalPrompt, history, stream, res, fileData });
@@ -253,8 +253,18 @@ async function handleStreamResponse(response, res) {
 async function callMistralAPI({ intent, prompt, history, stream, res, fileData }) {
     if (!process.env.MISTRAL_API_KEY) throw new Error("Falta API Key de Mistral");
 
-    const hasAudio = fileData && fileData.mimeType && fileData.mimeType.startsWith('audio/');
-    const hasImages = !hasAudio && fileData && (Array.isArray(fileData) ? fileData.length > 0 : fileData.data);
+    function buildUserContent(msg, file) {
+        if (!file || file.mimeType?.startsWith('audio/')) return msg;
+        const parts = [{ type: 'text', text: msg }];
+        if (Array.isArray(file)) {
+            file.forEach(p => {
+                if (p.data) parts.push({ type: 'image_url', image_url: `data:${p.mimeType || 'image/jpeg'};base64,${p.data}` });
+            });
+        } else if (file.data && file.mimeType?.startsWith('image/')) {
+            parts.push({ type: 'image_url', image_url: `data:${file.mimeType};base64,${file.data}` });
+        }
+        return parts;
+    }
 
     const messages = [
         { role: "system", content: SYSTEM_PROMPTS[intent] },
@@ -262,7 +272,7 @@ async function callMistralAPI({ intent, prompt, history, stream, res, fileData }
             role: h.role === 'model' ? 'assistant' : 'user',
             content: h.parts[0].text
         })),
-        { role: "user", content: prompt }
+        { role: "user", content: buildUserContent(prompt, fileData) }
     ];
 
     const requestBody = {
