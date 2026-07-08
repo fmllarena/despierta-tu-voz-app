@@ -4,6 +4,7 @@ let supabase;
 let currentStudentId = null;
 let currentStudentName = null;
 let advisorHistory = [];
+let advisorFile = null;
 
 const ELEMENTS = {
     loginSection: document.getElementById('loginSection'),
@@ -124,6 +125,7 @@ async function mostrarDashboard(email) {
     ELEMENTS.advisorInput.oninput = autoResizeInput;
     ELEMENTS.changeStudentBtn.onclick = cambiarAlumno;
 
+    initAdvisorUpload();
     await cargarListaAlumnos();
 }
 
@@ -266,10 +268,11 @@ async function generateBriefing() {
 
 async function consultarAsesor() {
     const query = ELEMENTS.advisorInput.value.trim();
-    if (!query) return;
+    if (!query && !advisorFile) return;
     if (!currentStudentId) return alert("Primero selecciona un alumno.");
 
-    appendChatMessage('mentor', query);
+    const msgText = query || "Analiza esta imagen.";
+    appendChatMessage('mentor', msgText);
     ELEMENTS.advisorInput.value = "";
     ELEMENTS.sendAdvisorBtn.disabled = true;
 
@@ -281,16 +284,34 @@ async function consultarAsesor() {
     ELEMENTS.advisorChatBox.appendChild(thinkingDiv);
     ELEMENTS.advisorChatBox.scrollTop = ELEMENTS.advisorChatBox.scrollHeight;
 
+    let fileData = null;
+    if (advisorFile) {
+        fileData = await new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve({ mimeType: advisorFile.type, data: reader.result.split(',')[1], name: advisorFile.name });
+            reader.onerror = reject;
+            reader.readAsDataURL(advisorFile);
+        });
+        advisorFile = null;
+        const preview = document.getElementById('advisorFilePreview');
+        if (preview) preview.style.display = 'none';
+        const input = document.querySelector('input[type="file"][accept*="png"]');
+        if (input) input.value = '';
+    }
+
     try {
+        const body = {
+            intent: 'mentor_advisor',
+            message: msgText,
+            history: advisorHistory,
+            userId: currentStudentId
+        };
+        if (fileData) body.fileData = fileData;
+
         const response = await fetch('/api/chat', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                intent: 'mentor_advisor',
-                message: query,
-                history: advisorHistory,
-                userId: currentStudentId
-            })
+            body: JSON.stringify(body)
         });
 
         const data = await response.json();
@@ -300,7 +321,7 @@ async function consultarAsesor() {
 
         console.log(`[Modelo IA] ${data.info || 'desconocido'}`);
         appendChatMessage('ia', data.text);
-        advisorHistory.push({ role: 'user', parts: [{ text: query }] });
+        advisorHistory.push({ role: 'user', parts: [{ text: msgText }] });
         advisorHistory.push({ role: 'model', parts: [{ text: data.text }] });
 
     } catch (e) {
@@ -331,7 +352,35 @@ function autoResizeInput() {
     ELEMENTS.advisorInput.style.height = Math.min(ELEMENTS.advisorInput.scrollHeight, 120) + 'px';
 }
 
-function appendChatMessage(role, text) {
+function initAdvisorUpload() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.png,.jpg,.jpeg,.webp';
+    input.style.display = 'none';
+    document.body.appendChild(input);
+
+    const btn = document.getElementById('advisorUploadBtn');
+    const preview = document.createElement('div');
+    preview.id = 'advisorFilePreview';
+    preview.style.cssText = 'display:none;padding:4px 15px;font-size:0.75rem;color:var(--color-acento);background:#f0ede8;border-top:1px solid #ddd;';
+
+    const chatInputArea = document.querySelector('.chat-input-area');
+    if (chatInputArea) chatInputArea.parentNode.insertBefore(preview, chatInputArea);
+
+    btn.addEventListener('click', () => input.click());
+    input.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            if (file.size > 3.5 * 1024 * 1024) { alert('Imagen demasiado grande (máx 3.5MB).'); return; }
+            advisorFile = file;
+            preview.style.display = 'block';
+            preview.innerHTML = `<span>🖼️ ${file.name}</span> <button style="background:none;border:none;color:#e74c3c;cursor:pointer;font-size:0.75rem;margin-left:8px;">✕</button>`;
+            preview.querySelector('button').onclick = () => { advisorFile = null; preview.style.display = 'none'; input.value = ''; };
+        }
+    });
+}
+
+function copiarConFormato(msgDiv, plainText, copyBtn) {
     const msgDiv = document.createElement('div');
     msgDiv.className = `chat-msg ${role}`;
 
