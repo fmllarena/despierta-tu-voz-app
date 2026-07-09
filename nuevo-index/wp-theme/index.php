@@ -1,75 +1,89 @@
-<?php
-/**
- * The main template file (Blog Wall)
- */
-get_header(); ?>
-
-<section class="alt-hero blog-hero reveal">
-    <div class="container">
-        <span class="alt-tag">Bitácora de la Voz</span>
-        <h1>Artículos para profundizar en tu viaje</h1>
-        <div class="alt-hero-quote">
-            <p>Cada artículo es una semilla para tu próxima conversación con el Mentor IA. Explora la
-                biodecodificación vocal, la gestión emocional y el arte de cantar desde el ser.</p>
-        </div>
-    </div>
-</section>
-
-<div class="container">
-    <!-- Filtro de Categorías Dinámico -->
-    <div class="category-filter reveal">
-        <a href="<?php echo get_post_type_archive_link('post'); ?>"
-            class="category-tag <?php echo !is_category() ? 'active' : ''; ?>">Todos</a>
-        <?php
-        $categories = get_categories();
-        foreach ($categories as $category) {
-            $active_class = (is_category($category->term_id)) ? 'active' : '';
-            echo '<a href="' . get_category_link($category->term_id) . '" class="category-tag ' . $active_class . '">' . $category->name . '</a>';
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Despierta tu Voz — Próximamente</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Georgia', 'Times New Roman', serif;
+            background: #fcfaf7;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
         }
-        ?>
+        .card {
+            max-width: 540px;
+            width: 100%;
+            text-align: center;
+            padding: 50px 40px;
+            background: rgba(255,255,255,0.9);
+            border-radius: 24px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.06);
+            border: 1px solid rgba(142,125,109,0.15);
+        }
+        .logo {
+            max-width: 120px;
+            height: auto;
+            margin-bottom: 24px;
+        }
+        h1 {
+            font-size: 1.7rem;
+            font-weight: 400;
+            color: #8e7d6d;
+            margin-bottom: 12px;
+            letter-spacing: 0.5px;
+        }
+        .sub {
+            font-size: 1rem;
+            color: #888;
+            margin-bottom: 30px;
+            line-height: 1.5;
+        }
+        .frase {
+            font-style: italic;
+            color: #8e7d6d;
+            font-size: 1.05rem;
+            line-height: 1.6;
+            padding: 20px 0;
+            border-top: 1px solid #eee;
+            border-bottom: 1px solid #eee;
+            margin-bottom: 24px;
+        }
+        .frase::before { content: "\201C"; }
+        .frase::after { content: "\201D"; }
+        .contacto {
+            font-size: 0.9rem;
+            color: #999;
+            margin-bottom: 6px;
+        }
+        .brand {
+            font-size: 0.8rem;
+            color: #bbb;
+            line-height: 1.4;
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <img src="<?php echo get_template_directory_uri(); ?>/assets/logo-appDTV2.png" alt="Despierta tu Voz" class="logo">
+        <h1>Página temporalmente fuera de servicio</h1>
+        <p class="sub">Estamos realizando mejoras para ofrecerte una experiencia más profunda. Volveremos en breve.</p>
+        <p class="frase">El silencio también forma parte del proceso. En la pausa es donde la voz encuentra su verdadero tono.</p>
+        <p class="contacto">Si quieres contactar: <strong id="email-placeholder"><em>Cargando...</em></strong></p>
+        <p class="brand">Despierta tu Voz — inteligencia emocional y desarrollo personal aplicado al canto.</p>
     </div>
-
-    <section class="grid-container blog-grid-section">
-        <?php if (have_posts()):
-            while (have_posts()):
-                the_post(); ?>
-
-                <article class="base-card blog-card">
-                    <div class="blog-card-img">
-                        <?php if (has_post_thumbnail()): ?>
-                            <?php the_post_thumbnail('medium'); ?>
-                        <?php else: ?>
-                            ✨
-                        <?php endif; ?>
-                    </div>
-                    <div class="blog-content-inner">
-                        <span class="blog-category">
-                            <?php
-                            $category = get_the_category();
-                            if (!empty($category)) {
-                                echo esc_html($category[0]->name);
-                            }
-                            ?>
-                        </span>
-                        <h3><?php the_title(); ?></h3>
-                        <p><?php echo wp_trim_words(get_the_excerpt(), 20); ?></p>
-                        <a href="<?php the_permalink(); ?>" class="read-more">Leer artículo <span>→</span></a>
-                    </div>
-                </article>
-
-            <?php endwhile; else: ?>
-            <p><?php _e('No hay artículos publicados todavía.', 'dtv-theme'); ?></p>
-        <?php endif; ?>
-    </section>
-
-    <!-- Paginación -->
-    <div class="pagination reveal" style="text-align: center; margin-bottom: 80px;">
-        <?php the_posts_pagination(array(
-            'mid_size' => 2,
-            'prev_text' => '← Anterior',
-            'next_text' => 'Siguiente →',
-        )); ?>
-    </div>
-</div>
-
-<?php get_footer(); ?>
+    <script>
+        (function() {
+            var user = 'contacto';
+            var domain = 'despiertatuvoz.com';
+            document.getElementById('email-placeholder').innerHTML =
+                '<a href="mailto:' + user + '@' + domain + '" style="color:#8e7d6d;text-decoration:none;">' +
+                user + '@' + domain + '</a>';
+        })();
+    </script>
+</body>
+</html>
