@@ -1,26 +1,35 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
+<script>if (localStorage.getItem('dtv_dark_mode') === 'true') document.documentElement.setAttribute('data-theme', 'dark')</script>
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Despierta tu Voz - Mentor Vocal</title>
     <!-- Cal.com SDK -->
-    <script type="text/javascript">
+    <script>
         (function (C, A, L) {
             let p = function (a, ar) { a.q.push(ar); };
-            let d = C.document; C.cal = C.cal || function () {
-                let a = arguments; if (!a.length) return; p(C.cal, a);
+            let d = C.document;
+            C.Cal = C.Cal || function () {
+                let cal = C.Cal;
+                let ar = arguments;
+                if (!cal.loaded) {
+                    cal.q = [];
+                    cal.loaded = true;
+                }
+                if (ar[0] === L) {
+                    const s = d.createElement("script");
+                    s.src = "https://app.cal.com/embed/embed.js";
+                    d.head.appendChild(s);
+                    return;
+                }
+                p(cal, ar);
             };
-            C.cal.q = C.cal.q || [];
-            fetch("https://api.cal.com/embed/v1.js").then(response => {
-                let s = d.createElement("script"); s.src = response.url;
-                d.body.appendChild(s);
-            });
-        })(window, window.cal, "init");
+        })(window, "https://app.cal.com/embed/embed.js", "init");
 
-        // Inicialización estándar (sin dtv-sessions)
-        cal("init", { origin: "https://cal.com" });
+        // Inicialización global (sin namespace) para máxima compatibilidad
+        Cal("init", { origin: "https://app.cal.com" });
     </script>
 
     <!-- Stripe SDK -->
@@ -120,15 +129,17 @@
     <div class="chat-container">
         <div class="chat-header">
             <div class="chat-header-top">
-                <span>Sesión con el Mentor</span>
+                <span>Sesión con<br>el Mentor</span>
                 <div class="header-top-actions">
                     <div class="music-player-container">
+                        <input type="range" id="volumeSlider" class="volume-slider" min="0" max="1" step="0.05" value="0.5" title="Volumen">
                         <button id="musicToggleBtn" class="music-icon-btn" title="Música ambiental">
                             <img src="assets/musica.png" alt="Música">
                         </button>
                         <div id="musicMenu" class="music-menu-dropdown">
                             <div class="music-menu-header">Música de Alquimia</div>
                             <div id="musicListItems"></div>
+                            <button id="playAllBtn" class="music-playall-option">▶ Reproducir todo</button>
                             <button id="stopMusicBtn" class="music-stop-option">✕ Detener música</button>
                         </div>
                     </div>
@@ -180,9 +191,14 @@
                         chatear de forma más fluida.</div>
                 </div>
                 <div class="help-item">
+                    <span class="help-btn-tag sing">🎵</span>
+                    <div class="help-desc"><strong>Analiza tu canto</strong> – Graba tu voz cantando y el Mentor
+                        analizará tu afinación, resonancia y proyección.</div>
+                </div>
+                <div class="help-item">
                     <span class="help-btn-tag files">+Añadir...</span>
                     <div class="help-desc"><strong>Tus Archivos</strong> – Sube PDFs o audios para que el Mentor los
-                        analice y te dé feedback. Archivos de hasta 3.5 Mb. Recomend: súbelo en modo mono.</div>
+                        analice y te dé feedback.</div>
                 </div>
                 <div class="help-item">
                     <span class="help-btn-tag phonetics">F▼</span>
@@ -221,7 +237,8 @@
             <textarea id="chatMentoriaInput" placeholder="Chatea aquí con el Mentor..." autocomplete="off"
                 spellcheck="false" rows="1"></textarea>
             <button id="sendBtn">▶</button>
-            <button id="micBtn">🎤</button>
+            <button id="micBtn" title="Transcribir voz a texto">🎤</button>
+            <button id="singBtn" title="Analizar canto">🎵</button>
         </div>
         <div class="quick-actions">
             <button id="quickUploadBtn" class="action-btn">+ Añadir partitura o audio</button>
@@ -351,6 +368,14 @@
                     <div id="settingsUserTier" class="info-value">...</div>
                     <button id="upgradeSettingsBtn" class="upgrade-btn-small">Mejorar Plan</button>
                 </div>
+            </div>
+
+            <div class="setting-item switch-row" style="justify-content:space-between;display:flex;padding:10px 5px;margin-bottom:5px;">
+                <label for="darkModeToggle" style="font-weight:600;font-size:0.9em;">Modo Oscuro 🌙</label>
+                <label class="switch">
+                    <input type="checkbox" id="darkModeToggle">
+                    <span class="slider"></span>
+                </label>
             </div>
 
             <div class="settings-section">
@@ -568,6 +593,19 @@
                         <span class="slider"></span>
                     </label>
                 </div>
+                <div class="preference-option">
+                    <div class="option-main">
+                        <div class="option-text">
+                            <h3>Reto Vocal Diario 🎵</h3>
+                            <p>Recibe cada mañana un reto personalizado para tu voz.</p>
+                        </div>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" id="dailyChallengeToggle" checked
+                            title="Reto Vocal Diario">
+                        <span class="slider"></span>
+                    </label>
+                </div>
                 <div class="preference-option disabled" style="opacity: 0.6;">
                     <div class="option-main">
                         <div class="option-text">
@@ -675,9 +713,16 @@
                     <div class="loader-spin"></div>
                     <p>Conectando con tu Mentor...</p>
                 </div>
-                <!-- Target para el SDK de Cal.com -->
                 <div id="cal-iframe-target"></div>
             </div>
+        </div>
+    </div>
+
+    <!-- Modal de Progreso / Estadísticas -->
+    <div id="progresoModal" class="modal">
+        <div class="modal-content progreso-modal-content">
+            <span class="close-modal" id="closeProgreso">&times;</span>
+            <div id="progresoContent"></div>
         </div>
     </div>
 
@@ -711,9 +756,17 @@
 
 
 
+    <!-- PDF.js para renderizado de partituras en el cliente -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script>
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    </script>
+
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script type="module" src="js/services/auth-service.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+    <script src="https://cdn.jsdelivr.net/npm/tone@14.7.77/build/Tone.js"></script>
     <script src="js/stripe-checkout.js"></script>
     <script type="module" src="js/modules/config.js?v=7.1"></script>
     <script type="module" src="js/modules/elements.js?v=7.1"></script>
@@ -725,6 +778,7 @@
     <script src="js/modules/sessions.js?v=7.2" defer></script>
     <script type="module" src="js/modules/payments.js?v=7.1"></script>
     <script type="module" src="js/modules/email.js?v=7.1"></script>
+    <script type="module" src="js/modules/progress.js?v=7.1"></script>
     <script type="module" src="js/modules/tour.js?v=7.1"></script>
     <script type="module" src="js/modules/files.js?v=7.1"></script>
     <script type="module" src="js/modules/pronunciation.js?v=7.1"></script>
