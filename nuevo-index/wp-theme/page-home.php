@@ -68,7 +68,6 @@ h1 {
     <div class="card">
         <img src="<?php echo get_template_directory_uri(); ?>/assets/logo-appDTV2.png" alt="Despierta tu Voz" class="logo">
         <h1>Página temporalmente fuera de servicio</h1>
-        <p class="sub">Estamos realizando mejoras para ofrecerte una experiencia más profunda. Volveremos en breve.</p>
         <p class="frase">El silencio también forma parte del proceso. En la pausa es donde la voz encuentra su verdadero tono.</p>
         <p class="contacto">Si quieres contactar: <strong id="email-placeholder"><em>Cargando...</em></strong></p>
         <p class="brand">Despierta tu Voz — inteligencia emocional y desarrollo personal aplicado al canto.</p>
