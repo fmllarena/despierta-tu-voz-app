@@ -256,8 +256,8 @@ async function callMistralAPI({ intent, prompt, history, stream, res, fileData }
 
     const messages = [
         { role: "system", content: SYSTEM_PROMPTS[intent] },
-        ...history.filter(h => h?.parts?.[0]?.text).map(h => ({
-            role: h.role === 'model' ? 'assistant' : 'user',
+        ...history.filter(h => h?.role === 'user' && h?.parts?.[0]?.text).map(h => ({
+            role: 'user',
             content: h.parts[0].text
         })),
         { role: "user", content: buildUserContent(prompt, fileData) }
