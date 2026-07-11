@@ -45,7 +45,8 @@ async function processChat(req, res = null) {
     if (!intent || !SYSTEM_PROMPTS[intent]) throw new Error("Intento no válido");
 
     // 1. Construir Contexto del Alumno
-    let context = await buildUserContext(userId, intent, originPost, originCat);
+    const ctx = await buildUserContext(userId, intent, originPost, originCat);
+    let context = ctx.context;
 
     // Añadir Escaneo Vocal si existe
     if (vocal_scan) {
@@ -66,7 +67,7 @@ async function processChat(req, res = null) {
     if (process.env.MISTRAL_API_KEY) {
         try {
             console.log("🚀 Intentando con Mistral...");
-            const result = await callMistralAPI({ intent, prompt: finalPrompt, history, stream, res, fileData });
+            const result = await callMistralAPI({ intent, prompt: finalPrompt, history, stream, res, fileData, resumenBoundary: ctx.resumenBoundary });
             if (stream && res) return;
             return result;
         } catch (e) {
@@ -85,10 +86,10 @@ async function processChat(req, res = null) {
  * Recupera datos de Supabase para alimentar el prompt
  */
 async function buildUserContext(userId, intent, originPost = null, originCat = null) {
-    if (!userId && !originPost) return "";
+    if (!userId && !originPost) return { context: "", resumenBoundary: null };
 
     const needsContext = ['mentor_chat', 'mentor_briefing', 'alchemy_analysis', 'mentor_advisor', 'inspiracion_dia'].includes(intent);
-    if (!needsContext) return "";
+    if (!needsContext) return { context: "", resumenBoundary: null };
 
     const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
     let context = "";
@@ -145,7 +146,22 @@ async function buildUserContext(userId, intent, originPost = null, originCat = n
         }
     }
 
-    return context;
+    // Obtener la fecha del último resumen_diario para la frontera de sesión
+    let resumenBoundary = null;
+    if (userId) {
+        const { data: lastResumen } = await supabase.from('mensajes')
+            .select('created_at')
+            .eq('alumno', userId)
+            .eq('emisor', 'resumen_diario')
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .maybeSingle();
+        if (lastResumen?.created_at) {
+            resumenBoundary = lastResumen.created_at;
+        }
+    }
+
+    return { context, resumenBoundary };
 }
 
 /**
@@ -238,7 +254,7 @@ async function handleStreamResponse(response, res) {
 /**
  * Ejecuta la llamada a Mistral AI (primario — servidores UE)
  */
-async function callMistralAPI({ intent, prompt, history, stream, res, fileData }) {
+async function callMistralAPI({ intent, prompt, history, stream, res, fileData, resumenBoundary }) {
     if (!process.env.MISTRAL_API_KEY) throw new Error("Falta API Key de Mistral");
 
     function buildUserContent(msg, file) {
@@ -254,13 +270,15 @@ async function callMistralAPI({ intent, prompt, history, stream, res, fileData }
         return parts;
     }
 
-    const totalModel = history.filter(h => h.role === 'model' && h?.parts?.[0]?.text).length;
-    let modelSeen = 0;
+    const boundaryDate = resumenBoundary ? new Date(resumenBoundary) : null;
     const filteredHistory = history.filter(h => {
-        if (h.role === 'user' && h?.parts?.[0]?.text) return true;
-        if (h.role === 'model' && h?.parts?.[0]?.text) {
-            modelSeen++;
-            return modelSeen > totalModel - 2; // solo las 2 últimas respuestas IA
+        if (!h?.parts?.[0]?.text) return false;
+        if (h.role === 'user') return true;
+        // role === 'model': solo si es posterior al último resumen_diario
+        if (h.role === 'model') {
+            if (!boundaryDate) return false;
+            const msgDate = h.created_at ? new Date(h.created_at) : null;
+            return msgDate && msgDate > boundaryDate;
         }
         return false;
     });

@@ -371,7 +371,7 @@ async function cargarHistorialDesdeDB(userId, render = false) {
             if (msg.emisor === 'resumen_diario' || msg.emisor === 'sistema') return;
 
             const role = msg.emisor === 'ia' ? 'model' : 'user';
-            chatHistory.push({ role: role, parts: [{ text: msg.texto }] });
+            chatHistory.push({ role: role, parts: [{ text: msg.texto }], created_at: msg.created_at });
 
             if (render) {
                 appendMessage(msg.texto, msg.emisor);
@@ -654,7 +654,11 @@ async function sendMessage() {
 
         if (responseText && responseText.trim() !== "") {
             await guardarMensajeDB(responseText, 'ia');
-            chatHistory.push({ role: "user", parts: [{ text }] }, { role: "model", parts: [{ text: responseText }] });
+            const now = new Date().toISOString();
+            chatHistory.push(
+                { role: "user", parts: [{ text }], created_at: now },
+                { role: "model", parts: [{ text: responseText }], created_at: now }
+            );
 
             if (chatHistory.length % 4 === 0 && chatHistory.length >= 4) {
                 MODULOS.generarCronicaSesion();

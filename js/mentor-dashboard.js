@@ -321,8 +321,9 @@ async function consultarAsesor() {
 
         console.log(`[Modelo IA] ${data.info || 'desconocido'}`);
         appendChatMessage('ia', data.text);
-        advisorHistory.push({ role: 'user', parts: [{ text: msgText }] });
-        advisorHistory.push({ role: 'model', parts: [{ text: data.text }] });
+        const now = new Date().toISOString();
+        advisorHistory.push({ role: 'user', parts: [{ text: msgText }], created_at: now });
+        advisorHistory.push({ role: 'model', parts: [{ text: data.text }], created_at: now });
 
     } catch (e) {
         console.error("Error consulta asesor:", e);
