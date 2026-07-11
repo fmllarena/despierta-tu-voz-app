@@ -254,10 +254,21 @@ async function callMistralAPI({ intent, prompt, history, stream, res, fileData }
         return parts;
     }
 
+    const totalModel = history.filter(h => h.role === 'model' && h?.parts?.[0]?.text).length;
+    let modelSeen = 0;
+    const filteredHistory = history.filter(h => {
+        if (h.role === 'user' && h?.parts?.[0]?.text) return true;
+        if (h.role === 'model' && h?.parts?.[0]?.text) {
+            modelSeen++;
+            return modelSeen > totalModel - 2; // solo las 2 últimas respuestas IA
+        }
+        return false;
+    });
+
     const messages = [
         { role: "system", content: SYSTEM_PROMPTS[intent] },
-        ...history.filter(h => h?.role === 'user' && h?.parts?.[0]?.text).map(h => ({
-            role: 'user',
+        ...filteredHistory.map(h => ({
+            role: h.role === 'model' ? 'assistant' : 'user',
             content: h.parts[0].text
         })),
         { role: "user", content: buildUserContent(prompt, fileData) }
