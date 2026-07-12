@@ -126,6 +126,10 @@ async function buildUserContext(userId, intent, originPost = null, originCat = n
 
         context += `- Historia: ${perfil.historia_vocal}\n- Nivel: ${perfil.nivel_alquimia}/10\n`;
         context += `- Transmutaciones (Logros): ${perfil.creencias_transmutadas || 'Ninguna registrada'}\n`;
+
+        if ((intent === 'mentor_briefing' || intent === 'mentor_advisor') && perfil.mentor_notes) {
+            context += `\n--- ANOTACIONES DEL MENTOR ---\n${perfil.mentor_notes}\n`;
+        }
     }
 
     const userTier = perfil.subscription_tier || 'free';
