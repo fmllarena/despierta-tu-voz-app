@@ -3,6 +3,8 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
 let supabase;
 let currentStudentId = null;
 let currentStudentName = null;
+let currentStudentId2 = null;
+let currentStudentName2 = null;
 let advisorHistory = [];
 let advisorFile = null;
 
@@ -34,6 +36,11 @@ const ELEMENTS = {
     mentorNotes: document.getElementById('mentorNotes'),
     saveNotesBtn: document.getElementById('saveNotesBtn'),
     customQuery: document.getElementById('customQuery'),
+    comparisonToggleBtn: document.getElementById('comparisonToggleBtn'),
+    secondStudentSection: document.getElementById('secondStudentSection'),
+    studentEmail2: document.getElementById('studentEmail2'),
+    studentList2: document.getElementById('studentList2'),
+    selectStudentBtn2: document.getElementById('selectStudentBtn2'),
 };
 
 async function init() {
@@ -59,7 +66,7 @@ async function init() {
                     svg.innerHTML = `<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24</path><line x1="1" y1="1" x2="23" y2="23"></line>`;
                 } else {
                     input.type = 'password';
-                    svg.innerHTML = `<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z</path><circle cx="12" cy="12" r="3"></circle>`;
+                    svg.innerHTML = `<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle>`;
                 }
             });
         });
@@ -124,6 +131,9 @@ async function mostrarDashboard(email) {
     ELEMENTS.advisorInput.onkeydown = (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); consultarAsesor(); } };
     ELEMENTS.advisorInput.oninput = autoResizeInput;
     ELEMENTS.changeStudentBtn.onclick = cambiarAlumno;
+    ELEMENTS.comparisonToggleBtn.onclick = toggleModoComparacion;
+    ELEMENTS.selectStudentBtn2.onclick = seleccionarAlumno2;
+    ELEMENTS.studentEmail2.onkeypress = (e) => { if (e.key === 'Enter') seleccionarAlumno2(); };
 
     initAdvisorUpload();
     await cargarListaAlumnos();
@@ -141,6 +151,7 @@ async function logout() {
 async function cargarListaAlumnos() {
     if (ELEMENTS.searchStatus) ELEMENTS.searchStatus.innerText = "🔍 Cargando lista de alumnos...";
     if (ELEMENTS.studentList) ELEMENTS.studentList.innerHTML = "";
+    if (ELEMENTS.studentList2) ELEMENTS.studentList2.innerHTML = "";
 
     try {
         const { data, error } = await supabase
@@ -151,14 +162,17 @@ async function cargarListaAlumnos() {
 
         if (error) throw error;
 
-        if (ELEMENTS.studentList) {
+        const poblar = (listEl) => {
+            if (!listEl) return;
             data.forEach(alumno => {
                 const option = document.createElement('option');
                 option.value = alumno.email;
                 option.textContent = alumno.nombre ? `${alumno.nombre} (${alumno.email})` : alumno.email;
-                ELEMENTS.studentList.appendChild(option);
+                listEl.appendChild(option);
             });
-        }
+        };
+        poblar(ELEMENTS.studentList);
+        poblar(ELEMENTS.studentList2);
 
         if (ELEMENTS.searchStatus) ELEMENTS.searchStatus.innerText = `✅ ${data.length} alumnos cargados.`;
     } catch (e) {
@@ -208,12 +222,60 @@ async function seleccionarAlumno() {
 function cambiarAlumno() {
     currentStudentId = null;
     currentStudentName = null;
+    currentStudentId2 = null;
+    currentStudentName2 = null;
     advisorHistory = [];
     ELEMENTS.studentInfo.style.display = 'none';
     ELEMENTS.studentEmail.value = '';
     ELEMENTS.studentEmail.focus();
     ELEMENTS.reportContainer.style.display = 'none';
     ELEMENTS.mentorNotes.value = '';
+}
+
+function toggleModoComparacion() {
+    const section = ELEMENTS.secondStudentSection;
+    const btn = ELEMENTS.comparisonToggleBtn;
+    if (section.style.display === 'none') {
+        section.style.display = 'block';
+        btn.textContent = '✕ Modo comparación';
+        btn.style.background = '#e74c3c';
+        btn.style.boxShadow = '0 4px 15px rgba(231,76,60,0.3)';
+    } else {
+        section.style.display = 'none';
+        btn.textContent = '➕ Modo comparación';
+        btn.style.background = '#6c757d';
+        btn.style.boxShadow = '0 4px 15px rgba(108,117,125,0.3)';
+        currentStudentId2 = null;
+        currentStudentName2 = null;
+        ELEMENTS.studentEmail2.value = '';
+        if (currentStudentName && ELEMENTS.studentInfoText) {
+            ELEMENTS.studentInfoText.innerText = `👤 ${currentStudentName}`;
+        }
+    }
+}
+
+async function seleccionarAlumno2() {
+    const email = ELEMENTS.studentEmail2.value.trim();
+    if (!email) return alert("Introduce el email del segundo alumno.");
+
+    try {
+        const { data: userData, error: userError } = await supabase
+            .from('user_profiles')
+            .select('user_id, nombre')
+            .eq('email', email.toLowerCase())
+            .maybeSingle();
+
+        if (userError) throw userError;
+        if (!userData) throw new Error("Alumno no encontrado.");
+
+        currentStudentId2 = userData.user_id;
+        currentStudentName2 = userData.nombre || email;
+        const baseName = currentStudentName || '—';
+        ELEMENTS.studentInfoText.innerText = `👤 ${baseName} | ${currentStudentName2} (Modo Comparación)`;
+        alert(`✅ Segundo alumno seleccionado: ${currentStudentName2}`);
+    } catch (e) {
+        alert(e.message);
+    }
 }
 
 async function generateBriefing() {
@@ -235,7 +297,8 @@ async function generateBriefing() {
             body: JSON.stringify({
                 intent: 'mentor_briefing',
                 message: finalMessage,
-                userId: currentStudentId
+                userId: currentStudentId,
+                userId2: currentStudentId2
             })
         });
 
@@ -304,7 +367,8 @@ async function consultarAsesor() {
             intent: 'mentor_advisor',
             message: msgText,
             history: advisorHistory,
-            userId: currentStudentId
+            userId: currentStudentId,
+            userId2: currentStudentId2
         };
         if (fileData) body.fileData = fileData;
 

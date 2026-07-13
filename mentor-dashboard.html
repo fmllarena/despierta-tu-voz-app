@@ -775,6 +775,18 @@
                 </div>
 
                 <button id="selectStudentBtn" class="main-btn secondary">Seleccionar Alumno</button>
+
+                <button id="comparisonToggleBtn" class="main-btn secondary" style="margin-top:10px;background:#6c757d;box-shadow:0 4px 15px rgba(108,117,125,0.3);">➕ Modo comparación</button>
+
+                <div id="secondStudentSection" style="display:none;margin-top:15px;">
+                    <div class="input-group">
+                        <label for="studentEmail2">Segundo alumno</label>
+                        <input type="text" id="studentEmail2" list="studentList2" autocomplete="off"
+                            placeholder="Escribe nombre o email...">
+                        <datalist id="studentList2"></datalist>
+                    </div>
+                    <button id="selectStudentBtn2" class="main-btn secondary" style="margin-top:10px;">Seleccionar 2º Alumno</button>
+                </div>
             </div>
 
             <div id="loading" class="loading-briefing">

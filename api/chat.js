@@ -39,7 +39,7 @@ module.exports = async function handler(req, res) {
  * Procesa la lógica de negocio del chat con fallback secuencial
  */
 async function processChat(req, res = null) {
-    const { intent, message, history = [], userId, stream = false, vocal_scan = null, originPost = null, originCat = null, fileData = null } = req.body;
+    const { intent, message, history = [], userId, userId2 = null, stream = false, vocal_scan = null, originPost = null, originCat = null, fileData = null } = req.body;
 
     if (intent === 'warmup') return { text: "OK" };
     if (!intent || !SYSTEM_PROMPTS[intent]) throw new Error("Intento no válido");
@@ -47,6 +47,16 @@ async function processChat(req, res = null) {
     // 1. Construir Contexto del Alumno
     const ctx = await buildUserContext(userId, intent, originPost, originCat);
     let context = ctx.context;
+
+    // 1b. Segundo alumno (modo comparación)
+    if (userId2) {
+        const ctx2 = await buildUserContext(userId2, intent, originPost, originCat);
+        if (ctx2.context) {
+            context += `\n\n--- SEGUNDO ALUMNO (COMPARACIÓN) ---\n`;
+            context += ctx2.context;
+            context += `\n\n[INSTRUCCIÓN: El usuario ha solicitado una comparación entre ambos alumnos. Analiza las diferencias y similitudes en su evolución, respuestas, niveles y anotaciones. Si hay datos de ambos, contrasta sus progresos y ofrece una visión comparativa útil para el mentor. Si solo hay datos de uno, indícalo y procede con la información disponible.]\n`;
+        }
+    }
 
     // Añadir Escaneo Vocal si existe
     if (vocal_scan) {
