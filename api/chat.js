@@ -288,9 +288,8 @@ async function callMistralAPI({ intent, prompt, history, stream, res, fileData, 
     const filteredHistory = history.filter(h => {
         if (!h?.parts?.[0]?.text) return false;
         if (h.role === 'user') return true;
-        // role === 'model': solo si es posterior al último resumen_diario
         if (h.role === 'model') {
-            if (!boundaryDate) return false;
+            if (!boundaryDate) return true;
             const msgDate = h.created_at ? new Date(h.created_at) : null;
             return msgDate && msgDate > boundaryDate;
         }
