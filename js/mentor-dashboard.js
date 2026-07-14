@@ -272,7 +272,6 @@ async function seleccionarAlumno2() {
         currentStudentName2 = userData.nombre || email;
         const baseName = currentStudentName || '—';
         ELEMENTS.studentInfoText.innerText = `👤 ${baseName} | ${currentStudentName2} (Modo Comparación)`;
-        alert(`✅ Segundo alumno seleccionado: ${currentStudentName2}`);
     } catch (e) {
         alert(e.message);
     }
