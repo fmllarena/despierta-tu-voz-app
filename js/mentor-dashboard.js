@@ -203,7 +203,8 @@ async function seleccionarAlumno() {
         ELEMENTS.studentInfo.style.display = 'flex';
         ELEMENTS.reportContainer.style.display = 'block';
         ELEMENTS.reportContent.innerHTML = '<p class="report-placeholder">Alumno cargado. Puedes chatear o solicitar un informe.</p>';
-        ELEMENTS.advisorChatBox.innerHTML = `<div class="chat-msg ia">Alumno seleccionado: <strong>${currentStudentName}</strong>. ¿Qué quieres consultar?</div>`;
+        const compMsg = currentStudentId2 && currentStudentName2 ? ` / <strong>${currentStudentName2}</strong>` : '';
+        ELEMENTS.advisorChatBox.innerHTML = `<div class="chat-msg ia">Alumno seleccionado: <strong>${currentStudentName}</strong>${compMsg}. ¿Qué quieres consultar?</div>`;
 
         // Si hay consulta específica escrita, enviarla automáticamente al chat asesor
         const queryText = ELEMENTS.customQuery.value.trim();
@@ -272,6 +273,7 @@ async function seleccionarAlumno2() {
         currentStudentName2 = userData.nombre || email;
         const baseName = currentStudentName || '—';
         ELEMENTS.studentInfoText.innerText = `👤 ${baseName} | ${currentStudentName2} (Modo Comparación)`;
+        ELEMENTS.advisorChatBox.innerHTML = `<div class="chat-msg ia">Alumno seleccionado: <strong>${baseName}</strong> / <strong>${currentStudentName2}</strong>. ¿Qué quieres consultar?</div>`;
     } catch (e) {
         alert(e.message);
     }
