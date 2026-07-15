@@ -135,6 +135,11 @@ async function mostrarDashboard(email) {
     ELEMENTS.selectStudentBtn2.onclick = seleccionarAlumno2;
     ELEMENTS.studentEmail2.onkeypress = (e) => { if (e.key === 'Enter') seleccionarAlumno2(); };
 
+    const copyConvBtn = document.getElementById('copyConversationBtn');
+    if (copyConvBtn) {
+        copyConvBtn.onclick = copiarConversacion;
+    }
+
     initAdvisorUpload();
     await cargarListaAlumnos();
 }
@@ -519,6 +524,34 @@ function copiarConFormato(msgDiv, plainText, copyBtn) {
         }
     } catch (e) {
         fallback();
+    }
+}
+
+function copiarConversacion() {
+    const msgs = ELEMENTS.advisorChatBox.querySelectorAll('.chat-msg');
+    let textParts = [];
+    let htmlParts = [];
+    msgs.forEach(msg => {
+        const isIA = msg.classList.contains('ia');
+        const label = isIA ? 'Asesor IA' : 'Mentor';
+        const plain = `${label}:\n${msg.innerText.trim()}`;
+        const rich = `<p><strong>${label}:</strong></p>${msg.innerHTML}`;
+        textParts.push(plain);
+        htmlParts.push(rich);
+    });
+    const fullText = textParts.join('\n\n---\n\n');
+    const fullHtml = htmlParts.join('\n<hr>\n');
+    navigator.clipboard.write([
+        new ClipboardItem({
+            'text/html': new Blob([fullHtml], { type: 'text/html' }),
+            'text/plain': new Blob([fullText], { type: 'text/plain' })
+        })
+    ]).catch(() => navigator.clipboard.writeText(fullText));
+    const btn = document.getElementById('copyConversationBtn');
+    if (btn) {
+        const orig = btn.textContent;
+        btn.textContent = '✓ Copiado';
+        setTimeout(() => { btn.textContent = orig; }, 2000);
     }
 }
 
