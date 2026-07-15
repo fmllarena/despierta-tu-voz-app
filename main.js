@@ -1028,8 +1028,8 @@ function copiarConFormato(msgDiv, plainText, copyBtn) {
         if (navigator.clipboard.write) {
             navigator.clipboard.write([
                 new ClipboardItem({
-                    'text/html': new Blob([htmlContent], { type: 'text/html' }),
-                    'text/plain': new Blob([plainText], { type: 'text/plain' })
+                    'text/html': new Blob([htmlContent], { type: 'text/html;charset=utf-8' }),
+                    'text/plain': new Blob([plainText], { type: 'text/plain;charset=utf-8' })
                 })
             ]).then(() => {
                 copyBtn.innerHTML = '<span style="font-size:11px">✓ Copiado</span>';
