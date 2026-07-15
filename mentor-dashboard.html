@@ -828,7 +828,10 @@
                     <div class="panel-right">
                         <div class="panel-header">
                             <span>🧠 Consultar Asesor IA</span>
-                            <button id="copyConversationBtn" title="Copiar toda la conversación" style="background:none;border:none;cursor:pointer;color:var(--color-acento, #8e7d6d);font-size:0.85rem;padding:2px 8px;border-radius:6px;transition:background 0.2s;" onmouseover="this.style.background='rgba(128,128,128,0.1)'" onmouseout="this.style.background='none'">📋 Copiar todo</button>
+                            <div style="display:flex;gap:4px;flex-shrink:0;">
+                                <button id="copyConversationBtn" title="Copiar toda la conversación" style="background:none;border:none;cursor:pointer;color:var(--color-acento, #8e7d6d);font-size:0.75rem;padding:2px 6px;border-radius:6px;transition:background 0.2s;white-space:nowrap;" onmouseover="this.style.background='rgba(128,128,128,0.1)'" onmouseout="this.style.background='none'">📋 Copiar todo</button>
+                                <button id="clearConversationBtn" title="Borrar toda la conversación" style="background:none;border:none;cursor:pointer;color:#e74c3c;font-size:0.75rem;padding:2px 6px;border-radius:6px;transition:background 0.2s;white-space:nowrap;" onmouseover="this.style.background='rgba(231,76,60,0.1)'" onmouseout="this.style.background='none'">🗑 Borrar todo</button>
+                            </div>
                         </div>
                         <div id="advisorChatBox" class="advisor-chat-box">
                             <div class="chat-msg ia">Bienvenido. Selecciona un alumno para empezar a consultar.</div>

@@ -140,6 +140,11 @@ async function mostrarDashboard(email) {
         copyConvBtn.onclick = copiarConversacion;
     }
 
+    const clearConvBtn = document.getElementById('clearConversationBtn');
+    if (clearConvBtn) {
+        clearConvBtn.onclick = limpiarConversacion;
+    }
+
     initAdvisorUpload();
     await cargarListaAlumnos();
 }
@@ -553,6 +558,12 @@ function copiarConversacion() {
         btn.textContent = '✓ Copiado';
         setTimeout(() => { btn.textContent = orig; }, 2000);
     }
+}
+
+function limpiarConversacion() {
+    if (!confirm('¿Borrar toda la conversación del chat?')) return;
+    ELEMENTS.advisorChatBox.innerHTML = '';
+    advisorHistory = [];
 }
 
 async function saveNotes() {
