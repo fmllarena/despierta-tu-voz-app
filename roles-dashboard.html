@@ -373,7 +373,7 @@
                 const res = await fetch('/api/chat', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ roleplayAction: 'start', roleplayData: { userId: (await sb.auth.getUser()).data.user?.id, studentId, topic: 'Conversación libre' } })
+                    body: JSON.stringify({ roleplayAction: 'start', roleplayData: { userId: (await sb.auth.getUser()).data.user?.id, studentId } })
                 });
                 const data = await res.json();
                 if (data.id) currentSessionId = data.id;
