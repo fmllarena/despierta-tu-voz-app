@@ -201,13 +201,13 @@
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@sb/sb-js@2"></script>
     <script>
         // Supabase config
-        const SUPABASE_URL = "https://axwwjtjcawuabzyojabu.supabase.co";
+        const SUPABASE_URL = "https://axwwjtjcawuabzyojabu.sb.co";
         const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF4d3dqdGpjYXd1YWJ6eW9qYWJ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzg4ODExNjUsImV4cCI6MjA1NDQ1NzE2NX0.Pk0MUk1I61z6pkMl4eBF82vIqyK7z1xj_bbAzBvl3eM";
 
-        let supabase;
+        let sb;
         let studentAId = null, studentAName = null;
         let studentBId = null, studentBName = null;
         let conversationHistory = [];
@@ -215,11 +215,11 @@
         const EL = (id) => document.getElementById(id);
 
         async function init() {
-            supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+            sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
                 auth: { storageKey: 'sb-roles-auth-token', autoRefreshToken: true, persistSession: true }
             });
 
-            const { data: { session } } = await supabase.auth.getSession();
+            const { data: { session } } = await sb.auth.getSession();
             if (session) mostrarDashboard(session);
 
             EL('loginBtn').onclick = login;
@@ -245,10 +245,10 @@
             const password = EL('loginPassword').value.trim();
             if (!email || !password) { EL('loginError').textContent = 'Introduce email y contraseña.'; return; }
 
-            const { error } = await supabase.auth.signInWithPassword({ email, password });
+            const { error } = await sb.auth.signInWithPassword({ email, password });
             if (error) { EL('loginError').textContent = error.message; return; }
 
-            const { data: { session } } = await supabase.auth.getSession();
+            const { data: { session } } = await sb.auth.getSession();
             if (session) mostrarDashboard(session);
         }
 
@@ -260,7 +260,7 @@
         }
 
         async function logout() {
-            await supabase.auth.signOut();
+            await sb.auth.signOut();
             EL('dashboard').style.display = 'none';
             EL('loginSection').style.display = 'block';
             studentAId = studentBId = null;
@@ -279,7 +279,7 @@
         }
 
         async function cargarListaAlumnos() {
-            const { data, error } = await supabase
+            const { data, error } = await sb
                 .from('user_profiles')
                 .select('email, nombre')
                 .not('email', 'is', null)
@@ -307,7 +307,7 @@
             const email = EL(inputId).value.trim();
             if (!email) return;
 
-            const { data, error } = await supabase
+            const { data, error } = await sb
                 .from('user_profiles')
                 .select('user_id, nombre')
                 .eq('email', email.toLowerCase())
