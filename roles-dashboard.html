@@ -344,7 +344,11 @@
             if (empty) empty.remove();
             const div = document.createElement('div');
             div.className = `msg ${cls}`;
-            div.innerHTML = `<div class="msg-label">${label}</div><div>${text.replace(/\n/g, '<br>')}</div>`;
+            const html = text
+                .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+                .replace(/\*(.+?)\*/g, '<em>$1</em>')
+                .replace(/\n/g, '<br>');
+            div.innerHTML = `<div class="msg-label">${label}</div><div>${html}</div>`;
             body.appendChild(div);
             div.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
