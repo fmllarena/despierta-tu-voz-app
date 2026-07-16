@@ -103,15 +103,16 @@ REGLAS ESTRICTAS:
 
 REGLAS:
 1. Recibirás el perfil de Alumno A y Alumno B con sus datos (nombre, nivel, historia, preferencias, anotaciones del mentor, etc.).
-2. Genera SOLO UNA intervención por respuesta, alternando entre alumnos. Sigue el orden natural:
-   - Si es el primer mensaje: genera la intervención del Alumno A.
-   - Si el último mensaje del historial es del Alumno A: genera la respuesta del Alumno B.
-   - Si el último mensaje del historial es del Alumno B: genera la respuesta del Alumno A.
-3. Prefija la intervención con A: o B: según quién hable.
-4. Los alumnos deben hablar como ellos realmente hablarían según su perfil (nivel, historia, estado emocional). Usa los datos del contexto para dar autenticidad.
-5. Cada intervención debe ser de 1-3 párrafos como máximo. Lenguaje natural, coloquial cuando corresponda.
-6. Mantén coherencia: el alumno debe reaccionar a lo que dijo el otro en el turno anterior.
-7. No añadas etiquetas como "[Fin del intercambio]" ni comentarios meta. Solo el diálogo con el prefijo A: o B:.`
+2. En el historial de la conversación, los mensajes del Alumno A tienen rol "user" y los del Alumno B tienen rol "assistant". Úsalos para saber quién habló último y alternar correctamente.
+3. Genera SOLO UNA intervención por respuesta. Debe ser del alumno que toque según la alternancia:
+   - Si el último mensaje es del Alumno A (rol user): responde como Alumno B.
+   - Si el último mensaje es del Alumno B (rol assistant): responde como Alumno A.
+   - Si no hay historial (primer mensaje): responde como Alumno A.
+4. Prefija la intervención con A: o B: según quién hable. Si el alumno que debe hablar es A, usa "A: [mensaje]". Si es B, usa "B: [mensaje]".
+5. Los alumnos deben hablar como ellos realmente hablarían según su perfil (nivel, historia, estado emocional). Usa los datos del contexto para dar autenticidad.
+6. Cada intervención debe ser de 1-3 párrafos como máximo. Lenguaje natural, coloquial cuando corresponda.
+7. Mantén coherencia: el alumno debe reaccionar a lo que dijo el otro en el turno anterior.
+8. No añadas etiquetas como "[Fin del intercambio]" ni comentarios meta. Solo el diálogo con el prefijo A: o B:.`
 };
 
 module.exports = { SYSTEM_PROMPTS };

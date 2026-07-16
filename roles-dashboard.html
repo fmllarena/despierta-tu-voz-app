@@ -382,7 +382,8 @@
                     const which = parsed.who === 'A' ? 'A' : 'B';
                     const name = parsed.who === 'A' ? studentAName : studentBName;
                     addMessage(which, name, parsed.text);
-                    conversationHistory.push({ role: 'user', parts: [{ text: `[${name}]: ${parsed.text}` }], created_at: now });
+                    const role = which === 'A' ? 'user' : 'model';
+                    conversationHistory.push({ role, parts: [{ text: `[${name}]: ${parsed.text}` }], created_at: now });
                 }
 
                 EL('continueBtn').disabled = false;
@@ -398,7 +399,12 @@
             setLoading(true);
 
             try {
-                const data = await llamarAPI('Continúa la conversación desde donde quedó.', conversationHistory);
+                // Determinar quién habla según el último rol
+                const last = conversationHistory[conversationHistory.length - 1];
+                const nextLabel = last.role === 'user' ? studentBName : studentAName;
+                const msg = `Turno de ${nextLabel} para responder.`;
+
+                const data = await llamarAPI(msg, conversationHistory);
                 const now = new Date().toISOString();
                 const parsed = parseMensajeUnico(data.text);
 
@@ -406,7 +412,8 @@
                     const which = parsed.who === 'A' ? 'A' : 'B';
                     const name = parsed.who === 'A' ? studentAName : studentBName;
                     addMessage(which, name, parsed.text);
-                    conversationHistory.push({ role: 'user', parts: [{ text: `[${name}]: ${parsed.text}` }], created_at: now });
+                    const role = which === 'A' ? 'user' : 'model';
+                    conversationHistory.push({ role, parts: [{ text: `[${name}]: ${parsed.text}` }], created_at: now });
                 }
             } catch (e) {
                 const body = EL('convBody');
