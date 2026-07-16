@@ -39,7 +39,7 @@ module.exports = async function handler(req, res) {
  * Procesa la lógica de negocio del chat con fallback secuencial
  */
 async function processChat(req, res = null) {
-    const { intent, message, history = [], userId, userId2 = null, stream = false, vocal_scan = null, originPost = null, originCat = null, fileData = null, roleplayAction, roleplayData } = req.body;
+    const { intent, message, history = [], userId, userId2 = null, stream = false, vocal_scan = null, originPost = null, originCat = null, fileData = null, roleplayAction, roleplayData, includeRoleplayContext = true } = req.body;
 
     if (intent === 'warmup') return { text: "OK" };
 
@@ -66,7 +66,7 @@ async function processChat(req, res = null) {
     if (!intent || !SYSTEM_PROMPTS[intent]) throw new Error("Intento no válido");
 
     // 1. Construir Contexto del Alumno
-    const ctx = await buildUserContext(userId, intent, originPost, originCat);
+    const ctx = await buildUserContext(userId, intent, originPost, originCat, includeRoleplayContext);
     let context = ctx.context;
 
     // 1b. Segundo alumno (modo comparación)
@@ -116,7 +116,7 @@ async function processChat(req, res = null) {
 /**
  * Recupera datos de Supabase para alimentar el prompt
  */
-async function buildUserContext(userId, intent, originPost = null, originCat = null) {
+async function buildUserContext(userId, intent, originPost = null, originCat = null, includeRoleplayHistory = true) {
     if (!userId && !originPost) return { context: "", resumenBoundary: null };
 
     const needsContext = ['mentor_chat', 'mentor_briefing', 'alchemy_analysis', 'mentor_advisor', 'inspiracion_dia', 'roleplay_chat'].includes(intent);
@@ -163,9 +163,8 @@ async function buildUserContext(userId, intent, originPost = null, originCat = n
         }
     }
 
-    // --- HISTORIAL DE ROLEPLAY Y CREENCIAS TRANSMUTADAS (solo para roleplay_chat) ---
-    if (intent === 'roleplay_chat') {
-        // Últimas 3 sesiones de roleplay
+    // --- HISTORIAL DE ROLEPLAY Y CREENCIAS (solo primer mensaje de cada sesión) ---
+    if (intent === 'roleplay_chat' && includeRoleplayHistory) {
         const { data: rpSessions } = await supabase.from('roleplay_sessions')
             .select('id, topic, summary, started_at, ended_at')
             .eq('student_id', userId)
@@ -173,42 +172,36 @@ async function buildUserContext(userId, intent, originPost = null, originCat = n
             .limit(3);
 
         if (rpSessions?.length > 0) {
-            context += `\n--- HISTORIAL DE ROLEPLAY (últimas sesiones) ---\n`;
+            context += `\n--- HISTORIAL DE ROLEPLAY ---\n`;
             for (const s of rpSessions) {
-                context += `\n[Sesión: ${new Date(s.started_at).toLocaleDateString()}] Tema: ${s.topic || '—'}`;
-                if (s.summary) context += `\n  Resumen: ${s.summary}`;
+                context += `\n[${new Date(s.started_at).toLocaleDateString()}] ${s.topic || '—'}`;
+                if (s.summary) context += ` → ${s.summary}`;
             }
 
-            // Cargar mensajes de la última sesión para continuidad inmediata
             const lastSession = rpSessions[0];
             const { data: rpMessages } = await supabase.from('roleplay_messages')
                 .select('role, content, sequence')
                 .eq('session_id', lastSession.id)
                 .order('sequence', { ascending: true })
-                .limit(20);
+                .limit(5);
             if (rpMessages?.length > 0) {
                 context += `\n  Últimos intercambios:`;
                 rpMessages.forEach(m => {
-                    context += `\n    ${m.role === 'mentor' ? 'Mentor' : 'Alumno'}: ${m.content}`;
+                    context += `\n    ${m.role}: ${m.content.substring(0, 200)}`;
                 });
             }
-            context += `\n[SISTEMA: Usa este historial para dar continuidad. No repitas temas ya tratados. Evoluciona la conversación.]\n`;
+            context += `\n[SISTEMA: Úsalo para continuidad. No repitas temas.]\n`;
         }
 
-        // Creencias transmutadas acumuladas
         const { data: beliefs } = await supabase.from('belief_transmutations')
             .select('old_belief, new_belief, context, created_at')
             .eq('student_id', userId)
             .order('created_at', { ascending: false })
-            .limit(10);
+            .limit(3);
 
         if (beliefs?.length > 0) {
-            context += `\n--- CREENCIAS TRANSMUTADAS (log histórico) ---\n`;
-            beliefs.forEach(b => {
-                context += `\n- Antes: "${b.old_belief}" → Ahora: "${b.new_belief}"`;
-                if (b.context) context += ` (${b.context})`;
-            });
-            context += `\n[SISTEMA: Estas creencias ya fueron trabajadas. No las repitas como nuevas. Si surge algo relacionado, reconoce la evolución.]\n`;
+            context += `\n--- CREENCIAS TRANSMUTADAS ---\n`;
+            beliefs.forEach(b => context += `\n- "${b.old_belief}" → "${b.new_belief}"`);
         }
     }
 

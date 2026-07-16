@@ -230,6 +230,7 @@
         let studentId = null, studentName = null;
         let chatHistory = [];
         let currentSessionId = null;
+        let includeRoleplayContext = true;
 
         const EL = (id) => document.getElementById(id);
 
@@ -303,7 +304,7 @@
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        roleplayAction: 'session_end',
+                        roleplayAction: 'end',
                         roleplayData: { sessionId: currentSessionId }
                     })
                 });
@@ -366,6 +367,7 @@
             EL('msgInput').focus();
             chatHistory = [];
             currentSessionId = null;
+            includeRoleplayContext = true;
             EL('chatBody').innerHTML = `<div class="chat-empty">Empieza a escribir para conversar con ${studentName}.</div>`;
 
             // Iniciar sesión de roleplay
@@ -415,7 +417,8 @@
                     intent: 'roleplay_chat',
                     message: text,
                     history: chatHistory,
-                    userId: studentId
+                    userId: studentId,
+                    includeRoleplayContext
                 };
                 const res = await fetch('/api/chat', {
                     method: 'POST',
@@ -424,6 +427,7 @@
                 });
                 const data = await res.json();
                 if (data.error) throw new Error(data.error);
+                includeRoleplayContext = false;
 
                 const now = new Date().toISOString();
                 chatHistory.push({ role: 'user', parts: [{ text }], created_at: now });
