@@ -387,6 +387,7 @@
                 const parsed = parseRespuesta(data.text);
                 addMsg('alumno', studentName, parsed);
                 chatHistory.push({ role: 'model', parts: [{ text: parsed }], created_at: now });
+                if (chatHistory.length > 20) chatHistory = chatHistory.slice(-20);
 
             } catch (e) {
                 addMsg('alumno', 'Error', `❌ ${e.message}`);
