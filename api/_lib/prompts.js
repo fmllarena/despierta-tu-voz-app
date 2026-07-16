@@ -111,7 +111,7 @@ Cada respuesta debe avanzar la conversación según la ETAPA que aparece en el C
 - PROFUNDIZA: conecta con experiencias, reflexiona, muestra evolución.
 - CIERRE: busca conclusiones o cambia de perspectiva con naturalidad.
 
-Varía estructura, longitud máxima de 2 párrafos y tono entre turnos como en una charla real.`
+Varía estructura, longitud máxima de un párrafo y tono entre turnos como en una charla real.`
 };
 
 module.exports = { SYSTEM_PROMPTS };
