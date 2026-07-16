@@ -73,15 +73,15 @@
             overflow: hidden;
             margin-top: 20px;
         }
+        @media (min-width: 1024px) {
+            .conversation-box { width: 60%; margin-left: auto; margin-right: auto; }
+        }
         .conv-header {
             padding: 15px 20px;
             background: #f8f9fa;
             border-bottom: 1px solid #eee;
             font-weight: 600;
             color: var(--color-acento);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
         }
         .conv-body {
             padding: 20px;
@@ -190,12 +190,12 @@
             <div id="loading" class="loading">🤖 Generando conversación...</div>
 
             <div class="conversation-box">
-                <div class="conv-header">
-                    <span>Conversación</span>
-                    <button id="continueBtn" class="btn btn-primary" style="padding:8px 16px;font-size:0.8rem;" disabled>➡️ Continuar conversación</button>
-                </div>
+                <div class="conv-header">Conversación</div>
                 <div id="convBody" class="conv-body">
                     <div class="conv-empty">Selecciona los dos alumnos y escribe un tema para iniciar la conversación.</div>
+                </div>
+                <div style="padding:12px 20px;border-top:1px solid #eee;text-align:center;">
+                    <button id="continueBtn" class="btn btn-primary" style="padding:10px 24px;font-size:0.85rem;" disabled>➡️ Continuar conversación</button>
                 </div>
             </div>
         </div>
