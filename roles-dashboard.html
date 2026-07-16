@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="es">
+<script>if (localStorage.getItem('rolesDarkMode') === 'true') document.documentElement.setAttribute('data-theme', 'dark')</script>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Roles Dashboard - Despierta tu Voz</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --color-acento: #8e7d6d;
+            --color-texto: #333;
+            --glass-bg: rgba(255, 255, 255, 0.95);
+            --dark-bg: #1a1a1a;
+            --dark-card: #2a2a2a;
+            --dark-panel: #333;
+            --dark-text: #e0d8cc;
+            --dark-input: #3a3a3a;
+            --dark-border: #444;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Outfit', sans-serif; background: #f5f2ed; color: var(--color-texto); min-height: 100vh; }
+
+        .container { max-width: 1000px; margin: 0 auto; padding: 20px; }
+
+        .login-section {
+            max-width: 380px;
+            margin: 60px auto;
+            padding: 30px;
+            background: var(--glass-bg);
+            border-radius: 24px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        .login-section h1 { color: var(--color-acento); margin-bottom: 10px; font-size: 1.6rem; }
+        .login-section p { color: #888; margin-bottom: 25px; font-size: 0.9rem; }
+        .login-section input { width: 100%; padding: 14px; border: 2px solid #eee; border-radius: 12px; font-size: 1rem; outline: none; font-family: inherit; margin-bottom: 10px; }
+        .login-section input:focus { border-color: var(--color-acento); box-shadow: 0 0 0 4px rgba(142,125,109,0.1); }
+        .login-error { color: #e74c3c; font-size: 0.85rem; min-height: 1.5em; margin-top: 8px; }
+
+        .dashboard { display: none; }
+        .dash-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .dash-header h2 { color: var(--color-acento); }
+        .logout-btn { background: transparent; border: 1px solid #e74c3c; color: #e74c3c; padding: 6px 16px; border-radius: 8px; cursor: pointer; font-family: inherit; font-size: 0.85rem; }
+        .logout-btn:hover { background: #e74c3c; color: #fff; }
+
+        .selectors { display: flex; gap: 15px; margin-bottom: 20px; }
+        .selector-box { flex: 1; background: #f8f9fa; padding: 15px; border-radius: 15px; }
+        .selector-box label { font-size: 0.85rem; font-weight: 600; color: #555; display: block; margin-bottom: 5px; }
+        .selector-box input { width: 100%; padding: 12px; border: 2px solid #eee; border-radius: 10px; font-size: 0.95rem; outline: none; font-family: inherit; }
+        .selector-box input:focus { border-color: var(--color-acento); }
+        .sel-status { font-size: 0.75rem; color: #888; margin-top: 5px; min-height: 1.2em; }
+
+        .theme-row { display: flex; gap: 10px; margin-bottom: 15px; }
+        .theme-row textarea { flex: 1; padding: 12px; border: 2px solid #eee; border-radius: 12px; font-size: 0.95rem; outline: none; font-family: inherit; resize: vertical; min-height: 50px; }
+        .theme-row textarea:focus { border-color: var(--color-acento); }
+
+        .btn { padding: 12px 24px; border: none; border-radius: 12px; cursor: pointer; font-weight: 600; font-size: 0.95rem; font-family: inherit; transition: transform 0.2s, opacity 0.2s; }
+        .btn:hover { opacity: 0.9; transform: translateY(-1px); }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+        .btn-primary { background: var(--color-acento); color: #fff; box-shadow: 0 4px 15px rgba(142,125,109,0.3); }
+        .btn-secondary { background: #6c757d; color: #fff; box-shadow: 0 4px 15px rgba(108,117,125,0.3); }
+        .btn-success { background: #27ae60; color: #fff; box-shadow: 0 4px 15px rgba(39,174,96,0.3); }
+
+        .conversation-box {
+            background: #fff;
+            border-radius: 18px;
+            border: 1px solid #eee;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            overflow: hidden;
+            margin-top: 20px;
+        }
+        .conv-header {
+            padding: 15px 20px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #eee;
+            font-weight: 600;
+            color: var(--color-acento);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .conv-body {
+            padding: 20px;
+            min-height: 300px;
+            max-height: 500px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .conv-empty {
+            text-align: center;
+            color: #aaa;
+            padding: 40px 20px;
+            font-style: italic;
+        }
+        .conv-msg {
+            padding: 12px 16px;
+            border-radius: 15px;
+            max-width: 80%;
+            line-height: 1.5;
+            font-size: 0.92rem;
+        }
+        .conv-msg .msg-label {
+            font-size: 0.75rem;
+            font-weight: 700;
+            margin-bottom: 4px;
+            opacity: 0.8;
+        }
+        .conv-msg.msg-a {
+            align-self: flex-start;
+            background: #e8f0fe;
+            border-bottom-left-radius: 4px;
+        }
+        .conv-msg.msg-a .msg-label { color: #1a73e8; }
+        .conv-msg.msg-b {
+            align-self: flex-end;
+            background: #fce8e6;
+            border-bottom-right-radius: 4px;
+        }
+        .conv-msg.msg-b .msg-label { color: #d93025; }
+
+        .loading { display: none; text-align: center; padding: 20px; color: #888; }
+
+        /* DARK MODE */
+        html[data-theme="dark"] body { background: var(--dark-bg); color: var(--dark-text); }
+        html[data-theme="dark"] .login-section { background: var(--dark-card); }
+        html[data-theme="dark"] .login-section input { background: var(--dark-input); border-color: var(--dark-border); color: var(--dark-text); }
+        html[data-theme="dark"] .selector-box { background: var(--dark-panel); }
+        html[data-theme="dark"] .selector-box input { background: var(--dark-input); border-color: var(--dark-border); color: var(--dark-text); }
+        html[data-theme="dark"] .theme-row textarea { background: var(--dark-input); border-color: var(--dark-border); color: var(--dark-text); }
+        html[data-theme="dark"] .conversation-box { background: var(--dark-card); border-color: var(--dark-border); }
+        html[data-theme="dark"] .conv-header { background: var(--dark-panel); border-color: var(--dark-border); }
+        html[data-theme="dark"] .conv-msg.msg-a { background: #1a3a5c; }
+        html[data-theme="dark"] .conv-msg.msg-a .msg-label { color: #64b5f6; }
+        html[data-theme="dark"] .conv-msg.msg-b { background: #5c2e2a; }
+        html[data-theme="dark"] .conv-msg.msg-b .msg-label { color: #ef9a9a; }
+        html[data-theme="dark"] .btn-primary { box-shadow: 0 4px 15px rgba(212,175,55,0.2); }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <!-- LOGIN -->
+        <div id="loginSection" class="login-section">
+            <h1>🎭 Roles Dashboard</h1>
+            <p>Inicia sesión para gestionar conversaciones entre alumnos</p>
+            <input type="email" id="loginEmail" placeholder="Email de mentor">
+            <input type="password" id="loginPassword" placeholder="Contraseña">
+            <button id="loginBtn" class="btn btn-primary" style="width:100%;margin-top:10px;">Entrar</button>
+            <p id="loginError" class="login-error"></p>
+        </div>
+
+        <!-- DASHBOARD -->
+        <div id="dashboard" class="dashboard">
+            <div class="dash-header">
+                <h2>🎭 Roles Dashboard</h2>
+                <div>
+                    <button id="toggleDarkBtn" class="btn" style="background:transparent;border:1px solid #888;color:#888;padding:6px 12px;font-size:0.8rem;margin-right:8px;">🌙</button>
+                    <button id="logoutBtn" class="logout-btn">Cerrar Sesión</button>
+                </div>
+            </div>
+
+            <div class="selectors">
+                <div class="selector-box">
+                    <label for="studentA">Alumno A</label>
+                    <input type="text" id="studentA" list="studentListA" placeholder="Escribe nombre o email...">
+                    <datalist id="studentListA"></datalist>
+                    <p id="statusA" class="sel-status"></p>
+                    <button id="selectBtnA" class="btn btn-secondary" style="padding:8px 16px;font-size:0.8rem;margin-top:8px;width:100%;">Seleccionar A</button>
+                </div>
+                <div class="selector-box">
+                    <label for="studentB">Alumno B</label>
+                    <input type="text" id="studentB" list="studentListB" placeholder="Escribe nombre o email...">
+                    <datalist id="studentListB"></datalist>
+                    <p id="statusB" class="sel-status"></p>
+                    <button id="selectBtnB" class="btn btn-secondary" style="padding:8px 16px;font-size:0.8rem;margin-top:8px;width:100%;">Seleccionar B</button>
+                </div>
+            </div>
+
+            <div class="theme-row">
+                <textarea id="themeInput" placeholder="Tema o pregunta inicial (ej. 'A quiere preguntarle a B cómo lleva su proceso')"></textarea>
+                <button id="startBtn" class="btn btn-success" style="white-space:nowrap;align-self:flex-end;">💬 Iniciar conversación</button>
+            </div>
+
+            <div id="loading" class="loading">🤖 Generando conversación...</div>
+
+            <div class="conversation-box">
+                <div class="conv-header">
+                    <span>Conversación</span>
+                    <button id="continueBtn" class="btn btn-primary" style="padding:8px 16px;font-size:0.8rem;" disabled>➡️ Continuar conversación</button>
+                </div>
+                <div id="convBody" class="conv-body">
+                    <div class="conv-empty">Selecciona los dos alumnos y escribe un tema para iniciar la conversación.</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        // Supabase config
+        const SUPABASE_URL = "https://axwwjtjcawuabzyojabu.supabase.co";
+        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF4d3dqdGpjYXd1YWJ6eW9qYWJ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzg4ODExNjUsImV4cCI6MjA1NDQ1NzE2NX0.Pk0MUk1I61z6pkMl4eBF82vIqyK7z1xj_bbAzBvl3eM";
+
+        let supabase;
+        let studentAId = null, studentAName = null;
+        let studentBId = null, studentBName = null;
+        let conversationHistory = [];
+
+        const EL = (id) => document.getElementById(id);
+
+        async function init() {
+            supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+                auth: { storageKey: 'sb-roles-auth-token', autoRefreshToken: true, persistSession: true }
+            });
+
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session) mostrarDashboard(session);
+
+            EL('loginBtn').onclick = login;
+            EL('loginPassword').onkeypress = (e) => { if (e.key === 'Enter') login(); };
+            EL('logoutBtn').onclick = logout;
+            EL('toggleDarkBtn').onclick = toggleDark;
+            EL('selectBtnA').onclick = () => seleccionar('A');
+            EL('selectBtnB').onclick = () => seleccionar('B');
+            EL('studentA').onkeypress = (e) => { if (e.key === 'Enter') seleccionar('A'); };
+            EL('studentB').onkeypress = (e) => { if (e.key === 'Enter') seleccionar('B'); };
+            EL('startBtn').onclick = iniciarConversacion;
+            EL('continueBtn').onclick = continuarConversacion;
+
+            // Dark mode init
+            if (localStorage.getItem('rolesDarkMode') === 'true') {
+                document.documentElement.setAttribute('data-theme', 'dark');
+                EL('toggleDarkBtn').textContent = '☀️';
+            }
+        }
+
+        async function login() {
+            const email = EL('loginEmail').value.trim();
+            const password = EL('loginPassword').value.trim();
+            if (!email || !password) { EL('loginError').textContent = 'Introduce email y contraseña.'; return; }
+
+            const { error } = await supabase.auth.signInWithPassword({ email, password });
+            if (error) { EL('loginError').textContent = error.message; return; }
+
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session) mostrarDashboard(session);
+        }
+
+        async function mostrarDashboard(session) {
+            EL('loginSection').style.display = 'none';
+            EL('dashboard').style.display = 'block';
+            EL('loginError').textContent = '';
+            await cargarListaAlumnos();
+        }
+
+        async function logout() {
+            await supabase.auth.signOut();
+            EL('dashboard').style.display = 'none';
+            EL('loginSection').style.display = 'block';
+            studentAId = studentBId = null;
+            studentAName = studentBName = null;
+            conversationHistory = [];
+            EL('convBody').innerHTML = '<div class="conv-empty">Selecciona los dos alumnos y escribe un tema para iniciar la conversación.</div>';
+            EL('continueBtn').disabled = true;
+        }
+
+        function toggleDark() {
+            const html = document.documentElement;
+            const isDark = html.getAttribute('data-theme') === 'dark';
+            html.setAttribute('data-theme', isDark ? '' : 'dark');
+            localStorage.setItem('rolesDarkMode', !isDark);
+            EL('toggleDarkBtn').textContent = isDark ? '🌙' : '☀️';
+        }
+
+        async function cargarListaAlumnos() {
+            const { data, error } = await supabase
+                .from('user_profiles')
+                .select('email, nombre')
+                .not('email', 'is', null)
+                .order('nombre', { ascending: true });
+            if (error) { console.error(error); return; }
+
+            const poblar = (listId) => {
+                const list = document.getElementById(listId);
+                if (!list) return;
+                list.innerHTML = '';
+                data.forEach(a => {
+                    const opt = document.createElement('option');
+                    opt.value = a.email;
+                    opt.textContent = a.nombre ? `${a.nombre} (${a.email})` : a.email;
+                    list.appendChild(opt);
+                });
+            };
+            poblar('studentListA');
+            poblar('studentListB');
+        }
+
+        async function seleccionar(which) {
+            const inputId = which === 'A' ? 'studentA' : 'studentB';
+            const statusId = which === 'A' ? 'statusA' : 'statusB';
+            const email = EL(inputId).value.trim();
+            if (!email) return;
+
+            const { data, error } = await supabase
+                .from('user_profiles')
+                .select('user_id, nombre')
+                .eq('email', email.toLowerCase())
+                .maybeSingle();
+
+            if (error || !data) {
+                EL(statusId).textContent = '❌ Alumno no encontrado.';
+                return;
+            }
+
+            if (which === 'A') {
+                studentAId = data.user_id;
+                studentAName = data.nombre || email;
+                EL(statusId).textContent = `✅ ${studentAName}`;
+            } else {
+                studentBId = data.user_id;
+                studentBName = data.nombre || email;
+                EL(statusId).textContent = `✅ ${studentBName}`;
+            }
+        }
+
+        function addMessage(which, name, text) {
+            const body = EL('convBody');
+            const empty = body.querySelector('.conv-empty');
+            if (empty) empty.remove();
+
+            const div = document.createElement('div');
+            div.className = `conv-msg msg-${which.toLowerCase()}`;
+            div.innerHTML = `<div class="msg-label">${name}</div><div>${text.replace(/\n/g, '<br>')}</div>`;
+            body.appendChild(div);
+            body.scrollTop = body.scrollHeight;
+        }
+
+        function setLoading(on) {
+            EL('loading').style.display = on ? 'block' : 'none';
+            EL('startBtn').disabled = on;
+            EL('continueBtn').disabled = on;
+        }
+
+        async function llamarAPI(message, history) {
+            const body = {
+                intent: 'roleplay_chat',
+                message,
+                history,
+                userId: studentAId,
+                userId2: studentBId
+            };
+            const res = await fetch('/api/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+            const data = await res.json();
+            if (data.error) throw new Error(data.error);
+            return data;
+        }
+
+        async function iniciarConversacion() {
+            if (!studentAId || !studentBId) { alert('Selecciona ambos alumnos.'); return; }
+            const theme = EL('themeInput').value.trim();
+            if (!theme) { alert('Escribe un tema o pregunta inicial.'); return; }
+
+            setLoading(true);
+            conversationHistory = [];
+            EL('convBody').innerHTML = '';
+
+            try {
+                const data = await llamarAPI(theme, []);
+                const now = new Date().toISOString();
+
+                // Parse response: expect format "A: ...\nB: ..." or similar
+                const lines = data.text.split('\n').filter(l => l.trim());
+                let aMsg = '', bMsg = '';
+                for (const line of lines) {
+                    const trimmed = line.trim();
+                    if (/^(A|Alumno A|alumno a):/i.test(trimmed)) {
+                        aMsg = trimmed.replace(/^(A|Alumno A|alumno a):\s*/i, '').trim();
+                    } else if (/^(B|Alumno B|alumno b):/i.test(trimmed)) {
+                        bMsg = trimmed.replace(/^(B|Alumno B|alumno b):\s*/i, '').trim();
+                    }
+                }
+
+                // If parsing didn't find labeled messages, split roughly in half
+                if (!aMsg && !bMsg) {
+                    const mid = Math.ceil(lines.length / 2);
+                    aMsg = lines.slice(0, mid).join(' ');
+                    bMsg = lines.slice(mid).join(' ');
+                }
+
+                if (aMsg) {
+                    addMessage('A', studentAName, aMsg);
+                    conversationHistory.push({ role: 'user', parts: [{ text: `[${studentAName}]: ${aMsg}` }], created_at: now });
+                }
+                if (bMsg) {
+                    addMessage('B', studentBName, bMsg);
+                    conversationHistory.push({ role: 'model', parts: [{ text: `[${studentBName}]: ${bMsg}` }], created_at: now });
+                }
+
+                EL('continueBtn').disabled = false;
+            } catch (e) {
+                EL('convBody').innerHTML = `<div class="conv-msg" style="align-self:center;background:#fce8e6;color:#c0392b;">❌ Error: ${e.message}</div>`;
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        async function continuarConversacion() {
+            if (conversationHistory.length === 0) return;
+            setLoading(true);
+
+            try {
+                const data = await llamarAPI('Continúa la conversación desde donde quedó. Genera el siguiente intercambio.', conversationHistory);
+                const now = new Date().toISOString();
+
+                const lines = data.text.split('\n').filter(l => l.trim());
+                let aMsg = '', bMsg = '';
+                for (const line of lines) {
+                    const trimmed = line.trim();
+                    if (/^(A|Alumno A|alumno a):/i.test(trimmed)) {
+                        aMsg = trimmed.replace(/^(A|Alumno A|alumno a):\s*/i, '').trim();
+                    } else if (/^(B|Alumno B|alumno b):/i.test(trimmed)) {
+                        bMsg = trimmed.replace(/^(B|Alumno B|alumno b):\s*/i, '').trim();
+                    }
+                }
+
+                if (!aMsg && !bMsg) {
+                    const mid = Math.ceil(lines.length / 2);
+                    aMsg = lines.slice(0, mid).join(' ');
+                    bMsg = lines.slice(mid).join(' ');
+                }
+
+                if (aMsg) {
+                    addMessage('A', studentAName, aMsg);
+                    conversationHistory.push({ role: 'user', parts: [{ text: `[${studentAName}]: ${aMsg}` }], created_at: now });
+                }
+                if (bMsg) {
+                    addMessage('B', studentBName, bMsg);
+                    conversationHistory.push({ role: 'model', parts: [{ text: `[${studentBName}]: ${bMsg}` }], created_at: now });
+                }
+            } catch (e) {
+                const body = EL('convBody');
+                const errDiv = document.createElement('div');
+                errDiv.className = 'conv-msg';
+                errDiv.style.cssText = 'align-self:center;background:#fce8e6;color:#c0392b;';
+                errDiv.textContent = `❌ Error: ${e.message}`;
+                body.appendChild(errDiv);
+                body.scrollTop = body.scrollHeight;
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        init();
+    </script>
+</body>
+</html>

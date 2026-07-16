@@ -98,7 +98,7 @@ async function processChat(req, res = null) {
 async function buildUserContext(userId, intent, originPost = null, originCat = null) {
     if (!userId && !originPost) return { context: "", resumenBoundary: null };
 
-    const needsContext = ['mentor_chat', 'mentor_briefing', 'alchemy_analysis', 'mentor_advisor', 'inspiracion_dia'].includes(intent);
+    const needsContext = ['mentor_chat', 'mentor_briefing', 'alchemy_analysis', 'mentor_advisor', 'inspiracion_dia', 'roleplay_chat'].includes(intent);
     if (!needsContext) return { context: "", resumenBoundary: null };
 
     const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
