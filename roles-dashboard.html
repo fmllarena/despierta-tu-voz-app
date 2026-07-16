@@ -346,6 +346,7 @@
             div.className = `msg ${cls}`;
             div.innerHTML = `<div class="msg-label">${label}</div><div>${text.replace(/\n/g, '<br>')}</div>`;
             body.appendChild(div);
+            div.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
 
         function setLoading(on) {
