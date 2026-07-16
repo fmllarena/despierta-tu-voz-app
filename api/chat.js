@@ -39,27 +39,9 @@ module.exports = async function handler(req, res) {
  * Procesa la lógica de negocio del chat con fallback secuencial
  */
 async function processChat(req, res = null) {
-    const { intent, message, history = [], userId, userId2 = null, stream = false, vocal_scan = null, originPost = null, originCat = null, fileData = null, roleplayAction, roleplayData } = req.body;
+    const { intent, message, history = [], userId, userId2 = null, stream = false, vocal_scan = null, originPost = null, originCat = null, fileData = null } = req.body;
 
     if (intent === 'warmup') return { text: "OK" };
-
-    // --- ROLEPLAY ACTIONS ---
-    if (roleplayAction) {
-        try {
-            switch (roleplayAction) {
-                case 'start':
-                    return await roleplayStart({ userId: roleplayData?.userId, studentId: roleplayData?.studentId, topic: roleplayData?.topic });
-                case 'save_message':
-                    return await roleplaySaveMessage(roleplayData);
-                case 'end':
-                    return await roleplayEnd({ sessionId: roleplayData?.sessionId, summary: roleplayData?.summary, history: roleplayData?.history });
-                default:
-                    throw new Error(`Acción roleplay desconocida: ${roleplayAction}`);
-            }
-        } catch (e) {
-            throw new Error(`Roleplay error: ${e.message}`);
-        }
-    }
 
     if (!intent || !SYSTEM_PROMPTS[intent]) throw new Error("Intento no válido");
 
@@ -403,51 +385,6 @@ function handleError(error, res, stream) {
 }
 
 // ===== ROLEPLAY ENDPOINTS =====
-
-async function roleplayStart({ userId, studentId, topic }) {
-    const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
-    
-    const session = await supabase.from('roleplay_sessions')
-        .insert({ student_id: studentId, mentor_id: userId, topic: topic || 'Conversación libre' })
-        .select()
-        .single();
-    
-    if (session.error) throw session.error;
-    return session.data;
-}
-
-async function roleplaySaveMessage({ sessionId, messages, role, content, sequence }) {
-    const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
-
-    const rows = messages?.length
-        ? messages.map((m, i) => ({ session_id: sessionId, role: m.role, content: m.content, sequence: i }))
-        : [{ session_id: sessionId, role, content, sequence: sequence ?? 0 }];
-
-    const { error } = await supabase.from('roleplay_messages').insert(rows);
-    if (error) throw error;
-    return { saved: rows.length };
-}
-
-async function roleplayEnd({ sessionId, summary, history }) {
-    const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
-    
-    // Generar resumen automático si no se proporciona
-    if (!summary && history?.length) {
-        const mentorMsgs = history.filter(m => m.role === 'user').map(m => m.parts?.[0]?.text).filter(Boolean);
-        const studentMsgs = history.filter(m => m.role === 'model').map(m => m.parts?.[0]?.text).filter(Boolean);
-        summary = `Mentor preguntó sobre: ${mentorMsgs.slice(0, 3).join('; ')}`;
-        if (studentMsgs.length) summary += `. Alumno respondió: ${studentMsgs[studentMsgs.length - 1].substring(0, 200)}`;
-    }
-    
-    const session = await supabase.from('roleplay_sessions')
-        .update({ ended_at: new Date().toISOString(), summary })
-        .eq('id', sessionId)
-        .select()
-        .single();
-    
-    if (session.error) throw session.error;
-    return session.data;
-}
 
 function setupStreamHeaders(res) {
     res.setHeader('Content-Type', 'text/event-stream');
