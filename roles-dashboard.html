@@ -346,7 +346,6 @@
             div.className = `msg ${cls}`;
             div.innerHTML = `<div class="msg-label">${label}</div><div>${text.replace(/\n/g, '<br>')}</div>`;
             body.appendChild(div);
-            body.scrollTop = body.scrollHeight;
         }
 
         function setLoading(on) {
