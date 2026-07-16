@@ -47,25 +47,20 @@
         .logout-btn { background: transparent; border: 1px solid #e74c3c; color: #e74c3c; padding: 6px 16px; border-radius: 8px; cursor: pointer; font-family: inherit; font-size: 0.85rem; }
         .logout-btn:hover { background: #e74c3c; color: #fff; }
 
-        .selectors { display: flex; gap: 15px; margin-bottom: 20px; }
-        .selector-box { flex: 1; background: #f8f9fa; padding: 15px; border-radius: 15px; }
-        .selector-box label { font-size: 0.85rem; font-weight: 600; color: #555; display: block; margin-bottom: 5px; }
-        .selector-box input { width: 100%; padding: 12px; border: 2px solid #eee; border-radius: 10px; font-size: 0.95rem; outline: none; font-family: inherit; }
-        .selector-box input:focus { border-color: var(--color-acento); }
+        .selector-row { display: flex; gap: 15px; margin-bottom: 20px; align-items: flex-end; }
+        .selector-row .input-group { flex: 1; }
+        .selector-row label { font-size: 0.85rem; font-weight: 600; color: #555; display: block; margin-bottom: 5px; }
+        .selector-row input { width: 100%; padding: 12px; border: 2px solid #eee; border-radius: 10px; font-size: 0.95rem; outline: none; font-family: inherit; }
+        .selector-row input:focus { border-color: var(--color-acento); }
         .sel-status { font-size: 0.75rem; color: #888; margin-top: 5px; min-height: 1.2em; }
-
-        .theme-row { display: flex; gap: 10px; margin-bottom: 15px; }
-        .theme-row textarea { flex: 1; padding: 12px; border: 2px solid #eee; border-radius: 12px; font-size: 0.95rem; outline: none; font-family: inherit; resize: vertical; min-height: 50px; }
-        .theme-row textarea:focus { border-color: var(--color-acento); }
 
         .btn { padding: 12px 24px; border: none; border-radius: 12px; cursor: pointer; font-weight: 600; font-size: 0.95rem; font-family: inherit; transition: transform 0.2s, opacity 0.2s; }
         .btn:hover { opacity: 0.9; transform: translateY(-1px); }
         .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
         .btn-primary { background: var(--color-acento); color: #fff; box-shadow: 0 4px 15px rgba(142,125,109,0.3); }
         .btn-secondary { background: #6c757d; color: #fff; box-shadow: 0 4px 15px rgba(108,117,125,0.3); }
-        .btn-success { background: #27ae60; color: #fff; box-shadow: 0 4px 15px rgba(39,174,96,0.3); }
 
-        .conversation-box {
+        .chat-box {
             background: #fff;
             border-radius: 18px;
             border: 1px solid #eee;
@@ -74,128 +69,151 @@
             margin-top: 20px;
         }
         @media (min-width: 1024px) {
-            .conversation-box { width: 60%; margin-left: auto; margin-right: auto; }
+            .chat-box { width: 60%; margin-left: auto; margin-right: auto; }
         }
-        .conv-header {
+        .chat-header {
             padding: 15px 20px;
             background: #f8f9fa;
             border-bottom: 1px solid #eee;
             font-weight: 600;
             color: var(--color-acento);
         }
-        .conv-body {
+        .chat-body {
             padding: 20px;
-            min-height: 300px;
+            min-height: 350px;
             max-height: 500px;
             overflow-y: auto;
             display: flex;
             flex-direction: column;
             gap: 12px;
         }
-        .conv-empty {
+        .chat-empty {
             text-align: center;
             color: #aaa;
             padding: 40px 20px;
             font-style: italic;
         }
-        .conv-msg {
+        .msg {
             padding: 12px 16px;
             border-radius: 15px;
             max-width: 80%;
             line-height: 1.5;
             font-size: 0.92rem;
         }
-        .conv-msg .msg-label {
+        .msg .msg-label {
             font-size: 0.75rem;
             font-weight: 700;
             margin-bottom: 4px;
             opacity: 0.8;
         }
-        .conv-msg.msg-a {
+        .msg.yo {
+            align-self: flex-end;
+            background: var(--color-acento);
+            color: #fff;
+            border-bottom-right-radius: 4px;
+        }
+        .msg.yo .msg-label { color: rgba(255,255,255,0.8); }
+        .msg.alumno {
             align-self: flex-start;
             background: #e8f0fe;
             border-bottom-left-radius: 4px;
+            color: #333;
         }
-        .conv-msg.msg-a .msg-label { color: #1a73e8; }
-        .conv-msg.msg-b {
-            align-self: flex-end;
-            background: #fce8e6;
-            border-bottom-right-radius: 4px;
-        }
-        .conv-msg.msg-b .msg-label { color: #d93025; }
+        .msg.alumno .msg-label { color: #1a73e8; }
 
-        .loading { display: none; text-align: center; padding: 20px; color: #888; }
+        .chat-input-area {
+            padding: 15px 20px;
+            border-top: 1px solid #eee;
+            display: flex;
+            gap: 10px;
+            align-items: flex-end;
+        }
+        .chat-input-area textarea {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #eee;
+            border-radius: 12px;
+            font-size: 0.95rem;
+            outline: none;
+            font-family: inherit;
+            resize: none;
+            min-height: 44px;
+            max-height: 120px;
+        }
+        .chat-input-area textarea:focus { border-color: var(--color-acento); }
+        .chat-input-area .send-btn {
+            width: 44px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--color-acento);
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+        .chat-input-area .send-btn svg { fill: #fff; width: 20px; height: 20px; }
+        .chat-input-area .send-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .loading { display: none; text-align: center; padding: 10px; color: #888; font-size: 0.85rem; }
 
         /* DARK MODE */
         html[data-theme="dark"] body { background: var(--dark-bg); color: var(--dark-text); }
         html[data-theme="dark"] .login-section { background: var(--dark-card); }
         html[data-theme="dark"] .login-section input { background: var(--dark-input); border-color: var(--dark-border); color: var(--dark-text); }
-        html[data-theme="dark"] .selector-box { background: var(--dark-panel); }
-        html[data-theme="dark"] .selector-box input { background: var(--dark-input); border-color: var(--dark-border); color: var(--dark-text); }
-        html[data-theme="dark"] .theme-row textarea { background: var(--dark-input); border-color: var(--dark-border); color: var(--dark-text); }
-        html[data-theme="dark"] .conversation-box { background: var(--dark-card); border-color: var(--dark-border); }
-        html[data-theme="dark"] .conv-header { background: var(--dark-panel); border-color: var(--dark-border); }
-        html[data-theme="dark"] .conv-msg.msg-a { background: #1a3a5c; }
-        html[data-theme="dark"] .conv-msg.msg-a .msg-label { color: #64b5f6; }
-        html[data-theme="dark"] .conv-msg.msg-b { background: #5c2e2a; }
-        html[data-theme="dark"] .conv-msg.msg-b .msg-label { color: #ef9a9a; }
+        html[data-theme="dark"] .selector-row input { background: var(--dark-input); border-color: var(--dark-border); color: var(--dark-text); }
+        html[data-theme="dark"] .chat-box { background: var(--dark-card); border-color: var(--dark-border); }
+        html[data-theme="dark"] .chat-header { background: var(--dark-panel); border-color: var(--dark-border); }
+        html[data-theme="dark"] .msg.alumno { background: #1a3a5c; color: var(--dark-text); }
+        html[data-theme="dark"] .msg.alumno .msg-label { color: #64b5f6; }
+        html[data-theme="dark"] .chat-input-area { border-top-color: var(--dark-border); }
+        html[data-theme="dark"] .chat-input-area textarea { background: var(--dark-input); border-color: var(--dark-border); color: var(--dark-text); }
         html[data-theme="dark"] .btn-primary { box-shadow: 0 4px 15px rgba(212,175,55,0.2); }
     </style>
 </head>
 
 <body>
     <div class="container">
-        <!-- LOGIN -->
         <div id="loginSection" class="login-section">
-            <h1>🎭 Roles Dashboard</h1>
-            <p>Inicia sesión para gestionar conversaciones entre alumnos</p>
+            <h1>🎭 Roleplay con Alumno</h1>
+            <p>Inicia sesión para conversar con un alumno interpretado por IA</p>
             <input type="email" id="loginEmail" placeholder="Email de mentor">
             <input type="password" id="loginPassword" placeholder="Contraseña">
             <button id="loginBtn" class="btn btn-primary" style="width:100%;margin-top:10px;">Entrar</button>
             <p id="loginError" class="login-error"></p>
         </div>
 
-        <!-- DASHBOARD -->
         <div id="dashboard" class="dashboard">
             <div class="dash-header">
-                <h2>🎭 Roles Dashboard</h2>
+                <h2>🎭 Roleplay con Alumno</h2>
                 <div>
                     <button id="toggleDarkBtn" class="btn" style="background:transparent;border:1px solid #888;color:#888;padding:6px 12px;font-size:0.8rem;margin-right:8px;">🌙</button>
                     <button id="logoutBtn" class="logout-btn">Cerrar Sesión</button>
                 </div>
             </div>
 
-            <div class="selectors">
-                <div class="selector-box">
-                    <label for="studentA">Alumno A</label>
-                    <input type="text" id="studentA" list="studentListA" placeholder="Escribe nombre o email...">
-                    <datalist id="studentListA"></datalist>
-                    <p id="statusA" class="sel-status"></p>
-                    <button id="selectBtnA" class="btn btn-secondary" style="padding:8px 16px;font-size:0.8rem;margin-top:8px;width:100%;">Seleccionar A</button>
+            <div class="selector-row">
+                <div class="input-group">
+                    <label for="studentInput">Alumno</label>
+                    <input type="text" id="studentInput" list="studentList" placeholder="Escribe nombre o email...">
+                    <datalist id="studentList"></datalist>
+                    <p id="studentStatus" class="sel-status"></p>
                 </div>
-                <div class="selector-box">
-                    <label for="studentB">Alumno B</label>
-                    <input type="text" id="studentB" list="studentListB" placeholder="Escribe nombre o email...">
-                    <datalist id="studentListB"></datalist>
-                    <p id="statusB" class="sel-status"></p>
-                    <button id="selectBtnB" class="btn btn-secondary" style="padding:8px 16px;font-size:0.8rem;margin-top:8px;width:100%;">Seleccionar B</button>
-                </div>
+                <button id="selectBtn" class="btn btn-secondary" style="padding:12px 20px;white-space:nowrap;">Seleccionar</button>
             </div>
 
-            <div class="theme-row">
-                <textarea id="themeInput" placeholder="Tema o pregunta inicial (ej. 'A quiere preguntarle a B cómo lleva su proceso')"></textarea>
-                <button id="startBtn" class="btn btn-success" style="white-space:nowrap;align-self:flex-end;">💬 Iniciar conversación</button>
-            </div>
-
-            <div id="loading" class="loading">🤖 Generando conversación...</div>
-
-            <div class="conversation-box">
-                <div class="conv-header">Conversación</div>
-                <div id="convBody" class="conv-body">
-                    <div class="conv-empty">Selecciona los dos alumnos y escribe un tema para iniciar la conversación.</div>
+            <div class="chat-box">
+                <div class="chat-header" id="chatHeader">Selecciona un alumno para empezar</div>
+                <div id="chatBody" class="chat-body">
+                    <div class="chat-empty">Selecciona un alumno para conversar con él.</div>
                 </div>
-                <div style="padding:12px 20px;border-top:1px solid #eee;text-align:center;">
-                    <button id="continueBtn" class="btn btn-primary" style="padding:10px 24px;font-size:0.85rem;" disabled>➡️ Continuar conversación</button>
+                <div id="loading" class="loading">🤖 El alumno está escribiendo...</div>
+                <div class="chat-input-area">
+                    <textarea id="msgInput" placeholder="Escribe tu mensaje..." rows="1" disabled></textarea>
+                    <button id="sendBtn" class="send-btn" disabled>
+                        <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+                    </button>
                 </div>
             </div>
         </div>
@@ -205,9 +223,8 @@
         import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
 
         let sb;
-        let studentAId = null, studentAName = null;
-        let studentBId = null, studentBName = null;
-        let conversationHistory = [];
+        let studentId = null, studentName = null;
+        let chatHistory = [];
 
         const EL = (id) => document.getElementById(id);
 
@@ -215,24 +232,22 @@
             const configRes = await fetch('/api/config');
             const config = await configRes.json();
             sb = createClient(config.url, config.key, {
-                auth: { storageKey: 'sb-roles-auth-token', autoRefreshToken: true, persistSession: true }
+                auth: { storageKey: 'sb-roleplay-auth-token', autoRefreshToken: true, persistSession: true }
             });
 
             const { data: { session } } = await sb.auth.getSession();
-            if (session) mostrarDashboard(session);
+            if (session) mostrarDashboard();
 
             EL('loginBtn').onclick = login;
             EL('loginPassword').onkeypress = (e) => { if (e.key === 'Enter') login(); };
             EL('logoutBtn').onclick = logout;
             EL('toggleDarkBtn').onclick = toggleDark;
-            EL('selectBtnA').onclick = () => seleccionar('A');
-            EL('selectBtnB').onclick = () => seleccionar('B');
-            EL('studentA').onkeypress = (e) => { if (e.key === 'Enter') seleccionar('A'); };
-            EL('studentB').onkeypress = (e) => { if (e.key === 'Enter') seleccionar('B'); };
-            EL('startBtn').onclick = iniciarConversacion;
-            EL('continueBtn').onclick = continuarConversacion;
+            EL('selectBtn').onclick = seleccionar;
+            EL('studentInput').onkeypress = (e) => { if (e.key === 'Enter') seleccionar(); };
+            EL('sendBtn').onclick = enviarMensaje;
+            EL('msgInput').onkeydown = (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); enviarMensaje(); } };
+            EL('msgInput').oninput = function() { this.style.height = 'auto'; this.style.height = Math.min(this.scrollHeight, 120) + 'px'; };
 
-            // Dark mode init
             if (localStorage.getItem('rolesDarkMode') === 'true') {
                 document.documentElement.setAttribute('data-theme', 'dark');
                 EL('toggleDarkBtn').textContent = '☀️';
@@ -248,25 +263,26 @@
             if (error) { EL('loginError').textContent = error.message; return; }
 
             const { data: { session } } = await sb.auth.getSession();
-            if (session) mostrarDashboard(session);
+            if (session) mostrarDashboard();
         }
 
-        async function mostrarDashboard(session) {
+        function mostrarDashboard() {
             EL('loginSection').style.display = 'none';
             EL('dashboard').style.display = 'block';
             EL('loginError').textContent = '';
-            await cargarListaAlumnos();
+            cargarListaAlumnos();
         }
 
         async function logout() {
             await sb.auth.signOut();
             EL('dashboard').style.display = 'none';
             EL('loginSection').style.display = 'block';
-            studentAId = studentBId = null;
-            studentAName = studentBName = null;
-            conversationHistory = [];
-            EL('convBody').innerHTML = '<div class="conv-empty">Selecciona los dos alumnos y escribe un tema para iniciar la conversación.</div>';
-            EL('continueBtn').disabled = true;
+            studentId = null; studentName = null;
+            chatHistory = [];
+            EL('chatBody').innerHTML = '<div class="chat-empty">Selecciona un alumno para conversar con él.</div>';
+            EL('msgInput').disabled = true;
+            EL('sendBtn').disabled = true;
+            EL('chatHeader').textContent = 'Selecciona un alumno para empezar';
         }
 
         function toggleDark() {
@@ -285,25 +301,18 @@
                 .order('nombre', { ascending: true });
             if (error) { console.error(error); return; }
 
-            const poblar = (listId) => {
-                const list = document.getElementById(listId);
-                if (!list) return;
-                list.innerHTML = '';
-                data.forEach(a => {
-                    const opt = document.createElement('option');
-                    opt.value = a.email;
-                    opt.textContent = a.nombre ? `${a.nombre} (${a.email})` : a.email;
-                    list.appendChild(opt);
-                });
-            };
-            poblar('studentListA');
-            poblar('studentListB');
+            const list = EL('studentList');
+            list.innerHTML = '';
+            data.forEach(a => {
+                const opt = document.createElement('option');
+                opt.value = a.email;
+                opt.textContent = a.nombre ? `${a.nombre} (${a.email})` : a.email;
+                list.appendChild(opt);
+            });
         }
 
-        async function seleccionar(which) {
-            const inputId = which === 'A' ? 'studentA' : 'studentB';
-            const statusId = which === 'A' ? 'statusA' : 'statusB';
-            const email = EL(inputId).value.trim();
+        async function seleccionar() {
+            const email = EL('studentInput').value.trim();
             if (!email) return;
 
             const { data, error } = await sb
@@ -313,130 +322,79 @@
                 .maybeSingle();
 
             if (error || !data) {
-                EL(statusId).textContent = '❌ Alumno no encontrado.';
+                EL('studentStatus').textContent = '❌ Alumno no encontrado.';
                 return;
             }
 
-            if (which === 'A') {
-                studentAId = data.user_id;
-                studentAName = data.nombre || email;
-                EL(statusId).textContent = `✅ ${studentAName}`;
-            } else {
-                studentBId = data.user_id;
-                studentBName = data.nombre || email;
-                EL(statusId).textContent = `✅ ${studentBName}`;
-            }
+            studentId = data.user_id;
+            studentName = data.nombre || email;
+            EL('studentStatus').textContent = `✅ ${studentName}`;
+            EL('chatHeader').textContent = `Conversando con ${studentName}`;
+            EL('msgInput').disabled = false;
+            EL('sendBtn').disabled = false;
+            EL('msgInput').focus();
+            chatHistory = [];
+            EL('chatBody').innerHTML = `<div class="chat-empty">Empieza a escribir para conversar con ${studentName}.</div>`;
         }
 
-        function addMessage(which, name, text) {
-            const body = EL('convBody');
-            const empty = body.querySelector('.conv-empty');
+        function addMsg(cls, label, text) {
+            const body = EL('chatBody');
+            const empty = body.querySelector('.chat-empty');
             if (empty) empty.remove();
-
             const div = document.createElement('div');
-            div.className = `conv-msg msg-${which.toLowerCase()}`;
-            div.innerHTML = `<div class="msg-label">${name}</div><div>${text.replace(/\n/g, '<br>')}</div>`;
+            div.className = `msg ${cls}`;
+            div.innerHTML = `<div class="msg-label">${label}</div><div>${text.replace(/\n/g, '<br>')}</div>`;
             body.appendChild(div);
             body.scrollTop = body.scrollHeight;
         }
 
         function setLoading(on) {
             EL('loading').style.display = on ? 'block' : 'none';
-            EL('startBtn').disabled = on;
-            EL('continueBtn').disabled = on;
+            EL('sendBtn').disabled = on;
+            EL('msgInput').disabled = on;
         }
 
-        async function llamarAPI(message, history) {
-            const body = {
-                intent: 'roleplay_chat',
-                message,
-                history,
-                userId: studentAId,
-                userId2: studentBId
-            };
-            const res = await fetch('/api/chat', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(body)
-            });
-            const data = await res.json();
-            if (data.error) throw new Error(data.error);
-            return data;
-        }
+        async function enviarMensaje() {
+            const text = EL('msgInput').value.trim();
+            if (!text || !studentId) return;
 
-        async function iniciarConversacion() {
-            if (!studentAId || !studentBId) { alert('Selecciona ambos alumnos.'); return; }
-            const theme = EL('themeInput').value.trim();
-            if (!theme) { alert('Escribe un tema o pregunta inicial.'); return; }
-
-            setLoading(true);
-            conversationHistory = [];
-            EL('convBody').innerHTML = '';
-
-            try {
-                const data = await llamarAPI(theme, []);
-                const now = new Date().toISOString();
-                const parsed = parseMensajeUnico(data.text);
-
-                if (parsed) {
-                    const which = parsed.who === 'A' ? 'A' : 'B';
-                    const name = parsed.who === 'A' ? studentAName : studentBName;
-                    addMessage(which, name, parsed.text);
-                    const role = which === 'A' ? 'user' : 'model';
-                    conversationHistory.push({ role, parts: [{ text: `[${name}]: ${parsed.text}` }], created_at: now });
-                }
-
-                EL('continueBtn').disabled = false;
-            } catch (e) {
-                EL('convBody').innerHTML = `<div class="conv-msg" style="align-self:center;background:#fce8e6;color:#c0392b;">❌ Error: ${e.message}</div>`;
-            } finally {
-                setLoading(false);
-            }
-        }
-
-        async function continuarConversacion() {
-            if (conversationHistory.length === 0) return;
+            EL('msgInput').value = '';
+            EL('msgInput').style.height = 'auto';
+            addMsg('yo', 'Yo', text);
             setLoading(true);
 
             try {
-                // Determinar quién habla según el último rol
-                const last = conversationHistory[conversationHistory.length - 1];
-                const nextLabel = last.role === 'user' ? studentBName : studentAName;
-                const msg = `Turno de ${nextLabel} para responder.`;
+                const body = {
+                    intent: 'roleplay_chat',
+                    message: text,
+                    history: chatHistory,
+                    userId: studentId
+                };
+                const res = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+                const data = await res.json();
+                if (data.error) throw new Error(data.error);
 
-                const data = await llamarAPI(msg, conversationHistory);
                 const now = new Date().toISOString();
-                const parsed = parseMensajeUnico(data.text);
+                chatHistory.push({ role: 'user', parts: [{ text }], created_at: now });
 
-                if (parsed) {
-                    const which = parsed.who === 'A' ? 'A' : 'B';
-                    const name = parsed.who === 'A' ? studentAName : studentBName;
-                    addMessage(which, name, parsed.text);
-                    const role = which === 'A' ? 'user' : 'model';
-                    conversationHistory.push({ role, parts: [{ text: `[${name}]: ${parsed.text}` }], created_at: now });
-                }
+                const parsed = parseRespuesta(data.text);
+                addMsg('alumno', studentName, parsed);
+                chatHistory.push({ role: 'model', parts: [{ text: parsed }], created_at: now });
+
             } catch (e) {
-                const body = EL('convBody');
-                const errDiv = document.createElement('div');
-                errDiv.className = 'conv-msg';
-                errDiv.style.cssText = 'align-self:center;background:#fce8e6;color:#c0392b;';
-                errDiv.textContent = `❌ Error: ${e.message}`;
-                body.appendChild(errDiv);
-                body.scrollTop = body.scrollHeight;
+                addMsg('alumno', 'Error', `❌ ${e.message}`);
             } finally {
                 setLoading(false);
+                EL('msgInput').focus();
             }
         }
 
-        function parseMensajeUnico(text) {
-            const trimmed = text.trim();
-            const match = trimmed.match(/^(A|B|Alumno A|Alumno B|alumno a|alumno b):\s*(.*)/is);
-            if (match) {
-                const who = match[1].toUpperCase().startsWith('B') ? 'B' : 'A';
-                return { who, text: match[2].trim() };
-            }
-            // fallback: todo el texto como un solo mensaje
-            return { who: 'A', text: trimmed };
+        function parseRespuesta(text) {
+            return text.replace(/^(A|B|Alumno A|Alumno B|alumno a|alumno b):\s*/i, '').trim();
         }
 
         init();
