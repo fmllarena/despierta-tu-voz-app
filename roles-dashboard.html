@@ -230,7 +230,6 @@
         let studentId = null, studentName = null;
         let chatHistory = [];
         let currentSessionId = null;
-        let includeRoleplayContext = true;
 
         const EL = (id) => document.getElementById(id);
 
@@ -303,10 +302,10 @@
                 await fetch('/api/chat', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        roleplayAction: 'end',
-                        roleplayData: { sessionId: currentSessionId }
-                    })
+            body: JSON.stringify({
+                roleplayAction: 'end',
+                roleplayData: { sessionId: currentSessionId, history: chatHistory }
+            })
                 });
             } catch (e) { console.warn('Error cerrando sesión roleplay:', e); }
             currentSessionId = null;
@@ -367,7 +366,6 @@
             EL('msgInput').focus();
             chatHistory = [];
             currentSessionId = null;
-            includeRoleplayContext = true;
             EL('chatBody').innerHTML = `<div class="chat-empty">Empieza a escribir para conversar con ${studentName}.</div>`;
 
             // Iniciar sesión de roleplay
@@ -418,7 +416,6 @@
                     message: text,
                     history: chatHistory,
                     userId: studentId,
-                    includeRoleplayContext
                 };
                 const res = await fetch('/api/chat', {
                     method: 'POST',
@@ -427,8 +424,6 @@
                 });
                 const data = await res.json();
                 if (data.error) throw new Error(data.error);
-                includeRoleplayContext = false;
-
                 const now = new Date().toISOString();
                 chatHistory.push({ role: 'user', parts: [{ text }], created_at: now });
 

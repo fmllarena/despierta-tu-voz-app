@@ -39,7 +39,7 @@ module.exports = async function handler(req, res) {
  * Procesa la lógica de negocio del chat con fallback secuencial
  */
 async function processChat(req, res = null) {
-    const { intent, message, history = [], userId, userId2 = null, stream = false, vocal_scan = null, originPost = null, originCat = null, fileData = null, roleplayAction, roleplayData, includeRoleplayContext = true } = req.body;
+    const { intent, message, history = [], userId, userId2 = null, stream = false, vocal_scan = null, originPost = null, originCat = null, fileData = null, roleplayAction, roleplayData } = req.body;
 
     if (intent === 'warmup') return { text: "OK" };
 
@@ -50,9 +50,9 @@ async function processChat(req, res = null) {
                 case 'start':
                     return await roleplayStart({ userId: roleplayData?.userId, studentId: roleplayData?.studentId, topic: roleplayData?.topic });
                 case 'save_message':
-                    return await roleplaySaveMessage({ sessionId: roleplayData?.sessionId, role: roleplayData?.role, content: roleplayData?.content, sequence: roleplayData?.sequence });
+                    return await roleplaySaveMessage(roleplayData);
                 case 'end':
-                    return await roleplayEnd({ sessionId: roleplayData?.sessionId, summary: roleplayData?.summary });
+                    return await roleplayEnd({ sessionId: roleplayData?.sessionId, summary: roleplayData?.summary, history: roleplayData?.history });
                 case 'save_transmutation':
                     return await roleplaySaveTransmutation({ studentId: roleplayData?.studentId, oldBelief: roleplayData?.oldBelief, newBelief: roleplayData?.newBelief, context: roleplayData?.context });
                 default:
@@ -66,7 +66,7 @@ async function processChat(req, res = null) {
     if (!intent || !SYSTEM_PROMPTS[intent]) throw new Error("Intento no válido");
 
     // 1. Construir Contexto del Alumno
-    const ctx = await buildUserContext(userId, intent, originPost, originCat, includeRoleplayContext);
+    const ctx = await buildUserContext(userId, intent, originPost, originCat);
     let context = ctx.context;
 
     // 1b. Segundo alumno (modo comparación)
@@ -77,6 +77,13 @@ async function processChat(req, res = null) {
             context += ctx2.context;
             context += `\n\n[INSTRUCCIÓN: El usuario ha solicitado una comparación entre ambos alumnos. Analiza las diferencias y similitudes en su evolución, respuestas, niveles y anotaciones. Si hay datos de ambos, contrasta sus progresos y ofrece una visión comparativa útil para el mentor. Si solo hay datos de uno, indícalo y procede con la información disponible.]\n`;
         }
+    }
+
+    // Añadir etapa de conversación para roleplay
+    if (intent === 'roleplay_chat') {
+        const turnCount = Math.floor((history?.length || 0) / 2);
+        const stage = turnCount <= 1 ? 'INICIO' : turnCount <= 4 ? 'EXPLORA' : turnCount <= 7 ? 'PROFUNDIZA' : 'CIERRE';
+        context += `\n[Intercambio #${turnCount} — Etapa: ${stage}]\n`;
     }
 
     // Añadir Escaneo Vocal si existe
@@ -116,7 +123,7 @@ async function processChat(req, res = null) {
 /**
  * Recupera datos de Supabase para alimentar el prompt
  */
-async function buildUserContext(userId, intent, originPost = null, originCat = null, includeRoleplayHistory = true) {
+async function buildUserContext(userId, intent, originPost = null, originCat = null) {
     if (!userId && !originPost) return { context: "", resumenBoundary: null };
 
     const needsContext = ['mentor_chat', 'mentor_briefing', 'alchemy_analysis', 'mentor_advisor', 'inspiracion_dia', 'roleplay_chat'].includes(intent);
@@ -163,50 +170,8 @@ async function buildUserContext(userId, intent, originPost = null, originCat = n
         }
     }
 
-    // --- HISTORIAL DE ROLEPLAY Y CREENCIAS (solo primer mensaje de cada sesión) ---
-    if (intent === 'roleplay_chat' && includeRoleplayHistory) {
-        const { data: rpSessions } = await supabase.from('roleplay_sessions')
-            .select('id, topic, summary, started_at, ended_at')
-            .eq('student_id', userId)
-            .order('started_at', { ascending: false })
-            .limit(3);
-
-        if (rpSessions?.length > 0) {
-            context += `\n--- HISTORIAL DE ROLEPLAY ---\n`;
-            for (const s of rpSessions) {
-                context += `\n[${new Date(s.started_at).toLocaleDateString()}] ${s.topic || '—'}`;
-                if (s.summary) context += ` → ${s.summary}`;
-            }
-
-            const lastSession = rpSessions[0];
-            const { data: rpMessages } = await supabase.from('roleplay_messages')
-                .select('role, content, sequence')
-                .eq('session_id', lastSession.id)
-                .order('sequence', { ascending: true })
-                .limit(5);
-            if (rpMessages?.length > 0) {
-                context += `\n  Últimos intercambios:`;
-                rpMessages.forEach(m => {
-                    context += `\n    ${m.role}: ${m.content.substring(0, 200)}`;
-                });
-            }
-            context += `\n[SISTEMA: Úsalo para continuidad. No repitas temas.]\n`;
-        }
-
-        const { data: beliefs } = await supabase.from('belief_transmutations')
-            .select('old_belief, new_belief, context, created_at')
-            .eq('student_id', userId)
-            .order('created_at', { ascending: false })
-            .limit(3);
-
-        if (beliefs?.length > 0) {
-            context += `\n--- CREENCIAS TRANSMUTADAS ---\n`;
-            beliefs.forEach(b => context += `\n- "${b.old_belief}" → "${b.new_belief}"`);
-        }
-    }
-
     const userTier = perfil.subscription_tier || 'free';
-    if ((userTier === 'pro' || userTier === 'premium') && intent !== 'inspiracion_dia') {
+    if ((userTier === 'pro' || userTier === 'premium') && intent !== 'inspiracion_dia' && intent !== 'roleplay_chat') {
         const { data: cronicas } = await supabase.from('mensajes')
             .select('texto, created_at')
             .eq('alumno', userId)
@@ -372,7 +337,7 @@ async function callMistralAPI({ intent, prompt, history, stream, res, fileData, 
         model: MISTRAL_MODEL,
         messages,
         temperature: 0.85,
-        presence_penalty: 0.3,
+        presence_penalty: 0.7,
         max_tokens: 4096,
         stream: !!stream
     };
@@ -453,20 +418,28 @@ async function roleplayStart({ userId, studentId, topic }) {
     return session.data;
 }
 
-async function roleplaySaveMessage({ sessionId, role, content, sequence }) {
+async function roleplaySaveMessage({ sessionId, messages, role, content, sequence }) {
     const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
     
-    const msg = await supabase.from('roleplay_messages')
-        .insert({ session_id: sessionId, role, content, sequence })
-        .select()
-        .single();
-    
+    const rows = messages?.length
+        ? messages.map((m, i) => ({ session_id: sessionId, role: m.role, content: m.content, sequence: i }))
+        : [{ session_id: sessionId, role, content, sequence: sequence ?? 0 }];
+
+    const msg = await supabase.from('roleplay_messages').insert(rows).select();
     if (msg.error) throw msg.error;
     return msg.data;
 }
 
-async function roleplayEnd({ sessionId, summary }) {
+async function roleplayEnd({ sessionId, summary, history }) {
     const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
+    
+    // Generar resumen automático si no se proporciona
+    if (!summary && history?.length) {
+        const mentorMsgs = history.filter(m => m.role === 'user').map(m => m.parts?.[0]?.text).filter(Boolean);
+        const studentMsgs = history.filter(m => m.role === 'model').map(m => m.parts?.[0]?.text).filter(Boolean);
+        summary = `Mentor preguntó sobre: ${mentorMsgs.slice(0, 3).join('; ')}`;
+        if (studentMsgs.length) summary += `. Alumno respondió: ${studentMsgs[studentMsgs.length - 1].substring(0, 200)}`;
+    }
     
     const session = await supabase.from('roleplay_sessions')
         .update({ ended_at: new Date().toISOString(), summary })
