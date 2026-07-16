@@ -376,33 +376,13 @@
             try {
                 const data = await llamarAPI(theme, []);
                 const now = new Date().toISOString();
+                const parsed = parseMensajeUnico(data.text);
 
-                // Parse response: expect format "A: ...\nB: ..." or similar
-                const lines = data.text.split('\n').filter(l => l.trim());
-                let aMsg = '', bMsg = '';
-                for (const line of lines) {
-                    const trimmed = line.trim();
-                    if (/^(A|Alumno A|alumno a):/i.test(trimmed)) {
-                        aMsg = trimmed.replace(/^(A|Alumno A|alumno a):\s*/i, '').trim();
-                    } else if (/^(B|Alumno B|alumno b):/i.test(trimmed)) {
-                        bMsg = trimmed.replace(/^(B|Alumno B|alumno b):\s*/i, '').trim();
-                    }
-                }
-
-                // If parsing didn't find labeled messages, split roughly in half
-                if (!aMsg && !bMsg) {
-                    const mid = Math.ceil(lines.length / 2);
-                    aMsg = lines.slice(0, mid).join(' ');
-                    bMsg = lines.slice(mid).join(' ');
-                }
-
-                if (aMsg) {
-                    addMessage('A', studentAName, aMsg);
-                    conversationHistory.push({ role: 'user', parts: [{ text: `[${studentAName}]: ${aMsg}` }], created_at: now });
-                }
-                if (bMsg) {
-                    addMessage('B', studentBName, bMsg);
-                    conversationHistory.push({ role: 'model', parts: [{ text: `[${studentBName}]: ${bMsg}` }], created_at: now });
+                if (parsed) {
+                    const which = parsed.who === 'A' ? 'A' : 'B';
+                    const name = parsed.who === 'A' ? studentAName : studentBName;
+                    addMessage(which, name, parsed.text);
+                    conversationHistory.push({ role: 'user', parts: [{ text: `[${name}]: ${parsed.text}` }], created_at: now });
                 }
 
                 EL('continueBtn').disabled = false;
@@ -418,33 +398,15 @@
             setLoading(true);
 
             try {
-                const data = await llamarAPI('Continúa la conversación desde donde quedó. Genera el siguiente intercambio.', conversationHistory);
+                const data = await llamarAPI('Continúa la conversación desde donde quedó.', conversationHistory);
                 const now = new Date().toISOString();
+                const parsed = parseMensajeUnico(data.text);
 
-                const lines = data.text.split('\n').filter(l => l.trim());
-                let aMsg = '', bMsg = '';
-                for (const line of lines) {
-                    const trimmed = line.trim();
-                    if (/^(A|Alumno A|alumno a):/i.test(trimmed)) {
-                        aMsg = trimmed.replace(/^(A|Alumno A|alumno a):\s*/i, '').trim();
-                    } else if (/^(B|Alumno B|alumno b):/i.test(trimmed)) {
-                        bMsg = trimmed.replace(/^(B|Alumno B|alumno b):\s*/i, '').trim();
-                    }
-                }
-
-                if (!aMsg && !bMsg) {
-                    const mid = Math.ceil(lines.length / 2);
-                    aMsg = lines.slice(0, mid).join(' ');
-                    bMsg = lines.slice(mid).join(' ');
-                }
-
-                if (aMsg) {
-                    addMessage('A', studentAName, aMsg);
-                    conversationHistory.push({ role: 'user', parts: [{ text: `[${studentAName}]: ${aMsg}` }], created_at: now });
-                }
-                if (bMsg) {
-                    addMessage('B', studentBName, bMsg);
-                    conversationHistory.push({ role: 'model', parts: [{ text: `[${studentBName}]: ${bMsg}` }], created_at: now });
+                if (parsed) {
+                    const which = parsed.who === 'A' ? 'A' : 'B';
+                    const name = parsed.who === 'A' ? studentAName : studentBName;
+                    addMessage(which, name, parsed.text);
+                    conversationHistory.push({ role: 'user', parts: [{ text: `[${name}]: ${parsed.text}` }], created_at: now });
                 }
             } catch (e) {
                 const body = EL('convBody');
@@ -457,6 +419,17 @@
             } finally {
                 setLoading(false);
             }
+        }
+
+        function parseMensajeUnico(text) {
+            const trimmed = text.trim();
+            const match = trimmed.match(/^(A|B|Alumno A|Alumno B|alumno a|alumno b):\s*(.*)/is);
+            if (match) {
+                const who = match[1].toUpperCase().startsWith('B') ? 'B' : 'A';
+                return { who, text: match[2].trim() };
+            }
+            // fallback: todo el texto como un solo mensaje
+            return { who: 'A', text: trimmed };
         }
 
         init();
