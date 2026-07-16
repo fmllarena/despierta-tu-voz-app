@@ -39,9 +39,30 @@ module.exports = async function handler(req, res) {
  * Procesa la lógica de negocio del chat con fallback secuencial
  */
 async function processChat(req, res = null) {
-    const { intent, message, history = [], userId, userId2 = null, stream = false, vocal_scan = null, originPost = null, originCat = null, fileData = null } = req.body;
+    const { intent, message, history = [], userId, userId2 = null, stream = false, vocal_scan = null, originPost = null, originCat = null, fileData = null, roleplayAction, roleplayData } = req.body;
 
     if (intent === 'warmup') return { text: "OK" };
+
+    // --- ROLEPLAY ACTIONS ---
+    if (roleplayAction) {
+        try {
+            switch (roleplayAction) {
+                case 'start':
+                    return await roleplayStart({ userId: roleplayData?.userId, studentId: roleplayData?.studentId, topic: roleplayData?.topic });
+                case 'save_message':
+                    return await roleplaySaveMessage({ sessionId: roleplayData?.sessionId, role: roleplayData?.role, content: roleplayData?.content, sequence: roleplayData?.sequence });
+                case 'end':
+                    return await roleplayEnd({ sessionId: roleplayData?.sessionId, summary: roleplayData?.summary });
+                case 'save_transmutation':
+                    return await roleplaySaveTransmutation({ studentId: roleplayData?.studentId, oldBelief: roleplayData?.oldBelief, newBelief: roleplayData?.newBelief, context: roleplayData?.context });
+                default:
+                    throw new Error(`Acción roleplay desconocida: ${roleplayAction}`);
+            }
+        } catch (e) {
+            throw new Error(`Roleplay error: ${e.message}`);
+        }
+    }
+
     if (!intent || !SYSTEM_PROMPTS[intent]) throw new Error("Intento no válido");
 
     // 1. Construir Contexto del Alumno
@@ -139,6 +160,55 @@ async function buildUserContext(userId, intent, originPost = null, originCat = n
 
         if ((intent === 'mentor_briefing' || intent === 'mentor_advisor' || intent === 'roleplay_chat') && perfil.mentor_notes) {
             context += `\n--- ANOTACIONES DEL MENTOR ---\n${perfil.mentor_notes}\n`;
+        }
+    }
+
+    // --- HISTORIAL DE ROLEPLAY Y CREENCIAS TRANSMUTADAS (solo para roleplay_chat) ---
+    if (intent === 'roleplay_chat') {
+        // Últimas 3 sesiones de roleplay
+        const { data: rpSessions } = await supabase.from('roleplay_sessions')
+            .select('id, topic, summary, started_at, ended_at')
+            .eq('student_id', userId)
+            .order('started_at', { ascending: false })
+            .limit(3);
+
+        if (rpSessions?.length > 0) {
+            context += `\n--- HISTORIAL DE ROLEPLAY (últimas sesiones) ---\n`;
+            for (const s of rpSessions) {
+                context += `\n[Sesión: ${new Date(s.started_at).toLocaleDateString()}] Tema: ${s.topic || '—'}`;
+                if (s.summary) context += `\n  Resumen: ${s.summary}`;
+            }
+
+            // Cargar mensajes de la última sesión para continuidad inmediata
+            const lastSession = rpSessions[0];
+            const { data: rpMessages } = await supabase.from('roleplay_messages')
+                .select('role, content, sequence')
+                .eq('session_id', lastSession.id)
+                .order('sequence', { ascending: true })
+                .limit(20);
+            if (rpMessages?.length > 0) {
+                context += `\n  Últimos intercambios:`;
+                rpMessages.forEach(m => {
+                    context += `\n    ${m.role === 'mentor' ? 'Mentor' : 'Alumno'}: ${m.content}`;
+                });
+            }
+            context += `\n[SISTEMA: Usa este historial para dar continuidad. No repitas temas ya tratados. Evoluciona la conversación.]\n`;
+        }
+
+        // Creencias transmutadas acumuladas
+        const { data: beliefs } = await supabase.from('belief_transmutations')
+            .select('old_belief, new_belief, context, created_at')
+            .eq('student_id', userId)
+            .order('created_at', { ascending: false })
+            .limit(10);
+
+        if (beliefs?.length > 0) {
+            context += `\n--- CREENCIAS TRANSMUTADAS (log histórico) ---\n`;
+            beliefs.forEach(b => {
+                context += `\n- Antes: "${b.old_belief}" → Ahora: "${b.new_belief}"`;
+                if (b.context) context += ` (${b.context})`;
+            });
+            context += `\n[SISTEMA: Estas creencias ya fueron trabajadas. No las repitas como nuevas. Si surge algo relacionado, reconoce la evolución.]\n`;
         }
     }
 
@@ -358,6 +428,73 @@ async function callMistralAPI({ intent, prompt, history, stream, res, fileData, 
         const text = data.choices?.[0]?.message?.content || "";
         return { text, info: `${MISTRAL_MODEL} (UE)` };
     }
+}
+
+function handleError(error, res, stream) {
+    console.error("⛔ [Backend Chat Error]:", error);
+    if (res.writableEnded) return;
+
+    const msg = error.message.includes("Gemini Error") || error.message.includes("Mistral Error")
+        ? "El Mentor está meditando profundamente... Prueba de nuevo."
+        : "Error técnico temporal.";
+
+    if (stream) {
+        res.write(`data: ${JSON.stringify({ error: msg })}\n\n`);
+        res.end();
+    } else {
+        res.status(500).json({ error: msg, details: error.message });
+    }
+}
+
+// ===== ROLEPLAY ENDPOINTS =====
+
+async function roleplayStart({ userId, studentId, topic }) {
+    const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
+    
+    const session = await supabase.from('roleplay_sessions')
+        .insert({ student_id: studentId, mentor_id: userId, topic: topic || 'Conversación libre' })
+        .select()
+        .single();
+    
+    if (session.error) throw session.error;
+    return session.data;
+}
+
+async function roleplaySaveMessage({ sessionId, role, content, sequence }) {
+    const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
+    
+    const msg = await supabase.from('roleplay_messages')
+        .insert({ session_id: sessionId, role, content, sequence })
+        .select()
+        .single();
+    
+    if (msg.error) throw msg.error;
+    return msg.data;
+}
+
+async function roleplayEnd({ sessionId, summary }) {
+    const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
+    
+    const session = await supabase.from('roleplay_sessions')
+        .update({ ended_at: new Date().toISOString(), summary })
+        .eq('id', sessionId)
+        .select()
+        .single();
+    
+    if (session.error) throw session.error;
+    return session.data;
+}
+
+async function roleplaySaveTransmutation({ studentId, oldBelief, newBelief, context }) {
+    const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
+    
+    const trans = await supabase.from('belief_transmutations')
+        .insert({ student_id: studentId, old_belief: oldBelief, new_belief: newBelief, context })
+        .select()
+        .single();
+    
+    if (trans.error) throw trans.error;
+    return trans.data;
 }
 
 function setupStreamHeaders(res) {
