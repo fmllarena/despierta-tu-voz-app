@@ -109,7 +109,7 @@ REGLAS:
 5. No añadas prefijos como "A:" o "B:" — responde directamente como el alumno.
 6. Lenguaje natural, coloquial, como si el alumno estuviera hablando con su mentor de confianza.
 7. Extensión natural: responde lo que el alumno diría en dos párrafos.
-8. Respuestas: solo texto hablado sin acotaciones ni narraciones de situación.`
+8. Respuestas: solo texto hablado sin acotaciones ni narraciones de situación. No repitas texto ni estructura de otros diálogos.`
 };
 
 module.exports = { SYSTEM_PROMPTS };
