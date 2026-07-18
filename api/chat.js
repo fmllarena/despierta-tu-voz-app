@@ -277,7 +277,24 @@ async function handleStreamResponse(response, res) {
  * Ejecuta la llamada a Mistral AI (primario — servidores UE)
  */
 async function callMistralAPI({ intent, prompt, history, stream, res, fileData, resumenBoundary }) {
-    if (!process.env.MISTRAL_API_KEY) throw new Error("Falta API Key de Mistral");
+    const keys = [process.env.MISTRAL_API_KEY, process.env.MISTRAL_API_KEY_2].filter(Boolean);
+    if (!keys.length) throw new Error("Falta API Key de Mistral");
+
+    let lastErr;
+    for (const key of keys) {
+        try {
+            return await _mistralCall({ intent, prompt, history, stream, res, fileData, resumenBoundary, apiKey: key });
+        } catch (e) {
+            lastErr = e;
+            const isRetryable = e.message.includes('429') || e.message.includes('503') || e.message.includes('Too Many Requests') || e.message.includes('401');
+            if (!isRetryable) break;
+        }
+    }
+    throw lastErr;
+}
+
+async function _mistralCall({ intent, prompt, history, stream, res, fileData, resumenBoundary, apiKey }) {
+    if (!apiKey) throw new Error("Falta API Key de Mistral");
 
     function buildUserContent(msg, file) {
         if (!file || file.mimeType?.startsWith('audio/')) return msg;
@@ -322,10 +339,12 @@ async function callMistralAPI({ intent, prompt, history, stream, res, fileData, 
         stream: !!stream
     };
 
+    const keyLabel = apiKey === process.env.MISTRAL_API_KEY ? 'MISTRAL_API_KEY' : 'MISTRAL_API_KEY_2';
+    console.log(`→ Usando ${keyLabel}`);
     const response = await fetch(`${MISTRAL_BASE_URL}/chat/completions`, {
         method: 'POST',
         headers: {
-            'Authorization': `Bearer ${process.env.MISTRAL_API_KEY}`,
+            'Authorization': `Bearer ${apiKey}`,
             'Content-Type': 'application/json'
         },
         body: JSON.stringify(requestBody)
@@ -367,24 +386,6 @@ async function callMistralAPI({ intent, prompt, history, stream, res, fileData, 
         return { text, info: `${MISTRAL_MODEL} (UE)` };
     }
 }
-
-function handleError(error, res, stream) {
-    console.error("⛔ [Backend Chat Error]:", error);
-    if (res.writableEnded) return;
-
-    const msg = error.message.includes("Gemini Error") || error.message.includes("Mistral Error")
-        ? "El Mentor está meditando profundamente... Prueba de nuevo."
-        : "Error técnico temporal.";
-
-    if (stream) {
-        res.write(`data: ${JSON.stringify({ error: msg })}\n\n`);
-        res.end();
-    } else {
-        res.status(500).json({ error: msg, details: error.message });
-    }
-}
-
-// ===== ROLEPLAY ENDPOINTS =====
 
 function setupStreamHeaders(res) {
     res.setHeader('Content-Type', 'text/event-stream');
