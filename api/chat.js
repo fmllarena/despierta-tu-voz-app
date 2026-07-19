@@ -397,16 +397,16 @@ async function generateImage(prompt) {
     const apiKey = process.env.OPENROUTER_API_KEY;
     if (!apiKey) throw new Error("Falta OPENROUTER_API_KEY");
 
-    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+    const response = await fetch("https://openrouter.ai/api/v1/images", {
         method: 'POST',
         headers: {
             'Authorization': `Bearer ${apiKey}`,
             'Content-Type': 'application/json',
-            'HTTP-Referer': 'https://despiertatuvoz.com',
         },
         body: JSON.stringify({
-            model: "black-forest-labs/flux-schnell",
-            messages: [{ role: 'user', content: prompt }],
+            model: "black-forest-labs/flux.2-flex",
+            prompt,
+            n: 1,
         })
     });
 
@@ -416,12 +416,11 @@ async function generateImage(prompt) {
     }
 
     const data = await response.json();
-    const content = data.choices?.[0]?.message?.content || '';
-    const match = content.match(/https?:\/\/[^\s)]+/);
-    const imageUrl = match ? match[0] : null;
+    const imageB64 = data.data?.[0]?.b64_json;
+    if (!imageB64) throw new Error("No se recibió imagen en la respuesta");
 
-    if (!imageUrl) throw new Error("No se pudo extraer la URL de la imagen");
-    return { text: imageUrl, imageUrl, model: "black-forest-labs/flux-schnell" };
+    const dataUrl = `data:image/png;base64,${imageB64}`;
+    return { text: dataUrl, imageUrl: dataUrl, model: "black-forest-labs/flux.2-flex" };
 }
 
 function setupStreamHeaders(res) {
