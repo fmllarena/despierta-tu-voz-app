@@ -18,6 +18,7 @@ module.exports = async function handler(req, res) {
     res.setHeader('Access-Control-Allow-Credentials', true).setHeader('Access-Control-Allow-Origin', '*').setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT').setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version');
 
     if (req.method === 'OPTIONS') return res.status(200).end();
+    console.log(`[chat.js] req.method=${req.method}, req.url=${req.url}, intent=${req.body?.intent || '?'}`);
     if (req.method !== "POST") return res.status(405).json({ error: "Método no permitido" });
 
     const { stream } = req.body;
