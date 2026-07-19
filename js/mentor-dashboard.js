@@ -364,10 +364,10 @@ async function consultarAsesor() {
         const prompt = imgMatch[1];
         document.getElementById(thinkingId)?.remove();
         try {
-            const res = await fetch('/api/generate-image', {
+            const res = await fetch('/api/chat', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ prompt })
+                body: JSON.stringify({ intent: 'generate_image', message: prompt })
             });
             const data = await res.json();
             if (data.error) throw new Error(data.error);

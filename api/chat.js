@@ -43,6 +43,12 @@ async function processChat(req, res = null) {
 
     if (intent === 'warmup') return { text: "OK" };
 
+    // --- Generación de imágenes vía OpenRouter ---
+    if (intent === 'generate_image') {
+        const imgRes = await generateImage(message);
+        return imgRes;
+    }
+
     if (!intent || !SYSTEM_PROMPTS[intent]) throw new Error("Intento no válido");
 
     // 1. Construir Contexto del Alumno
@@ -385,6 +391,37 @@ async function _mistralCall({ intent, prompt, history, stream, res, fileData, re
         const text = data.choices?.[0]?.message?.content || "";
         return { text, info: `${MISTRAL_MODEL} (UE)` };
     }
+}
+
+async function generateImage(prompt) {
+    const apiKey = process.env.OPENROUTER_API_KEY;
+    if (!apiKey) throw new Error("Falta OPENROUTER_API_KEY");
+
+    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+        method: 'POST',
+        headers: {
+            'Authorization': `Bearer ${apiKey}`,
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            model: "black-forest-labs/flux-schnell",
+            messages: [{ role: 'user', content: prompt }],
+            n: 1,
+        })
+    });
+
+    if (!response.ok) {
+        const err = await response.text();
+        throw new Error(`OpenRouter ${response.status}: ${err}`);
+    }
+
+    const data = await response.json();
+    const content = data.choices?.[0]?.message?.content || '';
+    const match = content.match(/https?:\/\/[^\s)]+/);
+    const imageUrl = match ? match[0] : null;
+
+    if (!imageUrl) throw new Error("No se pudo extraer la URL de la imagen");
+    return { text: imageUrl, imageUrl, model: "black-forest-labs/flux-schnell" };
 }
 
 function setupStreamHeaders(res) {
