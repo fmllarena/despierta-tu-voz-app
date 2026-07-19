@@ -394,8 +394,37 @@ async function _mistralCall({ intent, prompt, history, stream, res, fileData, re
 }
 
 async function generateImage(prompt) {
-    const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}`;
-    return { text: imageUrl, imageUrl, model: "pollinations.ai (flux)" };
+    const HF_TOKEN = process.env.HF_API_KEY;
+    if (!HF_TOKEN) throw new Error("Falta HF_API_KEY (huggingface.co/settings/tokens)");
+
+    const MODEL = "black-forest-labs/FLUX.1-schnell";
+    const urls = [
+        `https://api-inference.huggingface.co/models/${MODEL}`,
+        `https://router.huggingface.co/hf-inference/models/${MODEL}`,
+    ];
+
+    let lastErr;
+    for (const url of urls) {
+        try {
+            const res = await fetch(url, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${HF_TOKEN}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ inputs: prompt })
+            });
+            if (res.ok) {
+                const buffer = await res.arrayBuffer();
+                const base64 = Buffer.from(buffer).toString('base64');
+                const dataUrl = `data:image/png;base64,${base64}`;
+                return { text: dataUrl, imageUrl: dataUrl, model: `HF:${MODEL}` };
+            }
+            const text = await res.text();
+            throw new Error(`HuggingFace ${res.status}: ${text.slice(0, 200)}`);
+        } catch (e) {
+            lastErr = e;
+            if (!e.message?.includes('ENOTFOUND')) throw e; // solo reintenta si es DNS
+        }
+    }
+    throw lastErr;
 }
 
 function setupStreamHeaders(res) {
