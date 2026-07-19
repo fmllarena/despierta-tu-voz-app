@@ -394,33 +394,52 @@ async function _mistralCall({ intent, prompt, history, stream, res, fileData, re
 }
 
 async function generateImage(prompt) {
-    const apiKey = process.env.OPENROUTER_API_KEY;
-    if (!apiKey) throw new Error("Falta OPENROUTER_API_KEY");
+    let apiKey;
+    let model;
+    let url;
 
-    const response = await fetch("https://openrouter.ai/api/v1/images", {
+    // Intentar OpenRouter primero (si tiene créditos)
+    if (process.env.OPENROUTER_API_KEY) {
+        apiKey = process.env.OPENROUTER_API_KEY;
+        model = "black-forest-labs/flux.2-flex";
+        url = "https://openrouter.ai/api/v1/images";
+        try {
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ model, prompt, n: 1 })
+            });
+            if (response.ok) {
+                const data = await response.json();
+                const imageB64 = data.data?.[0]?.b64_json;
+                if (imageB64) {
+                    const dataUrl = `data:image/png;base64,${imageB64}`;
+                    return { text: dataUrl, imageUrl: dataUrl, model };
+                }
+            }
+        } catch (_) {}
+    }
+
+    // Fallback: Hugging Face Inference API (gratis)
+    if (!process.env.HF_API_KEY) throw new Error("Falta HF_API_KEY (huggingface.co/settings/tokens)");
+    model = "black-forest-labs/FLUX.1-schnell";
+    url = `https://api-inference.huggingface.co/models/${model}`;
+
+    const response = await fetch(url, {
         method: 'POST',
-        headers: {
-            'Authorization': `Bearer ${apiKey}`,
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-            model: "black-forest-labs/flux.2-flex",
-            prompt,
-            n: 1,
-        })
+        headers: { 'Authorization': `Bearer ${process.env.HF_API_KEY}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ inputs: prompt })
     });
 
     if (!response.ok) {
         const err = await response.text();
-        throw new Error(`OpenRouter ${response.status}: ${err}`);
+        throw new Error(`HuggingFace ${response.status}: ${err}`);
     }
 
-    const data = await response.json();
-    const imageB64 = data.data?.[0]?.b64_json;
-    if (!imageB64) throw new Error("No se recibió imagen en la respuesta");
-
-    const dataUrl = `data:image/png;base64,${imageB64}`;
-    return { text: dataUrl, imageUrl: dataUrl, model: "black-forest-labs/flux.2-flex" };
+    const buffer = await response.arrayBuffer();
+    const base64 = Buffer.from(buffer).toString('base64');
+    const dataUrl = `data:image/png;base64,${base64}`;
+    return { text: dataUrl, imageUrl: dataUrl, model };
 }
 
 function setupStreamHeaders(res) {
