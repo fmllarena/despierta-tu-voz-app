@@ -18,7 +18,6 @@ module.exports = async function handler(req, res) {
     res.setHeader('Access-Control-Allow-Credentials', true).setHeader('Access-Control-Allow-Origin', '*').setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT').setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version');
 
     if (req.method === 'OPTIONS') return res.status(200).end();
-    console.log(`[chat.js] req.method=${req.method}, req.url=${req.url}, intent=${req.body?.intent || '?'}`);
     if (req.method !== "POST") return res.status(405).json({ error: "Método no permitido" });
 
     const { stream } = req.body;
@@ -43,12 +42,6 @@ async function processChat(req, res = null) {
     const { intent, message, history = [], userId, userId2 = null, stream = false, vocal_scan = null, originPost = null, originCat = null, fileData = null } = req.body;
 
     if (intent === 'warmup') return { text: "OK" };
-
-    // --- Generación de imágenes vía OpenRouter ---
-    if (intent === 'generate_image') {
-        const imgRes = await generateImage(message);
-        return imgRes;
-    }
 
     if (!intent || !SYSTEM_PROMPTS[intent]) throw new Error("Intento no válido");
 
@@ -392,40 +385,6 @@ async function _mistralCall({ intent, prompt, history, stream, res, fileData, re
         const text = data.choices?.[0]?.message?.content || "";
         return { text, info: `${MISTRAL_MODEL} (UE)` };
     }
-}
-
-async function generateImage(prompt) {
-    const HF_TOKEN = process.env.HF_API_KEY;
-    if (!HF_TOKEN) throw new Error("Falta HF_API_KEY (huggingface.co/settings/tokens)");
-
-    const MODEL = "black-forest-labs/FLUX.1-schnell";
-    const urls = [
-        `https://api-inference.huggingface.co/models/${MODEL}`,
-        `https://router.huggingface.co/hf-inference/models/${MODEL}`,
-    ];
-
-    let lastErr;
-    for (const url of urls) {
-        try {
-            const res = await fetch(url, {
-                method: 'POST',
-                headers: { 'Authorization': `Bearer ${HF_TOKEN}`, 'Content-Type': 'application/json' },
-                body: JSON.stringify({ inputs: prompt })
-            });
-            if (res.ok) {
-                const buffer = await res.arrayBuffer();
-                const base64 = Buffer.from(buffer).toString('base64');
-                const dataUrl = `data:image/png;base64,${base64}`;
-                return { text: dataUrl, imageUrl: dataUrl, model: `HF:${MODEL}` };
-            }
-            const text = await res.text();
-            throw new Error(`HuggingFace ${res.status}: ${text.slice(0, 200)}`);
-        } catch (e) {
-            lastErr = e;
-            if (!e.message?.includes('ENOTFOUND')) throw e; // solo reintenta si es DNS
-        }
-    }
-    throw lastErr;
 }
 
 function setupStreamHeaders(res) {
