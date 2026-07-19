@@ -402,11 +402,11 @@ async function generateImage(prompt) {
         headers: {
             'Authorization': `Bearer ${apiKey}`,
             'Content-Type': 'application/json',
+            'HTTP-Referer': 'https://despiertatuvoz.com',
         },
         body: JSON.stringify({
             model: "black-forest-labs/flux-schnell",
             messages: [{ role: 'user', content: prompt }],
-            n: 1,
         })
     });
 
