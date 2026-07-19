@@ -358,6 +358,34 @@ async function consultarAsesor() {
     ELEMENTS.advisorChatBox.appendChild(thinkingDiv);
     ELEMENTS.advisorChatBox.scrollTop = ELEMENTS.advisorChatBox.scrollHeight;
 
+    // --- Comando /imagen: ---
+    const imgMatch = msgText.match(/^\/(?:imagen|img):\s*(.+)/i);
+    if (imgMatch) {
+        const prompt = imgMatch[1];
+        document.getElementById(thinkingId)?.remove();
+        try {
+            const res = await fetch('/api/generate-image', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ prompt })
+            });
+            const data = await res.json();
+            if (data.error) throw new Error(data.error);
+
+            const msgDiv = document.createElement('div');
+            msgDiv.className = 'chat-msg ia';
+            msgDiv.innerHTML = `<img src="${data.imageUrl}" alt="${prompt.replace(/"/g,'&quot;')}" style="max-width:100%;border-radius:8px;" onerror="this.outerHTML='<p style=color:red;>Error al cargar la imagen</p>'">`;
+            ELEMENTS.advisorChatBox.appendChild(msgDiv);
+            ELEMENTS.advisorChatBox.scrollTop = ELEMENTS.advisorChatBox.scrollHeight;
+        } catch (e) {
+            appendChatMessage('ia', "❌ Error al generar imagen: " + e.message);
+        } finally {
+            ELEMENTS.sendAdvisorBtn.disabled = false;
+            ELEMENTS.advisorInput.focus();
+        }
+        return;
+    }
+
     let fileData = null;
     if (advisorFile) {
         fileData = await new Promise((resolve, reject) => {
