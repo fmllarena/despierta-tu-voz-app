@@ -370,7 +370,8 @@ async function consultarAsesor() {
                 body: JSON.stringify({ intent: 'generate_image', message: prompt })
             });
             const data = await res.json();
-            if (data.error) throw new Error(data.error);
+            console.error('generate_image response:', data);
+            if (data.error) throw new Error(data.error + (data.details ? ` | ${data.details}` : ''));
 
             const msgDiv = document.createElement('div');
             msgDiv.className = 'chat-msg ia';
