@@ -359,7 +359,7 @@ async function consultarAsesor() {
     ELEMENTS.advisorChatBox.scrollTop = ELEMENTS.advisorChatBox.scrollHeight;
 
     // --- Comando /imagen: ---
-    const imgMatch = msgText.match(/^\/(?:imagen|img):\s*(.+)/i);
+    const imgMatch = msgText.match(/^\/(?:imagen|img|image):\s*(.+)/i);
     if (imgMatch) {
         const prompt = imgMatch[1];
         document.getElementById(thinkingId)?.remove();
