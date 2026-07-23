@@ -43,6 +43,11 @@ async function processChat(req, res = null) {
 
     if (intent === 'warmup') return { text: "OK" };
 
+    // --- Compendio (sintetizar múltiples alumnos en uno) ---
+    if (intent === 'compendio') {
+        return await generarCompendio(req.body);
+    }
+
     if (!intent || !SYSTEM_PROMPTS[intent]) throw new Error("Intento no válido");
 
     // 1. Construir Contexto del Alumno
@@ -385,6 +390,91 @@ async function _mistralCall({ intent, prompt, history, stream, res, fileData, re
         const text = data.choices?.[0]?.message?.content || "";
         return { text, info: `${MISTRAL_MODEL} (UE)` };
     }
+}
+
+async function generarCompendio(body) {
+    const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
+    const { user_ids, instrucciones } = body;
+    if (!user_ids?.length) throw new Error("Se requiere al menos un user_id");
+
+    // Cargar perfiles
+    const { data: perfiles } = await supabase.from('user_profiles').select('*').in('user_id', user_ids);
+    if (!perfiles?.length) throw new Error("No se encontraron perfiles");
+
+    // Armar prompt
+    let perfilesTexto = perfiles.map((p, i) =>
+        `ALUMNO ${i + 1}:\n- Nombre: ${p.nombre}\n- Historia Vocal: ${p.historia_vocal || 'N/A'}\n- Nivel Alquimia: ${p.nivel_alquimia || 'N/A'}/10\n- Creencias Transmutadas: ${p.creencias_transmutadas || 'Ninguna'}\n- Último Resumen: ${p.ultimo_resumen || 'N/A'}\n- Notas del Mentor: ${p.mentor_notes || 'N/A'}\n- Trato Preferido: ${p.mentor_trato_preferido || 'N/A'}`
+    ).join('\n\n');
+
+    const systemPrompt = `Eres un analista de perfiles vocales. Tu tarea es fusionar los siguientes perfiles de alumnos en UN SOLO perfil compuesto. Debes crear un personaje coherente que combine las historias, traumas, niveles y personalidades de todos ellos.
+
+Responde ÚNICAMENTE con un JSON válido, sin explicaciones ni markdown. El JSON debe seguir esta estructura exacta:
+{
+  "nombre": "Nombre compuesto sugerido",
+  "historia_vocal": "Historia combinada (2-4 párrafos)",
+  "creencias_transmutadas": "Creencias combinadas (formato: antigua → nueva)",
+  "ultimo_resumen": "Resumen del estado actual del compendio",
+  "nivel_alquimia": "Nivel promedio (1-10)",
+  "mentor_notes": "Notas compuestas para el mentor",
+  "mentor_trato_preferido": "Trato preferido combinado",
+  "mentor_focus": 0.5,
+  "mentor_personality": 0.5,
+  "mentor_length": 0.5
+}`;
+
+    const userPrompt = `Fusiona estos perfiles en uno solo:\n\n${perfilesTexto}${instrucciones ? `\n\nInstrucciones adicionales del mentor: ${instrucciones}` : ''}`;
+
+    if (!process.env.MISTRAL_API_KEY) throw new Error("Falta API Key de Mistral");
+
+    const response = await fetch(`${MISTRAL_BASE_URL}/chat/completions`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${process.env.MISTRAL_API_KEY}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            model: MISTRAL_MODEL,
+            messages: [
+                { role: 'system', content: systemPrompt },
+                { role: 'user', content: userPrompt }
+            ],
+            temperature: 0.7,
+            max_tokens: 2048
+        })
+    });
+
+    if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        throw new Error(`Mistral Error ${response.status}: ${err.error?.message || response.statusText}`);
+    }
+
+    const data = await response.json();
+    const texto = data.choices?.[0]?.message?.content || '';
+    let perfilCompuesto;
+    try {
+        perfilCompuesto = JSON.parse(texto.replace(/```(json)?/g, '').trim());
+    } catch {
+        throw new Error("Mistral no devolvió JSON válido: " + texto.slice(0, 300));
+    }
+
+    // Insertar nuevo perfil en BD
+    const nuevoId = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => { const r = Math.random() * 16 | 0; return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16); });
+    const { data: insertado, error: insertError } = await supabase.from('user_profiles').insert({
+        user_id: nuevoId,
+        email: `compendio-${Date.now()}@test.com`,
+        nombre: perfilCompuesto.nombre || 'Compendio',
+        subscription_tier: 'free',
+        historia_vocal: perfilCompuesto.historia_vocal || '',
+        creencias_transmutadas: perfilCompuesto.creencias_transmutadas || '',
+        ultimo_resumen: perfilCompuesto.ultimo_resumen || '',
+        nivel_alquimia: perfilCompuesto.nivel_alquimia || '5',
+        mentor_notes: perfilCompuesto.mentor_notes || '',
+        mentor_trato_preferido: perfilCompuesto.mentor_trato_preferido || '',
+        mentor_focus: perfilCompuesto.mentor_focus ?? 0.5,
+        mentor_personality: perfilCompuesto.mentor_personality ?? 0.5,
+        mentor_length: perfilCompuesto.mentor_length ?? 0.5,
+    }).select('*').single();
+
+    if (insertError) throw new Error("Error al guardar compendio: " + insertError.message);
+
+    return { success: true, perfil: insertado };
 }
 
 function setupStreamHeaders(res) {

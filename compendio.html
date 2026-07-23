@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Compendio de Alumnos - Despierta tu Voz</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Outfit', sans-serif; background: #f5f2ed; color: #333; min-height: 100vh; }
+
+        .container { max-width: 900px; margin: 0 auto; padding: 20px; }
+
+        .login-section {
+            max-width: 380px; margin: 60px auto; padding: 30px;
+            background: rgba(255,255,255,0.95); border-radius: 24px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.1); text-align: center;
+        }
+        .login-section h1 { color: #8e7d6d; margin-bottom: 10px; font-size: 1.6rem; }
+        .login-section input { width: 100%; padding: 14px; border: 2px solid #eee; border-radius: 12px; font-size: 1rem; outline: none; font-family: inherit; margin-bottom: 10px; }
+        .login-section input:focus { border-color: #8e7d6d; box-shadow: 0 0 0 4px rgba(142,125,109,0.1); }
+        .login-error { color: #e74c3c; font-size: 0.85rem; min-height: 1.5em; margin-top: 8px; }
+
+        .dashboard { display: none; }
+        .dash-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px; }
+        .dash-header h2 { color: #8e7d6d; }
+        .logout-btn { background: transparent; border: 1px solid #e74c3c; color: #e74c3c; padding: 6px 16px; border-radius: 8px; cursor: pointer; font-family: inherit; font-size: 0.85rem; }
+        .logout-btn:hover { background: #e74c3c; color: #fff; }
+
+        .main-btn {
+            background: #8e7d6d; color: #fff; border: none; padding: 12px 28px;
+            border-radius: 12px; font-size: 1rem; font-family: inherit; cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .main-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(142,125,109,0.3); }
+        .main-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+        .main-btn.secondary { background: #6c757d; }
+
+        .panel {
+            background: rgba(255,255,255,0.95); border-radius: 20px; padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08); margin-bottom: 20px;
+        }
+        .panel h3 { color: #8e7d6d; margin-bottom: 15px; }
+
+        .search-box { width: 100%; padding: 12px; border: 2px solid #eee; border-radius: 12px; font-size: 0.95rem; outline: none; font-family: inherit; margin-bottom: 15px; }
+        .search-box:focus { border-color: #8e7d6d; }
+
+        .alumno-item {
+            display: flex; align-items: center; gap: 12px; padding: 10px 12px;
+            border-radius: 10px; cursor: pointer; transition: background 0.2s; margin-bottom: 4px;
+        }
+        .alumno-item:hover { background: #f5f2ed; }
+        .alumno-item input[type="checkbox"] { width: 18px; height: 18px; accent-color: #8e7d6d; cursor: pointer; flex-shrink: 0; }
+        .alumno-item .info { flex: 1; min-width: 0; }
+        .alumno-item .nombre { font-weight: 600; font-size: 0.95rem; }
+        .alumno-item .meta { font-size: 0.8rem; color: #888; display: flex; gap: 12px; flex-wrap: wrap; }
+        .alumno-item .sel-count { font-size: 0.8rem; color: #8e7d6d; font-weight: 600; min-width: 20px; text-align: center; }
+
+        .alumnos-grid { max-height: 400px; overflow-y: auto; }
+
+        .instrucciones-area { width: 100%; min-height: 80px; padding: 12px; border: 2px solid #eee; border-radius: 12px; font-size: 0.95rem; outline: none; font-family: inherit; resize: vertical; margin-bottom: 15px; }
+        .instrucciones-area:focus { border-color: #8e7d6d; }
+
+        .resultado { display: none; }
+        .resultado h3 { color: #8e7d6d; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+        .resultado-field { margin-bottom: 12px; }
+        .resultado-field label { font-weight: 600; display: block; font-size: 0.85rem; color: #666; margin-bottom: 3px; }
+        .resultado-field .val { background: #f9f6f0; padding: 8px 12px; border-radius: 8px; font-size: 0.93rem; line-height: 1.5; white-space: pre-wrap; }
+
+        .loading-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; z-index: 100; }
+        .spinner { width: 48px; height: 48px; border: 4px solid #ddd; border-top-color: #8e7d6d; border-radius: 50%; animation: spin 0.8s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+<div class="container" id="app">
+    <div id="loginSection" class="login-section">
+        <h1>Compendio de Alumnos</h1>
+        <p>Fusiona múltiples perfiles en uno solo.</p>
+        <input type="email" id="loginEmail" placeholder="Email" value="fernando@despiertatuvoz.com">
+        <input type="password" id="loginPassword" placeholder="Contraseña">
+        <div class="login-error" id="loginError"></div>
+        <button id="loginBtn" class="main-btn" style="width:100%;margin-top:5px;">Entrar</button>
+    </div>
+
+    <div id="dashboard" class="dashboard">
+        <div class="dash-header">
+            <h2>🧬 Compendio de Alumnos</h2>
+            <button id="logoutBtn" class="logout-btn">Cerrar Sesión</button>
+        </div>
+
+        <div class="panel">
+            <h3>Selecciona los alumnos a fusionar</h3>
+            <input type="text" id="searchBox" class="search-box" placeholder="Buscar por nombre o email...">
+            <div id="alumnosList" class="alumnos-grid"></div>
+            <div style="margin-top:12px;font-size:0.85rem;color:#888;">
+                <span id="selCount">0</span> seleccionados
+            </div>
+        </div>
+
+        <div class="panel">
+            <h3>Instrucciones adicionales (opcional)</h3>
+            <textarea id="instrucciones" class="instrucciones-area" placeholder="Ej: El perfil resultante debe ser una mujer joven de unos 25 años..."></textarea>
+            <button id="generateBtn" class="main-btn" style="width:100%;">🔄 Generar Compendio</button>
+        </div>
+
+        <div id="resultado" class="panel resultado">
+            <h3>✅ Perfil generado</h3>
+            <div id="resultadoBody"></div>
+        </div>
+    </div>
+
+    <div id="loadingOverlay" class="loading-overlay" style="display:none;">
+        <div class="spinner"></div>
+    </div>
+</div>
+
+<script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+
+    let sb, supabaseUrl, supabaseKey;
+
+    const $ = id => document.getElementById(id);
+    const loginSection = $('loginSection');
+    const dashboard = $('dashboard');
+    const loginBtn = $('loginBtn');
+    const loginError = $('loginError');
+    const logoutBtn = $('logoutBtn');
+    const searchBox = $('searchBox');
+    const alumnosList = $('alumnosList');
+    const selCount = $('selCount');
+    const generateBtn = $('generateBtn');
+    const instrucciones = $('instrucciones');
+    const resultado = $('resultado');
+    const resultadoBody = $('resultadoBody');
+    const loadingOverlay = $('loadingOverlay');
+
+    let todosAlumnos = [];
+
+    const setLoading = on => { loadingOverlay.style.display = on ? 'flex' : 'none'; };
+
+    async function init() {
+        const configRes = await fetch('/api/config');
+        const config = await configRes.json();
+        supabaseUrl = config.url;
+        supabaseKey = config.key;
+
+        const session = localStorage.getItem('sb-session');
+        if (session) {
+            sb = createClient(supabaseUrl, supabaseKey, {
+                auth: { persistSession: false }
+            });
+            await sb.auth.setSession(JSON.parse(session));
+            const { data: { user } } = await sb.auth.getUser();
+            if (user) {
+                loginSection.style.display = 'none';
+                dashboard.style.display = 'block';
+                await cargarAlumnos();
+                return;
+            }
+        }
+
+        sb = createClient(supabaseUrl, supabaseKey, {
+            auth: { persistSession: false }
+        });
+    }
+
+    loginBtn.onclick = async () => {
+        const email = $('loginEmail').value.trim();
+        const password = $('loginPassword').value.trim();
+        if (!email || !password) { loginError.textContent = 'Completa ambos campos'; return; }
+        loginError.textContent = '';
+
+        const { data, error } = await sb.auth.signInWithPassword({ email, password });
+        if (error) { loginError.textContent = error.message; return; }
+        localStorage.setItem('sb-session', JSON.stringify(data.session));
+        loginSection.style.display = 'none';
+        dashboard.style.display = 'block';
+        await cargarAlumnos();
+    };
+
+    logoutBtn.onclick = async () => {
+        await sb.auth.signOut();
+        localStorage.removeItem('sb-session');
+        dashboard.style.display = 'none';
+        loginSection.style.display = 'block';
+        $('loginPassword').value = '';
+    };
+
+    async function cargarAlumnos() {
+        const { data } = await sb.from('user_profiles').select('user_id, email, nombre, nivel_alquimia, historia_vocal, ultimo_resumen').order('nombre');
+        todosAlumnos = data || [];
+        renderAlumnos();
+    }
+
+    function renderAlumnos(filter = '') {
+        const q = filter.toLowerCase();
+        const filtered = todosAlumnos.filter(a => (a.nombre + ' ' + a.email).toLowerCase().includes(q));
+        const checked = [...document.querySelectorAll('.alumno-item input:checked')].map(c => c.value);
+
+        alumnosList.innerHTML = filtered.map(a => {
+            const idx = checked.indexOf(a.user_id);
+            const checkedAttr = idx >= 0 ? 'checked' : '';
+            const numLabel = idx >= 0 ? `<span class="sel-count">#${idx + 1}</span>` : '';
+            return `<label class="alumno-item">
+                <input type="checkbox" value="${a.user_id}" ${checkedAttr}>
+                <div class="info">
+                    <div class="nombre">${a.nombre}</div>
+                    <div class="meta">${a.email} · Nivel ${a.nivel_alquimia || '?'}/10</div>
+                </div>
+                ${numLabel}
+            </label>`;
+        }).join('');
+
+        const checkboxes = alumnosList.querySelectorAll('input[type="checkbox"]');
+        checkboxes.forEach(cb => cb.onchange = actualizarContador);
+        actualizarContador();
+    }
+
+    function actualizarContador() {
+        const n = document.querySelectorAll('.alumno-item input:checked').length;
+        selCount.textContent = n;
+        generateBtn.disabled = n < 2;
+    }
+
+    searchBox.oninput = () => renderAlumnos(searchBox.value);
+
+    generateBtn.onclick = async () => {
+        const checked = [...document.querySelectorAll('.alumno-item input:checked')].map(c => c.value);
+        if (checked.length < 2) { alert('Selecciona al menos 2 alumnos.'); return; }
+
+        setLoading(true);
+        resultado.style.display = 'none';
+        try {
+            const res = await fetch('/api/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    intent: 'compendio',
+                    user_ids: checked,
+                    instrucciones: instrucciones.value.trim()
+                })
+            });
+            const data = await res.json();
+            if (data.error) throw new Error(data.details || data.error);
+
+            const p = data.perfil;
+            resultadoBody.innerHTML = `
+                <div class="resultado-field"><label>Nombre</label><div class="val">${p.nombre || 'Sin nombre'}</div></div>
+                <div class="resultado-field"><label>Email</label><div class="val">${p.email || 'N/A'}</div></div>
+                <div class="resultado-field"><label>Historia Vocal</label><div class="val">${p.historia_vocal || 'N/A'}</div></div>
+                <div class="resultado-field"><label>Creencias Transmutadas</label><div class="val">${p.creencias_transmutadas || 'N/A'}</div></div>
+                <div class="resultado-field"><label>Último Resumen</label><div class="val">${p.ultimo_resumen || 'N/A'}</div></div>
+                <div class="resultado-field"><label>Nivel Alquimia</label><div class="val">${p.nivel_alquimia || 'N/A'}/10</div></div>
+                <div class="resultado-field"><label>Notas del Mentor</label><div class="val">${p.mentor_notes || 'N/A'}</div></div>
+                <div class="resultado-field"><label>Trato Preferido</label><div class="val">${p.mentor_trato_preferido || 'N/A'}</div></div>
+            `;
+            resultado.style.display = 'block';
+            resultado.scrollIntoView({ behavior: 'smooth' });
+        } catch (e) {
+            alert('Error: ' + e.message);
+        } finally {
+            setLoading(false);
+            await cargarAlumnos();
+        }
+    };
+
+    init();
+</script>
+</body>
+</html>
