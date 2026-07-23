@@ -99,7 +99,7 @@
             <div class="field-group"><label>Nivel de Alquimia</label><div class="val" id="fNivel">—</div></div>
             <div class="field-group"><label>Historia Vocal</label><div class="val" id="fHistoria">—</div></div>
             <div class="field-group"><label>Creencias Transmutadas</label><div class="val" id="fCreencias">—</div></div>
-            <div class="field-group"><label>Último Resumen</label><div class="val" id="fResumen">—</div></div>
+            <div class="field-group"><label for="fResumen">Último Resumen</label><textarea id="fResumen" placeholder="—" style="min-height:80px;"></textarea></div>
             <div class="field-group"><label>Trato Preferido</label><div class="val" id="fTrato">—</div></div>
             <div class="field-group"><label>Enfoque (1 Técnico → 10 Emocional)</label><div class="val" id="fFocus">—</div></div>
             <div class="field-group"><label>Personalidad (1 Formal → 10 Cercano)</label><div class="val" id="fPersonalidad">—</div></div>
@@ -184,7 +184,7 @@
         $('fNivel').textContent = p.nivel_alquimia ? `${p.nivel_alquimia}/10` : '—';
         $('fHistoria').textContent = p.historia_vocal || '—';
         $('fCreencias').textContent = p.creencias_transmutadas || '—';
-        $('fResumen').textContent = p.ultimo_resumen || '—';
+        $('fResumen').value = p.ultimo_resumen || '';
         $('fTrato').textContent = p.mentor_trato_preferido || '—';
         $('fFocus').textContent = p.mentor_focus != null ? `${Math.round(p.mentor_focus * 10)}/10` : '—';
         $('fPersonalidad').textContent = p.mentor_personality != null ? `${Math.round(p.mentor_personality * 10)}/10` : '—';
@@ -215,9 +215,11 @@
     $('guardarNotasBtn').onclick = async () => {
         if (!perfilActual) return;
         const nuevasNotas = $('fNotas').value;
-        const { error } = await sb.from('user_profiles').update({ mentor_notes: nuevasNotas }).eq('email', perfilActual.email);
+        const nuevoResumen = $('fResumen').value;
+        const { error } = await sb.from('user_profiles').update({ mentor_notes: nuevasNotas, ultimo_resumen: nuevoResumen }).eq('email', perfilActual.email);
         if (error) { alert('Error al guardar: ' + error.message); return; }
         perfilActual.mentor_notes = nuevasNotas;
+        perfilActual.ultimo_resumen = nuevoResumen;
         const msg = $('saveMsg');
         msg.classList.add('show');
         setTimeout(() => msg.classList.remove('show'), 2000);
