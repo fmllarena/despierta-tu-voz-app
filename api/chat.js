@@ -394,7 +394,7 @@ async function _mistralCall({ intent, prompt, history, stream, res, fileData, re
 
 async function generarCompendio(body) {
     const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
-    const { user_ids, instrucciones } = body;
+    const { user_ids, instrucciones, nombre_personalizado } = body;
     if (!user_ids?.length) throw new Error("Se requiere al menos un user_id");
 
     // Cargar perfiles
@@ -459,7 +459,7 @@ Responde ÚNICAMENTE con un JSON válido, sin explicaciones ni markdown. El JSON
     const { data: insertado, error: insertError } = await supabase.from('user_profiles').insert({
         user_id: nuevoId,
         email: `compendio-${Date.now()}@test.com`,
-        nombre: perfilCompuesto.nombre || 'Compendio',
+        nombre: nombre_personalizado || perfilCompuesto.nombre || 'Compendio',
         subscription_tier: 'free',
         historia_vocal: perfilCompuesto.historia_vocal || '',
         creencias_transmutadas: perfilCompuesto.creencias_transmutadas || '',

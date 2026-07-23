@@ -101,6 +101,7 @@
 
         <div class="panel">
             <h3>Instrucciones adicionales (opcional)</h3>
+            <input type="text" id="nuevoNombre" class="search-box" placeholder="Nombre para el nuevo perfil (si lo dejas vacío, la IA lo genera)">
             <textarea id="instrucciones" class="instrucciones-area" placeholder="Ej: El perfil resultante debe ser una mujer joven de unos 25 años..."></textarea>
             <button id="generateBtn" class="main-btn" style="width:100%;">🔄 Generar Compendio</button>
         </div>
@@ -239,6 +240,7 @@
                 body: JSON.stringify({
                     intent: 'compendio',
                     user_ids: checked,
+                    nombre_personalizado: $('nuevoNombre').value.trim(),
                     instrucciones: instrucciones.value.trim()
                 })
             });
