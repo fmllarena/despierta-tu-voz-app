@@ -458,7 +458,7 @@ Responde ÚNICAMENTE con un JSON válido, sin explicaciones ni markdown. El JSON
     const nuevoId = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => { const r = Math.random() * 16 | 0; return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16); });
     const { data: insertado, error: insertError } = await supabase.from('user_profiles').insert({
         user_id: nuevoId,
-        email: `compendio-${Date.now()}@test.com`,
+        email: `${(nombre_personalizado || perfilCompuesto.nombre || 'compendio').toLowerCase().replace(/[^a-z0-9]/g, '')}@test.com`,
         nombre: nombre_personalizado || perfilCompuesto.nombre || 'Compendio',
         subscription_tier: 'free',
         historia_vocal: perfilCompuesto.historia_vocal || '',
