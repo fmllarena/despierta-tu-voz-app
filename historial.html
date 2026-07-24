@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Historial de Chat - Despierta tu Voz</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Outfit', sans-serif; background: #f5f2ed; color: #333; min-height: 100vh; }
+
+        .container { max-width: 1000px; margin: 0 auto; padding: 20px; }
+
+        .login-section {
+            max-width: 380px; margin: 60px auto; padding: 30px;
+            background: rgba(255,255,255,0.95); border-radius: 24px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.1); text-align: center;
+        }
+        .login-section h1 { color: #8e7d6d; margin-bottom: 10px; font-size: 1.6rem; }
+        .login-section input { width: 100%; padding: 14px; border: 2px solid #eee; border-radius: 12px; font-size: 1rem; outline: none; font-family: inherit; margin-bottom: 10px; }
+        .login-section input:focus { border-color: #8e7d6d; }
+        .login-error { color: #e74c3c; font-size: 0.85rem; min-height: 1.5em; margin-top: 8px; }
+
+        .dashboard { display: none; }
+        .dash-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px; }
+        .dash-header h2 { color: #8e7d6d; }
+        .logout-btn { background: transparent; border: 1px solid #e74c3c; color: #e74c3c; padding: 6px 16px; border-radius: 8px; cursor: pointer; font-family: inherit; font-size: 0.85rem; }
+        .logout-btn:hover { background: #e74c3c; color: #fff; }
+
+        .tabs { display: flex; gap: 8px; margin-bottom: 20px; }
+        .tab { padding: 10px 20px; border-radius: 12px; cursor: pointer; font-family: inherit; font-size: 0.95rem; border: 2px solid #ddd; background: #fff; color: #666; transition: all 0.2s; }
+        .tab:hover { border-color: #8e7d6d; color: #8e7d6d; }
+        .tab.active { background: #8e7d6d; color: #fff; border-color: #8e7d6d; }
+
+        .panel {
+            background: rgba(255,255,255,0.95); border-radius: 20px; padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08); margin-bottom: 20px;
+        }
+        .panel h3 { color: #8e7d6d; margin-bottom: 15px; }
+
+        .fila { display: flex; gap: 12px; margin-bottom: 15px; flex-wrap: wrap; align-items: flex-end; }
+        .fila .campo { flex: 1; min-width: 150px; }
+        .fila label { display: block; font-size: 0.8rem; font-weight: 600; color: #666; margin-bottom: 4px; }
+        .fila input, .fila select { width: 100%; padding: 10px 12px; border: 2px solid #eee; border-radius: 10px; font-size: 0.93rem; outline: none; font-family: inherit; }
+        .fila input:focus, .fila select:focus { border-color: #8e7d6d; }
+
+        .main-btn {
+            background: #8e7d6d; color: #fff; border: none; padding: 10px 22px;
+            border-radius: 12px; font-size: 0.93rem; font-family: inherit; cursor: pointer; white-space: nowrap;
+        }
+        .main-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(142,125,109,0.3); }
+        .main-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+        .result-count { font-size: 0.85rem; color: #888; margin-bottom: 12px; }
+        .msg-card {
+            padding: 14px 16px; border-radius: 12px; margin-bottom: 8px;
+            border-left: 4px solid #8e7d6d; background: #faf8f4;
+        }
+        .msg-card .meta { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; font-size: 0.8rem; flex-wrap: wrap; gap: 6px; }
+        .msg-card .alumno-tag { font-weight: 600; color: #8e7d6d; }
+        .msg-card .fecha { color: #aaa; }
+        .msg-card .emisor-tag { padding: 2px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 600; }
+        .msg-card .emisor-usuario { background: #e8f0fe; color: #1a73e8; }
+        .msg-card .emisor-ia { background: #e6f7e6; color: #2e7d32; }
+        .msg-card .texto { font-size: 0.93rem; line-height: 1.5; white-space: pre-wrap; word-break: break-word; }
+        .msg-card .texto .highlight { background: #fff3cd; padding: 1px 3px; border-radius: 3px; }
+        .msg-card .texto-truncado { max-height: 80px; overflow: hidden; position: relative; cursor: pointer; }
+        .msg-card .texto-truncado::after { content: '... ver más'; position: absolute; bottom: 0; right: 0; background: #faf8f4; padding: 0 6px; font-size: 0.8rem; color: #8e7d6d; }
+        .msg-card .texto-truncado.expandido { max-height: none; }
+        .msg-card .texto-truncado.expandido::after { content: none; }
+
+        .sin-resultados { text-align: center; padding: 40px 20px; color: #aaa; }
+
+        .loading-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.3); display: none; align-items: center; justify-content: center; z-index: 100; }
+        .spinner { width: 48px; height: 48px; border: 4px solid #ddd; border-top-color: #8e7d6d; border-radius: 50%; animation: spin 0.8s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+<div class="container" id="app">
+    <div id="loginSection" class="login-section">
+        <h1>Historial de Chat</h1>
+        <p>Busca en todas las conversaciones.</p>
+        <input type="email" id="loginEmail" placeholder="Email" value="fernando@despiertatuvoz.com">
+        <input type="password" id="loginPassword" placeholder="Contraseña">
+        <div class="login-error" id="loginError"></div>
+        <button id="loginBtn" class="main-btn" style="width:100%;margin-top:5px;">Entrar</button>
+    </div>
+
+    <div id="dashboard" class="dashboard">
+        <div class="dash-header">
+            <h2>📜 Historial de Chat</h2>
+            <button id="logoutBtn" class="logout-btn">Cerrar Sesión</button>
+        </div>
+
+        <div class="tabs">
+            <div class="tab active" data-tab="alumno">Por Alumno</div>
+            <div class="tab" data-tab="global">Búsqueda Global</div>
+        </div>
+
+        <!-- Pestaña: Por Alumno -->
+        <div id="tabAlumno">
+            <div class="panel">
+                <h3>Filtros</h3>
+                <div class="fila">
+                    <div class="campo">
+                        <label for="alumnoSelect">Alumno</label>
+                        <select id="alumnoSelect"></select>
+                    </div>
+                    <div class="campo">
+                        <label for="keywordAlumno">Palabra clave</label>
+                        <input type="text" id="keywordAlumno" placeholder="Buscar en los mensajes...">
+                    </div>
+                    <div class="campo">
+                        <label for="fechaDesde">Desde</label>
+                        <input type="date" id="fechaDesde">
+                    </div>
+                    <div class="campo">
+                        <label for="fechaHasta">Hasta</label>
+                        <input type="date" id="fechaHasta">
+                    </div>
+                    <button id="buscarAlumnoBtn" class="main-btn" style="align-self:flex-end;">Buscar</button>
+                </div>
+            </div>
+            <div class="panel" id="resultadosAlumno">
+                <div class="sin-resultados">Selecciona un alumno y haz clic en Buscar.</div>
+            </div>
+        </div>
+
+        <!-- Pestaña: Búsqueda Global -->
+        <div id="tabGlobal" style="display:none;">
+            <div class="panel">
+                <h3>Buscar en todas las conversaciones</h3>
+                <div class="fila">
+                    <div class="campo" style="flex:2;">
+                        <label for="keywordGlobal">Palabra o frase</label>
+                        <input type="text" id="keywordGlobal" placeholder="Texto a buscar en cualquier mensaje...">
+                    </div>
+                    <div class="campo">
+                        <label for="fechaDesdeG">Desde</label>
+                        <input type="date" id="fechaDesdeG">
+                    </div>
+                    <div class="campo">
+                        <label for="fechaHastaG">Hasta</label>
+                        <input type="date" id="fechaHastaG">
+                    </div>
+                    <button id="buscarGlobalBtn" class="main-btn" style="align-self:flex-end;">Buscar</button>
+                </div>
+            </div>
+            <div class="panel" id="resultadosGlobal">
+                <div class="sin-resultados">Introduce un texto y haz clic en Buscar.</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="loadingOverlay" class="loading-overlay">
+        <div class="spinner"></div>
+    </div>
+</div>
+
+<script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+
+    let sb, sbService;
+    let alumnosMap = {};
+    let alumnosList = [];
+
+    const $ = id => document.getElementById(id);
+    const setLoading = on => { $('loadingOverlay').style.display = on ? 'flex' : 'none'; };
+
+    function qs(texto) {
+        if (!texto) return texto;
+        return texto.replace(/'/g, "''").replace(/[%_]/g, '\\$&');
+    }
+
+    async function init() {
+        const configRes = await fetch('/api/config');
+        const config = await configRes.json();
+
+        sb = createClient(config.url, config.key, { auth: { persistSession: false } });
+        sbService = createClient(config.url, config.key, { auth: { persistSession: false } });
+
+        const session = localStorage.getItem('sb-session');
+        if (session) {
+            await sb.auth.setSession(JSON.parse(session));
+            const { data: { user } } = await sb.auth.getUser();
+            if (user) {
+                $('loginSection').style.display = 'none';
+                $('dashboard').style.display = 'block';
+                await Promise.all([cargarAlumnos(), initFechas()]);
+                return;
+            }
+        }
+    }
+
+    $('loginBtn').onclick = async () => {
+        const email = $('loginEmail').value.trim();
+        const password = $('loginPassword').value.trim();
+        if (!email || !password) { $('loginError').textContent = 'Completa ambos campos'; return; }
+        $('loginError').textContent = '';
+        const { data, error } = await sb.auth.signInWithPassword({ email, password });
+        if (error) { $('loginError').textContent = error.message; return; }
+        localStorage.setItem('sb-session', JSON.stringify(data.session));
+        $('loginSection').style.display = 'none';
+        $('dashboard').style.display = 'block';
+        await initFechas();
+    };
+
+    $('logoutBtn').onclick = async () => {
+        await sb.auth.signOut();
+        localStorage.removeItem('sb-session');
+        $('dashboard').style.display = 'none';
+        $('loginSection').style.display = 'block';
+        $('loginPassword').value = '';
+    };
+
+    // Tabs
+    document.querySelectorAll('.tab').forEach(tab => {
+        tab.onclick = () => {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+            $('tabAlumno').style.display = tab.dataset.tab === 'alumno' ? 'block' : 'none';
+            $('tabGlobal').style.display = tab.dataset.tab === 'global' ? 'block' : 'none';
+        };
+    });
+
+    function initFechas() {
+        const hoy = new Date().toISOString().split('T')[0];
+        const mesAntes = new Date(Date.now() - 30*24*60*60*1000).toISOString().split('T')[0];
+        ['fechaDesde', 'fechaDesdeG'].forEach(id => { if (!$(''+id).value) $(''+id).value = mesAntes; });
+        ['fechaHasta', 'fechaHastaG'].forEach(id => { if (!$(''+id).value) $(''+id).value = hoy; });
+    }
+
+    async function cargarAlumnos() {
+        const { data } = await sb.from('user_profiles').select('user_id, email, nombre').order('nombre');
+        alumnosList = data || [];
+        alumnosMap = {};
+        const sel = $('alumnoSelect');
+        sel.innerHTML = '<option value="">— Selecciona —</option>';
+        (data || []).forEach(a => {
+            alumnosMap[a.user_id] = a;
+            const opt = document.createElement('option');
+            opt.value = a.user_id;
+            opt.textContent = `${a.nombre} (${a.email})`;
+            sel.appendChild(opt);
+        });
+    }
+
+    // ===== Pestaña Por Alumno =====
+    $('buscarAlumnoBtn').onclick = async () => {
+        const userId = $('alumnoSelect').value;
+        if (!userId) { alert('Selecciona un alumno.'); return; }
+        const keyword = $('keywordAlumno').value.trim();
+        const desde = $('fechaDesde').value;
+        const hasta = $('fechaHasta').value;
+
+        setLoading(true);
+        try {
+            let query = sb.from('mensajes')
+                .select('id, texto, emisor, created_at, alumno')
+                .eq('alumno', userId)
+                .order('created_at', { ascending: false })
+                .limit(500);
+
+            if (keyword) {
+                query = query.ilike('texto', `%${keyword}%`);
+            }
+            if (desde) query = query.gte('created_at', desde);
+            if (hasta) query = query.lte('created_at', `${hasta}T23:59:59`);
+
+            const { data, error } = await query;
+            if (error) throw error;
+            renderMensajesAlumno(data || [], { keyword, alumno: alumnosMap[userId] });
+        } catch (e) {
+            $('resultadosAlumno').innerHTML = `<div class="sin-resultados" style="color:#e74c3c;">Error: ${e.message}</div>`;
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    function renderMensajesAlumno(msgs, { keyword, alumno }) {
+        const cont = $('resultadosAlumno');
+        if (!msgs.length) {
+            cont.innerHTML = '<div class="sin-resultados">No se encontraron mensajes.</div>';
+            return;
+        }
+        cont.innerHTML = `<div class="result-count">${msgs.length} mensajes encontrados</div>`;
+        cont.innerHTML += msgs.map(m => msgCard(m, alumno.nombre, keyword)).join('');
+    }
+
+    // ===== Pestaña Búsqueda Global =====
+    $('buscarGlobalBtn').onclick = async () => {
+        const keyword = $('keywordGlobal').value.trim();
+        if (!keyword) { alert('Introduce un texto para buscar.'); return; }
+        const desde = $('fechaDesdeG').value;
+        const hasta = $('fechaHastaG').value;
+
+        setLoading(true);
+        try {
+            let query = sb.from('mensajes')
+                .select('id, texto, emisor, created_at, alumno')
+                .ilike('texto', `%${keyword}%`)
+                .order('created_at', { ascending: false })
+                .limit(500);
+
+            if (desde) query = query.gte('created_at', desde);
+            if (hasta) query = query.lte('created_at', `${hasta}T23:59:59`);
+
+            const { data, error } = await query;
+            if (error) throw error;
+            renderMensajesGlobal(data || [], keyword);
+        } catch (e) {
+            $('resultadosGlobal').innerHTML = `<div class="sin-resultados" style="color:#e74c3c;">Error: ${e.message}</div>`;
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    function renderMensajesGlobal(msgs, keyword) {
+        const cont = $('resultadosGlobal');
+        if (!msgs.length) {
+            cont.innerHTML = '<div class="sin-resultados">No se encontraron mensajes.</div>';
+            return;
+        }
+        cont.innerHTML = `<div class="result-count">${msgs.length} mensajes encontrados</div>`;
+        cont.innerHTML += msgs.map(m => {
+            const a = alumnosMap[m.alumno] || { nombre: 'Desconocido' };
+            return msgCard(m, a.nombre, keyword);
+        }).join('');
+    }
+
+    function msgCard(m, nombreAlumno, keyword) {
+        const emisorCls = m.emisor === 'usuario' || m.emisor === 'user' ? 'emisor-usuario' : 'emisor-ia';
+        const emisorLabel = (m.emisor === 'usuario' || m.emisor === 'user') ? '👤 Alumno' : '🤖 Mentor IA';
+        const fecha = new Date(m.created_at).toLocaleString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+        let texto = m.texto || '';
+        if (keyword) {
+            const regex = new RegExp(`(${keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+            texto = texto.replace(regex, '<span class="highlight">$1</span>');
+        }
+        return `<div class="msg-card">
+            <div class="meta">
+                <span class="alumno-tag">${nombreAlumno}</span>
+                <span class="emisor-tag ${emisorCls}">${emisorLabel}</span>
+                <span class="fecha">${fecha}</span>
+            </div>
+            <div class="texto texto-truncado" onclick="this.classList.toggle('expandido')">${texto}</div>
+        </div>`;
+    }
+
+    // Enter en campos clave
+    $('keywordAlumno').onkeydown = e => { if (e.key === 'Enter') $('buscarAlumnoBtn').click(); };
+    $('keywordGlobal').onkeydown = e => { if (e.key === 'Enter') $('buscarGlobalBtn').click(); };
+
+    init();
+</script>
+</body>
+</html>
