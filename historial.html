@@ -120,6 +120,10 @@
                         <label for="fechaHasta">Hasta</label>
                         <input type="date" id="fechaHasta">
                     </div>
+                    <div class="campo" style="flex:0 0 auto;">
+                        <label>Orden</label>
+                        <button id="ordenAlumnoBtn" class="orden-btn" style="display:flex;align-items:center;gap:6px;padding:10px 14px;border:2px solid #eee;border-radius:10px;background:#fff;cursor:pointer;font-family:inherit;font-size:0.93rem;color:#666;width:100%;">↓ Más reciente</button>
+                    </div>
                     <button id="buscarAlumnoBtn" class="main-btn" style="align-self:flex-end;">Buscar</button>
                 </div>
             </div>
@@ -145,6 +149,10 @@
                         <label for="fechaHastaG">Hasta</label>
                         <input type="date" id="fechaHastaG">
                     </div>
+                    <div class="campo" style="flex:0 0 auto;">
+                        <label>Orden</label>
+                        <button id="ordenGlobalBtn" class="orden-btn" style="display:flex;align-items:center;gap:6px;padding:10px 14px;border:2px solid #eee;border-radius:10px;background:#fff;cursor:pointer;font-family:inherit;font-size:0.93rem;color:#666;width:100%;">↓ Más reciente</button>
+                    </div>
                     <button id="buscarGlobalBtn" class="main-btn" style="align-self:flex-end;">Buscar</button>
                 </div>
             </div>
@@ -165,6 +173,8 @@
     let sb, sbService;
     let alumnosMap = {};
     let alumnosList = [];
+    let ascendenteAlumno = false;
+    let ascendenteGlobal = false;
 
     const $ = id => document.getElementById(id);
     const setLoading = on => { $('loadingOverlay').style.display = on ? 'flex' : 'none'; };
@@ -247,6 +257,21 @@
         });
     }
 
+    // ===== Toggle orden =====
+    function toggleOrden(tab) {
+        return function() {
+            if (tab === 'alumno') {
+                ascendenteAlumno = !ascendenteAlumno;
+                $('ordenAlumnoBtn').innerHTML = ascendenteAlumno ? '↑ Más antiguo' : '↓ Más reciente';
+            } else {
+                ascendenteGlobal = !ascendenteGlobal;
+                $('ordenGlobalBtn').innerHTML = ascendenteGlobal ? '↑ Más antiguo' : '↓ Más reciente';
+            }
+        };
+    }
+    $('ordenAlumnoBtn').onclick = toggleOrden('alumno');
+    $('ordenGlobalBtn').onclick = toggleOrden('global');
+
     // ===== Pestaña Por Alumno =====
     $('buscarAlumnoBtn').onclick = async () => {
         const userId = $('alumnoSelect').value;
@@ -260,7 +285,7 @@
             let query = sb.from('mensajes')
                 .select('id, texto, emisor, created_at, alumno')
                 .eq('alumno', userId)
-                .order('created_at', { ascending: false })
+                .order('created_at', { ascending: ascendenteAlumno })
                 .limit(500);
 
             if (keyword) {
@@ -301,7 +326,7 @@
             let query = sb.from('mensajes')
                 .select('id, texto, emisor, created_at, alumno')
                 .ilike('texto', `%${keyword}%`)
-                .order('created_at', { ascending: false })
+                .order('created_at', { ascending: ascendenteGlobal })
                 .limit(500);
 
             if (desde) query = query.gte('created_at', desde);
