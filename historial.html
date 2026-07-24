@@ -250,7 +250,7 @@
             alumnosMap = {};
             const sel = $('alumnoSelect');
             sel.innerHTML = '<option value="">— Selecciona —</option>';
-            (data || []).forEach(a => {
+            (data || []).filter(a => !a.email.endsWith('@test.com')).forEach(a => {
                 alumnosMap[a.user_id] = a;
                 const opt = document.createElement('option');
                 opt.value = a.user_id;
