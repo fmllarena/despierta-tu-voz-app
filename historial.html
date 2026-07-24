@@ -214,7 +214,7 @@
         localStorage.setItem('sb-session', JSON.stringify(data.session));
         $('loginSection').style.display = 'none';
         $('dashboard').style.display = 'block';
-        await initFechas();
+        await Promise.all([cargarAlumnos(), initFechas()]);
     };
 
     $('logoutBtn').onclick = async () => {
@@ -243,18 +243,23 @@
     }
 
     async function cargarAlumnos() {
-        const { data } = await sb.from('user_profiles').select('user_id, email, nombre').order('nombre');
-        alumnosList = data || [];
-        alumnosMap = {};
-        const sel = $('alumnoSelect');
-        sel.innerHTML = '<option value="">— Selecciona —</option>';
-        (data || []).forEach(a => {
-            alumnosMap[a.user_id] = a;
-            const opt = document.createElement('option');
-            opt.value = a.user_id;
-            opt.textContent = `${a.nombre} (${a.email})`;
-            sel.appendChild(opt);
-        });
+        try {
+            const { data, error } = await sb.from('user_profiles').select('user_id, email, nombre').order('nombre');
+            if (error) throw error;
+            alumnosList = data || [];
+            alumnosMap = {};
+            const sel = $('alumnoSelect');
+            sel.innerHTML = '<option value="">— Selecciona —</option>';
+            (data || []).forEach(a => {
+                alumnosMap[a.user_id] = a;
+                const opt = document.createElement('option');
+                opt.value = a.user_id;
+                opt.textContent = `${a.nombre} (${a.email})`;
+                sel.appendChild(opt);
+            });
+        } catch (e) {
+            console.error('Error al cargar alumnos:', e);
+        }
     }
 
     // ===== Toggle orden =====
