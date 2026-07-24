@@ -330,15 +330,27 @@
         }).join('');
     }
 
+    function renderMd(texto, keyword) {
+        let t = texto.replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c]);
+        t = t
+            .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+            .replace(/__(.+?)__/g, '<strong>$1</strong>')
+            .replace(/\*(.+?)\*/g, '<em>$1</em>')
+            .replace(/_(.+?)_/g, '<em>$1</em>')
+            .replace(/`(.+?)`/g, '<code>$1</code>')
+            .replace(/\n/g, '<br>');
+        if (keyword) {
+            const re = new RegExp(`(${keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+            t = t.replace(re, '<span class="highlight">$1</span>');
+        }
+        return t;
+    }
+
     function msgCard(m, nombreAlumno, keyword) {
         const emisorCls = m.emisor === 'usuario' || m.emisor === 'user' ? 'emisor-usuario' : 'emisor-ia';
         const emisorLabel = (m.emisor === 'usuario' || m.emisor === 'user') ? '👤 Alumno' : '🤖 Mentor IA';
         const fecha = new Date(m.created_at).toLocaleString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
-        let texto = m.texto || '';
-        if (keyword) {
-            const regex = new RegExp(`(${keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
-            texto = texto.replace(regex, '<span class="highlight">$1</span>');
-        }
+        const texto = renderMd(m.texto || '', keyword);
         return `<div class="msg-card">
             <div class="meta">
                 <span class="alumno-tag">${nombreAlumno}</span>
