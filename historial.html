@@ -308,9 +308,9 @@
             const sel = $('alumnoSelect');
             sel.innerHTML = '<option value="">— Selecciona —</option>';
             (data || []).filter(a => !a.email.endsWith('@test.com')).forEach(a => {
-                alumnosMap[a.user_id] = a;
+                alumnosMap[a.user_id.toLowerCase()] = a;
                 const opt = document.createElement('option');
-                opt.value = a.user_id;
+                opt.value = a.user_id.toLowerCase();
                 opt.textContent = `${a.nombre} (${a.email})`;
                 sel.appendChild(opt);
             });
@@ -345,14 +345,21 @@
 
         setLoading(true);
         try {
-            let query = sb.from('mensajes')
-                .select('id, texto, emisor, created_at, alumno')
-                .order('created_at', { ascending: ascendenteAlumno })
-                .limit(500);
+            let query;
 
             if (userId) {
-                query = query.eq('alumno', userId);
+                query = sb.from('mensajes')
+                    .select('id, texto, emisor, created_at, alumno')
+                    .eq('alumno', userId)
+                    .order('created_at', { ascending: ascendenteAlumno })
+                    .limit(500);
+            } else {
+                query = sb.from('mensajes')
+                    .select('id, texto, emisor, created_at, alumno')
+                    .order('created_at', { ascending: ascendenteAlumno })
+                    .limit(500);
             }
+
             if (keyword) {
                 query = query.ilike('texto', `%${keyword}%`);
             }
@@ -375,16 +382,18 @@
             cont.innerHTML = '<div class="sin-resultados">No se encontraron mensajes.</div>';
             return;
         }
-        cont.innerHTML = `<div class="result-count">${msgs.length} mensajes encontrados</div>`;
+        let html = `<div class="result-count">${msgs.length} mensajes encontrados</div>`;
         if (userId) {
-            const a = alumnosMap[userId];
-            cont.innerHTML += msgs.map(m => msgCard(m, a?.nombre || '—', keyword)).join('');
+            const a = alumnosMap[userId.toLowerCase()];
+            const nombre = a?.nombre || '—';
+            html += msgs.map(m => msgCard(m, nombre, keyword)).join('');
         } else {
-            cont.innerHTML += msgs.map(m => {
-                const a = alumnosMap[m.alumno] || { nombre: 'Desconocido' };
-                return msgCard(m, a.nombre, keyword);
+            html += msgs.map(m => {
+                const a = alumnosMap[(m.alumno || '').toLowerCase()];
+                return msgCard(m, a ? a.nombre : 'Desconocido', keyword);
             }).join('');
         }
+        cont.innerHTML = html;
     }
 
     // ===== Pestaña Búsqueda Global =====
