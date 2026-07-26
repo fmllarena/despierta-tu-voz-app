@@ -185,7 +185,7 @@
                 </div>
             </div>
             <div class="panel" id="resultadosAlumno">
-                <div class="sin-resultados">Selecciona un alumno y haz clic en Buscar.</div>
+                        <div class="sin-resultados">Selecciona un alumno o define un rango de fechas y haz clic en Buscar.</div>
             </div>
         </div>
 
@@ -337,19 +337,22 @@
     // ===== Pestaña Por Alumno =====
     $('buscarAlumnoBtn').onclick = async () => {
         const userId = $('alumnoSelect').value;
-        if (!userId) { alert('Selecciona un alumno.'); return; }
         const keyword = $('keywordAlumno').value.trim();
         const desde = $('fechaDesde').value;
         const hasta = $('fechaHasta').value;
+
+        if (!userId && !desde && !hasta && !keyword) { alert('Selecciona un alumno o especifica un rango de fechas.'); return; }
 
         setLoading(true);
         try {
             let query = sb.from('mensajes')
                 .select('id, texto, emisor, created_at, alumno')
-                .eq('alumno', userId)
                 .order('created_at', { ascending: ascendenteAlumno })
                 .limit(500);
 
+            if (userId) {
+                query = query.eq('alumno', userId);
+            }
             if (keyword) {
                 query = query.ilike('texto', `%${keyword}%`);
             }
@@ -358,7 +361,7 @@
 
             const { data, error } = await query;
             if (error) throw error;
-            renderMensajesAlumno(data || [], { keyword, alumno: alumnosMap[userId] });
+            renderMensajesAlumnoGlobal(data || [], { keyword, userId });
         } catch (e) {
             $('resultadosAlumno').innerHTML = `<div class="sin-resultados" style="color:#e74c3c;">Error: ${e.message}</div>`;
         } finally {
@@ -366,14 +369,22 @@
         }
     };
 
-    function renderMensajesAlumno(msgs, { keyword, alumno }) {
+    function renderMensajesAlumnoGlobal(msgs, { keyword, userId }) {
         const cont = $('resultadosAlumno');
         if (!msgs.length) {
             cont.innerHTML = '<div class="sin-resultados">No se encontraron mensajes.</div>';
             return;
         }
         cont.innerHTML = `<div class="result-count">${msgs.length} mensajes encontrados</div>`;
-        cont.innerHTML += msgs.map(m => msgCard(m, alumno.nombre, keyword)).join('');
+        if (userId) {
+            const a = alumnosMap[userId];
+            cont.innerHTML += msgs.map(m => msgCard(m, a?.nombre || '—', keyword)).join('');
+        } else {
+            cont.innerHTML += msgs.map(m => {
+                const a = alumnosMap[m.alumno] || { nombre: 'Desconocido' };
+                return msgCard(m, a.nombre, keyword);
+            }).join('');
+        }
     }
 
     // ===== Pestaña Búsqueda Global =====
