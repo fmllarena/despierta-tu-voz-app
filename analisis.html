@@ -6,6 +6,7 @@
     <title>Análisis de Alumnos - Despierta tu Voz</title>
     <link rel="stylesheet" href="css/style.css">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: 'Outfit', sans-serif; background: #f5f2ed; color: #333; min-height: 100vh; }
@@ -29,8 +30,15 @@
         .pregunta-area:focus { border-color: #8e7d6d; }
         .pregunta-area::placeholder { color: #bbb; }
         .resultado { display: none; }
-        .resultado .analisis-texto { line-height: 1.7; white-space: pre-wrap; font-size: 0.95rem; }
+        .resultado .analisis-texto { line-height: 1.7; font-size: 0.95rem; }
         .resultado .analisis-texto h1, .resultado .analisis-texto h2, .resultado .analisis-texto h3 { color: #8e7d6d; margin: 16px 0 8px; }
+        .resultado .analisis-texto table { border-collapse: collapse; width: 100%; margin: 12px 0; font-size: 0.88rem; }
+        .resultado .analisis-texto th, .resultado .analisis-texto td { border: 1px solid #ddd; padding: 8px 12px; text-align: left; }
+        .resultado .analisis-texto th { background: #f5f2ed; color: #8e7d6d; font-weight: 600; }
+        .resultado .analisis-texto td { background: #fff; }
+        .resultado .analisis-texto strong { color: #8e7d6d; }
+        body.dark-mode .resultado .analisis-texto th { background: #2a2a42; color: #a89b8a; }
+        body.dark-mode .resultado .analisis-texto td { background: #1c1c30; border-color: #3a3a55; }
         .loading-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.3); display: none; align-items: center; justify-content: center; z-index: 100; }
         .spinner { width: 48px; height: 48px; border: 4px solid #ddd; border-top-color: #8e7d6d; border-radius: 50%; animation: spin 0.8s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
@@ -183,7 +191,7 @@
             const data = await res.json();
             if (data.error) throw new Error(data.details || data.error);
 
-            $('analisisTexto').innerHTML = data.analisis.replace(/\n/g, '<br>');
+            $('analisisTexto').innerHTML = marked.parse(data.analisis);
             $('resultadoPanel').style.display = 'block';
             $('resultadoPanel').scrollIntoView({ behavior: 'smooth' });
         } catch (e) {
