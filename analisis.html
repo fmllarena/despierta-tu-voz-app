@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Análisis de Alumnos - Despierta tu Voz</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Outfit', sans-serif; background: #f5f2ed; color: #333; min-height: 100vh; }
+        .container { max-width: 900px; margin: 0 auto; padding: 20px; }
+        .login-section { max-width: 380px; margin: 60px auto; padding: 30px; background: rgba(255,255,255,0.95); border-radius: 24px; box-shadow: 0 20px 50px rgba(0,0,0,0.1); text-align: center; }
+        .login-section h1 { color: #8e7d6d; margin-bottom: 10px; font-size: 1.6rem; }
+        .login-section input { width: 100%; padding: 14px; border: 2px solid #eee; border-radius: 12px; font-size: 1rem; outline: none; font-family: inherit; margin-bottom: 10px; }
+        .login-section input:focus { border-color: #8e7d6d; }
+        .login-error { color: #e74c3c; font-size: 0.85rem; min-height: 1.5em; margin-top: 8px; }
+        .dashboard { display: none; }
+        .dash-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px; }
+        .dash-header h2 { color: #8e7d6d; }
+        .logout-btn { background: transparent; border: 1px solid #e74c3c; color: #e74c3c; padding: 6px 16px; border-radius: 8px; cursor: pointer; font-family: inherit; font-size: 0.85rem; }
+        .logout-btn:hover { background: #e74c3c; color: #fff; }
+        .panel { background: rgba(255,255,255,0.95); border-radius: 20px; padding: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); margin-bottom: 20px; }
+        .panel h3 { color: #8e7d6d; margin-bottom: 15px; }
+        .main-btn { background: #8e7d6d; color: #fff; border: none; padding: 12px 28px; border-radius: 12px; font-size: 1rem; font-family: inherit; cursor: pointer; }
+        .main-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(142,125,109,0.3); }
+        .main-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+        .pregunta-area { width: 100%; min-height: 120px; padding: 14px; border: 2px solid #eee; border-radius: 12px; font-size: 0.95rem; outline: none; font-family: inherit; resize: vertical; margin-bottom: 15px; }
+        .pregunta-area:focus { border-color: #8e7d6d; }
+        .pregunta-area::placeholder { color: #bbb; }
+        .resultado { display: none; }
+        .resultado .analisis-texto { line-height: 1.7; white-space: pre-wrap; font-size: 0.95rem; }
+        .resultado .analisis-texto h1, .resultado .analisis-texto h2, .resultado .analisis-texto h3 { color: #8e7d6d; margin: 16px 0 8px; }
+        .loading-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.3); display: none; align-items: center; justify-content: center; z-index: 100; }
+        .spinner { width: 48px; height: 48px; border: 4px solid #ddd; border-top-color: #8e7d6d; border-radius: 50%; animation: spin 0.8s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .sugerencias { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 15px; }
+        .sugerencias button { background: #f0ece6; border: 1px solid #ddd; padding: 8px 14px; border-radius: 10px; cursor: pointer; font-family: inherit; font-size: 0.85rem; color: #555; transition: all 0.2s; }
+        .sugerencias button:hover { background: #8e7d6d; color: #fff; border-color: #8e7d6d; }
+
+        /* Dark mode */
+        body.dark-mode { background: #12121e; color: #d4d4dc; }
+        body.dark-mode .login-section { background: rgba(28,28,48,0.95); box-shadow: 0 20px 50px rgba(0,0,0,0.4); }
+        body.dark-mode .login-section input { background: #26263d; border-color: #2e2e48; color: #d4d4dc; }
+        body.dark-mode .panel { background: rgba(28,28,48,0.95); box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
+        body.dark-mode .panel h3 { color: #a89b8a; }
+        body.dark-mode .main-btn:hover { box-shadow: 0 8px 25px rgba(142,125,109,0.15); }
+        body.dark-mode .dash-header h2 { color: #d4d4dc; }
+        body.dark-mode .pregunta-area { background: #26263d; border-color: #2e2e48; color: #d4d4dc; }
+        body.dark-mode .spinner { border-color: #2e2e48; border-top-color: #8e7d6d; }
+        body.dark-mode .login-section h1 { color: #a89b8a; }
+        body.dark-mode .login-error { color: #ff6b6b; }
+        body.dark-mode .loading-overlay { background: rgba(0,0,0,0.5); }
+        body.dark-mode .logout-btn { border-color: #ff6b6b; color: #ff6b6b; }
+        body.dark-mode .logout-btn:hover { background: #ff6b6b; color: #fff; }
+        body.dark-mode .sugerencias button { background: #2a2a42; border-color: #3a3a55; color: #b0a090; }
+        body.dark-mode .sugerencias button:hover { background: #8e7d6d; color: #fff; border-color: #8e7d6d; }
+        body.dark-mode .resultado .analisis-texto h1,
+        body.dark-mode .resultado .analisis-texto h2,
+        body.dark-mode .resultado .analisis-texto h3 { color: #a89b8a; }
+    </style>
+</head>
+<body>
+<div class="container" id="app">
+    <div id="loginSection" class="login-section">
+        <h1>Análisis de Alumnos</h1>
+        <p>Pregunta a la IA sobre tus alumnos.</p>
+        <input type="email" id="loginEmail" placeholder="Email" value="fernando@despiertatuvoz.com">
+        <input type="password" id="loginPassword" placeholder="Contraseña">
+        <div class="login-error" id="loginError"></div>
+        <button id="loginBtn" class="main-btn" style="width:100%;margin-top:5px;">Entrar</button>
+    </div>
+
+    <div id="dashboard" class="dashboard">
+        <div class="dash-header">
+            <h2>🔍 Análisis de Alumnos</h2>
+            <div style="display:flex;gap:8px;">
+                <button id="darkToggle" style="background:transparent;border:1px solid #8e7d6d;color:#8e7d6d;padding:6px 12px;border-radius:8px;cursor:pointer;font-size:1rem;font-family:inherit;" title="Modo oscuro">🌙</button>
+                <button id="logoutBtn" class="logout-btn">Cerrar Sesión</button>
+            </div>
+        </div>
+
+        <div class="panel">
+            <h3>¿Qué quieres saber?</h3>
+            <div class="sugerencias">
+                <button data-q="¿Qué alumno ha evolucionado más en su historia vocal?">Evolución destacada</button>
+                <button data-q="¿Qué alumnos necesitan más apoyo o están estancados?">Necesitan apoyo</button>
+                <button data-q="¿Hay patrones o temas comunes entre los alumnos?">Patrones comunes</button>
+                <button data-q="¿Qué alumno tiene más constancia en sus sesiones?">Más constante</button>
+                <button data-q="Haz un resumen general del estado de todos los alumnos.">Resumen general</button>
+            </div>
+            <textarea id="preguntaInput" class="pregunta-area" placeholder="Ej: ¿Qué alumno ha practicado más la técnica de respiración diafragmática? ¿Quién muestra más inseguridad al hablar?"></textarea>
+            <button id="analizarBtn" class="main-btn">🔮 Analizar</button>
+        </div>
+
+        <div id="resultadoPanel" class="panel resultado">
+            <h3>📊 Resultado</h3>
+            <div id="analisisTexto" class="analisis-texto"></div>
+        </div>
+    </div>
+
+    <div id="loadingOverlay" class="loading-overlay">
+        <div class="spinner"></div>
+    </div>
+</div>
+
+<script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+
+    let sb;
+    const $ = id => document.getElementById(id);
+    const setLoading = on => { $('loadingOverlay').style.display = on ? 'flex' : 'none'; };
+
+    async function init() {
+        const configRes = await fetch('/api/config');
+        const config = await configRes.json();
+        sb = createClient(config.url, config.key, { auth: { persistSession: false } });
+
+        const session = localStorage.getItem('sb-session');
+        if (session) {
+            await sb.auth.setSession(JSON.parse(session));
+            const { data: { user } } = await sb.auth.getUser();
+            if (user) {
+                $('loginSection').style.display = 'none';
+                $('dashboard').style.display = 'block';
+                return;
+            }
+        }
+    }
+
+    $('loginBtn').onclick = async () => {
+        const email = $('loginEmail').value.trim();
+        const password = $('loginPassword').value.trim();
+        if (!email || !password) { $('loginError').textContent = 'Completa ambos campos'; return; }
+        $('loginError').textContent = '';
+        const { data, error } = await sb.auth.signInWithPassword({ email, password });
+        if (error) { $('loginError').textContent = error.message; return; }
+        localStorage.setItem('sb-session', JSON.stringify(data.session));
+        $('loginSection').style.display = 'none';
+        $('dashboard').style.display = 'block';
+    };
+
+    $('logoutBtn').onclick = async () => {
+        await sb.auth.signOut();
+        localStorage.removeItem('sb-session');
+        $('dashboard').style.display = 'none';
+        $('loginSection').style.display = 'block';
+        $('loginPassword').value = '';
+    };
+
+    // Dark Mode
+    function aplicarModoOscuro(oscuro) {
+        document.body.classList.toggle('dark-mode', oscuro);
+        $('darkToggle').textContent = oscuro ? '☀️' : '🌙';
+        localStorage.setItem('dark-mode', oscuro ? '1' : '0');
+    }
+    $('darkToggle').onclick = () => aplicarModoOscuro(!document.body.classList.contains('dark-mode'));
+    if (localStorage.getItem('dark-mode') === '1' || (localStorage.getItem('dark-mode') === null && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        aplicarModoOscuro(true);
+    }
+
+    // Sugerencias
+    document.querySelectorAll('.sugerencias button').forEach(btn => {
+        btn.onclick = () => { $('preguntaInput').value = btn.dataset.q; $('analizarBtn').click(); };
+    });
+
+    // Enter en pregunta
+    $('preguntaInput').onkeydown = e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); $('analizarBtn').click(); } };
+
+    // Análisis
+    $('analizarBtn').onclick = async () => {
+        const pregunta = $('preguntaInput').value.trim();
+        if (!pregunta) { alert('Escribe una pregunta.'); return; }
+
+        setLoading(true);
+        $('resultadoPanel').style.display = 'none';
+        try {
+            const res = await fetch('/api/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ intent: 'analisis', pregunta })
+            });
+            const data = await res.json();
+            if (data.error) throw new Error(data.details || data.error);
+
+            $('analisisTexto').innerHTML = data.analisis.replace(/\n/g, '<br>');
+            $('resultadoPanel').style.display = 'block';
+            $('resultadoPanel').scrollIntoView({ behavior: 'smooth' });
+        } catch (e) {
+            alert('Error: ' + e.message);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    init();
+</script>
+</body>
+</html>

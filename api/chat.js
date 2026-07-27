@@ -48,6 +48,10 @@ async function processChat(req, res = null) {
         return await generarCompendio(req.body);
     }
 
+    if (intent === 'analisis') {
+        return await analizarAlumnos(req.body);
+    }
+
     if (!intent || !SYSTEM_PROMPTS[intent]) throw new Error("Intento no válido");
 
     // 1. Construir Contexto del Alumno
@@ -475,6 +479,100 @@ Responde ÚNICAMENTE con un JSON válido, sin explicaciones ni markdown. El JSON
     if (insertError) throw new Error("Error al guardar compendio: " + insertError.message);
 
     return { success: true, perfil: insertado };
+}
+
+/**
+ * Analiza los datos de todos los alumnos para responder preguntas del mentor
+ */
+async function analizarAlumnos(body) {
+    const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
+    const { pregunta } = body;
+    if (!pregunta) throw new Error("Se requiere una pregunta");
+
+    const { data: perfiles } = await supabase.from('user_profiles')
+        .select('user_id, nombre, nivel_alquimia, historia_vocal, creencias_transmutadas, ultimo_resumen, mentor_notes, mentor_trato_preferido')
+        .not('email', 'ilike', '%@test.com')
+        .order('nombre');
+
+    const alumnosData = [];
+    for (const p of (perfiles || [])) {
+        const { data: msgs } = await supabase.from('mensajes')
+            .select('created_at, emisor')
+            .eq('alumno', p.user_id);
+
+        const total = msgs?.length || 0;
+        const delAlumno = msgs?.filter(m => m.emisor === 'usuario' || m.emisor === 'user').length || 0;
+        const delIA = msgs?.filter(m => m.emisor === 'ia' || m.emisor === 'model' || m.emisor === 'assistant').length || 0;
+        const ultima = msgs?.length > 0 ? new Date(msgs[msgs.length - 1].created_at).toLocaleDateString('es-ES') : 'Nunca';
+
+        alumnosData.push({
+            nombre: p.nombre,
+            nivel: p.nivel_alquimia || '?',
+            historia: (p.historia_vocal || '').substring(0, 250),
+            creencias: (p.creencias_transmutadas || '').substring(0, 250),
+            resumen: (p.ultimo_resumen || '').substring(0, 350),
+            notas: (p.mentor_notes || '').substring(0, 250),
+            trato: p.mentor_trato_preferido || '',
+            totalMsgs: total,
+            msgsAlumno: delAlumno,
+            msgsIA: delIA,
+            ultimaAct: ultima
+        });
+    }
+
+    let context = `DATOS DE ALUMNOS (${alumnosData.length} alumnos):\n\n`;
+    alumnosData.forEach((a, i) => {
+        context += `--- ALUMNO ${i + 1}: ${a.nombre} ---\n`;
+        context += `Nivel: ${a.nivel}/10\n`;
+        context += `Historia: ${a.historia || 'N/A'}\n`;
+        context += `Creencias: ${a.creencias || 'N/A'}\n`;
+        context += `Resumen: ${a.resumen || 'N/A'}\n`;
+        context += `Notas Mentor: ${a.notas || 'N/A'}\n`;
+        context += `Trato: ${a.trato || 'N/A'}\n`;
+        context += `Mensajes: ${a.totalMsgs} total (${a.msgsAlumno} alumno, ${a.msgsIA} IA)\n`;
+        context += `Última actividad: ${a.ultimaAct}\n\n`;
+    });
+
+    const systemPrompt = `Eres un analista pedagógico experto en coaching vocal. Tu tarea es analizar los datos de los alumnos de un mentor de canto y responder sus preguntas con insights accionables.
+Los datos incluyen: nombre, nivel, historia vocal, creencias transmutadas, resumen de estado, notas del mentor, cantidad de mensajes y última actividad.
+
+Responde de forma clara, directa y útil. Si no hay suficientes datos para responder algo, indícalo honestamente. Si preguntan por técnicas específicas (respiración, impostación, etc.) y no hay datos en los resúmenes, indícalo y sugiere al mentor que añada notas al respecto.`;
+
+    const userPrompt = `${context}\n\nPREGUNTA DEL MENTOR:\n${pregunta}\n\nProporciona un análisis detallado basado en los datos anteriores. Si un alumno no tiene datos relevantes, menciónalo.`;
+
+    const keys = [process.env.MISTRAL_API_KEY, process.env.MISTRAL_API_KEY_2].filter(Boolean);
+    if (!keys.length) throw new Error("Falta API Key de Mistral");
+
+    let lastErr;
+    for (const key of keys) {
+        try {
+            const response = await fetch(`${MISTRAL_BASE_URL}/chat/completions`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${key}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    model: MISTRAL_MODEL,
+                    messages: [
+                        { role: 'system', content: systemPrompt },
+                        { role: 'user', content: userPrompt }
+                    ],
+                    temperature: 0.7,
+                    max_tokens: 2048
+                })
+            });
+            if (!response.ok) {
+                const err = await response.json().catch(() => ({}));
+                throw new Error(`Mistral Error ${response.status}: ${err.error?.message || response.statusText}`);
+            }
+            const data = await response.json();
+            const texto = data.choices?.[0]?.message?.content || '';
+            return { success: true, analisis: texto };
+        } catch (e) {
+            lastErr = e;
+            const isRetryable = e.message.includes('429') || e.message.includes('503') || e.message.includes('Too Many Requests') || e.message.includes('401');
+            if (!isRetryable) break;
+        }
+    }
+    throw lastErr;
 }
 
 function setupStreamHeaders(res) {
