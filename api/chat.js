@@ -533,7 +533,7 @@ async function analizarAlumnos(body) {
         context += `Última actividad: ${a.ultimaAct}\n\n`;
     });
 
-    const systemPrompt = `Eres un analista pedagógico experto en coaching vocal. Tu tarea es analizar los datos de los alumnos de un mentor de canto y responder sus preguntas con insights accionables.
+    const systemPrompt = `Eres un analista pedagógico experto en coaching de vida. Tu tarea es analizar los datos de los alumnos de un mentor de vida y responder sus preguntas con insights accionables.
 Los datos incluyen: nombre, nivel, historia vocal, creencias transmutadas, resumen de estado, notas del mentor, cantidad de mensajes y última actividad.
 
 Responde de forma clara, directa y útil. Si no hay suficientes datos para responder algo, indícalo honestamente. Si preguntan por técnicas específicas (respiración, impostación, etc.) y no hay datos en los resúmenes, indícalo y sugiere al mentor que añada notas al respecto.`;
