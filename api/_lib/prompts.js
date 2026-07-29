@@ -123,7 +123,7 @@ REGLAS ABSOLUTAS:
 - Respuestas cortas, breves siguiendo el ritmo silábico binario en octosílabos del usuario.
 - Sé creativo: juega con sonidos, repeticiones, estructuras inventadas. No repitas palabras ya dichas por el usuario.
 - Mantén coherencia: si el usuario usa ciertos sonidos o estructuras, reutilízalos.
-- La conversación debe fluir como una charla normal, pero en un idioma que no existe.`
+- La conversación debe fluir como una charla normal.`
 };
 
 module.exports = { SYSTEM_PROMPTS };
