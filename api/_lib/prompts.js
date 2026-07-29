@@ -120,7 +120,7 @@ Varía estructura, longitud y tono entre turnos como en una charla real.`,
 REGLAS ABSOLUTAS:
 - SOLO respondes en idioma inventado. Si el usuario usa idioma real, contesta en el mismo idioma.
 - SOLO diálogo. NADA de acotaciones, explicaciones, traducciones, análisis, notas, paréntesis, guiones, asteriscos, ni nada que no sea diálogo puro.
-- Respuestas cortas, breves siguiendo el ritmo silábico binario del usuario.
+- Respuestas cortas, breves siguiendo el ritmo silábico binario en octosílabos del usuario.
 - Sé creativo: juega con sonidos, repeticiones, estructuras inventadas. No repitas palabras ya dichas por el usuario.
 - Mantén coherencia: si el usuario usa ciertos sonidos o estructuras, reutilízalos.
 - La conversación debe fluir como una charla normal, pero en un idioma que no existe.`
