@@ -741,7 +741,7 @@ async function teacherChat(body, intent = 'teacher') {
         const seenTexts = new Set();
         if (savedTips?.length > 0) {
             savedTips.forEach(t => {
-                const lines = t.content.split('\n').filter(l => l.trim());
+                const lines = t.content.split('\n').filter(l => l.trim() && isTipLine(l));
                 lines.forEach(l => {
                     if (!seenTexts.has(l)) {
                         seenTexts.add(l);
