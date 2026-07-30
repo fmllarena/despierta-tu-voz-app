@@ -605,7 +605,7 @@ function parseTipText(text) {
 }
 
 function isTipLine(line) {
-    return line.includes('🎯 Tip:');
+    return (line.includes('🎯 Tip:') || line.includes('Tip:')) && line.includes('→');
 }
 
 async function extractDailyTips(supabase, userId) {
