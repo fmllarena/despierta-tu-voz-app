@@ -594,49 +594,37 @@ Responde de forma clara, directa y útil. Si no hay suficientes datos para respo
  * Extrae tips de conversaciones del día y los guarda como tips_diarios
  */
 async function extractDailyTips(supabase, userId) {
-    // Buscar el último tips_diarios para saber desde dónde extraer
-    const { data: lastTips } = await supabase.from('teacher')
-        .select('created_at')
-        .eq('user_id', userId)
-        .eq('role', 'tips_diarios')
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-
-    const cutoff = lastTips?.created_at || new Date(0).toISOString();
-
-    // Obtener mensajes del assistant después del último tips_diarios
-    const { data: newMessages } = await supabase.from('teacher')
-        .select('content, created_at')
+    // Extraer tips de los últimos mensajes del assistant (independientemente de DB)
+    const { data: messages } = await supabase.from('teacher')
+        .select('content')
         .eq('user_id', userId)
         .eq('role', 'assistant')
-        .gt('created_at', cutoff)
-        .order('created_at', { ascending: true });
+        .order('created_at', { ascending: false })
+        .limit(100);
 
-    if (!newMessages?.length) return [];
+    if (!messages?.length) return [];
 
-    // Extraer líneas con tips
-    const tipLines = newMessages.flatMap(m => {
+    const allLines = messages.flatMap(m => {
         const lines = m.content.split('\n');
         return lines.filter(l =>
-            l.includes('🎯 Tip:') ||
-            l.includes('Tip:') ||
-            l.includes('→') ||
-            /instead of/i.test(l) ||
-            /more natural/i.test(l)
+            l.includes('🎯 Tip:') || l.includes('Tip:') ||
+            l.includes('→') || /instead of/i.test(l) || /more natural/i.test(l)
         );
     });
 
-    if (!tipLines.length) return [];
+    const unique = [...new Set(allLines)];
+    if (!unique.length) return [];
 
-    // Guardar tips del día
-    const { data: inserted } = await supabase.from('teacher').insert({
-        user_id: userId,
-        role: 'tips_diarios',
-        content: tipLines.join('\n')
-    }).select().maybeSingle();
+    // Guardar en DB (best-effort)
+    try {
+        await supabase.from('teacher').insert({
+            user_id: userId,
+            role: 'tips_diarios',
+            content: unique.join('\n')
+        }).maybeSingle();
+    } catch (_) {}
 
-    return tipLines;
+    return unique;
 }
 
 /**
@@ -739,17 +727,28 @@ async function teacherChat(body, intent = 'teacher') {
             return m[1].replace(/["""]/g, '').trim().toLowerCase();
         };
 
-        // 3. Combinar en lista plana con su key extraída
+        // 3. Combinar en lista plana (dedup por texto) con su key extraída
         flatTips = [];
+        const seenTexts = new Set();
         if (savedTips?.length > 0) {
             savedTips.forEach(t => {
                 const lines = t.content.split('\n').filter(l => l.trim());
-                lines.forEach(l => flatTips.push({ text: l, date: t.created_at, key: extractKey(l) }));
+                lines.forEach(l => {
+                    if (!seenTexts.has(l)) {
+                        seenTexts.add(l);
+                        flatTips.push({ text: l, date: t.created_at, key: extractKey(l) });
+                    }
+                });
             });
         }
         if (newTips?.length > 0) {
             const today = new Date().toISOString();
-            newTips.forEach(l => flatTips.push({ text: l, date: today, key: extractKey(l) }));
+            newTips.forEach(l => {
+                if (!seenTexts.has(l)) {
+                    seenTexts.add(l);
+                    flatTips.push({ text: l, date: today, key: extractKey(l) });
+                }
+            });
         }
 
         // 4. Excluir tips ya completados
@@ -765,7 +764,7 @@ async function teacherChat(body, intent = 'teacher') {
         // 5. Pasar SOLO 1 tip a la vez para evitar confusiones
         if (flatTips.length > 0) {
             context = `--- TIP TO CORRECT ---\n${flatTips[0].text}\n`;
-        } else if (newTips?.length || savedTips?.length) {
+        } else if (savedTips?.length || newTips?.length) {
             context = '--- ALL TIPS COMPLETED ---\n';
         } else {
             context = '--- NO TIPS YET ---\n';
