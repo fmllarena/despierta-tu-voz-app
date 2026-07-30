@@ -605,10 +605,7 @@ function parseTipText(text) {
 }
 
 function isTipLine(line) {
-    if (line.includes('🎯 Tip:') || (line.includes('Tip:') && line.includes('→'))) return true;
-    if (/instead of/i.test(line) || /more natural/i.test(line)) return true;
-    if (line.includes('→') && !line.includes('?')) return true;
-    return false;
+    return line.includes('🎯 Tip:');
 }
 
 async function extractDailyTips(supabase, userId) {
