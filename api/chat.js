@@ -593,6 +593,17 @@ Responde de forma clara, directa y útil. Si no hay suficientes datos para respo
 /**
  * Extrae tips de conversaciones del día y los guarda como tips_diarios
  */
+/**
+ * Extrae original y corrección de una línea de tip, con o sin prefijo "Tip:"
+ */
+function parseTipText(text) {
+    let m = text.match(/Tip:\s*(.+?)\s*→\s*(.+)/i);
+    if (m) return { original: m[1], correct: m[2] };
+    m = text.match(/^["""]?(.+?)["""]?\s*→\s*["""]?(.+)$/);
+    if (m) return { original: m[1], correct: m[2] };
+    return null;
+}
+
 function isTipLine(line) {
     if (line.includes('🎯 Tip:') || (line.includes('Tip:') && line.includes('→'))) return true;
     if (/instead of/i.test(line) || /more natural/i.test(line)) return true;
@@ -723,9 +734,9 @@ async function teacherChat(body, intent = 'teacher') {
 
         // Helper para extraer la key (frase original) de un tip
         const extractKey = (text) => {
-            const m = text.match(/Tip:\s*(.+?)\s*→/i);
-            if (!m) return null;
-            return m[1].replace(/["""]/g, '').trim().toLowerCase();
+            const parsed = parseTipText(text);
+            if (!parsed) return null;
+            return parsed.original.replace(/["""]/g, '').trim().toLowerCase();
         };
 
         // 3. Combinar en lista plana (dedup por texto) con su key extraída
@@ -767,10 +778,10 @@ async function teacherChat(body, intent = 'teacher') {
             const batch = flatTips.slice(0, 15);
             const total = flatTips.length;
             const lines = batch.map((t, i) => {
-                const m = t.text.match(/Tip:\s*(.+?)\s*→\s*(.+)/i);
-                if (m) {
-                    const original = m[1].replace(/["""]/g, '').trim();
-                    const correct = m[2].replace(/["""]/g, '').trim();
+                const parsed = parseTipText(t.text);
+                if (parsed) {
+                    const original = parsed.original.replace(/["""]/g, '').trim();
+                    const correct = parsed.correct.replace(/["""]/g, '').trim();
                     return `${i + 1}. Original: "${original}" — Correct: "${correct}"`;
                 }
                 return `${i + 1}. ${t.text}`;
