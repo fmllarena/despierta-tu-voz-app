@@ -752,7 +752,7 @@ async function teacherChat(body, intent = 'teacher') {
             newTips.forEach(l => flatTips.push({ text: l, date: today, key: extractKey(l) }));
         }
 
-        // 4. Excluir tips ya completados (desde teacher_review en BD)
+        // 4. Excluir tips ya completados
         const { data: completed } = await supabase.from('teacher_review')
             .select('tip_key')
             .eq('user_id', userId);
@@ -762,20 +762,13 @@ async function teacherChat(body, intent = 'teacher') {
         }
         allTips = { length: flatTips.length };
 
-        // 5. Reconstruir contexto con tips NO trabajados aún
+        // 5. Pasar SOLO 1 tip a la vez para evitar confusiones
         if (flatTips.length > 0) {
-            const byDate = {};
-            flatTips.forEach(({ text, date }) => {
-                const d = new Date(date).toLocaleDateString();
-                if (!byDate[d]) byDate[d] = [];
-                byDate[d].push(text);
-            });
-            const days = Object.entries(byDate).map(([d, tips], i) =>
-                `[Day ${i + 1} - ${d}]\n${tips.join('\n')}`
-            );
-            context = `--- TIPS FROM ALL DAYS (these are the ONLY tips you may use) ---\n${days.join('\n\n')}\n`;
+            context = `--- TIP TO CORRECT ---\n${flatTips[0].text}\n`;
+        } else if (newTips?.length || savedTips?.length) {
+            context = '--- ALL TIPS COMPLETED ---\n';
         } else {
-            context = '--- NO TIPS FOUND YET ---\n';
+            context = '--- NO TIPS YET ---\n';
         }
     } else {
         // Modo conversación normal: pasar historial reciente
@@ -832,17 +825,15 @@ async function teacherChat(body, intent = 'teacher') {
             const data = await response.json();
             const texto = data.choices?.[0]?.message?.content || '';
 
-            // Tras respuesta del quiz, registrar el tip presentado para no repetirlo
-            if (intent === 'teacher_review' && texto) {
-                const responseLower = texto.toLowerCase();
-                const presented = flatTips.find(t => t.key && responseLower.includes(t.key));
-                if (presented) {
+            // Tras validación del quiz: marcar el tip actual como completado
+            if (intent === 'teacher_review' && texto && !message.match(/^Start the review\.?$/i)) {
+                if (flatTips.length > 0 && flatTips[0].key) {
                     try {
                         await supabase.from('teacher_review').upsert({
                             user_id: userId,
-                            tip_key: presented.key
+                            tip_key: flatTips[0].key
                         }, { onConflict: 'user_id, tip_key' }).maybeSingle();
-                    } catch (_) { /* tabla no disponible, se ignora */ }
+                    } catch (_) { /* tabla no disponible */ }
                 }
             }
 
