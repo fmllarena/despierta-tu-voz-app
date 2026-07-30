@@ -60,6 +60,10 @@ async function processChat(req, res = null) {
         return await addTeacherTip(req.body);
     }
 
+    if (intent === 'get_teacher_tips') {
+        return await getTeacherTips(req.body);
+    }
+
     if (!intent || !SYSTEM_PROMPTS[intent]) throw new Error("Intento no válido");
 
     // 1. Construir Contexto del Alumno
@@ -650,6 +654,25 @@ async function addTeacherTip(body) {
     }).maybeSingle();
 
     return { success: true };
+}
+
+async function getTeacherTips(body) {
+    const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
+    const { userId } = body;
+    if (!userId) throw new Error("Se requiere userId");
+
+    const { data: tips } = await supabase.from('teacher')
+        .select('content, created_at')
+        .eq('user_id', userId)
+        .eq('role', 'tips_diarios')
+        .order('created_at', { ascending: true });
+
+    const formatted = (tips || []).map((t, i) => ({
+        day: `Day ${i + 1} - ${new Date(t.created_at).toLocaleDateString()}`,
+        content: t.content
+    }));
+
+    return { tips: formatted };
 }
 
 async function teacherChat(body, intent = 'teacher') {
