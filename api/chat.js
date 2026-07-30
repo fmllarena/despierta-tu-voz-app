@@ -807,7 +807,7 @@ async function teacherChat(body, intent = 'teacher') {
             const nextPhrase = next ? `If correct, respond "✅ Correct!" then present this next phrase: "${next.original}".` : `If correct, respond "✅ Correct! This was the last tip — 🎉 All tips completed! Great job!"`;
             context = `The student said: "${current.original}"\nThe correction is: "${current.correct}"\nThe student answers: "${message}"\n\nValidate. ${nextPhrase}\nIf wrong, respond "❌ Almost! The correct form is: ${current.correct}. Try again." and wait for the student to try once more. Do NOT present a new tip until they get it right.`;
         }
-    } else {
+    } else if (!pureChat) {
         // Modo conversación normal: pasar historial reciente
         const { data: recentMessages } = await supabase.from('teacher')
             .select('role, content, created_at')
