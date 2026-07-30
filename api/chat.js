@@ -52,6 +52,10 @@ async function processChat(req, res = null) {
         return await analizarAlumnos(req.body);
     }
 
+    if (intent === 'teacher') {
+        return await teacherChat(req.body);
+    }
+
     if (!intent || !SYSTEM_PROMPTS[intent]) throw new Error("Intento no válido");
 
     // 1. Construir Contexto del Alumno
@@ -566,6 +570,91 @@ Responde de forma clara, directa y útil. Si no hay suficientes datos para respo
             const data = await response.json();
             const texto = data.choices?.[0]?.message?.content || '';
             return { success: true, analisis: texto };
+        } catch (e) {
+            lastErr = e;
+            const isRetryable = e.message.includes('429') || e.message.includes('503') || e.message.includes('Too Many Requests') || e.message.includes('401');
+            if (!isRetryable) break;
+        }
+    }
+    throw lastErr;
+}
+
+/**
+ * Chat con el profesor de inglés IA
+ */
+async function teacherChat(body) {
+    const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
+    const { message, history = [], userId } = body;
+    if (!message) throw new Error("Se requiere un mensaje");
+    if (!userId) throw new Error("Se requiere userId");
+
+    // Guardar mensaje del usuario
+    await supabase.from('teacher').insert({
+        user_id: userId,
+        role: 'user',
+        content: message
+    }).maybeSingle();
+
+    // Obtener historial de la BD para repaso (últimos 20)
+    const { data: pastMessages } = await supabase.from('teacher')
+        .select('role, content, created_at')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false })
+        .limit(20);
+
+    // Construir contexto con historial de BD
+    let context = '';
+    if (pastMessages?.length > 0) {
+        const historial = pastMessages.reverse().map(m =>
+            `[${m.role === 'user' ? 'Student' : 'Teacher'}] ${m.content}`
+        ).join('\n');
+        context = `--- CONVERSATION HISTORY (English class) ---\n${historial}\n\nUse this history to review past concepts naturally. Refer to specific phrases the student said before.\n`;
+    }
+
+    const finalPrompt = context ? `CONTEXTO:\n${context}\n\nMENSAJE:\n${message}` : message;
+
+    // Llamar a Mistral con retry
+    const keys = [process.env.MISTRAL_API_KEY, process.env.MISTRAL_API_KEY_2].filter(Boolean);
+    if (!keys.length) throw new Error("Falta API Key de Mistral");
+
+    const sysPrompt = SYSTEM_PROMPTS['teacher'];
+    let lastErr;
+    for (const key of keys) {
+        try {
+            const messages = [
+                { role: "system", content: sysPrompt },
+                ...(history || []).map(h => ({
+                    role: h.role === 'model' ? 'assistant' : 'user',
+                    content: h.parts?.[0]?.text || ''
+                })),
+                { role: "user", content: finalPrompt }
+            ];
+
+            const response = await fetch(`${MISTRAL_BASE_URL}/chat/completions`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${key}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    model: MISTRAL_MODEL,
+                    messages,
+                    temperature: 0.8,
+                    max_tokens: 2048
+                })
+            });
+            if (!response.ok) {
+                const err = await response.json().catch(() => ({}));
+                throw new Error(`Mistral Error ${response.status}: ${err.error?.message || response.statusText}`);
+            }
+            const data = await response.json();
+            const texto = data.choices?.[0]?.message?.content || '';
+
+            // Guardar respuesta de la IA
+            await supabase.from('teacher').insert({
+                user_id: userId,
+                role: 'assistant',
+                content: texto
+            }).maybeSingle();
+
+            return { text: texto };
         } catch (e) {
             lastErr = e;
             const isRetryable = e.message.includes('429') || e.message.includes('503') || e.message.includes('Too Many Requests') || e.message.includes('401');
