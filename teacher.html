@@ -53,6 +53,7 @@
         .tips-summary small { color: #666; }
         body.dark-mode .tips-summary { background: #1a3a2a; border-color: #4a8; }
         body.dark-mode .tips-summary small { color: #aaa; }
+        body.dark-mode #addTipBtn { border-color: #4a8 !important; color: #4a8 !important; }
         body.dark-mode .chat-input-area { background: #15273d; border-color: #2a4565; }
         body.dark-mode .chat-input-area textarea { background: #1a2d45; border-color: #2a4565; color: #d4d4dc; }
         body.dark-mode .loading-dots { background: #1a2d45; color: #888; }
@@ -85,6 +86,7 @@
             <h2>🇺🇸 English Teacher</h2>
             <div style="display:flex;gap:8px;">
                 <button id="reviewBtn" style="background:#2c6b9e;color:#fff;border:none;padding:6px 12px;border-radius:8px;cursor:pointer;font-size:0.8rem;font-family:inherit;">📝 Daily Review</button>
+                <button id="addTipBtn" style="background:transparent;border:1px solid #4a8;color:#4a8;padding:6px 12px;border-radius:8px;cursor:pointer;font-size:0.8rem;font-family:inherit;">✏️ +Tip</button>
                 <button id="darkToggle" style="background:transparent;border:1px solid #2c6b9e;color:#2c6b9e;padding:6px 12px;border-radius:8px;cursor:pointer;font-size:1rem;font-family:inherit;" title="Modo oscuro">🌙</button>
                 <button id="clearChatBtn" style="background:transparent;border:1px solid #e74c3c;color:#e74c3c;padding:6px 12px;border-radius:8px;cursor:pointer;font-size:0.85rem;font-family:inherit;">🗑 Borrar</button>
                 <button id="logoutBtn" class="logout-btn">Cerrar Sesión</button>
@@ -197,6 +199,23 @@
         skipDisplay = true;
         $('msgInput').value = 'Start the review';
         enviar();
+    };
+
+    $('addTipBtn').onclick = async () => {
+        const tip = prompt('✏️ Escribe el tip (ej: "I go → I\'ll go"):');
+        if (!tip || !tip.trim()) return;
+        try {
+            const res = await fetch('/api/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ intent: 'add_teacher_tip', userId, tip: tip.trim() })
+            });
+            const data = await res.json();
+            if (data.error) throw new Error(data.details || data.error);
+            agregarMensaje(`✅ Tip guardado: ${tip}`, 'ia');
+        } catch (e) {
+            agregarMensaje('⚠️ Error al guardar tip: ' + e.message, 'ia');
+        }
     };
 
     document.querySelectorAll('.topic-sug button').forEach(btn => {
