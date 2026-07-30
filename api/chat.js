@@ -648,9 +648,10 @@ async function teacherChat(body, intent = 'teacher') {
     let context = '';
 
     if (intent === 'teacher_review') {
-        // Extraer tips del día actual y acumular todos los tips_diarios
-        await extractDailyTips(supabase, userId);
+        // Extraer tips del día actual
+        const newTips = await extractDailyTips(supabase, userId);
 
+        // Acumular todos los tips_diarios de todos los días
         const { data: allTips } = await supabase.from('teacher')
             .select('content, created_at')
             .eq('user_id', userId)
@@ -725,7 +726,7 @@ async function teacherChat(body, intent = 'teacher') {
                 content: texto
             }).maybeSingle();
 
-            return { text: texto };
+            return { text: texto, newTips, totalDays: allTips?.length || 0 };
         } catch (e) {
             lastErr = e;
             const isRetryable = e.message.includes('429') || e.message.includes('503') || e.message.includes('Too Many Requests') || e.message.includes('401');
