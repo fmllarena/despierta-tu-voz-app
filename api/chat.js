@@ -593,8 +593,32 @@ Responde de forma clara, directa y útil. Si no hay suficientes datos para respo
 /**
  * Extrae tips de conversaciones del día y los guarda como tips_diarios
  */
+/**
+ * Parsea una línea de tip en { original, correct }. Devuelve null si no es un tip válido.
+ * Solo acepta líneas con estructura "original → corrección" que contengan 🎯 o "Tip:".
+ */
+function parseTipLine(line) {
+    const l = (line || '').trim();
+    if (!l.includes('→')) return null;
+    if (!l.includes('🎯') && !/Tip:/i.test(l)) return null;
+    // Quitar prefijo hasta "Tip:" incluido (si existe)
+    const body = l.replace(/^.*?Tip:\s*/i, '');
+    const idx = body.indexOf('→');
+    if (idx === -1) return null;
+    const clean = s => s.replace(/["""*🎯]/g, '').trim();
+    const original = clean(body.slice(0, idx));
+    const correct = clean(body.slice(idx + 1));
+    if (!original || !correct) return null;
+    if (original.length > 200 || correct.length > 200) return null;
+    return { original, correct };
+}
+
+/** Normaliza una frase para usarla como clave de comparación */
+function normalizeTipKey(s) {
+    return (s || '').replace(/["""]/g, '').trim().toLowerCase();
+}
+
 async function extractDailyTips(supabase, userId) {
-    // Extraer tips de los últimos mensajes del assistant (independientemente de DB)
     const { data: messages } = await supabase.from('teacher')
         .select('content')
         .eq('user_id', userId)
@@ -604,27 +628,24 @@ async function extractDailyTips(supabase, userId) {
 
     if (!messages?.length) return [];
 
-    const allLines = messages.flatMap(m => {
-        const lines = m.content.split('\n');
-        return lines.filter(l =>
-            l.includes('🎯 Tip:') || l.includes('Tip:') ||
-            /instead of/i.test(l) || /more natural/i.test(l)
-        );
-    });
+    const unique = new Set();
+    for (const m of messages) {
+        for (const line of m.content.split('\n')) {
+            if (parseTipLine(line)) unique.add(line.trim());
+        }
+    }
+    const result = [...unique];
+    if (!result.length) return [];
 
-    const unique = [...new Set(allLines)];
-    if (!unique.length) return [];
-
-    // Guardar en DB (best-effort)
     try {
         await supabase.from('teacher').insert({
             user_id: userId,
             role: 'tips_diarios',
-            content: unique.join('\n')
+            content: result.join('\n')
         }).maybeSingle();
     } catch (_) {}
 
-    return unique;
+    return result;
 }
 
 /**
@@ -667,13 +688,12 @@ async function getTeacherTips(body) {
             .order('created_at', { ascending: false })
             .limit(100);
 
-        const allTips = (allMessages || []).flatMap(m => {
-            const lines = m.content.split('\n');
-            return lines.filter(l =>
-                l.includes('🎯 Tip:') || l.includes('Tip:') ||
-                l.includes('→') || /instead of/i.test(l) || /more natural/i.test(l)
-            );
-        });
+        const allTips = [];
+        for (const m of (allMessages || [])) {
+            for (const line of m.content.split('\n')) {
+                if (parseTipLine(line)) allTips.push(line.trim());
+            }
+        }
 
         if (allTips.length > 0) {
             return { tips: [{ day: 'Directly from conversations', content: allTips.join('\n') }] };
@@ -695,7 +715,7 @@ async function teacherChat(body, intent = 'teacher') {
     if (!message) throw new Error("Se requiere un mensaje");
     if (!userId) throw new Error("Se requiere userId");
 
-    let newTips = [], allTips = [], flatTips = [];
+    let newTips = [], allTips = [], flatTips = [], reviewAnswered = false;
 
     // Guardar mensaje del usuario (solo en modo conversación)
     if (intent !== 'teacher_review') {
@@ -720,62 +740,63 @@ async function teacherChat(body, intent = 'teacher') {
         // 2. Extraer tips de la conversación de hoy
         newTips = await extractDailyTips(supabase, userId);
 
-        // Helper para extraer la key (frase original) de un tip
-        const extractKey = (text) => {
-            const m = text.match(/Tip:\s*(.+?)\s*→/i);
-            if (!m) return null;
-            return m[1].replace(/["""]/g, '').trim().toLowerCase();
-        };
+        // 3. Construir pool: solo tips parseables, dedup por frase original normalizada
+        const candidateLines = [];
+        (savedTips || []).forEach(t => t.content.split('\n').forEach(l => candidateLines.push(l)));
+        (newTips || []).forEach(l => candidateLines.push(l));
 
-        // 3. Combinar en lista plana (dedup por texto) con su key extraída
-        flatTips = [];
-        const seenTexts = new Set();
-        if (savedTips?.length > 0) {
-            savedTips.forEach(t => {
-                const lines = t.content.split('\n').filter(l => l.trim());
-                lines.forEach(l => {
-                    if (!seenTexts.has(l)) {
-                        seenTexts.add(l);
-                        flatTips.push({ text: l, date: t.created_at, key: extractKey(l) });
-                    }
-                });
-            });
-        }
-        if (newTips?.length > 0) {
-            const today = new Date().toISOString();
-            newTips.forEach(l => {
-                if (!seenTexts.has(l)) {
-                    seenTexts.add(l);
-                    flatTips.push({ text: l, date: today, key: extractKey(l) });
-                }
-            });
+        const byKey = new Map();
+        for (const line of candidateLines) {
+            const parsed = parseTipLine(line);
+            if (!parsed) continue;
+            const key = normalizeTipKey(parsed.original);
+            if (key && !byKey.has(key)) {
+                byKey.set(key, { ...parsed, key, raw: line.trim() });
+            }
         }
 
-        // 4. Excluir tips ya completados
+        // 4. Excluir tips ya completados (compat: keys nuevas normalizadas y textos crudos antiguos)
         const { data: completed } = await supabase.from('teacher_review')
             .select('tip_key')
             .eq('user_id', userId);
-        const completedKeys = new Set((completed || []).map(c => c.tip_key));
-        if (completedKeys.size > 0) {
-            flatTips = flatTips.filter(t => !completedKeys.has(t.text));
-        }
+        const completedSet = new Set();
+        (completed || []).forEach(c => {
+            completedSet.add(c.tip_key);
+            completedSet.add(normalizeTipKey(c.tip_key));
+            const p = parseTipLine(c.tip_key);
+            if (p) completedSet.add(normalizeTipKey(p.original));
+        });
+        flatTips = [...byKey.values()].filter(t => !completedSet.has(t.key) && !completedSet.has(t.raw));
         allTips = { length: flatTips.length };
 
-        // 5. Pasar SOLO la frase incorrecta + la correcta (para validación interna)
-        if (flatTips.length > 0) {
-            const tipText = flatTips[0].text;
-            const m = tipText.match(/Tip:\s*(.+?)\s*→\s*(.+)/i);
-            if (m) {
-                const incorrect = m[1].replace(/["""]/g, '').trim();
-                const correct = m[2].replace(/["""]/g, '').trim();
-                context = `The student once said: "${incorrect}"\n\nThe teacher corrected it to: "${correct}"`;
-            } else {
-                context = `The student once said: "${tipText}"`;
-            }
-        } else if (savedTips?.length || newTips?.length) {
-            context = '--- ALL TIPS COMPLETED ---\n';
+        // 5. El servidor decide qué tip toca: la IA solo valida y presenta
+        const isStart = /^Start the review\.?$/i.test(message.trim());
+        const isSkip = !isStart && /^(next|next tip|skip|continue|siguiente|siguiente tip)$/i.test(message.trim());
+
+        if (isSkip && flatTips.length > 0) {
+            // "next tip" = saltar el tip actual sin responderlo
+            try {
+                await supabase.from('teacher_review').insert({
+                    user_id: userId,
+                    tip_key: flatTips[0].key
+                }).maybeSingle();
+            } catch (_) {}
+            flatTips = flatTips.slice(1);
+        }
+
+        if (flatTips.length === 0) {
+            context = (savedTips?.length || newTips?.length)
+                ? '--- ALL TIPS COMPLETED ---'
+                : '--- NO TIPS YET ---';
+        } else if (isStart || isSkip) {
+            context = `PRESENT THIS PHRASE TO THE STUDENT (${flatTips.length} tips remaining):\n"${flatTips[0].original}"`;
         } else {
-            context = '--- NO TIPS YET ---\n';
+            const current = flatTips[0];
+            const next = flatTips[1];
+            context = `THE STUDENT IS ANSWERING THIS TIP:\nPhrase shown: "${current.original}"\nExpected correction: "${current.correct}"\n\n`;
+            context += next
+                ? `AFTER VALIDATING, PRESENT THIS NEW PHRASE (${flatTips.length - 1} tips remaining):\n"${next.original}"`
+                : `THIS WAS THE LAST TIP. After validating, add: "🎉 All tips completed! Great job!"`;
         }
     } else {
         // Modo conversación normal: pasar historial reciente
@@ -794,8 +815,7 @@ async function teacherChat(body, intent = 'teacher') {
         }
     }
 
-    const isAdvance = intent === 'teacher_review' && /^(Start the review\.?|next|next tip|continue|siguiente|siguiente tip)$/i.test(message?.trim());
-    const finalPrompt = isAdvance
+    const finalPrompt = intent === 'teacher_review' && !reviewAnswered
         ? (context || 'Begin the review.')
         : (context ? `CONTEXTO:\n${context}\n\nMENSAJE:\n${message}` : message);
 
@@ -834,15 +854,13 @@ async function teacherChat(body, intent = 'teacher') {
             const texto = data.choices?.[0]?.message?.content || '';
 
             // Tras validación del quiz: marcar el tip actual como completado
-            if (intent === 'teacher_review' && texto && !message.match(/^Start the review\.?$/i)) {
-                if (flatTips.length > 0) {
-                    try {
-                        await supabase.from('teacher_review').insert({
-                            user_id: userId,
-                            tip_key: flatTips[0].text
-                        }).maybeSingle();
-                    } catch (_) {}
-                }
+            if (intent === 'teacher_review' && texto && reviewAnswered && flatTips.length > 0) {
+                try {
+                    await supabase.from('teacher_review').insert({
+                        user_id: userId,
+                        tip_key: flatTips[0].key
+                    }).maybeSingle();
+                } catch (_) {}
             }
 
             // Guardar respuesta de la IA (solo en modo conversación)
