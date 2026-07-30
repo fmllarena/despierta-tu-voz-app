@@ -661,13 +661,39 @@ async function getTeacherTips(body) {
     const { userId } = body;
     if (!userId) throw new Error("Se requiere userId");
 
+    // Extraer tips no procesados aún
+    await extractDailyTips(supabase, userId);
+
     const { data: tips } = await supabase.from('teacher')
         .select('content, created_at')
         .eq('user_id', userId)
         .eq('role', 'tips_diarios')
         .order('created_at', { ascending: true });
 
-    const formatted = (tips || []).map((t, i) => ({
+    // Si no hay tips_diarios, extraer directamente de assistant messages
+    if (!tips?.length) {
+        const { data: allMessages } = await supabase.from('teacher')
+            .select('content')
+            .eq('user_id', userId)
+            .eq('role', 'assistant')
+            .order('created_at', { ascending: false })
+            .limit(100);
+
+        const allTips = (allMessages || []).flatMap(m => {
+            const lines = m.content.split('\n');
+            return lines.filter(l =>
+                l.includes('🎯 Tip:') || l.includes('Tip:') ||
+                l.includes('→') || /instead of/i.test(l) || /more natural/i.test(l)
+            );
+        });
+
+        if (allTips.length > 0) {
+            return { tips: [{ day: 'Directly from conversations', content: allTips.join('\n') }] };
+        }
+        return { tips: [] };
+    }
+
+    const formatted = tips.map((t, i) => ({
         day: `Day ${i + 1} - ${new Date(t.created_at).toLocaleDateString()}`,
         content: t.content
     }));
@@ -740,7 +766,9 @@ async function teacherChat(body, intent = 'teacher') {
         }
     }
 
-    const finalPrompt = context ? `CONTEXTO:\n${context}\n\nMENSAJE:\n${message}` : message;
+    const finalPrompt = (intent === 'teacher_review' && (message === 'Start the review' || message === 'Start the review.'))
+        ? (context || 'Begin the review.')
+        : (context ? `CONTEXTO:\n${context}\n\nMENSAJE:\n${message}` : message);
 
     // Llamar a Mistral con retry
     const keys = [process.env.MISTRAL_API_KEY, process.env.MISTRAL_API_KEY_2].filter(Boolean);

@@ -148,8 +148,8 @@ RULES:
 - Below you will find a section called "TIPS FROM ALL DAYS" — these are the ONLY tips you may use.
 - This section contains tips extracted from ALL past conversation days, with each day labeled.
 - If the "TIPS FROM ALL DAYS" section is empty or says "NO TIPS FOUND YET", respond: "📭 No tips found yet. Practice more in conversation mode!"
-- Go through the tips day by day. For each tip, present ONLY the INCORRECT version to the student.
-- Ask them to write the correct version.
+- Start immediately by presenting the FIRST tip as a question.
+- For each tip, present ONLY the INCORRECT version to the student and ask them to write the correct version.
 - When they answer:
   - If correct: Say "✅ Correct!" then move to the next tip.
   - If incorrect: Say "❌ Almost! The correct form is: [correct]" then move to the next tip anyway.
