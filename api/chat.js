@@ -637,26 +637,31 @@ async function teacherChat(body, intent = 'teacher') {
     if (!message) throw new Error("Se requiere un mensaje");
     if (!userId) throw new Error("Se requiere userId");
 
-    // Guardar mensaje del usuario
-    await supabase.from('teacher').insert({
-        user_id: userId,
-        role: 'user',
-        content: message
-    }).maybeSingle();
+    let newTips = [], allTips = [];
+
+    // Guardar mensaje del usuario (solo en modo conversación)
+    if (intent !== 'teacher_review') {
+        await supabase.from('teacher').insert({
+            user_id: userId,
+            role: 'user',
+            content: message
+        }).maybeSingle();
+    }
 
     // Construir contexto
     let context = '';
 
     if (intent === 'teacher_review') {
         // Extraer tips del día actual
-        const newTips = await extractDailyTips(supabase, userId);
+        newTips = await extractDailyTips(supabase, userId);
 
         // Acumular todos los tips_diarios de todos los días
-        const { data: allTips } = await supabase.from('teacher')
+        const { data: tips } = await supabase.from('teacher')
             .select('content, created_at')
             .eq('user_id', userId)
             .eq('role', 'tips_diarios')
             .order('created_at', { ascending: true });
+        allTips = tips;
 
         if (allTips?.length > 0) {
             const tipsSummary = allTips.map((t, i) =>
@@ -719,12 +724,14 @@ async function teacherChat(body, intent = 'teacher') {
             const data = await response.json();
             const texto = data.choices?.[0]?.message?.content || '';
 
-            // Guardar respuesta de la IA
-            await supabase.from('teacher').insert({
-                user_id: userId,
-                role: 'assistant',
-                content: texto
-            }).maybeSingle();
+            // Guardar respuesta de la IA (solo en modo conversación)
+            if (intent !== 'teacher_review') {
+                await supabase.from('teacher').insert({
+                    user_id: userId,
+                    role: 'assistant',
+                    content: texto
+                }).maybeSingle();
+            }
 
             return { text: texto, newTips, totalDays: allTips?.length || 0 };
         } catch (e) {
