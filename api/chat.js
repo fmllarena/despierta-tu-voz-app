@@ -707,7 +707,7 @@ async function teacherChat(body, intent = 'teacher') {
     if (!message) throw new Error("Se requiere un mensaje");
     if (!userId) throw new Error("Se requiere userId");
 
-    let newTips = [], allTips = [];
+    let newTips = [], allTips = [], flatTips = [];
 
     // Guardar mensaje del usuario (solo en modo conversación)
     if (intent !== 'teacher_review') {
@@ -740,7 +740,7 @@ async function teacherChat(body, intent = 'teacher') {
         };
 
         // 3. Combinar en lista plana con su key extraída
-        let flatTips = [];
+        flatTips = [];
         if (savedTips?.length > 0) {
             savedTips.forEach(t => {
                 const lines = t.content.split('\n').filter(l => l.trim());
