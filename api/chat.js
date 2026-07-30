@@ -593,6 +593,13 @@ Responde de forma clara, directa y útil. Si no hay suficientes datos para respo
 /**
  * Extrae tips de conversaciones del día y los guarda como tips_diarios
  */
+function isTipLine(line) {
+    if (line.includes('🎯 Tip:') || (line.includes('Tip:') && line.includes('→'))) return true;
+    if (/instead of/i.test(line) || /more natural/i.test(line)) return true;
+    if (line.includes('→') && !line.includes('?')) return true;
+    return false;
+}
+
 async function extractDailyTips(supabase, userId) {
     // Extraer tips de los últimos mensajes del assistant (independientemente de DB)
     const { data: messages } = await supabase.from('teacher')
@@ -606,10 +613,7 @@ async function extractDailyTips(supabase, userId) {
 
     const allLines = messages.flatMap(m => {
         const lines = m.content.split('\n');
-        return lines.filter(l =>
-            l.includes('🎯 Tip:') || l.includes('Tip:') ||
-            /instead of/i.test(l) || /more natural/i.test(l)
-        );
+        return lines.filter(isTipLine);
     });
 
     const unique = [...new Set(allLines)];
@@ -669,10 +673,7 @@ async function getTeacherTips(body) {
 
         const allTips = (allMessages || []).flatMap(m => {
             const lines = m.content.split('\n');
-            return lines.filter(l =>
-                l.includes('🎯 Tip:') || l.includes('Tip:') ||
-                l.includes('→') || /instead of/i.test(l) || /more natural/i.test(l)
-            );
+            return lines.filter(isTipLine);
         });
 
         if (allTips.length > 0) {
@@ -761,9 +762,11 @@ async function teacherChat(body, intent = 'teacher') {
         }
         allTips = { length: flatTips.length };
 
-        // 5. Pasar TODOS los tips restantes (numerados) para que la IA avance sola
+        // 5. Pasar los siguientes tips (máx 15 por tanda) para que la IA avance sola
         if (flatTips.length > 0) {
-            const lines = flatTips.map((t, i) => {
+            const batch = flatTips.slice(0, 15);
+            const total = flatTips.length;
+            const lines = batch.map((t, i) => {
                 const m = t.text.match(/Tip:\s*(.+?)\s*→\s*(.+)/i);
                 if (m) {
                     const original = m[1].replace(/["""]/g, '').trim();
@@ -772,7 +775,7 @@ async function teacherChat(body, intent = 'teacher') {
                 }
                 return `${i + 1}. ${t.text}`;
             });
-            context = `--- REMAINING TIPS (${flatTips.length}) ---\n${lines.join('\n')}\n\nINSTRUCTIONS:\n- Show the student ONLY the "Original:" part one at a time.\n- Use "Correct:" internally to validate.\n- After each answer, immediately present the next Original.\n- Never show the "Correct:" value to the student.`;
+            context = `--- REMAINING TIPS (${total} left, showing next ${batch.length}) ---\n${lines.join('\n')}\n\nINSTRUCTIONS:\n- Show the student ONLY the "Original:" part one at a time.\n- Use "Correct:" internally to validate.\n- After each answer, immediately present the next Original from this list.\n- Never show the "Correct:" value to the student.\n- Keep going until ALL ${total} tips are done. Do NOT stop early.`;
         } else if (savedTips?.length || newTips?.length) {
             context = '--- ALL TIPS COMPLETED ---\n';
         } else {
