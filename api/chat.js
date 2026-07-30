@@ -757,7 +757,7 @@ async function teacherChat(body, intent = 'teacher') {
             .eq('user_id', userId);
         const completedKeys = new Set((completed || []).map(c => c.tip_key));
         if (completedKeys.size > 0) {
-            flatTips = flatTips.filter(t => !t.key || !completedKeys.has(t.key));
+            flatTips = flatTips.filter(t => !completedKeys.has(t.text));
         }
         allTips = { length: flatTips.length };
 
@@ -826,13 +826,13 @@ async function teacherChat(body, intent = 'teacher') {
 
             // Tras validación del quiz: marcar el tip actual como completado
             if (intent === 'teacher_review' && texto && !message.match(/^Start the review\.?$/i)) {
-                if (flatTips.length > 0 && flatTips[0].key) {
+                if (flatTips.length > 0) {
                     try {
-                        await supabase.from('teacher_review').upsert({
+                        await supabase.from('teacher_review').insert({
                             user_id: userId,
-                            tip_key: flatTips[0].key
-                        }, { onConflict: 'user_id, tip_key' }).maybeSingle();
-                    } catch (_) { /* tabla no disponible */ }
+                            tip_key: flatTips[0].text
+                        }).maybeSingle();
+                    } catch (_) {}
                 }
             }
 
