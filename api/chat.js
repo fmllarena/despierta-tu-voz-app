@@ -736,7 +736,7 @@ async function teacherChat(body, intent = 'teacher') {
         const extractKey = (text) => {
             const m = text.match(/Tip:\s*(.+?)\s*→/i);
             if (!m) return null;
-            return m[1].replace(/["""''´`]/g, '').trim().toLowerCase();
+            return m[1].replace(/["""]/g, '').trim().toLowerCase();
         };
 
         // 3. Combinar en lista plana con su key extraída
