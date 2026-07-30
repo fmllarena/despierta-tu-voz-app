@@ -794,18 +794,20 @@ async function teacherChat(body, intent = 'teacher') {
         }
 
         if (flatTips.length === 0) {
+            reviewAnswered = true;
             context = (savedTips?.length || newTips?.length)
                 ? '--- ALL TIPS COMPLETED ---'
                 : '--- NO TIPS YET ---';
         } else if (isStart || isSkip) {
-            context = `PRESENT THIS PHRASE TO THE STUDENT (${flatTips.length} tips remaining):\n"${flatTips[0].original}"`;
+            context = `The student said an incorrect phrase: "${flatTips[0].original}"\n\nAsk the student to correct it.`;
         } else {
+            reviewAnswered = true;
             const current = flatTips[0];
             const next = flatTips[1];
-            context = `THE STUDENT ANSWERED: "${message}"\nPhrase shown: "${current.original}"\nExpected correction: "${current.correct}"\n\n`;
+            context = `The student said: "${current.original}"\nThe correction is: "${current.correct}"\nThe student answers: "${message}"\n\n`;
             context += next
-                ? `AFTER VALIDATING, PRESENT THIS NEW PHRASE (${flatTips.length - 1} tips remaining):\n"${next.original}"`
-                : `THIS WAS THE LAST TIP. After validating, add: "🎉 All tips completed! Great job!"`;
+                ? `If correct say "✅ Correct!" then ask: "${next.original}". If wrong say "❌ Almost! The correct form is: ${current.correct}" then ask: "${next.original}".`
+                : `This is the last tip. After validating, say "🎉 All tips completed! Great job!"`;
         }
     } else {
         // Modo conversación normal: pasar historial reciente
