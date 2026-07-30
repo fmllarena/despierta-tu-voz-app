@@ -837,10 +837,12 @@ async function teacherChat(body, intent = 'teacher') {
                 const responseLower = texto.toLowerCase();
                 const presented = flatTips.find(t => t.key && responseLower.includes(t.key));
                 if (presented) {
-                    await supabase.from('teacher_review').insert({
-                        user_id: userId,
-                        tip_key: presented.key
-                    }).maybeSingle();
+                    try {
+                        await supabase.from('teacher_review').upsert({
+                            user_id: userId,
+                            tip_key: presented.key
+                        }, { onConflict: 'user_id, tip_key' }).maybeSingle();
+                    } catch (_) { /* tabla no disponible, se ignora */ }
                 }
             }
 
