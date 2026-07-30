@@ -593,21 +593,6 @@ Responde de forma clara, directa y útil. Si no hay suficientes datos para respo
 /**
  * Extrae tips de conversaciones del día y los guarda como tips_diarios
  */
-/**
- * Extrae original y corrección de una línea de tip, con o sin prefijo "Tip:"
- */
-function parseTipText(text) {
-    let m = text.match(/Tip:\s*(.+?)\s*→\s*(.+)/i);
-    if (m) return { original: m[1], correct: m[2] };
-    m = text.match(/^["""]?(.+?)["""]?\s*→\s*["""]?(.+)$/);
-    if (m) return { original: m[1], correct: m[2] };
-    return null;
-}
-
-function isTipLine(line) {
-    return (line.includes('🎯 Tip:') || line.includes('Tip:')) && line.includes('→');
-}
-
 async function extractDailyTips(supabase, userId) {
     // Extraer tips de los últimos mensajes del assistant (independientemente de DB)
     const { data: messages } = await supabase.from('teacher')
@@ -621,7 +606,10 @@ async function extractDailyTips(supabase, userId) {
 
     const allLines = messages.flatMap(m => {
         const lines = m.content.split('\n');
-        return lines.filter(isTipLine);
+        return lines.filter(l =>
+            l.includes('🎯 Tip:') || l.includes('Tip:') ||
+            /instead of/i.test(l) || /more natural/i.test(l)
+        );
     });
 
     const unique = [...new Set(allLines)];
@@ -681,7 +669,10 @@ async function getTeacherTips(body) {
 
         const allTips = (allMessages || []).flatMap(m => {
             const lines = m.content.split('\n');
-            return lines.filter(isTipLine);
+            return lines.filter(l =>
+                l.includes('🎯 Tip:') || l.includes('Tip:') ||
+                l.includes('→') || /instead of/i.test(l) || /more natural/i.test(l)
+            );
         });
 
         if (allTips.length > 0) {
@@ -731,9 +722,9 @@ async function teacherChat(body, intent = 'teacher') {
 
         // Helper para extraer la key (frase original) de un tip
         const extractKey = (text) => {
-            const parsed = parseTipText(text);
-            if (!parsed) return null;
-            return parsed.original.replace(/["""]/g, '').trim().toLowerCase();
+            const m = text.match(/Tip:\s*(.+?)\s*→/i);
+            if (!m) return null;
+            return m[1].replace(/["""]/g, '').trim().toLowerCase();
         };
 
         // 3. Combinar en lista plana (dedup por texto) con su key extraída
@@ -741,7 +732,7 @@ async function teacherChat(body, intent = 'teacher') {
         const seenTexts = new Set();
         if (savedTips?.length > 0) {
             savedTips.forEach(t => {
-                const lines = t.content.split('\n').filter(l => l.trim() && isTipLine(l));
+                const lines = t.content.split('\n').filter(l => l.trim());
                 lines.forEach(l => {
                     if (!seenTexts.has(l)) {
                         seenTexts.add(l);
@@ -770,20 +761,17 @@ async function teacherChat(body, intent = 'teacher') {
         }
         allTips = { length: flatTips.length };
 
-        // 5. Pasar los siguientes tips (máx 15 por tanda) para que la IA avance sola
+        // 5. Pasar SOLO la frase incorrecta + la correcta (para validación interna)
         if (flatTips.length > 0) {
-            const batch = flatTips.slice(0, 15);
-            const total = flatTips.length;
-            const lines = batch.map((t, i) => {
-                const parsed = parseTipText(t.text);
-                if (parsed) {
-                    const original = parsed.original.replace(/["""]/g, '').trim();
-                    const correct = parsed.correct.replace(/["""]/g, '').trim();
-                    return `${i + 1}. Original: "${original}" — Correct: "${correct}"`;
-                }
-                return `${i + 1}. ${t.text}`;
-            });
-            context = `--- REMAINING TIPS (${total} left, showing next ${batch.length}) ---\n${lines.join('\n')}\n\nINSTRUCTIONS:\n- Show the student ONLY the "Original:" part one at a time.\n- Use "Correct:" internally to validate.\n- After each answer, immediately present the next Original from this list.\n- Never show the "Correct:" value to the student.\n- Keep going until ALL ${total} tips are done. Do NOT stop early.`;
+            const tipText = flatTips[0].text;
+            const m = tipText.match(/Tip:\s*(.+?)\s*→\s*(.+)/i);
+            if (m) {
+                const incorrect = m[1].replace(/["""]/g, '').trim();
+                const correct = m[2].replace(/["""]/g, '').trim();
+                context = `The student once said: "${incorrect}"\n\nThe teacher corrected it to: "${correct}"`;
+            } else {
+                context = `The student once said: "${tipText}"`;
+            }
         } else if (savedTips?.length || newTips?.length) {
             context = '--- ALL TIPS COMPLETED ---\n';
         } else {
