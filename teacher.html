@@ -172,6 +172,8 @@
 
     $('clearChatBtn').onclick = () => { history = []; chatBody.innerHTML = '<div class="chat-empty">💬 Conversation cleared.</div>'; };
 
+    let skipDisplay = false;
+
     $('reviewBtn').onclick = () => {
         if (pendingIntent === 'teacher_review') {
             pendingIntent = 'teacher';
@@ -186,6 +188,7 @@
         chatBody.innerHTML = '<div class="chat-empty">📝 Starting daily review...</div>';
         $('reviewBtn').style.background = '#e67e22';
         $('reviewBtn').textContent = '🔄 Back to chat';
+        skipDisplay = true;
         $('msgInput').value = 'Start the review';
         enviar();
     };
@@ -195,6 +198,7 @@
     });
 
     function agregarMensaje(texto, rol) {
+        if (rol === 'user' && skipDisplay) { skipDisplay = false; return; }
         const div = document.createElement('div');
         div.className = `msg ${rol}`;
         div.innerHTML = marked.parse(texto);

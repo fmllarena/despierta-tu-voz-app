@@ -582,6 +582,55 @@ Responde de forma clara, directa y útil. Si no hay suficientes datos para respo
 /**
  * Chat con el profesor de inglés IA
  */
+/**
+ * Extrae tips de conversaciones del día y los guarda como tips_diarios
+ */
+async function extractDailyTips(supabase, userId) {
+    // Buscar el último tips_diarios para saber desde dónde extraer
+    const { data: lastTips } = await supabase.from('teacher')
+        .select('created_at')
+        .eq('user_id', userId)
+        .eq('role', 'tips_diarios')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+    const cutoff = lastTips?.created_at || new Date(0).toISOString();
+
+    // Obtener mensajes del assistant después del último tips_diarios
+    const { data: newMessages } = await supabase.from('teacher')
+        .select('content, created_at')
+        .eq('user_id', userId)
+        .eq('role', 'assistant')
+        .gt('created_at', cutoff)
+        .order('created_at', { ascending: true });
+
+    if (!newMessages?.length) return [];
+
+    // Extraer líneas con tips
+    const tipLines = newMessages.flatMap(m => {
+        const lines = m.content.split('\n');
+        return lines.filter(l =>
+            l.includes('🎯 Tip:') ||
+            l.includes('Tip:') ||
+            l.includes('→') ||
+            /instead of/i.test(l) ||
+            /more natural/i.test(l)
+        );
+    });
+
+    if (!tipLines.length) return [];
+
+    // Guardar tips del día
+    const { data: inserted } = await supabase.from('teacher').insert({
+        user_id: userId,
+        role: 'tips_diarios',
+        content: tipLines.join('\n')
+    }).select().maybeSingle();
+
+    return tipLines;
+}
+
 async function teacherChat(body, intent = 'teacher') {
     const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
     const { message, history = [], userId } = body;
@@ -595,41 +644,38 @@ async function teacherChat(body, intent = 'teacher') {
         content: message
     }).maybeSingle();
 
-    // Obtener historial de la BD para repaso (últimos 100 para tener suficientes tips)
-    const { data: pastMessages } = await supabase.from('teacher')
-        .select('role, content, created_at')
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false })
-        .limit(100);
-
-    // Construir contexto con historial de BD
+    // Construir contexto
     let context = '';
-    if (pastMessages?.length > 0) {
-        if (intent === 'teacher_review') {
-            // Extraer tips: buscar líneas con 🎯 Tip:, "→", "Instead of", "more natural"
-            const tipLines = pastMessages
-                .filter(m => m.role === 'assistant')
-                .flatMap(m => {
-                    const lines = m.content.split('\n');
-                    const found = lines.filter(l =>
-                        l.includes('🎯 Tip:') ||
-                        l.includes('Tip:') ||
-                        l.includes('→') ||
-                        /instead of/i.test(l) ||
-                        /more natural/i.test(l)
-                    );
-                    return found.length > 0 ? found : [];
-                });
-            const historial = pastMessages.reverse().map(m =>
-                `[${m.role === 'user' ? 'Student' : 'Teacher'}] ${m.content}`
-            ).join('\n');
-            if (tipLines.length > 0) {
-                context = `--- TIPS FROM PAST CLASSES (use ONLY these for review) ---\n${tipLines.join('\n')}\n\n--- FULL HISTORY (for context) ---\n${historial}\n`;
-            } else {
-                context = `--- FULL HISTORY (no explicit tips found, extract any corrections) ---\n${historial}\n`;
-            }
+
+    if (intent === 'teacher_review') {
+        // Extraer tips del día actual y acumular todos los tips_diarios
+        await extractDailyTips(supabase, userId);
+
+        const { data: allTips } = await supabase.from('teacher')
+            .select('content, created_at')
+            .eq('user_id', userId)
+            .eq('role', 'tips_diarios')
+            .order('created_at', { ascending: true });
+
+        if (allTips?.length > 0) {
+            const tipsSummary = allTips.map((t, i) =>
+                `[Day ${i + 1} - ${new Date(t.created_at).toLocaleDateString()}]\n${t.content}`
+            ).join('\n\n');
+            context = `--- TIPS FROM ALL DAYS (these are the ONLY tips you may use) ---\n${tipsSummary}\n`;
         } else {
-            const historial = pastMessages.reverse().map(m =>
+            context = '--- NO TIPS FOUND YET ---\n';
+        }
+    } else {
+        // Modo conversación normal: pasar historial reciente
+        const { data: recentMessages } = await supabase.from('teacher')
+            .select('role, content, created_at')
+            .eq('user_id', userId)
+            .neq('role', 'tips_diarios')
+            .order('created_at', { ascending: false })
+            .limit(20);
+
+        if (recentMessages?.length > 0) {
+            const historial = recentMessages.reverse().map(m =>
                 `[${m.role === 'user' ? 'Student' : 'Teacher'}] ${m.content}`
             ).join('\n');
             context = `--- CONVERSATION HISTORY (English class) ---\n${historial}\n\nUse this history to review past concepts naturally. Refer to specific phrases the student said before.\n`;
