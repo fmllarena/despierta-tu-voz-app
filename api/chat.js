@@ -826,7 +826,7 @@ async function teacherChat(body, intent = 'teacher') {
                 body: JSON.stringify({
                     model: MISTRAL_MODEL,
                     messages,
-                    temperature: 0.8,
+                    temperature: intent === 'teacher_review' ? 0.3 : 0.8,
                     max_tokens: 2048
                 })
             });
