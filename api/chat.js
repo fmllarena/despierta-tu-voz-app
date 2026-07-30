@@ -722,54 +722,48 @@ async function teacherChat(body, intent = 'teacher') {
     let context = '';
 
     if (intent === 'teacher_review') {
-        // 1. Obtener tips ya guardados de días anteriores
+        // 1. Obtener tips guardados de días anteriores
         const { data: savedTips } = await supabase.from('teacher')
             .select('content, created_at')
             .eq('user_id', userId)
             .eq('role', 'tips_diarios')
             .order('created_at', { ascending: true });
 
-        // 2. Extraer y guardar tips de la conversación de hoy
+        // 2. Extraer tips de la conversación de hoy
         newTips = await extractDailyTips(supabase, userId);
 
-        // 3. Combinar en una lista plana de tips individuales con su fecha
+        // Helper para extraer la key (frase original) de un tip
+        const extractKey = (text) => {
+            const m = text.match(/Tip:\s*(.+?)\s*→/i);
+            if (!m) return null;
+            return m[1].replace(/["""''´`]/g, '').trim().toLowerCase();
+        };
+
+        // 3. Combinar en lista plana con su key extraída
         let flatTips = [];
         if (savedTips?.length > 0) {
             savedTips.forEach(t => {
                 const lines = t.content.split('\n').filter(l => l.trim());
-                lines.forEach(l => flatTips.push({ text: l, date: t.created_at }));
+                lines.forEach(l => flatTips.push({ text: l, date: t.created_at, key: extractKey(l) }));
             });
         }
         if (newTips?.length > 0) {
             const today = new Date().toISOString();
-            newTips.forEach(l => flatTips.push({ text: l, date: today }));
+            newTips.forEach(l => flatTips.push({ text: l, date: today, key: extractKey(l) }));
         }
 
-        // 4. Excluir tips ya trabajados en esta sesión (comparando con history)
-        if (history?.length > 0 && flatTips.length > 0) {
-            const assistantText = history
-                .filter(h => h.role === 'model')
-                .map(h => (h.parts?.[0]?.text || ''))
-                .join('\n')
-                .toLowerCase();
-
-            if (assistantText) {
-                flatTips = flatTips.filter(({ text }) => {
-                    // Extraer la frase original entre "Tip:" y "→"
-                    const tipMatch = text.match(/Tip:\s*(.+?)\s*→/i);
-                    if (!tipMatch) return true; // no se puede extraer, mantener
-                    const key = tipMatch[1]
-                        .replace(/["""''´`]/g, '')
-                        .trim()
-                        .toLowerCase();
-                    return !(key.length > 2 && assistantText.includes(key));
-                });
-            }
+        // 4. Excluir tips ya completados (desde teacher_review en BD)
+        const { data: completed } = await supabase.from('teacher_review')
+            .select('tip_key')
+            .eq('user_id', userId);
+        const completedKeys = new Set((completed || []).map(c => c.tip_key));
+        if (completedKeys.size > 0) {
+            flatTips = flatTips.filter(t => !t.key || !completedKeys.has(t.key));
         }
         allTips = { length: flatTips.length };
 
+        // 5. Reconstruir contexto con tips NO trabajados aún
         if (flatTips.length > 0) {
-            // Reconstruir contexto con tips NO trabajados aún
             const byDate = {};
             flatTips.forEach(({ text, date }) => {
                 const d = new Date(date).toLocaleDateString();
@@ -837,6 +831,18 @@ async function teacherChat(body, intent = 'teacher') {
             }
             const data = await response.json();
             const texto = data.choices?.[0]?.message?.content || '';
+
+            // Tras respuesta del quiz, registrar el tip presentado para no repetirlo
+            if (intent === 'teacher_review' && texto) {
+                const responseLower = texto.toLowerCase();
+                const presented = flatTips.find(t => t.key && responseLower.includes(t.key));
+                if (presented) {
+                    await supabase.from('teacher_review').insert({
+                        user_id: userId,
+                        tip_key: presented.key
+                    }).maybeSingle();
+                }
+            }
 
             // Guardar respuesta de la IA (solo en modo conversación)
             if (intent !== 'teacher_review') {
