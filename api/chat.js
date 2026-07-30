@@ -761,9 +761,17 @@ async function teacherChat(body, intent = 'teacher') {
         }
         allTips = { length: flatTips.length };
 
-        // 5. Pasar SOLO 1 tip a la vez para evitar confusiones
+        // 5. Pasar SOLO la frase incorrecta + la correcta (para validación interna)
         if (flatTips.length > 0) {
-            context = `--- TIP TO CORRECT ---\n${flatTips[0].text}\n`;
+            const tipText = flatTips[0].text;
+            const m = tipText.match(/Tip:\s*(.+?)\s*→\s*(.+)/i);
+            if (m) {
+                const incorrect = m[1].replace(/["""]/g, '').trim();
+                const correct = m[2].replace(/["""]/g, '').trim();
+                context = `--- INCORRECT PHRASE (show this to the student) ---\n${incorrect}\n\n--- CORRECT VERSION (for validation only, do NOT show) ---\n${correct}\n`;
+            } else {
+                context = `--- INCORRECT PHRASE ---\n${tipText}\n`;
+            }
         } else if (savedTips?.length || newTips?.length) {
             context = '--- ALL TIPS COMPLETED ---\n';
         } else {
