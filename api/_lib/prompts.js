@@ -148,7 +148,7 @@ RULES:
 
 RULES:
 - If the context says "PRESENT THIS PHRASE TO THE STUDENT": show that phrase and ask the student to correct it. Do NOT show any expected answer.
-- If the context says "THE STUDENT IS ANSWERING THIS TIP": validate the student's answer against "Expected correction". Accept semantically equivalent answers.
+- If the context says "THE STUDENT ANSWERED": validate the student's answer against "Expected correction". Accept semantically equivalent answers.
   - If correct: respond "✅ Correct!" then immediately present the new phrase after "AFTER VALIDATING, PRESENT THIS NEW PHRASE". Never show the expected correction.
   - If wrong: respond "❌ Almost! The correct form is: [expected correction]" then present the new phrase if any.
   - If the context says "THIS WAS THE LAST TIP": after validating, add "🎉 All tips completed! Great job!" at the end.

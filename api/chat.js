@@ -763,8 +763,7 @@ async function teacherChat(body, intent = 'teacher') {
             // Empezar de cero: borrar registros antiguos y usar todos los tips
             await supabase.from('teacher_review')
                 .delete()
-                .eq('user_id', userId)
-                .maybeSingle();
+                .eq('user_id', userId);
             flatTips = [...byKey.values()];
         } else {
             // Excluir tips ya completados (compat: keys nuevas normalizadas y textos crudos antiguos)
@@ -789,7 +788,7 @@ async function teacherChat(body, intent = 'teacher') {
                 await supabase.from('teacher_review').insert({
                     user_id: userId,
                     tip_key: flatTips[0].key
-                }).maybeSingle();
+                });
             } catch (_) {}
             flatTips = flatTips.slice(1);
         }
@@ -803,7 +802,7 @@ async function teacherChat(body, intent = 'teacher') {
         } else {
             const current = flatTips[0];
             const next = flatTips[1];
-            context = `THE STUDENT IS ANSWERING THIS TIP:\nPhrase shown: "${current.original}"\nExpected correction: "${current.correct}"\n\n`;
+            context = `THE STUDENT ANSWERED: "${message}"\nPhrase shown: "${current.original}"\nExpected correction: "${current.correct}"\n\n`;
             context += next
                 ? `AFTER VALIDATING, PRESENT THIS NEW PHRASE (${flatTips.length - 1} tips remaining):\n"${next.original}"`
                 : `THIS WAS THE LAST TIP. After validating, add: "🎉 All tips completed! Great job!"`;
@@ -825,7 +824,7 @@ async function teacherChat(body, intent = 'teacher') {
         }
     }
 
-    const finalPrompt = intent === 'teacher_review' && !reviewAnswered
+    const finalPrompt = intent === 'teacher_review'
         ? (context || 'Begin the review.')
         : (context ? `CONTEXTO:\n${context}\n\nMENSAJE:\n${message}` : message);
 
@@ -869,7 +868,7 @@ async function teacherChat(body, intent = 'teacher') {
                     await supabase.from('teacher_review').insert({
                         user_id: userId,
                         tip_key: flatTips[0].key
-                    }).maybeSingle();
+                    });
                 } catch (_) {}
             }
 
