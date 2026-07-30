@@ -21,7 +21,6 @@
         .dash-header h2 { color: #2c6b9e; }
         .logout-btn { background: transparent; border: 1px solid #e74c3c; color: #e74c3c; padding: 6px 16px; border-radius: 8px; cursor: pointer; font-family: inherit; font-size: 0.85rem; }
         .logout-btn:hover { background: #e74c3c; color: #fff; }
-        .chat-box { background: rgba(255,255,255,0.95); border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); overflow: hidden; display: flex; flex-direction: column; height: 70vh; min-height: 400px; }
         .chat-header { padding: 10px 16px; background: #e8f0fe; border-bottom: 1px solid #d0ddea; }
         .chat-header h3 { color: #2c6b9e; font-size: 0.95rem; margin-bottom: 4px; }
         .chat-header p { font-size: 0.8rem; color: #888; margin-top: 4px; }
@@ -41,7 +40,7 @@
         body.dark-mode { background: #0d1b2a; color: #d4d4dc; }
         body.dark-mode .login-section { background: rgba(20,35,55,0.95); }
         body.dark-mode .login-section input { background: #1a2d45; border-color: #2a4565; color: #d4d4dc; }
-        body.dark-mode .chat-box { background: rgba(20,35,55,0.95); }
+        body.dark-mode .chat-box { flex: 1; background: rgba(20,35,55,0.95); }
         body.dark-mode .chat-header { background: #15273d; border-color: #2a4565; }
         body.dark-mode .chat-header h3 { color: #6ba4d6; }
         body.dark-mode .chat-body { background: #0d1b2a; }
@@ -63,6 +62,25 @@
         body.dark-mode .logout-btn:hover { background: #ff6b6b; color: #fff; }
         body.dark-mode .login-section h1 { color: #6ba4d6; }
         body.dark-mode .login-error { color: #ff6b6b; }
+
+        .main-layout { display: flex; gap: 16px; align-items: flex-start; }
+        .chat-box { flex: 1; background: rgba(255,255,255,0.95); border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); overflow: hidden; display: flex; flex-direction: column; height: 70vh; min-height: 400px; }
+        .tips-panel { width: 330px; height: 420px; background: rgba(255,255,255,0.95); border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); display: none; flex-direction: column; overflow: hidden; flex-shrink: 0; }
+        .tips-panel.open { display: flex; }
+        .tips-panel-header { padding: 10px 14px; background: #e8f0fe; border-bottom: 1px solid #d0ddea; display: flex; justify-content: space-between; align-items: center; }
+        .tips-panel-header h3 { font-size: 0.9rem; color: #2c6b9e; }
+        .tips-panel-header button { background: transparent; border: none; font-size: 1.2rem; cursor: pointer; color: #888; padding: 0 4px; }
+        .tips-panel-body { flex: 1; overflow-y: auto; padding: 12px 14px; font-size: 0.85rem; }
+        .tips-panel-body .tip-item { padding: 6px 0; border-bottom: 1px solid #eee; }
+        .tips-panel-body .tip-item:last-child { border-bottom: none; }
+        .tips-panel-body .tip-day { color: #888; font-size: 0.75rem; margin-bottom: 2px; }
+        .tips-panel-body .tip-text { line-height: 1.5; }
+        body.dark-mode .tips-panel { background: rgba(20,35,55,0.95); }
+        body.dark-mode .tips-panel-header { background: #15273d; border-color: #2a4565; }
+        body.dark-mode .tips-panel-header h3 { color: #6ba4d6; }
+        body.dark-mode .tips-panel-body .tip-item { border-color: #2a4565; }
+        body.dark-mode .tips-panel-body .tip-day { color: #888; }
+        body.dark-mode .tips-panel-header button { color: #aaa; }
 
         .topic-sug { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 6px; }
         .topic-sug button { background: #e8f0fe; border: 1px solid #d0ddea; padding: 3px 8px; border-radius: 6px; cursor: pointer; font-family: inherit; font-size: 0.7rem; color: #2c6b9e; }
@@ -95,23 +113,35 @@
             </div>
         </div>
 
-        <div class="chat-box">
-            <div class="chat-header">
-                <h3>🧑‍🏫 Your English Teacher — B1 Conversational</h3>
-                <div class="topic-sug">
-                    <button data-t="Introduce yourself">Introduce yourself</button>
-                    <button data-t="Talk about your weekend">Talk about your weekend</button>
-                    <button data-t="Order food at a restaurant">Order food at a restaurant</button>
-                    <button data-t="Describe your job">Describe your job</button>
-                    <button data-t="Make a phone appointment">Make a phone appointment</button>
+        <div class="main-layout">
+            <div class="chat-box">
+                <div class="chat-header">
+                    <h3>🧑‍🏫 Your English Teacher — B1 Conversational</h3>
+                    <div class="topic-sug">
+                        <button data-t="Introduce yourself">Introduce yourself</button>
+                        <button data-t="Talk about your weekend">Talk about your weekend</button>
+                        <button data-t="Order food at a restaurant">Order food at a restaurant</button>
+                        <button data-t="Describe your job">Describe your job</button>
+                        <button data-t="Make a phone appointment">Make a phone appointment</button>
+                    </div>
+                </div>
+                <div id="chatBody" class="chat-body">
+                    <div class="chat-empty">💬 Write something in English to start...</div>
+                </div>
+                <div class="chat-input-area">
+                    <textarea id="msgInput" placeholder="Write in English..." rows="1"></textarea>
+                    <button id="sendBtn" class="send-btn">➤</button>
                 </div>
             </div>
-            <div id="chatBody" class="chat-body">
-                <div class="chat-empty">💬 Write something in English to start...</div>
-            </div>
-            <div class="chat-input-area">
-                <textarea id="msgInput" placeholder="Write in English..." rows="1"></textarea>
-                <button id="sendBtn" class="send-btn">➤</button>
+
+            <div id="tipsPanel" class="tips-panel">
+                <div class="tips-panel-header">
+                    <h3>📋 Tips acumulados</h3>
+                    <button id="closeTipsPanel">&times;</button>
+                </div>
+                <div id="tipsPanelBody" class="tips-panel-body">
+                    <p style="color:#888;text-align:center;padding:20px;">Haz clic en "Listado de tips" para verlos.</p>
+                </div>
             </div>
         </div>
     </div>
@@ -221,6 +251,10 @@
     };
 
     $('listTipsBtn').onclick = async () => {
+        const panel = $('tipsPanel');
+        const body = $('tipsPanelBody');
+        panel.classList.add('open');
+        body.innerHTML = '<p style="color:#888;text-align:center;padding:20px;">Cargando...</p>';
         try {
             const res = await fetch('/api/chat', {
                 method: 'POST',
@@ -230,24 +264,20 @@
             const data = await res.json();
             if (data.error) throw new Error(data.details || data.error);
             if (!data.tips || data.tips.length === 0) {
-                agregarMensaje('📭 No hay tips guardados aún.', 'ia');
+                body.innerHTML = '<p style="color:#888;text-align:center;padding:20px;">📭 No hay tips guardados aún.</p>';
                 return;
             }
-            const tipsDiv = document.createElement('div');
-            tipsDiv.className = 'tips-summary';
-            let html = `<strong>📋 Tips acumulados (${data.tips.length} día(s))</strong><ul style="margin:6px 0 0 0;padding-left:20px;">`;
+            let html = '';
             data.tips.forEach(t => {
-                html += `<li style="margin:4px 0;"><small style="color:#666;">${t.day}</small><br>${t.content.replace(/\n/g, '<br>')}</li>`;
+                html += `<div class="tip-item"><div class="tip-day">${t.day}</div><div class="tip-text">${t.content.replace(/\n/g, '<br>')}</div></div>`;
             });
-            html += '</ul>';
-            tipsDiv.innerHTML = html;
-            const empty = chatBody.querySelector('.chat-empty');
-            if (empty) empty.remove();
-            chatBody.appendChild(tipsDiv);
+            body.innerHTML = html;
         } catch (e) {
-            agregarMensaje('⚠️ Error: ' + e.message, 'ia');
+            body.innerHTML = `<p style="color:#e74c3c;text-align:center;padding:20px;">⚠️ Error: ${e.message}</p>`;
         }
     };
+
+    $('closeTipsPanel').onclick = () => { $('tipsPanel').classList.remove('open'); };
 
     document.querySelectorAll('.topic-sug button').forEach(btn => {
         btn.onclick = () => { $('msgInput').value = btn.dataset.t; $('sendBtn').click(); };
