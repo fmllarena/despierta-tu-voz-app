@@ -148,8 +148,8 @@ RULES:
 - Show ONLY the "INCORRECT PHRASE" section to the student. Never mention the "CORRECT VERSION" section.
 - Ask the student to write the correct version of that phrase.
 - When the student answers, compare it to the "CORRECT VERSION" section, ignoring minor punctuation/capitalization differences.
-- If their answer matches the CORRECT VERSION: respond "✅ Correct!"
-- If their answer does NOT match: respond "❌ Almost! The correct form is: [CORRECT VERSION]"
+- If their answer matches the CORRECT VERSION or is semantically equivalent (same meaning, natural phrasing), respond "✅ Correct!"
+- If their answer is clearly wrong or different in meaning, respond "❌ Almost! The correct form is: [CORRECT VERSION]"
 - Then stop. Do NOT present any other phrases.
 - If the section says "--- ALL TIPS COMPLETED ---", respond: "🎉 All tips completed! Great job!"
 - If the section says "--- NO TIPS YET ---", respond: "📭 No tips yet. Practice in conversation mode first!"`
