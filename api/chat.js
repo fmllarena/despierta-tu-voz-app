@@ -755,10 +755,11 @@ async function teacherChat(body, intent = 'teacher') {
 
             if (assistantText) {
                 flatTips = flatTips.filter(({ text }) => {
-                    const parts = text.split('→');
-                    if (parts.length < 2) return true;
-                    const key = (parts[0] || '')
-                        .replace(/[^a-z0-9\sáéíóúñü]/gi, '')
+                    // Extraer la frase original entre "Tip:" y "→"
+                    const tipMatch = text.match(/Tip:\s*(.+?)\s*→/i);
+                    if (!tipMatch) return true; // no se puede extraer, mantener
+                    const key = tipMatch[1]
+                        .replace(/["""''´`]/g, '')
                         .trim()
                         .toLowerCase();
                     return !(key.length > 2 && assistantText.includes(key));
