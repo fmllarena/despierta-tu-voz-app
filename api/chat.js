@@ -595,20 +595,45 @@ async function teacherChat(body, intent = 'teacher') {
         content: message
     }).maybeSingle();
 
-    // Obtener historial de la BD para repaso (últimos 20)
+    // Obtener historial de la BD para repaso (últimos 100 para tener suficientes tips)
     const { data: pastMessages } = await supabase.from('teacher')
         .select('role, content, created_at')
         .eq('user_id', userId)
         .order('created_at', { ascending: false })
-        .limit(20);
+        .limit(100);
 
     // Construir contexto con historial de BD
     let context = '';
     if (pastMessages?.length > 0) {
-        const historial = pastMessages.reverse().map(m =>
-            `[${m.role === 'user' ? 'Student' : 'Teacher'}] ${m.content}`
-        ).join('\n');
-        context = `--- CONVERSATION HISTORY (English class) ---\n${historial}\n\nUse this history to review past concepts naturally. Refer to specific phrases the student said before.\n`;
+        if (intent === 'teacher_review') {
+            // Extraer tips: buscar líneas con 🎯 Tip:, "→", "Instead of", "more natural"
+            const tipLines = pastMessages
+                .filter(m => m.role === 'assistant')
+                .flatMap(m => {
+                    const lines = m.content.split('\n');
+                    const found = lines.filter(l =>
+                        l.includes('🎯 Tip:') ||
+                        l.includes('Tip:') ||
+                        l.includes('→') ||
+                        /instead of/i.test(l) ||
+                        /more natural/i.test(l)
+                    );
+                    return found.length > 0 ? found : [];
+                });
+            const historial = pastMessages.reverse().map(m =>
+                `[${m.role === 'user' ? 'Student' : 'Teacher'}] ${m.content}`
+            ).join('\n');
+            if (tipLines.length > 0) {
+                context = `--- TIPS FROM PAST CLASSES (use ONLY these for review) ---\n${tipLines.join('\n')}\n\n--- FULL HISTORY (for context) ---\n${historial}\n`;
+            } else {
+                context = `--- FULL HISTORY (no explicit tips found, extract any corrections) ---\n${historial}\n`;
+            }
+        } else {
+            const historial = pastMessages.reverse().map(m =>
+                `[${m.role === 'user' ? 'Student' : 'Teacher'}] ${m.content}`
+            ).join('\n');
+            context = `--- CONVERSATION HISTORY (English class) ---\n${historial}\n\nUse this history to review past concepts naturally. Refer to specific phrases the student said before.\n`;
+        }
     }
 
     const finalPrompt = context ? `CONTEXTO:\n${context}\n\nMENSAJE:\n${message}` : message;
