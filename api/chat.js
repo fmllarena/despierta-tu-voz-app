@@ -673,22 +673,30 @@ async function teacherChat(body, intent = 'teacher') {
     let context = '';
 
     if (intent === 'teacher_review') {
-        // Extraer tips del día actual
-        newTips = await extractDailyTips(supabase, userId);
-
-        // Acumular todos los tips_diarios de todos los días
-        const { data: tips } = await supabase.from('teacher')
+        // 1. Obtener tips ya guardados de días anteriores
+        const { data: savedTips } = await supabase.from('teacher')
             .select('content, created_at')
             .eq('user_id', userId)
             .eq('role', 'tips_diarios')
             .order('created_at', { ascending: true });
-        allTips = tips;
 
-        if (allTips?.length > 0) {
-            const tipsSummary = allTips.map((t, i) =>
-                `[Day ${i + 1} - ${new Date(t.created_at).toLocaleDateString()}]\n${t.content}`
-            ).join('\n\n');
-            context = `--- TIPS FROM ALL DAYS (these are the ONLY tips you may use) ---\n${tipsSummary}\n`;
+        // 2. Extraer y guardar tips de la conversación de hoy
+        newTips = await extractDailyTips(supabase, userId);
+
+        // 3. Combinar tips guardados + nuevos (sin depender de la lectura posterior al insert)
+        let allDays = [];
+        if (savedTips?.length > 0) {
+            savedTips.forEach((t, i) => {
+                allDays.push(`[Day ${i + 1} - ${new Date(t.created_at).toLocaleDateString()}]\n${t.content}`);
+            });
+        }
+        if (newTips?.length > 0) {
+            allDays.push(`[Day ${allDays.length + 1} - Today]\n${newTips.join('\n')}`);
+        }
+        allTips = { length: allDays.length };
+
+        if (allDays.length > 0) {
+            context = `--- TIPS FROM ALL DAYS (these are the ONLY tips you may use) ---\n${allDays.join('\n\n')}\n`;
         } else {
             context = '--- NO TIPS FOUND YET ---\n';
         }
