@@ -182,7 +182,11 @@
         const empty = chatBody.querySelector('.chat-empty');
         if (empty) empty.remove();
         chatBody.appendChild(div);
-        chatBody.scrollTop = chatBody.scrollHeight;
+        if (rol === 'user') {
+            chatBody.scrollTop = chatBody.scrollHeight;
+        } else {
+            div.scrollIntoView({ block: 'start' });
+        }
     }
 
     function mostrarLoading() {
