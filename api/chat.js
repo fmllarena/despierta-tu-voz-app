@@ -768,9 +768,9 @@ async function teacherChat(body, intent = 'teacher') {
             if (m) {
                 const incorrect = m[1].replace(/["""]/g, '').trim();
                 const correct = m[2].replace(/["""]/g, '').trim();
-                context = `--- PHRASE TO CORRECT ---\n${incorrect}\n--- KNOWN CORRECTION ---\n${correct}`;
+                context = `The student once said: "${incorrect}"\n\nThe teacher corrected it to: "${correct}"`;
             } else {
-                context = `--- PHRASE TO CORRECT ---\n${tipText}`;
+                context = `The student once said: "${tipText}"`;
             }
         } else if (savedTips?.length || newTips?.length) {
             context = '--- ALL TIPS COMPLETED ---\n';

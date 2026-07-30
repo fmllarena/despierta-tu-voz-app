@@ -20,18 +20,18 @@ CREATE POLICY "Mentor puede ver teacher"
 ON public.teacher FOR SELECT
 USING ( (auth.jwt() ->> 'email') = 'fernando@despiertatuvoz.com' );
 
-DROP POLICY IF EXISTS "Mentor puede insertar teacher";
+DROP POLICY IF EXISTS "Mentor puede insertar teacher" ON public.teacher;
 CREATE POLICY "Mentor puede insertar teacher"
 ON public.teacher FOR INSERT
 WITH CHECK ( (auth.jwt() ->> 'email') = 'fernando@despiertatuvoz.com' );
 
 -- El propio usuario puede ver sus mensajes
-DROP POLICY IF EXISTS "Usuario puede ver sus mensajes teacher";
+DROP POLICY IF EXISTS "Usuario puede ver sus mensajes teacher" ON public.teacher;
 CREATE POLICY "Usuario puede ver sus mensajes teacher"
 ON public.teacher FOR SELECT
 USING ( auth.uid() = user_id );
 
-DROP POLICY IF EXISTS "Usuario puede insertar sus mensajes teacher";
+DROP POLICY IF EXISTS "Usuario puede insertar sus mensajes teacher" ON public.teacher;
 CREATE POLICY "Usuario puede insertar sus mensajes teacher"
 ON public.teacher FOR INSERT
 WITH CHECK ( auth.uid() = user_id );
