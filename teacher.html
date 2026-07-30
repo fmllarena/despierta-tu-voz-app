@@ -78,6 +78,7 @@
         <div class="dash-header">
             <h2>🇺🇸 English Teacher</h2>
             <div style="display:flex;gap:8px;">
+                <button id="reviewBtn" style="background:#2c6b9e;color:#fff;border:none;padding:6px 12px;border-radius:8px;cursor:pointer;font-size:0.8rem;font-family:inherit;">📝 Daily Review</button>
                 <button id="darkToggle" style="background:transparent;border:1px solid #2c6b9e;color:#2c6b9e;padding:6px 12px;border-radius:8px;cursor:pointer;font-size:1rem;font-family:inherit;" title="Modo oscuro">🌙</button>
                 <button id="clearChatBtn" style="background:transparent;border:1px solid #e74c3c;color:#e74c3c;padding:6px 12px;border-radius:8px;cursor:pointer;font-size:0.85rem;font-family:inherit;">🗑 Borrar</button>
                 <button id="logoutBtn" class="logout-btn">Cerrar Sesión</button>
@@ -113,6 +114,7 @@
     let history = [];
     let esperando = false;
     let userId = null;
+    let pendingIntent = 'teacher';
 
     const $ = id => document.getElementById(id);
     const chatBody = $('chatBody');
@@ -170,6 +172,24 @@
 
     $('clearChatBtn').onclick = () => { history = []; chatBody.innerHTML = '<div class="chat-empty">💬 Conversation cleared.</div>'; };
 
+    $('reviewBtn').onclick = () => {
+        if (pendingIntent === 'teacher_review') {
+            pendingIntent = 'teacher';
+            history = [];
+            chatBody.innerHTML = '<div class="chat-empty">💬 Back to conversation mode.</div>';
+            $('reviewBtn').style.background = '#2c6b9e';
+            $('reviewBtn').textContent = '📝 Daily Review';
+            return;
+        }
+        pendingIntent = 'teacher_review';
+        history = [];
+        chatBody.innerHTML = '<div class="chat-empty">📝 Starting daily review...</div>';
+        $('reviewBtn').style.background = '#e67e22';
+        $('reviewBtn').textContent = '🔄 Back to chat';
+        $('msgInput').value = 'Start the review';
+        enviar();
+    };
+
     document.querySelectorAll('.topic-sug button').forEach(btn => {
         btn.onclick = () => { $('msgInput').value = btn.dataset.t; $('sendBtn').click(); };
     });
@@ -217,7 +237,7 @@
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    intent: 'teacher',
+                    intent: pendingIntent,
                     message: texto,
                     history: history.slice(-20),
                     userId

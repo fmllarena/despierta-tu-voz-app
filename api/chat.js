@@ -52,8 +52,8 @@ async function processChat(req, res = null) {
         return await analizarAlumnos(req.body);
     }
 
-    if (intent === 'teacher') {
-        return await teacherChat(req.body);
+    if (intent === 'teacher' || intent === 'teacher_review') {
+        return await teacherChat(req.body, intent);
     }
 
     if (!intent || !SYSTEM_PROMPTS[intent]) throw new Error("Intento no válido");
@@ -582,7 +582,7 @@ Responde de forma clara, directa y útil. Si no hay suficientes datos para respo
 /**
  * Chat con el profesor de inglés IA
  */
-async function teacherChat(body) {
+async function teacherChat(body, intent = 'teacher') {
     const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
     const { message, history = [], userId } = body;
     if (!message) throw new Error("Se requiere un mensaje");
@@ -617,7 +617,7 @@ async function teacherChat(body) {
     const keys = [process.env.MISTRAL_API_KEY, process.env.MISTRAL_API_KEY_2].filter(Boolean);
     if (!keys.length) throw new Error("Falta API Key de Mistral");
 
-    const sysPrompt = SYSTEM_PROMPTS['teacher'];
+    const sysPrompt = SYSTEM_PROMPTS[intent];
     let lastErr;
     for (const key of keys) {
         try {
