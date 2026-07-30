@@ -755,24 +755,34 @@ async function teacherChat(body, intent = 'teacher') {
             }
         }
 
-        // 4. Excluir tips ya completados (compat: keys nuevas normalizadas y textos crudos antiguos)
-        const { data: completed } = await supabase.from('teacher_review')
-            .select('tip_key')
-            .eq('user_id', userId);
-        const completedSet = new Set();
-        (completed || []).forEach(c => {
-            completedSet.add(c.tip_key);
-            completedSet.add(normalizeTipKey(c.tip_key));
-            const p = parseTipLine(c.tip_key);
-            if (p) completedSet.add(normalizeTipKey(p.original));
-        });
-        flatTips = [...byKey.values()].filter(t => !completedSet.has(t.key) && !completedSet.has(t.raw));
-        allTips = { length: flatTips.length };
-
-        // 5. El servidor decide qué tip toca: la IA solo valida y presenta
+        // 4. Detectar modo: start, skip, o respuesta
         const isStart = /^Start the review\.?$/i.test(message.trim());
         const isSkip = !isStart && /^(next|next tip|skip|continue|siguiente|siguiente tip)$/i.test(message.trim());
 
+        if (isStart) {
+            // Empezar de cero: borrar registros antiguos y usar todos los tips
+            await supabase.from('teacher_review')
+                .delete()
+                .eq('user_id', userId)
+                .maybeSingle();
+            flatTips = [...byKey.values()];
+        } else {
+            // Excluir tips ya completados (compat: keys nuevas normalizadas y textos crudos antiguos)
+            const { data: completed } = await supabase.from('teacher_review')
+                .select('tip_key')
+                .eq('user_id', userId);
+            const completedSet = new Set();
+            (completed || []).forEach(c => {
+                completedSet.add(c.tip_key);
+                completedSet.add(normalizeTipKey(c.tip_key));
+                const p = parseTipLine(c.tip_key);
+                if (p) completedSet.add(normalizeTipKey(p.original));
+            });
+            flatTips = [...byKey.values()].filter(t => !completedSet.has(t.key) && !completedSet.has(t.raw));
+        }
+        allTips = { length: flatTips.length };
+
+        // 5. Skip: marcar el actual como completado y pasar al siguiente
         if (isSkip && flatTips.length > 0) {
             // "next tip" = saltar el tip actual sin responderlo
             try {
