@@ -794,7 +794,8 @@ async function teacherChat(body, intent = 'teacher') {
         }
     }
 
-    const finalPrompt = (intent === 'teacher_review' && (message === 'Start the review' || message === 'Start the review.'))
+    const isAdvance = intent === 'teacher_review' && /^(Start the review\.?|next|next tip|continue|siguiente|siguiente tip)$/i.test(message?.trim());
+    const finalPrompt = isAdvance
         ? (context || 'Begin the review.')
         : (context ? `CONTEXTO:\n${context}\n\nMENSAJE:\n${message}` : message);
 
