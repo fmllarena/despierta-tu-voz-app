@@ -129,6 +129,9 @@
                     <div class="chat-empty">💬 Write something in English to start...</div>
                 </div>
                 <div class="chat-input-area">
+                    <label style="display:flex;align-items:center;gap:4px;font-size:0.75rem;white-space:nowrap;cursor:pointer;color:#555;">
+                        <input type="checkbox" id="pureChat" style="cursor:pointer;"> Solo conversar
+                    </label>
                     <textarea id="msgInput" placeholder="Write in English..." rows="1"></textarea>
                     <button id="sendBtn" class="send-btn">➤</button>
                 </div>
@@ -330,7 +333,8 @@
                     intent: pendingIntent,
                     message: texto,
                     history: history.slice(-20),
-                    userId
+                    userId,
+                    pureChat: document.getElementById('pureChat').checked
                 })
             });
             const data = await res.json();

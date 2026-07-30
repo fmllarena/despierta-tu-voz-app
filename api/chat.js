@@ -711,7 +711,7 @@ async function getTeacherTips(body) {
 
 async function teacherChat(body, intent = 'teacher') {
     const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
-    const { message, history = [], userId } = body;
+    const { message, history = [], userId, pureChat = false } = body;
     if (!message) throw new Error("Se requiere un mensaje");
     if (!userId) throw new Error("Se requiere userId");
 
@@ -832,7 +832,8 @@ async function teacherChat(body, intent = 'teacher') {
     const keys = [process.env.MISTRAL_API_KEY, process.env.MISTRAL_API_KEY_2].filter(Boolean);
     if (!keys.length) throw new Error("Falta API Key de Mistral");
 
-    const sysPrompt = SYSTEM_PROMPTS[intent];
+    const promptKey = pureChat && intent === 'teacher' ? 'teacher_pure' : intent;
+    const sysPrompt = SYSTEM_PROMPTS[promptKey];
     let lastErr;
     for (const key of keys) {
         try {
