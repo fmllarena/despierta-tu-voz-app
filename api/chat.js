@@ -608,7 +608,7 @@ async function extractDailyTips(supabase, userId) {
         const lines = m.content.split('\n');
         return lines.filter(l =>
             l.includes('🎯 Tip:') || l.includes('Tip:') ||
-            l.includes('→') || /instead of/i.test(l) || /more natural/i.test(l)
+            /instead of/i.test(l) || /more natural/i.test(l)
         );
     });
 
