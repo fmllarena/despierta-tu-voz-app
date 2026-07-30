@@ -761,17 +761,18 @@ async function teacherChat(body, intent = 'teacher') {
         }
         allTips = { length: flatTips.length };
 
-        // 5. Pasar SOLO la frase incorrecta + la correcta (para validación interna)
+        // 5. Pasar TODOS los tips restantes (numerados) para que la IA avance sola
         if (flatTips.length > 0) {
-            const tipText = flatTips[0].text;
-            const m = tipText.match(/Tip:\s*(.+?)\s*→\s*(.+)/i);
-            if (m) {
-                const incorrect = m[1].replace(/["""]/g, '').trim();
-                const correct = m[2].replace(/["""]/g, '').trim();
-                context = `The student once said: "${incorrect}"\n\nThe teacher corrected it to: "${correct}"`;
-            } else {
-                context = `The student once said: "${tipText}"`;
-            }
+            const lines = flatTips.map((t, i) => {
+                const m = t.text.match(/Tip:\s*(.+?)\s*→\s*(.+)/i);
+                if (m) {
+                    const original = m[1].replace(/["""]/g, '').trim();
+                    const correct = m[2].replace(/["""]/g, '').trim();
+                    return `${i + 1}. Original: "${original}" — Correct: "${correct}"`;
+                }
+                return `${i + 1}. ${t.text}`;
+            });
+            context = `--- REMAINING TIPS (${flatTips.length}) ---\n${lines.join('\n')}\n\nINSTRUCTIONS:\n- Show the student ONLY the "Original:" part one at a time.\n- Use "Correct:" internally to validate.\n- After each answer, immediately present the next Original.\n- Never show the "Correct:" value to the student.`;
         } else if (savedTips?.length || newTips?.length) {
             context = '--- ALL TIPS COMPLETED ---\n';
         } else {
