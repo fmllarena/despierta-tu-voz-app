@@ -732,20 +732,53 @@ async function teacherChat(body, intent = 'teacher') {
         // 2. Extraer y guardar tips de la conversación de hoy
         newTips = await extractDailyTips(supabase, userId);
 
-        // 3. Combinar tips guardados + nuevos (sin depender de la lectura posterior al insert)
-        let allDays = [];
+        // 3. Combinar en una lista plana de tips individuales con su fecha
+        let flatTips = [];
         if (savedTips?.length > 0) {
-            savedTips.forEach((t, i) => {
-                allDays.push(`[Day ${i + 1} - ${new Date(t.created_at).toLocaleDateString()}]\n${t.content}`);
+            savedTips.forEach(t => {
+                const lines = t.content.split('\n').filter(l => l.trim());
+                lines.forEach(l => flatTips.push({ text: l, date: t.created_at }));
             });
         }
         if (newTips?.length > 0) {
-            allDays.push(`[Day ${allDays.length + 1} - Today]\n${newTips.join('\n')}`);
+            const today = new Date().toISOString();
+            newTips.forEach(l => flatTips.push({ text: l, date: today }));
         }
-        allTips = { length: allDays.length };
 
-        if (allDays.length > 0) {
-            context = `--- TIPS FROM ALL DAYS (these are the ONLY tips you may use) ---\n${allDays.join('\n\n')}\n`;
+        // 4. Excluir tips ya trabajados en esta sesión (comparando con history)
+        if (history?.length > 0 && flatTips.length > 0) {
+            const assistantText = history
+                .filter(h => h.role === 'model')
+                .map(h => (h.parts?.[0]?.text || ''))
+                .join('\n')
+                .toLowerCase();
+
+            if (assistantText) {
+                flatTips = flatTips.filter(({ text }) => {
+                    const parts = text.split('→');
+                    if (parts.length < 2) return true;
+                    const key = (parts[0] || '')
+                        .replace(/[^a-z0-9\sáéíóúñü]/gi, '')
+                        .trim()
+                        .toLowerCase();
+                    return !(key.length > 2 && assistantText.includes(key));
+                });
+            }
+        }
+        allTips = { length: flatTips.length };
+
+        if (flatTips.length > 0) {
+            // Reconstruir contexto con tips NO trabajados aún
+            const byDate = {};
+            flatTips.forEach(({ text, date }) => {
+                const d = new Date(date).toLocaleDateString();
+                if (!byDate[d]) byDate[d] = [];
+                byDate[d].push(text);
+            });
+            const days = Object.entries(byDate).map(([d, tips], i) =>
+                `[Day ${i + 1} - ${d}]\n${tips.join('\n')}`
+            );
+            context = `--- TIPS FROM ALL DAYS (these are the ONLY tips you may use) ---\n${days.join('\n\n')}\n`;
         } else {
             context = '--- NO TIPS FOUND YET ---\n';
         }
