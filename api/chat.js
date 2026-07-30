@@ -768,9 +768,9 @@ async function teacherChat(body, intent = 'teacher') {
             if (m) {
                 const incorrect = m[1].replace(/["""]/g, '').trim();
                 const correct = m[2].replace(/["""]/g, '').trim();
-                context = `--- INCORRECT PHRASE (show this to the student) ---\n${incorrect}\n\n--- CORRECT VERSION (for validation only, do NOT show) ---\n${correct}\n`;
+                context = `--- PHRASE TO CORRECT ---\n${incorrect}\n--- KNOWN CORRECTION ---\n${correct}`;
             } else {
-                context = `--- INCORRECT PHRASE ---\n${tipText}\n`;
+                context = `--- PHRASE TO CORRECT ---\n${tipText}`;
             }
         } else if (savedTips?.length || newTips?.length) {
             context = '--- ALL TIPS COMPLETED ---\n';
