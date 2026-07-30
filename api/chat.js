@@ -804,10 +804,8 @@ async function teacherChat(body, intent = 'teacher') {
             reviewAnswered = true;
             const current = flatTips[0];
             const next = flatTips[1];
-            context = `The student said: "${current.original}"\nThe correction is: "${current.correct}"\nThe student answers: "${message}"\n\n`;
-            context += next
-                ? `If correct say "✅ Correct!" then ask: "${next.original}". If wrong say "❌ Almost! The correct form is: ${current.correct}" then ask: "${next.original}".`
-                : `This is the last tip. After validating, say "🎉 All tips completed! Great job!"`;
+            const nextPhrase = next ? `If correct, respond "✅ Correct!" then present this next phrase: "${next.original}".` : `If correct, respond "✅ Correct! This was the last tip — 🎉 All tips completed! Great job!"`;
+            context = `The student said: "${current.original}"\nThe correction is: "${current.correct}"\nThe student answers: "${message}"\n\nValidate. ${nextPhrase}\nIf wrong, respond "❌ Almost! The correct form is: ${current.correct}. Try again." and wait for the student to try once more. Do NOT present a new tip until they get it right.`;
         }
     } else {
         // Modo conversación normal: pasar historial reciente
@@ -864,14 +862,16 @@ async function teacherChat(body, intent = 'teacher') {
             const data = await response.json();
             const texto = data.choices?.[0]?.message?.content || '';
 
-            // Tras validación del quiz: marcar el tip actual como completado
+            // Tras validación del quiz: marcar como completado solo si acertó
             if (intent === 'teacher_review' && texto && reviewAnswered && flatTips.length > 0) {
-                try {
-                    await supabase.from('teacher_review').insert({
-                        user_id: userId,
-                        tip_key: flatTips[0].key
-                    });
-                } catch (_) {}
+                if (texto.includes('✅')) {
+                    try {
+                        await supabase.from('teacher_review').insert({
+                            user_id: userId,
+                            tip_key: flatTips[0].key
+                        });
+                    } catch (_) {}
+                }
             }
 
             // Guardar respuesta de la IA (solo en modo conversación)

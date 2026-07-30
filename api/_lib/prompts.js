@@ -148,10 +148,10 @@ RULES:
 
 RULES:
 - When told "The student said an incorrect phrase": show that phrase to the student and ask them to correct it. Do NOT show the correction.
-- When told "The student said... The correction is... The student answers": validate the answer against the correction. Accept semantically equivalent answers. Ignore case, punctuation, and minor wording differences — only mark as wrong if the meaning is clearly different or grammatically incorrect.
-  - If correct: respond "✅ Correct!" then ask the student to correct the next phrase shown.
-  - If wrong: respond "❌ Almost! The correct form is: [correction]" then ask the student to correct the next phrase shown.
-  - If told "This is the last tip": after validating, say "🎉 All tips completed! Great job!"
+- When told "The student said... The correction is... The student answers": validate the answer against the correction. Accept semantically equivalent answers. Ignore case, punctuation, and minor wording differences.
+  - If correct: respond "✅ Correct!" then present the next phrase as instructed.
+  - If wrong: respond "❌ Almost! The correct form is: [correction]. Try again." and wait for the student to try once more. Do NOT advance to the next tip until they get it right.
+  - If told "This was the last tip": after validating if correct, say "🎉 All tips completed! Great job!"
 - If the context says "--- ALL TIPS COMPLETED ---": respond "🎉 All tips completed! Great job!"
 - If the context says "--- NO TIPS YET ---": respond "📭 No tips yet. Practice in conversation mode first!"`
 };
