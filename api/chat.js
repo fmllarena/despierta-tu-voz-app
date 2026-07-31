@@ -738,20 +738,21 @@ async function teacherChat(body, intent = 'teacher') {
     let context = '';
 
     if (intent === 'teacher_review') {
-        // 1. Obtener tips guardados de días anteriores
+        // 1. Obtener tips guardados de días anteriores (más reciente primero)
         const { data: savedTips } = await supabase.from('teacher')
             .select('content, created_at')
             .eq('user_id', userId)
             .eq('role', 'tips_diarios')
-            .order('created_at', { ascending: true });
+            .order('created_at', { ascending: false });
 
         // 2. Extraer tips de la conversación de hoy
         newTips = await extractDailyTips(supabase, userId);
 
         // 3. Construir pool: solo tips parseables, dedup por frase original normalizada
+        //    Primero los de hoy (newTips), luego los guardados de más reciente a más antiguo
         const candidateLines = [];
-        (savedTips || []).forEach(t => t.content.split('\n').forEach(l => candidateLines.push(l)));
         (newTips || []).forEach(l => candidateLines.push(l));
+        (savedTips || []).forEach(t => t.content.split('\n').forEach(l => candidateLines.push(l)));
 
         const byKey = new Map();
         for (const line of candidateLines) {
