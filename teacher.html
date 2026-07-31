@@ -87,6 +87,24 @@
         .topic-sug button:hover { background: #2c6b9e; color: #fff; border-color: #2c6b9e; }
         body.dark-mode .topic-sug button { background: #1a2d45; border-color: #2a4565; color: #6ba4d6; }
         body.dark-mode .topic-sug button:hover { background: #2c6b9e; color: #fff; border-color: #2c6b9e; }
+
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); display: flex; align-items: center; justify-content: center; z-index: 100; }
+        .modal-box { background: #fff; border-radius: 14px; padding: 18px; width: 90%; max-width: 420px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .modal-header h3 { font-size: 1rem; color: #2c6b9e; margin: 0; }
+        .modal-close { background: transparent; border: none; font-size: 1.4rem; cursor: pointer; color: #888; }
+        .modal-textarea { width: 100%; padding: 10px; border: 2px solid #d0ddea; border-radius: 10px; font-size: 0.95rem; font-family: inherit; outline: none; resize: vertical; box-sizing: border-box; }
+        .modal-textarea:focus { border-color: #2c6b9e; }
+        .modal-actions { display: flex; gap: 8px; margin-top: 12px; align-items: center; }
+        .modal-btn { padding: 8px 14px; border: 1px solid #ccc; border-radius: 8px; background: #f0f5fa; color: #333; cursor: pointer; font-family: inherit; font-size: 0.85rem; }
+        .modal-btn.primary { background: #2c6b9e; color: #fff; border-color: #2c6b9e; }
+        .modal-btn.primary:hover { background: #245a86; }
+        .arrow-btn { font-size: 1.1rem; background: #e8f0fe; border-color: #d0ddea; color: #2c6b9e; }
+        body.dark-mode .modal-box { background: #15273d; }
+        body.dark-mode .modal-header h3 { color: #6ba4d6; }
+        body.dark-mode .modal-textarea { background: #1a2d45; border-color: #2a4565; color: #d4d4dc; }
+        body.dark-mode .modal-btn { background: #1a2d45; border-color: #2a4565; color: #d4d4dc; }
+        body.dark-mode .arrow-btn { background: #1a2d45; border-color: #2a4565; color: #6ba4d6; }
     </style>
 </head>
 <body>
@@ -144,6 +162,22 @@
                 </div>
                 <div id="tipsPanelBody" class="tips-panel-body">
                     <p style="color:#888;text-align:center;padding:20px;">Haz clic en "Listado de tips" para verlos.</p>
+                </div>
+            </div>
+
+            <div id="addTipModal" class="modal-overlay" style="display:none;">
+                <div class="modal-box">
+                    <div class="modal-header">
+                        <h3>✏️ Nuevo tip</h3>
+                        <button id="closeAddTipModal" class="modal-close">&times;</button>
+                    </div>
+                    <textarea id="tipInput" class="modal-textarea" rows="3" spellcheck="false"></textarea>
+                    <div class="modal-actions">
+                        <button id="tipArrowBtn" class="modal-btn arrow-btn">→</button>
+                        <span style="flex:1;"></span>
+                        <button id="saveTipBtn" class="modal-btn primary">Guardar</button>
+                        <button id="cancelAddTipBtn" class="modal-btn">Cancelar</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -236,14 +270,45 @@
         enviar();
     };
 
-    $('addTipBtn').onclick = async () => {
-        const tip = prompt('✏️ Escribe el tip (ej: "I go → I\'ll go"):');
-        if (!tip || !tip.trim()) return;
+    $('addTipBtn').onclick = () => {
+        const input = $('tipInput');
+        input.value = '🎯 Tip: ';
+        input.focus();
+        input.setSelectionRange(input.value.length, input.value.length);
+        $('addTipModal').style.display = 'flex';
+    };
+
+    const closeAddTipModal = () => { $('addTipModal').style.display = 'none'; };
+    $('closeAddTipModal').onclick = closeAddTipModal;
+    $('cancelAddTipBtn').onclick = closeAddTipModal;
+    $('addTipModal').onclick = (e) => { if (e.target === $('addTipModal')) closeAddTipModal(); };
+
+    $('tipArrowBtn').onclick = () => {
+        const input = $('tipInput');
+        const start = input.selectionStart || 0;
+        const end = input.selectionEnd || 0;
+        const prefix = input.value.slice(0, start);
+        const suffix = input.value.slice(end);
+        input.value = prefix + '→' + suffix;
+        input.focus();
+        input.setSelectionRange(start + 1, start + 1);
+    };
+
+    $('saveTipBtn').onclick = async () => {
+        let tip = $('tipInput').value.trim();
+        if (!tip) return;
+        tip = tip.replace(/^(🎯\s*)?Tip:\s*/i, '');
+        tip = '🎯 Tip: ' + tip;
+        if (!tip.includes('→')) {
+            alert('Añade la flecha → para separar la frase original de la corrección.');
+            return;
+        }
+        closeAddTipModal();
         try {
             const res = await fetch('/api/chat', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ intent: 'add_teacher_tip', userId, tip: tip.trim() })
+                body: JSON.stringify({ intent: 'add_teacher_tip', userId, tip })
             });
             const data = await res.json();
             if (data.error) throw new Error(data.details || data.error);

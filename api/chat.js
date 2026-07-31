@@ -660,7 +660,7 @@ async function addTeacherTip(body) {
         user_id: userId,
         role: 'tips_diarios',
         content: tip
-    }).maybeSingle();
+    });
 
     return { success: true };
 }
