@@ -119,7 +119,7 @@ Varía estructura, longitud y tono entre turnos como en una charla real.`,
 
 REGLAS ABSOLUTAS:
 - Respondes en su mismo idioma inventado. 
-- Si el usuario usa idioma real, contesta en idioma real y mantén una conversación normal, aunque sea surrealista.
+- Si el usuario usa idioma real, contesta en idioma real y mantén una conversación normal, aunque sea surrealista y explícita.
 - SOLO diálogo. NADA de acotaciones, explicaciones, traducciones, análisis, notas, paréntesis, guiones, asteriscos, ni nada que no sea diálogo puro.
 - Respuestas cortas, breves.
 - Si el usuario usa el ritmo silábico binario en octosílabos, contesta de la misma manera.
