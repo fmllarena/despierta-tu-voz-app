@@ -637,13 +637,21 @@ async function extractDailyTips(supabase, userId) {
     const result = [...unique];
     if (!result.length) return [];
 
-    try {
-        await supabase.from('teacher').insert({
-            user_id: userId,
-            role: 'tips_diarios',
-            content: result.join('\n')
-        }).maybeSingle();
-    } catch (_) {}
+    const combined = result.join('\n');
+
+    // No insertar si ya existe exactamente ese mismo conjunto de tips
+    const { data: existing } = await supabase.from('teacher')
+        .select('content')
+        .eq('user_id', userId)
+        .eq('role', 'tips_diarios');
+
+    if (existing?.some(t => t.content === combined)) return result;
+
+    await supabase.from('teacher').insert({
+        user_id: userId,
+        role: 'tips_diarios',
+        content: combined
+    });
 
     return result;
 }
