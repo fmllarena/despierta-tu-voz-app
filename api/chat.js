@@ -653,8 +653,9 @@ function isGoodTip(original, correct) {
 /**
  * Extrae tips de un mensaje del profesor soportando los distintos formatos:
  *  - "🎯 Tip: X → Y" (una línea)
- *  - "1. *X* → *Y*" (listas numeradas, con o sin cabecera "Tips for review")
+ *  - "1. *X* → *Y* (more natural...)" (listas de correcciones)
  *  - "Instead of X, say: Y" (Y en la misma línea o en las siguientes)
+ * Filtra las conexiones temáticas que la IA también escribe con → (no son correcciones).
  */
 function extractTipsFromContent(content) {
     const tips = [];
@@ -665,17 +666,24 @@ function extractTipsFromContent(content) {
 
         // A) "X → Y" en una sola línea
         if (line.includes('→')) {
+            // Rechazar conexiones temáticas ("Now: ...", "→ ties to", "→ matches", "→ like")
+            if (/Now:/.test(line) || /→\s*(ties to|matches|like)\b/i.test(line)) continue;
             const idx = line.indexOf('→');
             // Descartar si la → va entre comillas (texto explicativo, ej: "→")
             const prevCh = line[idx - 1];
             const nextCh = line[idx + 1];
             if (prevCh !== '"' && prevCh !== '“' && prevCh !== "'"
                 && nextCh !== '"' && nextCh !== '“' && nextCh !== "'") {
-                const original = extractPhrase(line.slice(0, idx)) || cleanTipText(line.slice(0, idx));
-                const correct = extractPhrase(line.slice(idx + 1)) || cleanTipText(line.slice(idx + 1));
-                if (isGoodTip(original, correct)) {
-                    tips.push({ original, correct });
-                    continue;
+                // Sin marcador 🎯/Tip:, exigir que la explicación indique corrección
+                const hasMarker = line.includes('🎯') || /Tip:/i.test(line);
+                const isCorrection = /(more natural|correct|spelling|grammar|singular|plural|pronoun|preposition|tense|refined|misspell|word choice|verb form|idiomatic)/i.test(line.slice(idx + 1));
+                if (hasMarker || isCorrection) {
+                    const original = stripMd(extractPhrase(line.slice(0, idx)) || cleanTipText(line.slice(0, idx)));
+                    const correct = stripMd(extractPhrase(line.slice(idx + 1)) || cleanTipText(line.slice(idx + 1)));
+                    if (isGoodTip(original, correct)) {
+                        tips.push({ original, correct });
+                        continue;
+                    }
                 }
             }
         }
@@ -685,7 +693,7 @@ function extractTipsFromContent(content) {
             const sayIdx = line.toLowerCase().lastIndexOf('say:');
             if (sayIdx !== -1) {
                 const afterInstead = line.replace(/^.*?Instead of\s*/i, '');
-                const original = extractPhrase(afterInstead);
+                const original = stripMd(extractPhrase(afterInstead));
                 if (original) {
                     let correct = extractPhrase(line.slice(sayIdx + 4));
                     if (!correct) {
@@ -696,12 +704,18 @@ function extractTipsFromContent(content) {
                             if (correct) break;
                         }
                     }
+                    correct = stripMd(correct);
                     if (isGoodTip(original, correct)) tips.push({ original, correct });
                 }
             }
         }
     }
     return tips;
+}
+
+/** Quita restos de markdown (asteriscos, tildes) de una frase extraída */
+function stripMd(s) {
+    return s ? s.replace(/[*~]/g, '').trim() : s;
 }
 
 function tipsToLines(tips) {
