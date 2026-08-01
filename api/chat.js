@@ -618,6 +618,96 @@ function normalizeTipKey(s) {
     return (s || '').replace(/["""]/g, '').trim().toLowerCase();
 }
 
+/** Devuelve el segmento entre comillas de un texto (dobles primero; comillas simples solo si la apertura no sigue a una letra) */
+function extractPhrase(text) {
+    const m = text.match(/[""“”]([^""“”]{1,200})[""“”]/);
+    if (m) return m[1].trim();
+    const s = text.match(/(^|[^a-zA-Z0-9])['’]([^'’]{1,200})['’]/);
+    return s ? s[2].trim() : null;
+}
+
+/** Limpia el texto antes de →: quita marcadores, numeración, comillas, asteriscos y conectores */
+function cleanTipText(s) {
+    return s
+        .replace(/^.*?Tip:?\s*/i, '')
+        .replace(/^\d+[.)]\s*/, '')
+        .replace(/[“”""''*✅❌]/g, '')
+        .replace(/^(Also|And|So|But|Finally|Then|However|Earlier,)[,\s]+\s*/i, '')
+        .replace(/^[\s#*-]+/, '')
+        .replace(/\s*\(.*\)\s*$/, '')
+        .trim()
+        .replace(/\s+/g, ' ');
+}
+
+function isGoodTip(original, correct) {
+    if (!(original && correct)) return false;
+    if (original.length < 2 || correct.length < 2) return false;
+    if (original.length > 200 || correct.length > 200) return false;
+    // Descartar cadenas tipo "Grip → Flow → ..." (no son correcciones)
+    if (correct.includes('→')) return false;
+    // Descartar cuando original y corrección son iguales
+    if (normalizeTipKey(original) === normalizeTipKey(correct)) return false;
+    return true;
+}
+
+/**
+ * Extrae tips de un mensaje del profesor soportando los distintos formatos:
+ *  - "🎯 Tip: X → Y" (una línea)
+ *  - "1. *X* → *Y*" (listas numeradas, con o sin cabecera "Tips for review")
+ *  - "Instead of X, say: Y" (Y en la misma línea o en las siguientes)
+ */
+function extractTipsFromContent(content) {
+    const tips = [];
+    const lines = (content || '').split('\n').map(l => l.trim());
+    for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+        if (!line) continue;
+
+        // A) "X → Y" en una sola línea
+        if (line.includes('→')) {
+            const idx = line.indexOf('→');
+            // Descartar si la → va entre comillas (texto explicativo, ej: "→")
+            const prevCh = line[idx - 1];
+            const nextCh = line[idx + 1];
+            if (prevCh !== '"' && prevCh !== '“' && prevCh !== "'"
+                && nextCh !== '"' && nextCh !== '“' && nextCh !== "'") {
+                const original = extractPhrase(line.slice(0, idx)) || cleanTipText(line.slice(0, idx));
+                const correct = extractPhrase(line.slice(idx + 1)) || cleanTipText(line.slice(idx + 1));
+                if (isGoodTip(original, correct)) {
+                    tips.push({ original, correct });
+                    continue;
+                }
+            }
+        }
+
+        // B) "Instead of X, say: Y" — requiere "say:" cerca (si no, es prosa)
+        if (/Instead of/i.test(line)) {
+            const sayIdx = line.toLowerCase().lastIndexOf('say:');
+            if (sayIdx !== -1) {
+                const afterInstead = line.replace(/^.*?Instead of\s*/i, '');
+                const original = extractPhrase(afterInstead);
+                if (original) {
+                    let correct = extractPhrase(line.slice(sayIdx + 4));
+                    if (!correct) {
+                        for (let j = i + 1; j < lines.length && j < i + 4; j++) {
+                            const nl = lines[j];
+                            if (!nl) continue;
+                            correct = extractPhrase(nl);
+                            if (correct) break;
+                        }
+                    }
+                    if (isGoodTip(original, correct)) tips.push({ original, correct });
+                }
+            }
+        }
+    }
+    return tips;
+}
+
+function tipsToLines(tips) {
+    return tips.map(t => `🎯 Tip: ${t.original} → ${t.correct}`);
+}
+
 async function extractDailyTips(supabase, userId) {
     const { data: messages } = await supabase.from('teacher')
         .select('content')
@@ -630,8 +720,8 @@ async function extractDailyTips(supabase, userId) {
 
     const unique = new Set();
     for (const m of messages) {
-        for (const line of m.content.split('\n')) {
-            if (parseTipLine(line)) unique.add(line.trim());
+        for (const t of extractTipsFromContent(m.content)) {
+            unique.add(`🎯 Tip: ${t.original} → ${t.correct}`);
         }
     }
     const result = [...unique];
@@ -698,9 +788,7 @@ async function getTeacherTips(body) {
 
         const allTips = [];
         for (const m of (allMessages || [])) {
-            for (const line of m.content.split('\n')) {
-                if (parseTipLine(line)) allTips.push(line.trim());
-            }
+            allTips.push(...tipsToLines(extractTipsFromContent(m.content)));
         }
 
         if (allTips.length > 0) {
