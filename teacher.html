@@ -89,8 +89,9 @@
         body.dark-mode .topic-sug button:hover { background: #2c6b9e; color: #fff; border-color: #2c6b9e; }
 
         .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); display: flex; align-items: center; justify-content: center; z-index: 100; }
-        .modal-box { background: #fff; border-radius: 14px; padding: 18px; width: 90%; max-width: 420px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
-        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .modal-box { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #fff; border-radius: 14px; padding: 18px; width: 90%; max-width: 420px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; cursor: grab; user-select: none; -webkit-user-select: none; }
+        .modal-header:active { cursor: grabbing; }
         .modal-header h3 { font-size: 1rem; color: #2c6b9e; margin: 0; }
         .modal-close { background: transparent; border: none; font-size: 1.4rem; cursor: pointer; color: #888; }
         .modal-textarea { width: 100%; padding: 10px; border: 2px solid #d0ddea; border-radius: 10px; font-size: 0.95rem; font-family: inherit; outline: none; resize: vertical; box-sizing: border-box; }
@@ -282,6 +283,31 @@
     $('closeAddTipModal').onclick = closeAddTipModal;
     $('cancelAddTipBtn').onclick = closeAddTipModal;
     $('addTipModal').onclick = (e) => { if (e.target === $('addTipModal')) closeAddTipModal(); };
+
+    // Modal arrastrable por la cabecera
+    const tipModalBox = $('addTipModal').querySelector('.modal-box');
+    const tipModalHeader = tipModalBox.querySelector('.modal-header');
+    let tipDragging = false, tipStartX = 0, tipStartY = 0, tipLeft = 0, tipTop = 0;
+
+    tipModalHeader.addEventListener('mousedown', (e) => {
+        if (e.target.closest('button')) return;
+        tipDragging = true;
+        const rect = tipModalBox.getBoundingClientRect();
+        tipStartX = e.clientX; tipStartY = e.clientY;
+        tipLeft = rect.left; tipTop = rect.top;
+        tipModalBox.style.transform = 'none';
+        tipModalBox.style.left = tipLeft + 'px';
+        tipModalBox.style.top = tipTop + 'px';
+        e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', (e) => {
+        if (!tipDragging) return;
+        tipModalBox.style.left = (tipLeft + e.clientX - tipStartX) + 'px';
+        tipModalBox.style.top = (tipTop + e.clientY - tipStartY) + 'px';
+    });
+
+    document.addEventListener('mouseup', () => { tipDragging = false; });
 
     $('tipArrowBtn').onclick = () => {
         const input = $('tipInput');
