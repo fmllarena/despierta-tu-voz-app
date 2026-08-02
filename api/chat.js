@@ -835,7 +835,8 @@ async function teacherChat(body, intent = 'teacher') {
         await supabase.from('teacher').insert({
             user_id: userId,
             role: 'user',
-            content: message
+            content: message,
+            mode: pureChat ? 'pure_chat' : 'chat'
         }).maybeSingle();
     }
 
@@ -927,6 +928,7 @@ async function teacherChat(body, intent = 'teacher') {
             .select('role, content, created_at')
             .eq('user_id', userId)
             .neq('role', 'tips_diarios')
+            .neq('mode', 'pure_chat')
             .order('created_at', { ascending: false })
             .limit(50);
 
@@ -994,7 +996,8 @@ async function teacherChat(body, intent = 'teacher') {
                 await supabase.from('teacher').insert({
                     user_id: userId,
                     role: 'assistant',
-                    content: texto
+                    content: texto,
+                    mode: pureChat ? 'pure_chat' : 'chat'
                 }).maybeSingle();
             }
 
