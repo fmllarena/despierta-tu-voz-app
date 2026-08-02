@@ -423,7 +423,7 @@
                 body: JSON.stringify({
                     intent: pendingIntent,
                     message: texto,
-                    history: history.slice(-20),
+                    history: history.slice(-50),
                     userId,
                     pureChat: document.getElementById('pureChat').checked
                 })

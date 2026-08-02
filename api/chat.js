@@ -928,7 +928,7 @@ async function teacherChat(body, intent = 'teacher') {
             .eq('user_id', userId)
             .neq('role', 'tips_diarios')
             .order('created_at', { ascending: false })
-            .limit(20);
+            .limit(50);
 
         if (recentMessages?.length > 0) {
             const historial = recentMessages.reverse().map(m =>
