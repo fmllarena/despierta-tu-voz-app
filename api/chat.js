@@ -922,7 +922,21 @@ async function teacherChat(body, intent = 'teacher') {
             const nextPhrase = next ? `If correct, respond "✅ Correct!" then present this next phrase: "${next.original}".` : `If correct, respond "✅ Correct! This was the last tip — 🎉 All tips completed! Great job!"`;
             context = `The student said: "${current.original}"\nThe correction is: "${current.correct}"\nThe student answers: "${message}"\n\nValidate. ${nextPhrase}\nIf wrong, respond "❌ Almost! The correct form is: ${current.correct}. Try again." and wait for the student to try once more. Do NOT present a new tip until they get it right.`;
         }
-    } else if (!pureChat) {
+    } else if (pureChat) {
+        // Modo "Solo conversar": memoria desde la tabla teacher_pure_chat
+        const { data: recentMessages } = await supabase.from('teacher_pure_chat')
+            .select('role, content, created_at')
+            .eq('user_id', userId)
+            .order('created_at', { ascending: false })
+            .limit(50);
+
+        if (recentMessages?.length > 0) {
+            const historial = recentMessages.reverse().map(m =>
+                `[${m.role === 'user' ? 'Person' : 'AI'}] ${m.content}`
+            ).join('\n');
+            context = `--- CONVERSATION HISTORY (free chat) ---\n${historial}\n\nUse this history as your memory of what was talked about. Reference it naturally if relevant, but do NOT recap everything.\n`;
+        }
+    } else {
         // Modo conversación normal: pasar historial reciente
         const { data: recentMessages } = await supabase.from('teacher')
             .select('role, content, created_at')
