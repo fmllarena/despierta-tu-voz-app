@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Historial Profesor - Despierta tu Voz</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Outfit', sans-serif; background: #f5f2ed; color: #333; min-height: 100vh; }
+
+        .container { max-width: 1000px; margin: 0 auto; padding: 20px; }
+
+        .login-section {
+            max-width: 380px; margin: 60px auto; padding: 30px;
+            background: rgba(255,255,255,0.95); border-radius: 24px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.1); text-align: center;
+        }
+        .login-section h1 { color: #8e7d6d; margin-bottom: 10px; font-size: 1.6rem; }
+        .login-section input { width: 100%; padding: 14px; border: 2px solid #eee; border-radius: 12px; font-size: 1rem; outline: none; font-family: inherit; margin-bottom: 10px; }
+        .login-section input:focus { border-color: #8e7d6d; }
+        .login-error { color: #e74c3c; font-size: 0.85rem; min-height: 1.5em; margin-top: 8px; }
+
+        .dashboard { display: none; }
+        .dash-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px; }
+        .dash-header h2 { color: #8e7d6d; }
+        .logout-btn { background: transparent; border: 1px solid #e74c3c; color: #e74c3c; padding: 6px 16px; border-radius: 8px; cursor: pointer; font-family: inherit; font-size: 0.85rem; }
+        .logout-btn:hover { background: #e74c3c; color: #fff; }
+
+        .panel {
+            background: rgba(255,255,255,0.95); border-radius: 20px; padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08); margin-bottom: 20px;
+        }
+        .panel h3 { color: #8e7d6d; margin-bottom: 15px; }
+
+        .fila { display: flex; gap: 12px; margin-bottom: 15px; flex-wrap: wrap; align-items: flex-end; }
+        .fila .campo { flex: 1; min-width: 150px; }
+        .fila label { display: block; font-size: 0.8rem; font-weight: 600; color: #666; margin-bottom: 4px; }
+        .fila input, .fila select { width: 100%; padding: 10px 12px; border: 2px solid #eee; border-radius: 10px; font-size: 0.93rem; outline: none; font-family: inherit; }
+        .fila input:focus, .fila select:focus { border-color: #8e7d6d; }
+
+        .main-btn {
+            background: #8e7d6d; color: #fff; border: none; padding: 10px 22px;
+            border-radius: 12px; font-size: 0.93rem; font-family: inherit; cursor: pointer; white-space: nowrap;
+        }
+        .main-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(142,125,109,0.3); }
+        .main-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+        .result-count { font-size: 0.85rem; color: #888; margin-bottom: 12px; }
+        .msg-card {
+            padding: 14px 16px; border-radius: 12px; margin-bottom: 8px;
+            border-left: 4px solid #8e7d6d; background: #faf8f4;
+        }
+        .msg-card .meta { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; font-size: 0.8rem; flex-wrap: wrap; gap: 6px; }
+        .msg-card .fecha { color: #aaa; }
+        .msg-card .emisor-tag { padding: 2px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 600; }
+        .msg-card .emisor-usuario { background: #e8f0fe; color: #1a73e8; }
+        .msg-card .emisor-ia { background: #e6f7e6; color: #2e7d32; }
+        .msg-card .emisor-tips { background: #fdf1dc; color: #b26a00; }
+        .msg-card .texto { font-size: 0.93rem; line-height: 1.5; white-space: pre-wrap; word-break: break-word; }
+        .msg-card .texto .highlight { background: #fff3cd; padding: 1px 3px; border-radius: 3px; }
+        .msg-card .texto-truncado { max-height: 80px; overflow: hidden; position: relative; cursor: pointer; }
+        .msg-card .texto-truncado::after { content: '... ver más'; position: absolute; bottom: 0; right: 0; background: #faf8f4; padding: 0 6px; font-size: 0.8rem; color: #8e7d6d; }
+        .msg-card .texto-truncado.expandido { max-height: none; }
+        .msg-card .texto-truncado.expandido::after { content: none; }
+
+        .sin-resultados { text-align: center; padding: 40px 20px; color: #aaa; }
+
+        .loading-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.3); display: none; align-items: center; justify-content: center; z-index: 100; }
+        .spinner { width: 48px; height: 48px; border: 4px solid #ddd; border-top-color: #8e7d6d; border-radius: 50%; animation: spin 0.8s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+    /* ===== Dark Mode ===== */
+    body.dark-mode { background: #12121e; color: #d4d4dc; }
+    body.dark-mode .login-section { background: rgba(28,28,48,0.95); box-shadow: 0 20px 50px rgba(0,0,0,0.4); }
+    body.dark-mode .login-section input { background: #26263d; border-color: #2e2e48; color: #d4d4dc; }
+    body.dark-mode .panel { background: rgba(28,28,48,0.95); box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
+    body.dark-mode .panel h3 { color: #a89b8a; }
+    body.dark-mode .fila input,
+    body.dark-mode .fila select { background: #26263d; border-color: #2e2e48; color: #d4d4dc; }
+    body.dark-mode .fila label { color: #aaa; }
+    body.dark-mode .main-btn:hover { box-shadow: 0 8px 25px rgba(142,125,109,0.15); }
+    body.dark-mode .result-count { color: #999; }
+    body.dark-mode .msg-card { background: #23233a; border-left-color: #a89b8a; }
+    body.dark-mode .msg-card .fecha { color: #777; }
+    body.dark-mode .msg-card .emisor-usuario { background: #1a2a4a; color: #6ba4ff; }
+    body.dark-mode .msg-card .emisor-ia { background: #1a2e1a; color: #4caf50; }
+    body.dark-mode .msg-card .emisor-tips { background: #2e2a1a; color: #e0a64c; }
+    body.dark-mode .msg-card .texto .highlight { background: #5a4a30; }
+    body.dark-mode .msg-card .texto-truncado::after { background: #23233a; color: #a89b8a; }
+    body.dark-mode .sin-resultados { color: #666; }
+    body.dark-mode .spinner { border-color: #2e2e48; border-top-color: #8e7d6d; }
+    body.dark-mode .orden-btn { background: #26263d !important; border-color: #2e2e48 !important; color: #d4d4dc !important; }
+    body.dark-mode .dash-header h2 { color: #d4d4dc; }
+    body.dark-mode .loading-overlay { background: rgba(0,0,0,0.5); }
+    body.dark-mode .login-section h1 { color: #a89b8a; }
+    body.dark-mode .login-error { color: #ff6b6b; }
+    @media (prefers-color-scheme: dark) {
+        body:not(.light-mode) { background: #12121e; color: #d4d4dc; }
+        body:not(.light-mode) .login-section { background: rgba(28,28,48,0.95); }
+        body:not(.light-mode) .login-section input { background: #26263d; border-color: #2e2e48; color: #d4d4dc; }
+        body:not(.light-mode) .panel { background: rgba(28,28,48,0.95); }
+        body:not(.light-mode) .panel h3 { color: #a89b8a; }
+        body:not(.light-mode) .fila input,
+        body:not(.light-mode) .fila select { background: #26263d; border-color: #2e2e48; color: #d4d4dc; }
+        body:not(.light-mode) .fila label { color: #aaa; }
+        body:not(.light-mode) .msg-card { background: #23233a; border-left-color: #a89b8a; }
+        body:not(.light-mode) .msg-card .fecha { color: #777; }
+        body:not(.light-mode) .msg-card .emisor-usuario { background: #1a2a4a; color: #6ba4ff; }
+        body:not(.light-mode) .msg-card .emisor-ia { background: #1a2e1a; color: #4caf50; }
+        body:not(.light-mode) .msg-card .emisor-tips { background: #2e2a1a; color: #e0a64c; }
+        body:not(.light-mode) .msg-card .texto .highlight { background: #5a4a30; }
+        body:not(.light-mode) .msg-card .texto-truncado::after { background: #23233a; color: #a89b8a; }
+        body:not(.light-mode) .sin-resultados { color: #666; }
+        body:not(.light-mode) .spinner { border-color: #2e2e48; border-top-color: #8e7d6d; }
+        body:not(.light-mode) .loading-overlay { background: rgba(0,0,0,0.5); }
+        body:not(.light-mode) .login-section h1 { color: #a89b8a; }
+        body:not(.light-mode) .login-error { color: #ff6b6b; }
+        body:not(.light-mode) .dash-header h2 { color: #d4d4dc; }
+    }
+    </style>
+</head>
+<body>
+<div class="container" id="app">
+    <div id="loginSection" class="login-section">
+        <h1>Historial del Profesor</h1>
+        <p>Consulta las conversaciones con tu profesor de inglés.</p>
+        <input type="email" id="loginEmail" placeholder="Email" value="fernando@despiertatuvoz.com">
+        <input type="password" id="loginPassword" placeholder="Contraseña">
+        <div class="login-error" id="loginError"></div>
+        <button id="loginBtn" class="main-btn" style="width:100%;margin-top:5px;">Entrar</button>
+    </div>
+
+    <div id="dashboard" class="dashboard">
+        <div class="dash-header">
+            <h2>📜 Historial del Profesor</h2>
+            <div style="display:flex;gap:8px;">
+                <button id="darkToggle" style="background:transparent;border:1px solid #8e7d6d;color:#8e7d6d;padding:6px 12px;border-radius:8px;cursor:pointer;font-size:1rem;font-family:inherit;" title="Modo oscuro">🌙</button>
+                <button id="logoutBtn" class="logout-btn">Cerrar Sesión</button>
+            </div>
+        </div>
+
+        <div class="panel">
+            <h3>Filtros</h3>
+            <div class="fila">
+                <div class="campo">
+                    <label for="keyword">Palabra clave</label>
+                    <input type="text" id="keyword" placeholder="Buscar en los mensajes...">
+                </div>
+                <div class="campo">
+                    <label for="fechaDesde">Desde</label>
+                    <input type="date" id="fechaDesde">
+                </div>
+                <div class="campo">
+                    <label for="fechaHasta">Hasta</label>
+                    <input type="date" id="fechaHasta">
+                </div>
+                <div class="campo" style="flex:0 0 auto;">
+                    <label>Orden</label>
+                    <button id="ordenBtn" class="orden-btn" style="display:flex;align-items:center;gap:6px;padding:10px 14px;border:2px solid #eee;border-radius:10px;background:#fff;cursor:pointer;font-family:inherit;font-size:0.93rem;color:#666;width:100%;">↓ Más reciente</button>
+                </div>
+                <button id="buscarBtn" class="main-btn" style="align-self:flex-end;">Buscar</button>
+            </div>
+        </div>
+        <div class="panel" id="resultados">
+            <div class="sin-resultados">Introduce un texto o define un rango de fechas y haz clic en Buscar.</div>
+        </div>
+    </div>
+
+    <div id="loadingOverlay" class="loading-overlay">
+        <div class="spinner"></div>
+    </div>
+</div>
+
+<script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+
+    let sb;
+    let ascendente = false;
+
+    const $ = id => document.getElementById(id);
+    const setLoading = on => { $('loadingOverlay').style.display = on ? 'flex' : 'none'; };
+
+    async function init() {
+        const configRes = await fetch('/api/config');
+        const config = await configRes.json();
+
+        sb = createClient(config.url, config.key, { auth: { persistSession: false } });
+
+        const session = localStorage.getItem('sb-session');
+        if (session) {
+            await sb.auth.setSession(JSON.parse(session));
+            const { data: { user } } = await sb.auth.getUser();
+            if (user) {
+                $('loginSection').style.display = 'none';
+                $('dashboard').style.display = 'block';
+                initFechas();
+                return;
+            }
+        }
+    }
+
+    $('loginBtn').onclick = async () => {
+        const email = $('loginEmail').value.trim();
+        const password = $('loginPassword').value.trim();
+        if (!email || !password) { $('loginError').textContent = 'Completa ambos campos'; return; }
+        $('loginError').textContent = '';
+        const { data, error } = await sb.auth.signInWithPassword({ email, password });
+        if (error) { $('loginError').textContent = error.message; return; }
+        localStorage.setItem('sb-session', JSON.stringify(data.session));
+        $('loginSection').style.display = 'none';
+        $('dashboard').style.display = 'block';
+        initFechas();
+    };
+
+    $('logoutBtn').onclick = async () => {
+        await sb.auth.signOut();
+        localStorage.removeItem('sb-session');
+        $('dashboard').style.display = 'none';
+        $('loginSection').style.display = 'block';
+        $('loginPassword').value = '';
+    };
+
+    function initFechas() {
+        const hoy = new Date().toISOString().split('T')[0];
+        const mesAntes = new Date(Date.now() - 30*24*60*60*1000).toISOString().split('T')[0];
+        if (!$('fechaDesde').value) $('fechaDesde').value = mesAntes;
+        if (!$('fechaHasta').value) $('fechaHasta').value = hoy;
+    }
+
+    // ===== Toggle orden =====
+    $('ordenBtn').onclick = () => {
+        ascendente = !ascendente;
+        $('ordenBtn').innerHTML = ascendente ? '↑ Más antiguo' : '↓ Más reciente';
+    };
+
+    // ===== Búsqueda =====
+    $('buscarBtn').onclick = async () => {
+        const keyword = $('keyword').value.trim();
+        const desde = $('fechaDesde').value;
+        const hasta = $('fechaHasta').value;
+
+        if (!keyword && !desde && !hasta) { alert('Introduce un texto o especifica un rango de fechas.'); return; }
+
+        setLoading(true);
+        try {
+            const { data: { user } } = await sb.auth.getUser();
+            if (!user) { alert('Sesión no válida. Vuelve a iniciar sesión.'); return; }
+
+            let query = sb.from('teacher')
+                .select('role, content, created_at')
+                .eq('user_id', user.id)
+                .order('created_at', { ascending: ascendente })
+                .limit(500);
+
+            if (keyword) query = query.ilike('content', `%${keyword}%`);
+            if (desde) query = query.gte('created_at', desde);
+            if (hasta) query = query.lte('created_at', `${hasta}T23:59:59`);
+
+            const { data, error } = await query;
+            if (error) throw error;
+            renderMensajes(data || [], keyword);
+        } catch (e) {
+            $('resultados').innerHTML = `<div class="sin-resultados" style="color:#e74c3c;">Error: ${e.message}</div>`;
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    function renderMensajes(msgs, keyword) {
+        const cont = $('resultados');
+        if (!msgs.length) {
+            cont.innerHTML = '<div class="sin-resultados">No se encontraron mensajes.</div>';
+            return;
+        }
+        cont.innerHTML = `<div class="result-count">${msgs.length} mensajes encontrados</div>`;
+        cont.innerHTML += msgs.map(m => msgCard(m, keyword)).join('');
+    }
+
+    function renderMd(texto, keyword) {
+        let t = texto.replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c]);
+        t = t
+            .replace(/^#### (.+)$/gm, '<h4>$1</h4>')
+            .replace(/^### (.+)$/gm, '<h3>$1</h3>')
+            .replace(/^## (.+)$/gm, '<h2>$1</h2>')
+            .replace(/^# (.+)$/gm, '<h1>$1</h1>')
+            .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+            .replace(/__(.+?)__/g, '<strong>$1</strong>')
+            .replace(/\*(.+?)\*/g, '<em>$1</em>')
+            .replace(/_(.+?)_/g, '<em>$1</em>')
+            .replace(/`(.+?)`/g, '<code>$1</code>')
+            .replace(/\n/g, '<br>');
+        if (keyword) {
+            const re = new RegExp(`(${keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+            t = t.replace(re, '<span class="highlight">$1</span>');
+        }
+        return t;
+    }
+
+    function msgCard(m, keyword) {
+        let emisorCls, emisorLabel;
+        if (m.role === 'user') {
+            emisorCls = 'emisor-usuario';
+            emisorLabel = '👤 Alumno';
+        } else if (m.role === 'assistant') {
+            emisorCls = 'emisor-ia';
+            emisorLabel = '🤖 Profesor IA';
+        } else {
+            emisorCls = 'emisor-tips';
+            emisorLabel = '📌 Tips diarios';
+        }
+        const fecha = new Date(m.created_at).toLocaleString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+        const texto = renderMd(m.content || '', keyword);
+        return `<div class="msg-card">
+            <div class="meta">
+                <span class="emisor-tag ${emisorCls}">${emisorLabel}</span>
+                <span class="fecha">${fecha}</span>
+            </div>
+            <div class="texto texto-truncado" onclick="this.classList.toggle('expandido')">${texto}</div>
+        </div>`;
+    }
+
+    // ===== Dark Mode =====
+    function aplicarModoOscuro(oscuro) {
+        document.body.classList.toggle('dark-mode', oscuro);
+        $('darkToggle').textContent = oscuro ? '☀️' : '🌙';
+        localStorage.setItem('dark-mode', oscuro ? '1' : '0');
+    }
+    $('darkToggle').onclick = () => aplicarModoOscuro(!document.body.classList.contains('dark-mode'));
+    if (localStorage.getItem('dark-mode') === '1' || (localStorage.getItem('dark-mode') === null && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        aplicarModoOscuro(true);
+    }
+
+    // Enter en el campo clave
+    $('keyword').onkeydown = e => { if (e.key === 'Enter') $('buscarBtn').click(); };
+
+    init();
+</script>
+</body>
+</html>
