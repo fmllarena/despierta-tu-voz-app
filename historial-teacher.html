@@ -53,6 +53,7 @@
             border-left: 4px solid #8e7d6d; background: #faf8f4;
         }
         .msg-card .meta { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; font-size: 0.8rem; flex-wrap: wrap; gap: 6px; }
+        .msg-card .msg-num { font-weight: 700; color: #8e7d6d; }
         .msg-card .fecha { color: #aaa; }
         .msg-card .emisor-tag { padding: 2px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 600; }
         .msg-card .emisor-usuario { background: #e8f0fe; color: #1a73e8; }
@@ -299,7 +300,7 @@
             return;
         }
         cont.innerHTML = `<div class="result-count">${msgs.length} mensajes encontrados</div>`;
-        cont.innerHTML += msgs.map(m => msgCard(m, keyword)).join('');
+        cont.innerHTML += msgs.map((m, i) => msgCard(m, keyword, i + 1)).join('');
     }
 
     function renderMd(texto, keyword) {
@@ -322,7 +323,7 @@
         return t;
     }
 
-    function msgCard(m, keyword) {
+    function msgCard(m, keyword, idx) {
         let emisorCls, emisorLabel;
         if (m.role === 'user') {
             emisorCls = 'emisor-usuario';
@@ -338,6 +339,7 @@
         const texto = renderMd(m.content || '', keyword);
         return `<div class="msg-card" data-id="${m.id}">
             <div class="meta">
+                <span class="msg-num">#${idx}</span>
                 <span class="emisor-tag ${emisorCls}">${emisorLabel}</span>
                 <span class="fecha">${fecha}</span>
                 <button class="edit-btn" data-action="editar">✏️ Editar</button>
