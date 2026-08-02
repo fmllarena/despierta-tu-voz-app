@@ -832,11 +832,11 @@ async function teacherChat(body, intent = 'teacher') {
 
     // Guardar mensaje del usuario (solo en modo conversación)
     if (intent !== 'teacher_review') {
-        await supabase.from('teacher').insert({
+        const tabla = pureChat ? 'teacher_pure_chat' : 'teacher';
+        await supabase.from(tabla).insert({
             user_id: userId,
             role: 'user',
-            content: message,
-            mode: pureChat ? 'pure_chat' : 'chat'
+            content: message
         }).maybeSingle();
     }
 
@@ -928,7 +928,6 @@ async function teacherChat(body, intent = 'teacher') {
             .select('role, content, created_at')
             .eq('user_id', userId)
             .neq('role', 'tips_diarios')
-            .neq('mode', 'pure_chat')
             .order('created_at', { ascending: false })
             .limit(50);
 
@@ -993,11 +992,11 @@ async function teacherChat(body, intent = 'teacher') {
 
             // Guardar respuesta de la IA (solo en modo conversación)
             if (intent !== 'teacher_review') {
-                await supabase.from('teacher').insert({
+                const tabla = pureChat ? 'teacher_pure_chat' : 'teacher';
+                await supabase.from(tabla).insert({
                     user_id: userId,
                     role: 'assistant',
-                    content: texto,
-                    mode: pureChat ? 'pure_chat' : 'chat'
+                    content: texto
                 }).maybeSingle();
             }
 
