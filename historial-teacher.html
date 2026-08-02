@@ -387,7 +387,7 @@
 
         btn.disabled = true;
         try {
-            const res = await fetch('/api/teacher', {
+            const res = await fetch('/api/chat', {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ userId: user.id, messageId: card.dataset.id, content: nuevo })
