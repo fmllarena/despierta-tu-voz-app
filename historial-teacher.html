@@ -340,14 +340,14 @@
             <div class="meta">
                 <span class="emisor-tag ${emisorCls}">${emisorLabel}</span>
                 <span class="fecha">${fecha}</span>
-                <button class="edit-btn" onclick="editarMensaje(this)">✏️ Editar</button>
+                <button class="edit-btn" data-action="editar">✏️ Editar</button>
             </div>
-            <div class="texto texto-truncado" onclick="this.classList.toggle('expandido')">${texto}</div>
+            <div class="texto texto-truncado" data-action="expandir">${texto}</div>
             <div class="edit-area">
                 <textarea data-role="textarea">${escapeHtml(m.content || '')}</textarea>
                 <div class="edit-actions">
-                    <button class="edit-btn save-btn" onclick="guardarMensaje(this)">💾 Guardar</button>
-                    <button class="edit-btn cancel-btn" onclick="cancelarEdicion(this)">Cancelar</button>
+                    <button class="edit-btn save-btn" data-action="guardar">💾 Guardar</button>
+                    <button class="edit-btn cancel-btn" data-action="cancelar">Cancelar</button>
                 </div>
                 <div class="edit-status"></div>
             </div>
@@ -360,7 +360,8 @@
 
     function editarMensaje(btn) {
         const card = btn.closest('.msg-card');
-        card.querySelector('.texto').style.display = 'none';
+        const texto = card.querySelector('.texto');
+        texto.style.display = 'none';
         card.querySelector('.edit-area').style.display = 'block';
         btn.style.display = 'none';
         card.querySelector('[data-role="textarea"]').focus();
@@ -420,6 +421,17 @@
 
     // Enter en el campo clave
     $('keyword').onkeydown = e => { if (e.key === 'Enter') $('buscarBtn').click(); };
+
+    // ===== Event delegation (las funciones de módulo no son globales para onclick inline) =====
+    $('resultados').addEventListener('click', e => {
+        const btn = e.target.closest('[data-action]');
+        if (!btn) return;
+        const action = btn.dataset.action;
+        if (action === 'editar') editarMensaje(btn);
+        else if (action === 'guardar') guardarMensaje(btn);
+        else if (action === 'cancelar') cancelarEdicion(btn);
+        else if (action === 'expandir') btn.classList.toggle('expandido');
+    });
 
     init();
 </script>
