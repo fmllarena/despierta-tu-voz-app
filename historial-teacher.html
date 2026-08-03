@@ -28,6 +28,11 @@
         .logout-btn { background: transparent; border: 1px solid #e74c3c; color: #e74c3c; padding: 6px 16px; border-radius: 8px; cursor: pointer; font-family: inherit; font-size: 0.85rem; }
         .logout-btn:hover { background: #e74c3c; color: #fff; }
 
+        .tabs { display: flex; gap: 8px; margin-bottom: 20px; }
+        .tab { padding: 10px 20px; border-radius: 12px; cursor: pointer; font-family: inherit; font-size: 0.95rem; border: 2px solid #ddd; background: #fff; color: #666; transition: all 0.2s; }
+        .tab:hover { border-color: #8e7d6d; color: #8e7d6d; }
+        .tab.active { background: #8e7d6d; color: #fff; border-color: #8e7d6d; }
+
         .panel {
             background: rgba(255,255,255,0.95); border-radius: 20px; padding: 25px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.08); margin-bottom: 20px;
@@ -101,6 +106,9 @@
     body.dark-mode .fila input,
     body.dark-mode .fila select { background: #26263d; border-color: #2e2e48; color: #d4d4dc; }
     body.dark-mode .fila label { color: #aaa; }
+    body.dark-mode .tab { background: #1c1c30; border-color: #2e2e48; color: #999; }
+    body.dark-mode .tab:hover { border-color: #a89b8a; color: #a89b8a; }
+    body.dark-mode .tab.active { background: #8e7d6d; color: #fff; border-color: #8e7d6d; }
     body.dark-mode .main-btn:hover { box-shadow: 0 8px 25px rgba(142,125,109,0.15); }
     body.dark-mode .result-count { color: #999; }
     body.dark-mode .msg-card { background: #23233a; border-left-color: #a89b8a; }
@@ -128,6 +136,9 @@
         body:not(.light-mode) .fila input,
         body:not(.light-mode) .fila select { background: #26263d; border-color: #2e2e48; color: #d4d4dc; }
         body:not(.light-mode) .fila label { color: #aaa; }
+        body:not(.light-mode) .tab { background: #1c1c30; border-color: #2e2e48; color: #999; }
+        body:not(.light-mode) .tab:hover { border-color: #a89b8a; color: #a89b8a; }
+        body:not(.light-mode) .tab.active { background: #8e7d6d; color: #fff; border-color: #8e7d6d; }
         body:not(.light-mode) .msg-card { background: #23233a; border-left-color: #a89b8a; }
         body:not(.light-mode) .msg-card .fecha { color: #777; }
         body:not(.light-mode) .msg-card .emisor-usuario { background: #1a2a4a; color: #6ba4ff; }
@@ -166,30 +177,67 @@
             </div>
         </div>
 
-        <div class="panel">
-            <h3>Filtros</h3>
-            <div class="fila">
-                <div class="campo">
-                    <label for="keyword">Palabra clave</label>
-                    <input type="text" id="keyword" placeholder="Buscar en los mensajes...">
+        <div class="tabs">
+            <div class="tab active" data-tab="teacher">Teacher</div>
+            <div class="tab" data-tab="chat">Chat</div>
+        </div>
+
+        <!-- Pestaña: Teacher -->
+        <div id="tabTeacher">
+            <div class="panel">
+                <h3>Filtros</h3>
+                <div class="fila">
+                    <div class="campo">
+                        <label for="keyword">Palabra clave</label>
+                        <input type="text" id="keyword" placeholder="Buscar en los mensajes...">
+                    </div>
+                    <div class="campo">
+                        <label for="fechaDesde">Desde</label>
+                        <input type="date" id="fechaDesde">
+                    </div>
+                    <div class="campo">
+                        <label for="fechaHasta">Hasta</label>
+                        <input type="date" id="fechaHasta">
+                    </div>
+                    <div class="campo" style="flex:0 0 auto;">
+                        <label>Orden</label>
+                        <button id="ordenBtn" class="orden-btn" style="display:flex;align-items:center;gap:6px;padding:10px 14px;border:2px solid #eee;border-radius:10px;background:#fff;cursor:pointer;font-family:inherit;font-size:0.93rem;color:#666;width:100%;">↓ Más reciente</button>
+                    </div>
+                    <button id="buscarBtn" class="main-btn" style="align-self:flex-end;">Buscar</button>
                 </div>
-                <div class="campo">
-                    <label for="fechaDesde">Desde</label>
-                    <input type="date" id="fechaDesde">
-                </div>
-                <div class="campo">
-                    <label for="fechaHasta">Hasta</label>
-                    <input type="date" id="fechaHasta">
-                </div>
-                <div class="campo" style="flex:0 0 auto;">
-                    <label>Orden</label>
-                    <button id="ordenBtn" class="orden-btn" style="display:flex;align-items:center;gap:6px;padding:10px 14px;border:2px solid #eee;border-radius:10px;background:#fff;cursor:pointer;font-family:inherit;font-size:0.93rem;color:#666;width:100%;">↓ Más reciente</button>
-                </div>
-                <button id="buscarBtn" class="main-btn" style="align-self:flex-end;">Buscar</button>
+            </div>
+            <div class="panel" id="resultados">
+                <div class="sin-resultados">Introduce un texto o define un rango de fechas y haz clic en Buscar.</div>
             </div>
         </div>
-        <div class="panel" id="resultados">
-            <div class="sin-resultados">Introduce un texto o define un rango de fechas y haz clic en Buscar.</div>
+
+        <!-- Pestaña: Chat -->
+        <div id="tabChat" style="display:none;">
+            <div class="panel">
+                <h3>Filtros</h3>
+                <div class="fila">
+                    <div class="campo">
+                        <label for="keywordChat">Palabra clave</label>
+                        <input type="text" id="keywordChat" placeholder="Buscar en los mensajes...">
+                    </div>
+                    <div class="campo">
+                        <label for="fechaDesdeChat">Desde</label>
+                        <input type="date" id="fechaDesdeChat">
+                    </div>
+                    <div class="campo">
+                        <label for="fechaHastaChat">Hasta</label>
+                        <input type="date" id="fechaHastaChat">
+                    </div>
+                    <div class="campo" style="flex:0 0 auto;">
+                        <label>Orden</label>
+                        <button id="ordenChatBtn" class="orden-btn" style="display:flex;align-items:center;gap:6px;padding:10px 14px;border:2px solid #eee;border-radius:10px;background:#fff;cursor:pointer;font-family:inherit;font-size:0.93rem;color:#666;width:100%;">↓ Más reciente</button>
+                    </div>
+                    <button id="buscarChatBtn" class="main-btn" style="align-self:flex-end;">Buscar</button>
+                </div>
+            </div>
+            <div class="panel" id="resultadosChat">
+                <div class="sin-resultados">Introduce un texto o define un rango de fechas y haz clic en Buscar.</div>
+            </div>
         </div>
     </div>
 
@@ -203,6 +251,7 @@
 
     let sb;
     let ascendente = false;
+    let ascendenteChat = false;
 
     const $ = id => document.getElementById(id);
     const setLoading = on => { $('loadingOverlay').style.display = on ? 'flex' : 'none'; };
@@ -250,14 +299,29 @@
     function initFechas() {
         const hoy = new Date().toISOString().split('T')[0];
         const mesAntes = new Date(Date.now() - 30*24*60*60*1000).toISOString().split('T')[0];
-        if (!$('fechaDesde').value) $('fechaDesde').value = mesAntes;
-        if (!$('fechaHasta').value) $('fechaHasta').value = hoy;
+        ['fechaDesde', 'fechaDesdeChat'].forEach(id => { if (!$('' + id).value) $('' + id).value = mesAntes; });
+        ['fechaHasta', 'fechaHastaChat'].forEach(id => { if (!$('' + id).value) $('' + id).value = hoy; });
     }
+
+    // ===== Tabs =====
+    document.querySelectorAll('.tab').forEach(tab => {
+        tab.onclick = () => {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+            $('tabTeacher').style.display = tab.dataset.tab === 'teacher' ? 'block' : 'none';
+            $('tabChat').style.display = tab.dataset.tab === 'chat' ? 'block' : 'none';
+        };
+    });
 
     // ===== Toggle orden =====
     $('ordenBtn').onclick = () => {
         ascendente = !ascendente;
         $('ordenBtn').innerHTML = ascendente ? '↑ Más antiguo' : '↓ Más reciente';
+    };
+
+    $('ordenChatBtn').onclick = () => {
+        ascendenteChat = !ascendenteChat;
+        $('ordenChatBtn').innerHTML = ascendenteChat ? '↑ Más antiguo' : '↓ Más reciente';
     };
 
     // ===== Búsqueda =====
@@ -293,6 +357,39 @@
         }
     };
 
+    // ===== Búsqueda Chat (tabla teacher_pure_chat) =====
+    $('buscarChatBtn').onclick = async () => {
+        const keyword = $('keywordChat').value.trim();
+        const desde = $('fechaDesdeChat').value;
+        const hasta = $('fechaHastaChat').value;
+
+        if (!keyword && !desde && !hasta) { alert('Introduce un texto o especifica un rango de fechas.'); return; }
+
+        setLoading(true);
+        try {
+            const { data: { user } } = await sb.auth.getUser();
+            if (!user) { alert('Sesión no válida. Vuelve a iniciar sesión.'); return; }
+
+            let query = sb.from('teacher_pure_chat')
+                .select('id, role, content, created_at')
+                .eq('user_id', user.id)
+                .order('created_at', { ascending: ascendenteChat })
+                .limit(500);
+
+            if (keyword) query = query.ilike('content', `%${keyword}%`);
+            if (desde) query = query.gte('created_at', desde);
+            if (hasta) query = query.lte('created_at', `${hasta}T23:59:59`);
+
+            const { data, error } = await query;
+            if (error) throw error;
+            renderMensajesChat(data || [], keyword);
+        } catch (e) {
+            $('resultadosChat').innerHTML = `<div class="sin-resultados" style="color:#e74c3c;">Error: ${e.message}</div>`;
+        } finally {
+            setLoading(false);
+        }
+    };
+
     function renderMensajes(msgs, keyword) {
         const cont = $('resultados');
         if (!msgs.length) {
@@ -300,7 +397,17 @@
             return;
         }
         cont.innerHTML = `<div class="result-count">${msgs.length} mensajes encontrados</div>`;
-        cont.innerHTML += msgs.map((m, i) => msgCard(m, keyword, i + 1)).join('');
+        cont.innerHTML += msgs.map((m, i) => msgCard(m, keyword, i + 1, true)).join('');
+    }
+
+    function renderMensajesChat(msgs, keyword) {
+        const cont = $('resultadosChat');
+        if (!msgs.length) {
+            cont.innerHTML = '<div class="sin-resultados">No se encontraron mensajes.</div>';
+            return;
+        }
+        cont.innerHTML = `<div class="result-count">${msgs.length} mensajes encontrados</div>`;
+        cont.innerHTML += msgs.map((m, i) => msgCard(m, keyword, i + 1, false)).join('');
     }
 
     function renderMd(texto, keyword) {
@@ -323,7 +430,7 @@
         return t;
     }
 
-    function msgCard(m, keyword, idx) {
+    function msgCard(m, keyword, idx, editable) {
         let emisorCls, emisorLabel;
         if (m.role === 'user') {
             emisorCls = 'emisor-usuario';
@@ -337,22 +444,24 @@
         }
         const fecha = new Date(m.created_at).toLocaleString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
         const texto = renderMd(m.content || '', keyword);
-        return `<div class="msg-card" data-id="${m.id}">
-            <div class="meta">
-                <span class="msg-num">#${idx}</span>
-                <span class="emisor-tag ${emisorCls}">${emisorLabel}</span>
-                <span class="fecha">${fecha}</span>
-                <button class="edit-btn" data-action="editar">✏️ Editar</button>
-            </div>
-            <div class="texto texto-truncado" data-action="expandir">${texto}</div>
-            <div class="edit-area">
+        const editBtn = editable ? `<button class="edit-btn" data-action="editar">✏️ Editar</button>` : '';
+        const editArea = editable ? `<div class="edit-area">
                 <textarea data-role="textarea">${escapeHtml(m.content || '')}</textarea>
                 <div class="edit-actions">
                     <button class="edit-btn save-btn" data-action="guardar">💾 Guardar</button>
                     <button class="edit-btn cancel-btn" data-action="cancelar">Cancelar</button>
                 </div>
                 <div class="edit-status"></div>
+            </div>` : '';
+        return `<div class="msg-card" data-id="${m.id}">
+            <div class="meta">
+                <span class="msg-num">#${idx}</span>
+                <span class="emisor-tag ${emisorCls}">${emisorLabel}</span>
+                <span class="fecha">${fecha}</span>
+                ${editBtn}
             </div>
+            <div class="texto texto-truncado" data-action="expandir">${texto}</div>
+            ${editArea}
         </div>`;
     }
 
@@ -423,6 +532,7 @@
 
     // Enter en el campo clave
     $('keyword').onkeydown = e => { if (e.key === 'Enter') $('buscarBtn').click(); };
+    $('keywordChat').onkeydown = e => { if (e.key === 'Enter') $('buscarChatBtn').click(); };
 
     // ===== Event delegation (las funciones de módulo no son globales para onclick inline) =====
     $('resultados').addEventListener('click', e => {
