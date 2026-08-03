@@ -535,14 +535,16 @@
     $('keywordChat').onkeydown = e => { if (e.key === 'Enter') $('buscarChatBtn').click(); };
 
     // ===== Event delegation (las funciones de módulo no son globales para onclick inline) =====
-    $('resultados').addEventListener('click', e => {
-        const btn = e.target.closest('[data-action]');
-        if (!btn) return;
-        const action = btn.dataset.action;
-        if (action === 'editar') editarMensaje(btn);
-        else if (action === 'guardar') guardarMensaje(btn);
-        else if (action === 'cancelar') cancelarEdicion(btn);
-        else if (action === 'expandir') btn.classList.toggle('expandido');
+    ['resultados', 'resultadosChat'].forEach(id => {
+        $('' + id).addEventListener('click', e => {
+            const btn = e.target.closest('[data-action]');
+            if (!btn) return;
+            const action = btn.dataset.action;
+            if (action === 'editar') editarMensaje(btn);
+            else if (action === 'guardar') guardarMensaje(btn);
+            else if (action === 'cancelar') cancelarEdicion(btn);
+            else if (action === 'expandir') btn.classList.toggle('expandido');
+        });
     });
 
     init();
