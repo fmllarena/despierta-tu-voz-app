@@ -3,7 +3,7 @@ module.exports = async function handler(req, res) {
         return res.status(405).json({ error: 'Method not allowed' });
     }
 
-    const { text, languageCode = 'es-ES', voiceName, speakingRate = 1.0 } = req.body;
+    const { text, languageCode = 'es-ES', voiceName, gender, speakingRate = 1.0 } = req.body;
     // Intentamos usar la clave específica de TTS, si no, usamos la de Gemini como fallback
     const apiKey = process.env.GOOGLE_TTS_API_KEY || process.env.GEMINI_API_KEY;
 
@@ -21,7 +21,7 @@ module.exports = async function handler(req, res) {
 
     const config = voiceMaps[languageCode] || voiceMaps['en-US'];
     const finalVoiceName = voiceName || config.name;
-    const finalGender = (voiceMaps[languageCode] && !voiceName) ? config.gender : 'FEMALE';
+    const finalGender = gender || (voiceMaps[languageCode] && !voiceName ? config.gender : 'FEMALE');
 
     if (!apiKey) {
         return res.status(500).json({ error: 'Falta la API Key de Google TTS en el servidor.' });
