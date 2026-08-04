@@ -415,27 +415,46 @@
     let audioActual = null;
     let botonActual = null;
 
+    function resetBotonUI(btn) {
+        if (!btn) return;
+        btn.textContent = '🔊 Escuchar';
+        btn.classList.remove('playing');
+        btn.disabled = false;
+    }
+
     function pararLectura() {
-        if (audioActual) {
-            audioActual.pause();
-            audioActual = null;
-        }
-        if (botonActual) {
-            botonActual.textContent = '🔊 Escuchar';
-            botonActual.classList.remove('playing');
-            botonActual.disabled = false;
-            botonActual = null;
-        }
+        if (audioActual) audioActual.pause();
+        resetBotonUI(botonActual);
+        audioActual = null;
+        botonActual = null;
     }
 
     async function leerMensaje(btn) {
         const texto = (btn.dataset.text || '').replace(/[#*_`>]/g, ' ').replace(/\s+/g, ' ').trim();
         if (!texto) return;
 
-        // Si el botón ya está reproduciendo, lo paramos
-        if (btn.classList.contains('playing')) { pararLectura(); return; }
+        // Mismo botón ya cargado → Detener/Continuar (reanuda donde se quedó)
+        if (btn._audio) {
+            if (!btn._audio.paused) {
+                btn._audio.pause();
+                btn.textContent = '▶ Continuar';
+                btn.classList.remove('playing');
+                return;
+            }
+            audioActual = btn._audio;
+            botonActual = btn;
+            btn.classList.add('playing');
+            btn.textContent = '⏹ Detener';
+            await btn._audio.play();
+            return;
+        }
 
-        pararLectura();
+        // Si suena otro mensaje, lo paramos
+        if (audioActual && !audioActual.paused) {
+            audioActual.pause();
+            resetBotonUI(botonActual);
+        }
+
         btn.classList.add('playing');
         btn.textContent = '⏹ Detener';
         btn.disabled = true;
@@ -457,14 +476,23 @@
             if (!res.ok || !data.audioContent) throw new Error(data.error || 'Error al generar audio');
 
             const audio = new Audio('data:audio/mp3;base64,' + data.audioContent);
+            btn._audio = audio;
             audioActual = audio;
             botonActual = btn;
             btn.disabled = false;
-            audio.onended = pararLectura;
-            audio.onerror = () => { pararLectura(); agregarMensaje('⚠️ No se pudo reproducir el audio.', 'ia'); };
+            audio.onended = () => {
+                btn._audio = null;
+                pararLectura();
+            };
+            audio.onerror = () => {
+                btn._audio = null;
+                pararLectura();
+                agregarMensaje('⚠️ No se pudo reproducir el audio.', 'ia');
+            };
             await audio.play();
         } catch (e) {
             pararLectura();
+            resetBotonUI(btn);
             agregarMensaje('⚠️ Error de audio: ' + e.message, 'ia');
         }
     }
