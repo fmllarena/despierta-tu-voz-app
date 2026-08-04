@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
@@ -30,14 +30,14 @@
         .msg em { font-style: italic; }
         .msg.user { align-self: flex-end; background: #2c6b9e; color: #fff; border-bottom-right-radius: 4px; }
         .msg.ia { align-self: flex-start; background: #f0f5fa; color: #333; border-bottom-left-radius: 4px; }
-.msg.ia .tts-msg-btn {
+        .msg.ia .tts-btn {
             background: transparent; border: 1px solid #2c6b9e; color: #2c6b9e;
             border-radius: 8px; cursor: pointer; font-size: 0.85rem; padding: 2px 8px;
             margin-top: 6px; font-family: inherit; line-height: 1.4;
         }
-        .msg.ia .tts-msg-btn:hover { background: #2c6b9e; color: #fff; }
-        .msg.ia .tts-msg-btn.playing { background: #2c6b9e; color: #fff; }
-        .msg.ia .tts-msg-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .msg.ia .tts-btn:hover { background: #2c6b9e; color: #fff; }
+        .msg.ia .tts-btn.playing { background: #2c6b9e; color: #fff; }
+        .msg.ia .tts-btn:disabled { opacity: 0.5; cursor: not-allowed; }
         .chat-input-area { display: flex; gap: 10px; padding: 15px 20px; border-top: 1px solid #d0ddea; background: #f8fafc; }
         .chat-input-area textarea { flex: 1; padding: 12px; border: 2px solid #d0ddea; border-radius: 12px; font-size: 0.95rem; outline: none; font-family: inherit; resize: none; height: 50px; }
         .chat-input-area textarea:focus { border-color: #2c6b9e; }
@@ -54,9 +54,9 @@
         body.dark-mode .chat-body { background: #0d1b2a; }
         body.dark-mode .msg.ia { background: #1a2d45; color: #d4d4dc; }
         body.dark-mode .msg.user { background: #2c6b9e; }
-        body.dark-mode .msg.ia .tts-msg-btn { border-color: #6ba4d6; color: #6ba4d6; }
-        body.dark-mode .msg.ia .tts-msg-btn:hover { background: #6ba4d6; color: #0d1b2a; }
-        body.dark-mode .msg.ia .tts-msg-btn.playing { background: #6ba4d6; color: #0d1b2a; }
+        body.dark-mode .tts-btn { border-color: #6ba4d6; color: #6ba4d6; }
+        body.dark-mode .tts-btn:hover { background: #6ba4d6; color: #0d1b2a; }
+        body.dark-mode .tts-btn.playing { background: #6ba4d6; color: #0d1b2a; }
         .tips-summary { background: #e8f4e8; border: 1px solid #4a8; border-radius: 12px; padding: 12px 16px; margin: 8px 0; font-size: 0.9rem; }
         .tips-summary ul { margin: 6px 0 0 0; padding-left: 20px; }
         .tips-summary li { margin: 4px 0; }
@@ -122,31 +122,31 @@
 <body>
 <div class="container" id="app">
     <div id="loginSection" class="login-section">
-        <h1>ðŸ‡ºðŸ‡¸ English Teacher</h1>
+        <h1>🇺🇸 English Teacher</h1>
         <p>Practice your American English conversation skills.</p>
         <input type="email" id="loginEmail" placeholder="Email" value="fernando@despiertatuvoz.com">
-        <input type="password" id="loginPassword" placeholder="ContraseÃ±a">
+        <input type="password" id="loginPassword" placeholder="Contraseña">
         <div class="login-error" id="loginError"></div>
         <button id="loginBtn" class="main-btn" style="width:100%;margin-top:5px;background:#2c6b9e;">Entrar</button>
     </div>
 
     <div id="dashboard" class="dashboard">
         <div class="dash-header">
-            <h2>ðŸ‡ºðŸ‡¸ English Teacher</h2>
+            <h2>🇺🇸 English Teacher</h2>
             <div style="display:flex;gap:8px;">
-                <button id="reviewBtn" style="background:#2c6b9e;color:#fff;border:none;padding:6px 12px;border-radius:8px;cursor:pointer;font-size:0.8rem;font-family:inherit;">ðŸ“ Daily Review</button>
-                <button id="listTipsBtn" style="background:transparent;border:1px solid #4a8;color:#4a8;padding:6px 12px;border-radius:8px;cursor:pointer;font-size:0.8rem;font-family:inherit;">ðŸ“‹ Listado de tips</button>
-                <button id="addTipBtn" style="background:transparent;border:1px solid #4a8;color:#4a8;padding:6px 12px;border-radius:8px;cursor:pointer;font-size:0.8rem;font-family:inherit;">âœï¸ +Tip</button>
-                <button id="darkToggle" style="background:transparent;border:1px solid #2c6b9e;color:#2c6b9e;padding:6px 12px;border-radius:8px;cursor:pointer;font-size:1rem;font-family:inherit;" title="Modo oscuro">ðŸŒ™</button>
-                <button id="clearChatBtn" style="background:transparent;border:1px solid #e74c3c;color:#e74c3c;padding:6px 12px;border-radius:8px;cursor:pointer;font-size:0.85rem;font-family:inherit;">ðŸ—‘ Borrar</button>
-                <button id="logoutBtn" class="logout-btn">Cerrar SesiÃ³n</button>
+                <button id="reviewBtn" style="background:#2c6b9e;color:#fff;border:none;padding:6px 12px;border-radius:8px;cursor:pointer;font-size:0.8rem;font-family:inherit;">📝 Daily Review</button>
+                <button id="listTipsBtn" style="background:transparent;border:1px solid #4a8;color:#4a8;padding:6px 12px;border-radius:8px;cursor:pointer;font-size:0.8rem;font-family:inherit;">📋 Listado de tips</button>
+                <button id="addTipBtn" style="background:transparent;border:1px solid #4a8;color:#4a8;padding:6px 12px;border-radius:8px;cursor:pointer;font-size:0.8rem;font-family:inherit;">✏️ +Tip</button>
+                <button id="darkToggle" style="background:transparent;border:1px solid #2c6b9e;color:#2c6b9e;padding:6px 12px;border-radius:8px;cursor:pointer;font-size:1rem;font-family:inherit;" title="Modo oscuro">🌙</button>
+                <button id="clearChatBtn" style="background:transparent;border:1px solid #e74c3c;color:#e74c3c;padding:6px 12px;border-radius:8px;cursor:pointer;font-size:0.85rem;font-family:inherit;">🗑 Borrar</button>
+                <button id="logoutBtn" class="logout-btn">Cerrar Sesión</button>
             </div>
         </div>
 
         <div class="main-layout">
             <div class="chat-box">
                 <div class="chat-header">
-                    <h3>ðŸ§‘â€ðŸ« Your English Teacher â€” B1 Conversational</h3>
+                    <h3>🧑‍🏫 Your English Teacher — B1 Conversational</h3>
                     <div class="topic-sug">
                         <button data-t="Introduce yourself">Introduce yourself</button>
                         <button data-t="Talk about your weekend">Talk about your weekend</button>
@@ -156,20 +156,20 @@
                     </div>
                 </div>
                 <div id="chatBody" class="chat-body">
-                    <div class="chat-empty">ðŸ’¬ Write something in English to start...</div>
+                    <div class="chat-empty">💬 Write something in English to start...</div>
                 </div>
                 <div class="chat-input-area">
                     <label style="display:flex;align-items:center;gap:4px;font-size:0.75rem;white-space:nowrap;cursor:pointer;color:#555;">
                         <input type="checkbox" id="pureChat" style="cursor:pointer;"> Solo conversar
                     </label>
                     <textarea id="msgInput" placeholder="Write in English..." rows="1"></textarea>
-                    <button id="sendBtn" class="send-btn">âž¤</button>
+                    <button id="sendBtn" class="send-btn">➤</button>
                 </div>
             </div>
 
             <div id="tipsPanel" class="tips-panel">
                 <div class="tips-panel-header">
-                    <h3>ðŸ“‹ Tips acumulados</h3>
+                    <h3>📋 Tips acumulados</h3>
                     <button id="closeTipsPanel">&times;</button>
                 </div>
                 <div id="tipsPanelBody" class="tips-panel-body">
@@ -180,12 +180,12 @@
             <div id="addTipModal" class="modal-overlay" style="display:none;">
                 <div class="modal-box">
                     <div class="modal-header">
-                        <h3>âœï¸ Nuevo tip</h3>
+                        <h3>✏️ Nuevo tip</h3>
                         <button id="closeAddTipModal" class="modal-close">&times;</button>
                     </div>
                     <textarea id="tipInput" class="modal-textarea" rows="3" spellcheck="false"></textarea>
                     <div class="modal-actions">
-                        <button id="tipArrowBtn" class="modal-btn arrow-btn">â†’</button>
+                        <button id="tipArrowBtn" class="modal-btn arrow-btn">→</button>
                         <span style="flex:1;"></span>
                         <button id="saveTipBtn" class="modal-btn primary">Guardar</button>
                         <button id="cancelAddTipBtn" class="modal-btn">Cancelar</button>
@@ -251,7 +251,7 @@
 
     function aplicarModoOscuro(oscuro) {
         document.body.classList.toggle('dark-mode', oscuro);
-        $('darkToggle').textContent = oscuro ? 'â˜€ï¸' : 'ðŸŒ™';
+        $('darkToggle').textContent = oscuro ? '☀️' : '🌙';
         localStorage.setItem('dark-mode', oscuro ? '1' : '0');
     }
     $('darkToggle').onclick = () => aplicarModoOscuro(!document.body.classList.contains('dark-mode'));
@@ -259,7 +259,7 @@
         aplicarModoOscuro(true);
     }
 
-    $('clearChatBtn').onclick = () => { history = []; chatBody.innerHTML = '<div class="chat-empty">ðŸ’¬ Conversation cleared.</div>'; };
+    $('clearChatBtn').onclick = () => { history = []; chatBody.innerHTML = '<div class="chat-empty">💬 Conversation cleared.</div>'; };
 
     let skipDisplay = false;
 
@@ -267,16 +267,16 @@
         if (pendingIntent === 'teacher_review') {
             pendingIntent = 'teacher';
             history = [];
-            chatBody.innerHTML = '<div class="chat-empty">ðŸ’¬ Back to conversation mode.</div>';
+            chatBody.innerHTML = '<div class="chat-empty">💬 Back to conversation mode.</div>';
             $('reviewBtn').style.background = '#2c6b9e';
-            $('reviewBtn').textContent = 'ðŸ“ Daily Review';
+            $('reviewBtn').textContent = '📝 Daily Review';
             return;
         }
         pendingIntent = 'teacher_review';
         history = [];
-        chatBody.innerHTML = '<div class="chat-empty">ðŸ“ Starting daily review...</div>';
+        chatBody.innerHTML = '<div class="chat-empty">📝 Starting daily review...</div>';
         $('reviewBtn').style.background = '#e67e22';
-        $('reviewBtn').textContent = 'ðŸ”„ Back to chat';
+        $('reviewBtn').textContent = '🔄 Back to chat';
         skipDisplay = true;
         $('msgInput').value = 'Start the review';
         enviar();
@@ -284,7 +284,7 @@
 
     $('addTipBtn').onclick = () => {
         const input = $('tipInput');
-        input.value = 'ðŸŽ¯ Tip: ';
+        input.value = '🎯 Tip: ';
         input.focus();
         input.setSelectionRange(input.value.length, input.value.length);
         $('addTipModal').style.display = 'flex';
@@ -326,7 +326,7 @@
         const end = input.selectionEnd || 0;
         const prefix = input.value.slice(0, start);
         const suffix = input.value.slice(end);
-        input.value = prefix + 'â†’' + suffix;
+        input.value = prefix + '→' + suffix;
         input.focus();
         input.setSelectionRange(start + 1, start + 1);
     };
@@ -334,10 +334,10 @@
     $('saveTipBtn').onclick = async () => {
         let tip = $('tipInput').value.trim();
         if (!tip) return;
-        tip = tip.replace(/^(ðŸŽ¯\s*)?Tip:\s*/i, '');
-        tip = 'ðŸŽ¯ Tip: ' + tip;
-        if (!tip.includes('â†’')) {
-            alert('AÃ±ade la flecha â†’ para separar la frase original de la correcciÃ³n.');
+        tip = tip.replace(/^(🎯\s*)?Tip:\s*/i, '');
+        tip = '🎯 Tip: ' + tip;
+        if (!tip.includes('→')) {
+            alert('Añade la flecha → para separar la frase original de la corrección.');
             return;
         }
         closeAddTipModal();
@@ -349,9 +349,9 @@
             });
             const data = await res.json();
             if (data.error) throw new Error(data.details || data.error);
-            agregarMensaje(`âœ… Tip guardado: ${tip}`, 'ia');
+            agregarMensaje(`✅ Tip guardado: ${tip}`, 'ia');
         } catch (e) {
-            agregarMensaje('âš ï¸ Error al guardar tip: ' + e.message, 'ia');
+            agregarMensaje('⚠️ Error al guardar tip: ' + e.message, 'ia');
         }
     };
 
@@ -369,7 +369,7 @@
             const data = await res.json();
             if (data.error) throw new Error(data.details || data.error);
             if (!data.tips || data.tips.length === 0) {
-                body.innerHTML = '<p style="color:#888;text-align:center;padding:20px;">ðŸ“­ No hay tips guardados aÃºn.</p>';
+                body.innerHTML = '<p style="color:#888;text-align:center;padding:20px;">📭 No hay tips guardados aún.</p>';
                 return;
             }
             let html = '';
@@ -378,7 +378,7 @@
             });
             body.innerHTML = html;
         } catch (e) {
-            body.innerHTML = `<p style="color:#e74c3c;text-align:center;padding:20px;">âš ï¸ Error: ${e.message}</p>`;
+            body.innerHTML = `<p style="color:#e74c3c;text-align:center;padding:20px;">⚠️ Error: ${e.message}</p>`;
         }
     };
 
@@ -395,8 +395,8 @@
         div.innerHTML = marked.parse(texto);
         if (rol === 'ia') {
             const tts = document.createElement('button');
-            tts.className = 'tts-msg-btn';
-            tts.textContent = 'ðŸ”Š Escuchar';
+            tts.className = 'tts-btn';
+            tts.textContent = '🔊 Escuchar';
             tts.dataset.text = texto;
             tts.onclick = () => leerMensaje(tts);
             div.appendChild(tts);
@@ -417,7 +417,7 @@
 
     function resetBotonUI(btn) {
         if (!btn) return;
-        btn.textContent = 'ðŸ”Š Escuchar';
+        btn.textContent = '🔊 Escuchar';
         btn.classList.remove('playing');
         btn.disabled = false;
     }
@@ -433,18 +433,18 @@
         const texto = (btn.dataset.text || '').replace(/[#*_`>]/g, ' ').replace(/\s+/g, ' ').trim();
         if (!texto) return;
 
-        // Mismo botÃ³n ya cargado â†’ Detener/Continuar (reanuda donde se quedÃ³)
+        // Mismo botón ya cargado → Detener/Continuar (reanuda donde se quedó)
         if (btn._audio) {
             if (!btn._audio.paused) {
                 btn._audio.pause();
-                btn.textContent = 'â–¶ Continuar';
+                btn.textContent = '▶ Continuar';
                 btn.classList.remove('playing');
                 return;
             }
             audioActual = btn._audio;
             botonActual = btn;
             btn.classList.add('playing');
-            btn.textContent = 'â¹ Detener';
+            btn.textContent = '⏹ Detener';
             await btn._audio.play();
             return;
         }
@@ -456,7 +456,7 @@
         }
 
         btn.classList.add('playing');
-        btn.textContent = 'â¹ Detener';
+        btn.textContent = '⏹ Detener';
         btn.disabled = true;
 
         try {
@@ -487,13 +487,13 @@
             audio.onerror = () => {
                 btn._audio = null;
                 pararLectura();
-                agregarMensaje('âš ï¸ No se pudo reproducir el audio.', 'ia');
+                agregarMensaje('⚠️ No se pudo reproducir el audio.', 'ia');
             };
             await audio.play();
         } catch (e) {
             pararLectura();
             resetBotonUI(btn);
-            agregarMensaje('âš ï¸ Error de audio: ' + e.message, 'ia');
+            agregarMensaje('⚠️ Error de audio: ' + e.message, 'ia');
         }
     }
 
@@ -501,7 +501,7 @@
         const div = document.createElement('div');
         div.className = 'loading-dots';
         div.id = 'loadingDots';
-        div.textContent = 'âœ¦ âœ¦ âœ¦';
+        div.textContent = '✦ ✦ ✦';
         chatBody.appendChild(div);
         chatBody.scrollTop = chatBody.scrollHeight;
     }
@@ -542,7 +542,7 @@
             history.push({ role: 'model', parts: [{ text: respuesta }] });
         } catch (e) {
             quitarLoading();
-            agregarMensaje('âš ï¸ Error: ' + e.message, 'ia');
+            agregarMensaje('⚠️ Error: ' + e.message, 'ia');
         } finally {
             esperando = false;
         }
