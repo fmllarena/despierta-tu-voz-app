@@ -8,15 +8,15 @@ module.exports = async function handler(req, res) {
     const apiKey = process.env.GOOGLE_TTS_API_KEY || process.env.GEMINI_API_KEY;
 
     // Mapa de voces por defecto con su género correcto para evitar errores 400
-    // Usa voces Standard (4M caracteres/mes gratis) para el uso habitual de la app
+    // Usa voces Neural2 (1M caracteres/mes gratis, calidad superior a Standard)
     const voiceMaps = {
-        'en-US': { name: 'en-US-Standard-C', gender: 'FEMALE' },
-        'de-DE': { name: 'de-DE-Standard-A', gender: 'FEMALE' },
-        'it-IT': { name: 'it-IT-Standard-A', gender: 'FEMALE' },
-        'fr-FR': { name: 'fr-FR-Standard-A', gender: 'FEMALE' },
-        'pt-PT': { name: 'pt-PT-Standard-A', gender: 'FEMALE' },
-        'pt-BR': { name: 'pt-BR-Standard-A', gender: 'FEMALE' },
-        'es-ES': { name: 'es-ES-Standard-A', gender: 'FEMALE' }
+        'en-US': { name: 'en-US-Neural2-C', gender: 'FEMALE' },
+        'de-DE': { name: 'de-DE-Neural2-A', gender: 'FEMALE' },
+        'it-IT': { name: 'it-IT-Neural2-A', gender: 'FEMALE' },
+        'fr-FR': { name: 'fr-FR-Neural2-A', gender: 'FEMALE' },
+        'pt-PT': { name: 'pt-PT-Neural2-A', gender: 'FEMALE' },
+        'pt-BR': { name: 'pt-BR-Neural2-A', gender: 'FEMALE' },
+        'es-ES': { name: 'es-ES-Neural2-A', gender: 'FEMALE' }
     };
 
     const config = voiceMaps[languageCode] || voiceMaps['en-US'];
