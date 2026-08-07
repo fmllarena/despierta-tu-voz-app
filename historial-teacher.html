@@ -45,6 +45,32 @@
         .fila input, .fila select { width: 100%; padding: 10px 12px; border: 2px solid #eee; border-radius: 10px; font-size: 0.93rem; outline: none; font-family: inherit; }
         .fila input:focus, .fila select:focus { border-color: #8e7d6d; }
 
+        .time-picker { position: relative; flex: 0 0 92px; }
+        .time-btn {
+            width: 100%; height: 100%; padding: 10px 8px; border: 2px solid #eee; border-radius: 10px;
+            font-size: 0.9rem; font-family: inherit; background: #fff; color: #666; cursor: pointer; white-space: nowrap;
+        }
+        .time-btn:hover { border-color: #8e7d6d; }
+        .time-popup {
+            position: absolute; top: calc(100% + 4px); right: 0; z-index: 50;
+            display: none; gap: 8px; padding: 10px; border-radius: 10px;
+            background: #fff; border: 1px solid #eee; box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+        .time-popup.abierto { display: flex; }
+        .time-col { width: 58px; text-align: center; }
+        .time-col-title { font-size: 0.72rem; font-weight: 600; color: #888; margin-bottom: 4px; }
+        .time-list { max-height: 160px; overflow-y: auto; border: 1px solid #eee; border-radius: 8px; }
+        .time-list::-webkit-scrollbar { width: 6px; }
+        .time-list::-webkit-scrollbar-thumb { background: #ddd; border-radius: 3px; }
+        .time-item { padding: 4px 0; font-size: 0.85rem; color: #333; cursor: pointer; }
+        .time-item:hover { background: #f2ede6; }
+        .time-item.seleccionado { background: #8e7d6d; color: #fff; font-weight: 600; }
+        .time-clear {
+            align-self: flex-end; border: none; background: transparent; color: #c0392b;
+            font-size: 0.75rem; cursor: pointer; font-family: inherit; padding: 4px 6px; white-space: nowrap;
+        }
+        .time-clear:hover { text-decoration: underline; }
+
         .main-btn {
             background: #8e7d6d; color: #fff; border: none; padding: 10px 22px;
             border-radius: 12px; font-size: 0.93rem; font-family: inherit; cursor: pointer; white-space: nowrap;
@@ -106,6 +132,12 @@
     body.dark-mode .fila input,
     body.dark-mode .fila select { background: #26263d; border-color: #2e2e48; color: #d4d4dc; }
     body.dark-mode .fila label { color: #aaa; }
+    body.dark-mode .time-btn { background: #26263d; border-color: #2e2e48; color: #d4d4dc; }
+    body.dark-mode .time-btn:hover { border-color: #8e7d6d; }
+    body.dark-mode .time-popup { background: #1e1e33; border-color: #2e2e48; }
+    body.dark-mode .time-item { color: #d4d4dc; }
+    body.dark-mode .time-item:hover { background: #2e2e48; }
+    body.dark-mode .time-item.seleccionado { background: #8e7d6d; color: #fff; }
     body.dark-mode .tab { background: #1c1c30; border-color: #2e2e48; color: #999; }
     body.dark-mode .tab:hover { border-color: #a89b8a; color: #a89b8a; }
     body.dark-mode .tab.active { background: #8e7d6d; color: #fff; border-color: #8e7d6d; }
@@ -193,7 +225,23 @@
                     </div>
                     <div class="campo">
                         <label for="fechaDesde">Desde</label>
-                        <input type="date" id="fechaDesde">
+                        <div style="display:flex;gap:6px;align-items:stretch;">
+                            <input type="date" id="fechaDesde">
+                            <div class="time-picker">
+                                <button type="button" id="horaDesdeBtn" class="time-btn">--:--</button>
+                                <div id="horaDesdePopup" class="time-popup">
+                                    <div class="time-col">
+                                        <div class="time-col-title">Hora</div>
+                                        <div class="time-list" data-unit="hour"></div>
+                                    </div>
+                                    <div class="time-col">
+                                        <div class="time-col-title">Min</div>
+                                        <div class="time-list" data-unit="min"></div>
+                                    </div>
+                                    <button type="button" class="time-clear">✕ Limpiar</button>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                     <div class="campo">
                         <label for="fechaHasta">Hasta</label>
@@ -226,7 +274,23 @@
                     </div>
                     <div class="campo">
                         <label for="fechaDesdeChat">Desde</label>
-                        <input type="date" id="fechaDesdeChat">
+                        <div style="display:flex;gap:6px;align-items:stretch;">
+                            <input type="date" id="fechaDesdeChat">
+                            <div class="time-picker">
+                                <button type="button" id="horaDesdeChatBtn" class="time-btn">--:--</button>
+                                <div id="horaDesdeChatPopup" class="time-popup">
+                                    <div class="time-col">
+                                        <div class="time-col-title">Hora</div>
+                                        <div class="time-list" data-unit="hour"></div>
+                                    </div>
+                                    <div class="time-col">
+                                        <div class="time-col-title">Min</div>
+                                        <div class="time-list" data-unit="min"></div>
+                                    </div>
+                                    <button type="button" class="time-clear">✕ Limpiar</button>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                     <div class="campo">
                         <label for="fechaHastaChat">Hasta</label>
@@ -314,6 +378,60 @@
         ['fechaHasta', 'fechaHastaChat'].forEach(id => { if (!$('' + id).value) $('' + id).value = hoy; });
     }
 
+    // ===== Selector de hora (--:-- por defecto) =====
+    function initTimePicker(btnId, popupId) {
+        const btn = $('' + btnId);
+        const popup = $('' + popupId);
+        const state = { hora: null, min: null };
+
+        popup.querySelectorAll('.time-list').forEach(list => {
+            const unit = list.dataset.unit;
+            const total = unit === 'hour' ? 24 : 60;
+            list.innerHTML = Array.from({ length: total }, (_, i) => {
+                const v = String(i).padStart(2, '0');
+                return `<div class="time-item" data-v="${v}">${v}</div>`;
+            }).join('');
+        });
+
+        const paint = () => {
+            btn.textContent = (state.hora !== null && state.min !== null) ? `${state.hora}:${state.min}` : '--:--';
+            popup.querySelectorAll('.time-item').forEach(it => {
+                const v = it.dataset.v;
+                const sel = (it.closest('.time-list').dataset.unit === 'hour' && v === state.hora)
+                    || (it.closest('.time-list').dataset.unit === 'min' && v === state.min);
+                it.classList.toggle('seleccionado', sel);
+            });
+        };
+
+        btn.onclick = e => { e.stopPropagation(); popup.classList.toggle('abierto'); };
+
+        popup.querySelectorAll('.time-list').forEach(list => {
+            list.onclick = e => {
+                const item = e.target.closest('.time-item');
+                if (!item) return;
+                if (list.dataset.unit === 'hour') state.hora = item.dataset.v;
+                else state.min = item.dataset.v;
+                paint();
+            };
+        });
+
+        popup.querySelector('.time-clear').onclick = e => {
+            e.stopPropagation();
+            state.hora = null;
+            state.min = null;
+            paint();
+        };
+
+        document.addEventListener('click', e => {
+            if (!popup.contains(e.target) && e.target !== btn) popup.classList.remove('abierto');
+        });
+
+        return state;
+    }
+
+    const horaDesde = initTimePicker('horaDesdeBtn', 'horaDesdePopup');
+    const horaDesdeChat = initTimePicker('horaDesdeChatBtn', 'horaDesdeChatPopup');
+
     // ===== Tabs =====
     document.querySelectorAll('.tab').forEach(tab => {
         tab.onclick = () => {
@@ -355,7 +473,12 @@
                 .limit(500);
 
             if (keyword) query = query.ilike('content', `%${keyword}%`);
-            if (desde) query = query.gte('created_at', desde);
+            if (desde) {
+                const desdeConHora = (horaDesde.hora !== null && horaDesde.min !== null)
+                    ? `${desde}T${horaDesde.hora}:${horaDesde.min}:00`
+                    : desde;
+                query = query.gte('created_at', desdeConHora);
+            }
             if (hasta) query = query.lte('created_at', `${hasta}T23:59:59`);
 
             const { data, error } = await query;
@@ -388,7 +511,12 @@
                 .limit(500);
 
             if (keyword) query = query.ilike('content', `%${keyword}%`);
-            if (desde) query = query.gte('created_at', desde);
+            if (desde) {
+                const desdeConHora = (horaDesdeChat.hora !== null && horaDesdeChat.min !== null)
+                    ? `${desde}T${horaDesdeChat.hora}:${horaDesdeChat.min}:00`
+                    : desde;
+                query = query.gte('created_at', desdeConHora);
+            }
             if (hasta) query = query.lte('created_at', `${hasta}T23:59:59`);
 
             const { data, error } = await query;
