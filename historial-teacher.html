@@ -207,6 +207,9 @@
                 </div>
             </div>
             <div class="panel" id="resultados">
+                <div class="result-bar" style="display:none;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                    <button id="pdfBtn" class="main-btn" style="background:#c0392b;">📄 Descargar PDF</button>
+                </div>
                 <div class="sin-resultados">Introduce un texto o define un rango de fechas y haz clic en Buscar.</div>
             </div>
         </div>
@@ -236,6 +239,9 @@
                 </div>
             </div>
             <div class="panel" id="resultadosChat">
+                <div class="result-bar" style="display:none;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                    <button id="pdfBtnChat" class="main-btn" style="background:#c0392b;">📄 Descargar PDF</button>
+                </div>
                 <div class="sin-resultados">Introduce un texto o define un rango de fechas y haz clic en Buscar.</div>
             </div>
         </div>
@@ -246,12 +252,15 @@
     </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 <script type="module">
     import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
 
     let sb;
     let ascendente = false;
     let ascendenteChat = false;
+    let resultadosActuales = [];
+    let tabActual = 'teacher';
 
     const $ = id => document.getElementById(id);
     const setLoading = on => { $('loadingOverlay').style.display = on ? 'flex' : 'none'; };
@@ -394,8 +403,12 @@
         const cont = $('resultados');
         if (!msgs.length) {
             cont.innerHTML = '<div class="sin-resultados">No se encontraron mensajes.</div>';
+            $('pdfBtn').closest('.result-bar').style.display = 'none';
             return;
         }
+        resultadosActuales = msgs;
+        tabActual = 'teacher';
+        $('pdfBtn').closest('.result-bar').style.display = 'flex';
         cont.innerHTML = `<div class="result-count">${msgs.length} mensajes encontrados</div>`;
         cont.innerHTML += msgs.map((m, i) => msgCard(m, keyword, i + 1, true)).join('');
     }
@@ -404,8 +417,12 @@
         const cont = $('resultadosChat');
         if (!msgs.length) {
             cont.innerHTML = '<div class="sin-resultados">No se encontraron mensajes.</div>';
+            $('pdfBtnChat').closest('.result-bar').style.display = 'none';
             return;
         }
+        resultadosActuales = msgs;
+        tabActual = 'chat';
+        $('pdfBtnChat').closest('.result-bar').style.display = 'flex';
         cont.innerHTML = `<div class="result-count">${msgs.length} mensajes encontrados</div>`;
         cont.innerHTML += msgs.map((m, i) => msgCard(m, keyword, i + 1, false)).join('');
     }
@@ -533,6 +550,67 @@
     // Enter en el campo clave
     $('keyword').onkeydown = e => { if (e.key === 'Enter') $('buscarBtn').click(); };
     $('keywordChat').onkeydown = e => { if (e.key === 'Enter') $('buscarChatBtn').click(); };
+
+    // ===== PDF =====
+    function textoPlano(md) {
+        return (md || '')
+            .replace(/^#{1,6}\s*/gm, '')
+            .replace(/[>*`#_\-]/g, '')
+            .replace(/\n{3,}/g, '\n\n')
+            .trim();
+    }
+
+    function generarPDF() {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        const pageWidth = doc.internal.pageSize.getWidth();
+        const margin = 15;
+        const usable = pageWidth - margin * 2;
+
+        doc.setFontSize(16);
+        doc.setFont('helvetica', 'bold');
+        doc.text('Historial de conversación', margin, 18);
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(120);
+        doc.text(`Pestaña: ${tabActual === 'teacher' ? 'Teacher' : 'Chat'}`, margin, 24);
+        doc.text(`Generado: ${new Date().toLocaleString('es-ES')}`, margin, 28);
+
+        let y = 36;
+        resultadosActuales.forEach((m, i) => {
+            const emisor = m.role === 'user' ? 'Alumno' : (m.role === 'assistant' ? 'Profesor IA' : 'Tips');
+            const fecha = new Date(m.created_at).toLocaleString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+
+            if (y > 270) { doc.addPage(); y = 18; }
+
+            doc.setFontSize(9);
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(30);
+            doc.text(`#${i + 1}  ${emisor}  —  ${fecha}`, margin, y);
+            y += 5;
+
+            doc.setFontSize(10);
+            doc.setFont('helvetica', 'normal');
+            const lines = doc.splitTextToSize(textoPlano(m.content), usable);
+            const lineHeight = 4.5;
+            const spaceNeeded = lines.length * lineHeight + 6;
+            if (y + spaceNeeded > 282) { doc.addPage(); y = 18; }
+
+            doc.text(lines, margin, y);
+            y += lines.length * lineHeight + 6;
+            doc.setDrawColor(200);
+            doc.line(margin, y - 3, pageWidth - margin, y - 3);
+        });
+
+        const resumen = resultadosActuales.length + ' mensajes exportados';
+        doc.setFontSize(9);
+        doc.setTextColor(120);
+        doc.text(resumen, margin, 290);
+        doc.save(`historial-${tabActual}-${new Date().toISOString().split('T')[0]}.pdf`);
+    }
+
+    $('pdfBtn').onclick = () => { if (!resultadosActuales.length) { alert('Primero realiza una búsqueda.'); return; } try { generarPDF(); } catch (e) { alert('Error al generar el PDF: ' + e.message); } };
+    $('pdfBtnChat').onclick = $('pdfBtn').onclick;
 
     // ===== Event delegation (las funciones de módulo no son globales para onclick inline) =====
     ['resultados', 'resultadosChat'].forEach(id => {
