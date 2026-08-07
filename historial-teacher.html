@@ -455,6 +455,14 @@
         $('ordenChatBtn').innerHTML = ascendenteChat ? '↑ Más antiguo' : '↓ Más reciente';
     };
 
+    // Convierte fecha (YYYY-MM-DD) + hora local a ISO en UTC, o límites del día si no hay hora
+    function aUtc(fecha, hora, min, finDeDia) {
+        const [y, m, d] = fecha.split('-').map(Number);
+        const hh = hora !== null ? parseInt(hora, 10) : (finDeDia ? 23 : 0);
+        const mm = hora !== null ? parseInt(min, 10) : (finDeDia ? 59 : 0);
+        return new Date(y, m - 1, d, hh, mm).toISOString();
+    }
+
     // ===== Búsqueda =====
     $('buscarBtn').onclick = async () => {
         const keyword = $('keyword').value.trim();
@@ -475,13 +483,8 @@
                 .limit(500);
 
             if (keyword) query = query.ilike('content', `%${keyword}%`);
-            if (desde) {
-                const desdeConHora = (horaDesde.hora !== null && horaDesde.min !== null)
-                    ? `${desde}T${horaDesde.hora}:${horaDesde.min}:00`
-                    : desde;
-                query = query.gte('created_at', desdeConHora);
-            }
-            if (hasta) query = query.lte('created_at', `${hasta}T23:59:59`);
+            if (desde) query = query.gte('created_at', aUtc(desde, horaDesde.hora, horaDesde.min, false));
+            if (hasta) query = query.lte('created_at', aUtc(hasta, null, null, true));
 
             const { data, error } = await query;
             if (error) throw error;
@@ -513,13 +516,8 @@
                 .limit(500);
 
             if (keyword) query = query.ilike('content', `%${keyword}%`);
-            if (desde) {
-                const desdeConHora = (horaDesdeChat.hora !== null && horaDesdeChat.min !== null)
-                    ? `${desde}T${horaDesdeChat.hora}:${horaDesdeChat.min}:00`
-                    : desde;
-                query = query.gte('created_at', desdeConHora);
-            }
-            if (hasta) query = query.lte('created_at', `${hasta}T23:59:59`);
+            if (desde) query = query.gte('created_at', aUtc(desde, horaDesdeChat.hora, horaDesdeChat.min, false));
+            if (hasta) query = query.lte('created_at', aUtc(hasta, null, null, true));
 
             const { data, error } = await query;
             if (error) throw error;
