@@ -207,7 +207,8 @@
                 </div>
             </div>
             <div class="panel" id="resultados">
-                <div class="result-bar" style="display:none;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                <div class="result-bar" style="display:none;justify-content:flex-end;align-items:center;gap:8px;margin-bottom:10px;">
+                    <button id="informeBtn" class="main-btn" style="background:#27ae60;">📊 Informe mensual</button>
                     <button id="pdfBtn" class="main-btn" style="background:#c0392b;">📄 Descargar PDF</button>
                 </div>
                 <div class="sin-resultados">Introduce un texto o define un rango de fechas y haz clic en Buscar.</div>
@@ -239,7 +240,8 @@
                 </div>
             </div>
             <div class="panel" id="resultadosChat">
-                <div class="result-bar" style="display:none;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                <div class="result-bar" style="display:none;justify-content:flex-end;align-items:center;gap:8px;margin-bottom:10px;">
+                    <button id="informeBtnChat" class="main-btn" style="background:#27ae60;">📊 Informe mensual</button>
                     <button id="pdfBtnChat" class="main-btn" style="background:#c0392b;">📄 Descargar PDF</button>
                 </div>
                 <div class="sin-resultados">Introduce un texto o define un rango de fechas y haz clic en Buscar.</div>
@@ -609,8 +611,118 @@
         doc.save(`historial-${tabActual}-${new Date().toISOString().split('T')[0]}.pdf`);
     }
 
+    function generarInforme() {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        const pageWidth = doc.internal.pageSize.getWidth();
+        const margin = 15;
+        const usable = pageWidth - margin * 2;
+
+        const msgs = resultadosActuales;
+        const delAlumno = msgs.filter(m => m.role === 'user');
+        const delProfesor = msgs.filter(m => m.role === 'assistant');
+        const palabras = delAlumno.reduce((n, m) => n + (m.content || '').split(/\s+/).filter(Boolean).length, 0);
+        const fechas = msgs.map(m => new Date(m.created_at)).filter(f => !isNaN(f));
+        const primera = fechas.length ? new Date(Math.min(...fechas.map(f => f.getTime()))).toLocaleDateString('es-ES') : '—';
+        const ultima = fechas.length ? new Date(Math.max(...fechas.map(f => f.getTime()))).toLocaleDateString('es-ES') : '—';
+
+        const correcciones = [];
+        delProfesor.forEach(m => {
+            const lines = (m.content || '').split('\n');
+            lines.forEach(line => {
+                if (line.includes('→')) {
+                    const idx = line.indexOf('→');
+                    const original = line.slice(0, idx).replace(/[*#`]/g, '').replace(/^.*?\sTip:/i, '').trim();
+                    const correct = line.slice(idx + 1).replace(/[*#`]/g, '').trim();
+                    if (original && correct) correcciones.push(`${original} → ${correct}`);
+                } else if (/Instead of\s+.+?,\s+say/i.test(line)) {
+                    const m2 = line.match(/Instead of\s+(.+?),\s+say[:\s]+(.+)/i);
+                    if (m2) correcciones.push(`${m2[1].replace(/[*#`]/g, '').trim()} → ${m2[2].replace(/[*#`]/g, '').trim()}`);
+                }
+            });
+        });
+
+        const keyword = tabActual === 'teacher' ? $('keyword').value.trim() : $('keywordChat').value.trim();
+        const desde = tabActual === 'teacher' ? $('fechaDesde').value : $('fechaDesdeChat').value;
+        const hasta = tabActual === 'teacher' ? $('fechaHasta').value : $('fechaHastaChat').value;
+
+        // Cabecera
+        doc.setFontSize(18);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(39, 174, 96);
+        doc.text('Informe de progreso', margin, 20);
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(100);
+        doc.text(`Alumno — Historial ${tabActual === 'teacher' ? 'Teacher' : 'Chat'}`, margin, 26);
+        doc.text(`Período: ${desde || 'desde inicio'}  →  ${hasta || 'hoy'}`, margin, 30);
+        doc.text(`Generado: ${new Date().toLocaleString('es-ES')}`, margin, 34);
+
+        // Resumen
+        let y = 44;
+        const labelX = margin;
+        const valX = margin + 75;
+        const filas = [
+            ['Mensajes totales', String(msgs.length)],
+            ['Mensajes del alumno', String(delAlumno.length)],
+            ['Mensajes del profesor', String(delProfesor.length)],
+            ['Palabras escritas (alumno)', palabras.toLocaleString('es-ES')],
+            ['Primera conversación', primera],
+            ['Última conversación', ultima]
+        ];
+        if (keyword) filas.push(['Palabra buscada', keyword]);
+
+        doc.setFontSize(12);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(30);
+        doc.text('Resumen', margin, y);
+        y += 6;
+        filas.forEach(([k, v]) => {
+            doc.setFontSize(10);
+            doc.setFont('helvetica', 'normal');
+            doc.setTextColor(80);
+            doc.text(k + ':', labelX, y);
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(30);
+            doc.text(String(v), valX, y);
+            y += 6;
+        });
+
+        // Correcciones
+        y += 4;
+        doc.setFontSize(12);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(30);
+        doc.text('Correcciones del profesor', margin, y);
+        y += 6;
+        if (!correcciones.length) {
+            doc.setFontSize(10);
+            doc.setFont('helvetica', 'normal');
+            doc.setTextColor(120);
+            doc.text('No se encontraron correcciones en este período.', margin, y);
+        } else {
+            doc.setFontSize(10);
+            doc.setFont('helvetica', 'normal');
+            doc.setTextColor(50);
+            correcciones.forEach(c => {
+                const lines = doc.splitTextToSize('• ' + c, usable);
+                if (y > 282) { doc.addPage(); y = 18; }
+                doc.text(lines, margin, y);
+                y += lines.length * 4.6 + 1;
+            });
+        }
+
+        doc.setFontSize(9);
+        doc.setTextColor(120);
+        doc.text(msgs.length + ' mensajes analizados', margin, 290);
+        doc.save(`informe-${tabActual}-${new Date().toISOString().split('T')[0]}.pdf`);
+    }
+
     $('pdfBtn').onclick = () => { if (!resultadosActuales.length) { alert('Primero realiza una búsqueda.'); return; } try { generarPDF(); } catch (e) { alert('Error al generar el PDF: ' + e.message); } };
     $('pdfBtnChat').onclick = $('pdfBtn').onclick;
+    const descargarInforme = () => { if (!resultadosActuales.length) { alert('Primero realiza una búsqueda.'); return; } try { generarInforme(); } catch (e) { alert('Error al generar el informe: ' + e.message); } };
+    $('informeBtn').onclick = descargarInforme;
+    $('informeBtnChat').onclick = descargarInforme;
 
     // ===== Event delegation (las funciones de módulo no son globales para onclick inline) =====
     ['resultados', 'resultadosChat'].forEach(id => {
