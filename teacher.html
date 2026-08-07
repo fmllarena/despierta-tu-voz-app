@@ -43,6 +43,19 @@
         .chat-input-area textarea { flex: 1; padding: 12px; border: 2px solid #d0ddea; border-radius: 12px; font-size: 0.95rem; outline: none; font-family: inherit; resize: none; height: 50px; }
         .chat-input-area textarea:focus { border-color: #2c6b9e; }
         .chat-input-area .send-btn { width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; background: transparent; border: none; font-size: 1.5rem; cursor: pointer; flex-shrink: 0; color: #2c6b9e; }
+        .repeat-input-area {
+            display: flex; gap: 8px; padding: 10px 20px; border-top: 1px solid #d0ddea; background: #f8fafc;
+        }
+        .repeat-input-area input {
+            flex: 1; padding: 9px 12px; border: 2px solid #d0ddea; border-radius: 10px;
+            font-size: 0.9rem; outline: none; font-family: inherit; color: #333; background: #fff;
+        }
+        .repeat-input-area input:focus { border-color: #2c6b9e; }
+        .repeat-btn {
+            width: 40px; height: 40px; flex-shrink: 0; border: none; border-radius: 10px;
+            background: #2c6b9e; color: #fff; font-size: 1rem; cursor: pointer;
+        }
+        .repeat-btn:disabled { opacity: 0.5; cursor: not-allowed; }
         .chat-empty { text-align: center; padding: 40px; color: #aaa; font-size: 0.9rem; }
         .loading-dots { align-self: flex-start; padding: 12px 16px; border-radius: 15px; background: #f0f5fa; color: #888; font-size: 1.2rem; border-bottom-left-radius: 4px; }
 
@@ -68,6 +81,8 @@
         body.dark-mode #listTipsBtn { border-color: #4a8 !important; color: #4a8 !important; }
         body.dark-mode .chat-input-area { background: #15273d; border-color: #2a4565; }
         body.dark-mode .chat-input-area textarea { background: #1a2d45; border-color: #2a4565; color: #d4d4dc; }
+        body.dark-mode .repeat-input-area { background: #15273d; border-color: #2a4565; }
+        body.dark-mode .repeat-input-area input { background: #1a2d45; border-color: #2a4565; color: #d4d4dc; }
         body.dark-mode .loading-dots { background: #1a2d45; color: #888; }
         body.dark-mode .dash-header h2 { color: #d4d4dc; }
         body.dark-mode .logout-btn { border-color: #ff6b6b; color: #ff6b6b; }
@@ -165,6 +180,10 @@
                     </label>
                     <textarea id="msgInput" placeholder="Write in English..." rows="1"></textarea>
                     <button id="sendBtn" class="send-btn">➤</button>
+                </div>
+                <div class="repeat-input-area">
+                    <input type="text" id="repeatInput" placeholder="Escribe una palabra o frase para escucharla..." spellcheck="false">
+                    <button id="repeatBtn" class="repeat-btn" title="Escuchar">🔊</button>
                 </div>
             </div>
 
@@ -497,6 +516,53 @@
             agregarMensaje('⚠️ Error de audio: ' + e.message, 'ia');
         }
     }
+
+    // ===== Repetidor de palabra/frase (TTS) =====
+    async function repetirTexto() {
+        const input = $('repeatInput');
+        const texto = input.value.trim();
+        if (!texto) { input.focus(); return; }
+
+        pararLectura();
+        const btn = $('repeatBtn');
+        btn.disabled = true;
+        btn.textContent = '⏳';
+
+        try {
+            const pureChat = document.getElementById('pureChat').checked;
+            const res = await fetch('/api/tts', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    text: texto,
+                    languageCode: 'en-US',
+                    speakingRate: 0.95,
+                    voiceName: pureChat ? 'en-US-Standard-C' : 'en-US-Standard-B',
+                    gender: pureChat ? 'FEMALE' : 'MALE'
+                })
+            });
+            const data = await res.json();
+            if (!res.ok || !data.audioContent) throw new Error(data.error || 'Error al generar audio');
+
+            const audio = new Audio('data:audio/mp3;base64,' + data.audioContent);
+            audio.onended = () => { btn.disabled = false; btn.textContent = '🔊'; };
+            audio.onerror = () => {
+                btn.disabled = false;
+                btn.textContent = '🔊';
+                alert('⚠️ No se pudo reproducir el audio.');
+            };
+            btn.textContent = '⏹';
+            btn.onclick = () => { audio.pause(); btn.disabled = false; btn.textContent = '🔊'; btn.onclick = repetirTexto; };
+            await audio.play();
+        } catch (e) {
+            btn.disabled = false;
+            btn.textContent = '🔊';
+            alert('⚠️ Error de audio: ' + e.message);
+        }
+    }
+
+    $('repeatBtn').onclick = repetirTexto;
+    $('repeatInput').onkeydown = e => { if (e.key === 'Enter') repetirTexto(); };
 
     function mostrarLoading() {
         const div = document.createElement('div');
