@@ -109,13 +109,19 @@
         body.dark-mode .tips-panel-body .tip-day { color: #888; }
         body.dark-mode .tips-panel-header button { color: #aaa; }
 
-        .topic-sug { flex: 1; min-width: 0; }
+        .topic-sug { flex: 0 1 220px; min-width: 0; max-width: 100%; }
         .topic-sug select {
-            width: 100%; padding: 6px 8px; border: 1px solid #d0ddea; border-radius: 6px;
-            font-family: inherit; font-size: 0.75rem; color: #2c6b9e; background: #fff; cursor: pointer; outline: none;
+            width: 100%; padding: 3px 6px; border: 1px solid #d0ddea; border-radius: 6px;
+            font-family: inherit; font-size: 0.7rem; color: #2c6b9e; background: #fff; cursor: pointer; outline: none;
         }
         .topic-sug select:focus { border-color: #2c6b9e; }
         body.dark-mode .topic-sug select { background: #1a2d45; border-color: #2a4565; color: #6ba4d6; }
+
+        @media (max-width: 480px) {
+            .topic-sug { flex: 0 1 150px; }
+            .chat-box .chat-header h3 { font-size: 0.85rem; }
+            .topic-sug select { font-size: 0.65rem; }
+        }
 
         .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); display: flex; align-items: center; justify-content: center; z-index: 100; }
         .modal-box { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #fff; border-radius: 14px; padding: 18px; width: 90%; max-width: 420px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
