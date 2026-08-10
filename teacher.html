@@ -109,11 +109,13 @@
         body.dark-mode .tips-panel-body .tip-day { color: #888; }
         body.dark-mode .tips-panel-header button { color: #aaa; }
 
-        .topic-sug { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 6px; }
-        .topic-sug button { background: #e8f0fe; border: 1px solid #d0ddea; padding: 3px 8px; border-radius: 6px; cursor: pointer; font-family: inherit; font-size: 0.7rem; color: #2c6b9e; }
-        .topic-sug button:hover { background: #2c6b9e; color: #fff; border-color: #2c6b9e; }
-        body.dark-mode .topic-sug button { background: #1a2d45; border-color: #2a4565; color: #6ba4d6; }
-        body.dark-mode .topic-sug button:hover { background: #2c6b9e; color: #fff; border-color: #2c6b9e; }
+        .topic-sug { margin-bottom: 6px; }
+        .topic-sug select {
+            width: 100%; padding: 6px 8px; border: 1px solid #d0ddea; border-radius: 6px;
+            font-family: inherit; font-size: 0.75rem; color: #2c6b9e; background: #e8f0fe; cursor: pointer; outline: none;
+        }
+        .topic-sug select:focus { border-color: #2c6b9e; }
+        body.dark-mode .topic-sug select { background: #1a2d45; border-color: #2a4565; color: #6ba4d6; }
 
         .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); display: flex; align-items: center; justify-content: center; z-index: 100; }
         .modal-box { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #fff; border-radius: 14px; padding: 18px; width: 90%; max-width: 420px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
@@ -164,11 +166,14 @@
                 <div class="chat-header">
                     <h3>🧑‍🏫 Your English Teacher — B1 Conversational</h3>
                     <div class="topic-sug">
-                        <button data-t="Introduce yourself">Introduce yourself</button>
-                        <button data-t="Talk about your weekend">Talk about your weekend</button>
-                        <button data-t="Order food at a restaurant">Order food at a restaurant</button>
-                        <button data-t="Describe your job">Describe your job</button>
-                        <button data-t="Make a phone appointment">Make a phone appointment</button>
+                        <select id="topicSelect" aria-label="Temas sugeridos">
+                            <option value="">💬 Elige un tema para conversar...</option>
+                            <option value="Introduce yourself">Introduce yourself</option>
+                            <option value="Talk about your weekend">Talk about your weekend</option>
+                            <option value="Order food at a restaurant">Order food at a restaurant</option>
+                            <option value="Describe your job">Describe your job</option>
+                            <option value="Make a phone appointment">Make a phone appointment</option>
+                        </select>
                     </div>
                 </div>
                 <div id="chatBody" class="chat-body">
@@ -404,9 +409,13 @@
 
     $('closeTipsPanel').onclick = () => { $('tipsPanel').classList.remove('open'); };
 
-    document.querySelectorAll('.topic-sug button').forEach(btn => {
-        btn.onclick = () => { $('msgInput').value = btn.dataset.t; $('sendBtn').click(); };
-    });
+    $('topicSelect').onchange = () => {
+        const t = $('topicSelect').value;
+        if (!t) return;
+        $('msgInput').value = t;
+        $('sendBtn').click();
+        $('topicSelect').value = '';
+    };
 
     function agregarMensaje(texto, rol) {
         if (rol === 'user' && skipDisplay) { skipDisplay = false; return; }
