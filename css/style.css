@@ -444,22 +444,8 @@ header p {
     border: 1px solid #eee;
 }
 
-/* Puente invisible para mantener el hover entre el botón y el menú */
-.dropdown-content::after {
-    content: "";
-    position: absolute;
-    bottom: -15px;
-    /* Cubrimos más espacio hacia abajo */
-    left: -20%;
-    /* Más ancho que el menú para seguridad */
-    width: 140%;
-    height: 15px;
-    background: transparent;
-    pointer-events: all;
-}
-
-/* Evitamos que el botón de fonética se mueva al hacer hover, para no romper el puente */
-.dropdown:hover .action-btn {
+/* Menú desplegable controlado por click (clase .active) en lugar de hover */
+.dropdown.active .action-btn {
     transform: none;
     background: #e8e8e8;
 }
@@ -495,7 +481,7 @@ header p {
     border-bottom-right-radius: 11px;
 }
 
-.dropdown:hover .dropdown-content {
+.dropdown.active .dropdown-content {
     display: block;
 }
 

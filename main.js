@@ -1521,6 +1521,17 @@ if (window.PRONUNCIATION) window.PRONUNCIATION.init();
 
 // --- ACCIONES RÁPIDAS (FONÉTICA) ---
 if (ELEMENTS.phoneticsMenu) {
+    // Menú desplegable controlado por click (no hover)
+    const phonDropdown = ELEMENTS.quickPhoneticsBtn ? ELEMENTS.quickPhoneticsBtn.closest('.dropdown') : null;
+    if (phonDropdown) {
+        ELEMENTS.quickPhoneticsBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            phonDropdown.classList.toggle('active');
+        });
+        document.addEventListener('click', (e) => {
+            if (!phonDropdown.contains(e.target)) phonDropdown.classList.remove('active');
+        });
+    }
     ELEMENTS.phoneticsMenu.querySelectorAll('.lang-option').forEach(btn => {
         btn.addEventListener('click', () => {
             const lang = btn.getAttribute('data-lang');
@@ -1532,9 +1543,8 @@ if (ELEMENTS.phoneticsMenu) {
             const pos = presetText.indexOf(':') + 2;
             ELEMENTS.chatInput.setSelectionRange(pos, presetText.length);
 
-            // Ocultar menú tras elegir (opcional, el CSS ya lo maneja por hover pero ayuda)
-            ELEMENTS.phoneticsMenu.style.display = 'none';
-            setTimeout(() => ELEMENTS.phoneticsMenu.style.display = '', 500);
+            // Ocultar menú tras elegir
+            if (phonDropdown) phonDropdown.classList.remove('active');
         });
     });
 }
