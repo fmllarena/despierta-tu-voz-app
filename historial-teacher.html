@@ -337,6 +337,7 @@
     let ascendenteChat = false;
     let resultadosActuales = [];
     let tabActual = 'teacher';
+    let estrictoActual = false;
 
     const $ = id => document.getElementById(id);
     const setLoading = on => { $('loadingOverlay').style.display = on ? 'flex' : 'none'; };
@@ -509,6 +510,7 @@
             if (keyword && estricto) {
                 mensajes = mensajes.filter(m => matchEstricto(m.content || '', keyword));
             }
+            estrictoActual = estricto;
             renderMensajes(mensajes, keyword);
         } catch (e) {
             $('resultados').innerHTML = `<div class="sin-resultados" style="color:#e74c3c;">Error: ${e.message}</div>`;
@@ -548,6 +550,7 @@
             if (keyword && estricto) {
                 mensajes = mensajes.filter(m => matchEstricto(m.content || '', keyword));
             }
+            estrictoActual = estricto;
             renderMensajesChat(mensajes, keyword);
         } catch (e) {
             $('resultadosChat').innerHTML = `<div class="sin-resultados" style="color:#e74c3c;">Error: ${e.message}</div>`;
@@ -598,8 +601,14 @@
             .replace(/`(.+?)`/g, '<code>$1</code>')
             .replace(/\n/g, '<br>');
         if (keyword) {
-            const re = new RegExp(`(${keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
-            t = t.replace(re, '<span class="highlight">$1</span>');
+            const esc = keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            if (estrictoActual) {
+                const reAll = new RegExp(`\\b${esc}\\b`, 'g');
+                t = t.replace(reAll, m => `<span class="highlight">${m}</span>`);
+            } else {
+                const re = new RegExp(`(${esc})`, 'gi');
+                t = t.replace(re, '<span class="highlight">$1</span>');
+            }
         }
         return t;
     }
