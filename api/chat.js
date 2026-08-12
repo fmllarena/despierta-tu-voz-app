@@ -59,6 +59,10 @@ async function processChat(req, res = null) {
         return await teacherChat(req.body, intent);
     }
 
+    if (intent === 'persona_chat') {
+        return await personaChat(req.body);
+    }
+
     if (intent === 'add_teacher_tip') {
         return await addTeacherTip(req.body);
     }
@@ -1044,6 +1048,95 @@ function handleError(error, res, stream) {
     } else {
         res.status(500).json({ error: msg, details: error.message });
     }
+}
+
+/**
+ * Chat de rol/personaje configurable (página sex.html).
+ * Responde en el idioma del usuario, con memoria en la tabla persona_chat.
+ */
+async function personaChat(body) {
+    const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
+    const { message, history = [], userId, persona = '' } = body;
+    if (!message) throw new Error("Se requiere un mensaje");
+    if (!userId) throw new Error("Se requiere userId");
+
+    // Guardar mensaje del usuario
+    await supabase.from('persona_chat').insert({
+        user_id: userId,
+        persona: persona || '',
+        role: 'user',
+        content: message
+    }).maybeSingle();
+
+    // Memoria desde la tabla persona_chat (últimos 50 turnos)
+    let context = '';
+    const { data: recentMessages } = await supabase.from('persona_chat')
+        .select('role, content, persona, created_at')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false })
+        .limit(50);
+
+    if (persona) {
+        context += `--- PERSONA ACTUAL ---\n${persona}\n\n`;
+    }
+
+    if (recentMessages?.length > 0) {
+        const historial = recentMessages.reverse().map(m =>
+            `[${m.role === 'user' ? 'Usuario' : 'Persona'}] ${m.content}`
+        ).join('\n');
+        context += `--- HISTORIAL DE CONVERSACIÓN ---\n${historial}\n\nUsa este historial como memoria de lo hablado. Referencia temas previos con naturalidad, no lo recapitules todo.\n`;
+    }
+
+    const finalPrompt = context ? `CONTEXTO:\n${context}\n\nMENSAJE:\n${message}` : message;
+    const sysPrompt = SYSTEM_PROMPTS['persona_chat'];
+
+    const keys = [process.env.MISTRAL_API_KEY, process.env.MISTRAL_API_KEY_2].filter(Boolean);
+    if (!keys.length) throw new Error("Falta API Key de Mistral");
+
+    let lastErr;
+    for (const key of keys) {
+        try {
+            const messages = [
+                { role: "system", content: sysPrompt },
+                ...(history || []).map(h => ({
+                    role: h.role === 'model' ? 'assistant' : 'user',
+                    content: h.parts?.[0]?.text || ''
+                })),
+                { role: "user", content: finalPrompt }
+            ];
+
+            const response = await fetch(`${MISTRAL_BASE_URL}/chat/completions`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${key}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    model: MISTRAL_MODEL,
+                    messages,
+                    temperature: 0.85,
+                    max_tokens: 2048
+                })
+            });
+            if (!response.ok) {
+                const err = await response.json().catch(() => ({}));
+                throw new Error(`Mistral Error ${response.status}: ${err.error?.message || response.statusText}`);
+            }
+            const data = await response.json();
+            const texto = data.choices?.[0]?.message?.content || '';
+
+            await supabase.from('persona_chat').insert({
+                user_id: userId,
+                persona: persona || '',
+                role: 'assistant',
+                content: texto
+            }).maybeSingle();
+
+            return { text: texto };
+        } catch (e) {
+            lastErr = e;
+            const isRetryable = e.message.includes('429') || e.message.includes('503') || e.message.includes('Too Many Requests') || e.message.includes('401');
+            if (!isRetryable) break;
+        }
+    }
+    throw lastErr;
 }
 
 /**
