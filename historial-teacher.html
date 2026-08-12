@@ -46,6 +46,8 @@
         .fila label { display: block; font-size: 0.8rem; font-weight: 600; color: #666; margin-bottom: 4px; }
         .fila input, .fila select { width: 100%; padding: 10px 12px; border: 2px solid #eee; border-radius: 10px; font-size: 0.93rem; outline: none; font-family: inherit; }
         .fila input:focus, .fila select:focus { border-color: #8e7d6d; }
+        .busqueda-estricta { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; font-size: 0.78rem; font-weight: 600; color: #666; cursor: pointer; margin-top: 8px; }
+        .busqueda-estricta input { width: auto; padding: 0; margin: 0; cursor: pointer; }
 
         .time-picker { position: relative; flex: 0 0 92px; z-index: 100; }
         .time-btn {
@@ -223,7 +225,10 @@
                 <div class="fila">
                     <div class="campo">
                         <label for="keyword">Palabra clave</label>
-                        <input type="text" id="keyword" placeholder="Buscar en los mensajes...">
+                        <div style="display:flex;gap:8px;align-items:center;">
+                            <input type="text" id="keyword" placeholder="Buscar en los mensajes..." style="flex:1;">
+                            <span class="busqueda-estricta"><input type="checkbox" id="estrictoKey"> <span>Estricta</span></span>
+                        </div>
                     </div>
                     <div class="campo campo-hora">
                         <label for="fechaDesde">Desde</label>
@@ -272,7 +277,10 @@
                 <div class="fila">
                     <div class="campo">
                         <label for="keywordChat">Palabra clave</label>
-                        <input type="text" id="keywordChat" placeholder="Buscar en los mensajes...">
+                        <div style="display:flex;gap:8px;align-items:center;">
+                            <input type="text" id="keywordChat" placeholder="Buscar en los mensajes..." style="flex:1;">
+                            <span class="busqueda-estricta"><input type="checkbox" id="estrictoChat"> <span>Estricta</span></span>
+                        </div>
                     </div>
                     <div class="campo campo-hora">
                         <label for="fechaDesdeChat">Desde</label>
@@ -464,8 +472,16 @@
     }
 
     // ===== Búsqueda =====
+    // Búsqueda estricta: palabra completa y respetando mayúsculas/minúsculas
+    function matchEstricto(texto, keyword) {
+        const safe = keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const re = new RegExp(`(^|[^a-zA-Z0-9áéíóúüñÁÉÍÓÚÜÑ])${safe}([^a-zA-Z0-9áéíóúüñÁÉÍÓÚÜÑ]|$)`);
+        return re.test(texto);
+    }
+
     $('buscarBtn').onclick = async () => {
         const keyword = $('keyword').value.trim();
+        const estricto = $('estrictoKey').checked;
         const desde = $('fechaDesde').value;
         const hasta = $('fechaHasta').value;
 
@@ -482,13 +498,18 @@
                 .order('created_at', { ascending: ascendente })
                 .limit(500);
 
-            if (keyword) query = query.ilike('content', `%${keyword}%`);
+            if (keyword && !estricto) query = query.ilike('content', `%${keyword}%`);
             if (desde) query = query.gte('created_at', aUtc(desde, horaDesde.hora, horaDesde.min, false));
             if (hasta) query = query.lte('created_at', aUtc(hasta, null, null, true));
 
             const { data, error } = await query;
             if (error) throw error;
-            renderMensajes(data || [], keyword);
+
+            let mensajes = data || [];
+            if (keyword && estricto) {
+                mensajes = mensajes.filter(m => matchEstricto(m.content || '', keyword));
+            }
+            renderMensajes(mensajes, keyword);
         } catch (e) {
             $('resultados').innerHTML = `<div class="sin-resultados" style="color:#e74c3c;">Error: ${e.message}</div>`;
         } finally {
@@ -499,6 +520,7 @@
     // ===== Búsqueda Chat (tabla teacher_pure_chat) =====
     $('buscarChatBtn').onclick = async () => {
         const keyword = $('keywordChat').value.trim();
+        const estricto = $('estrictoChat').checked;
         const desde = $('fechaDesdeChat').value;
         const hasta = $('fechaHastaChat').value;
 
@@ -515,13 +537,18 @@
                 .order('created_at', { ascending: ascendenteChat })
                 .limit(500);
 
-            if (keyword) query = query.ilike('content', `%${keyword}%`);
+            if (keyword && !estricto) query = query.ilike('content', `%${keyword}%`);
             if (desde) query = query.gte('created_at', aUtc(desde, horaDesdeChat.hora, horaDesdeChat.min, false));
             if (hasta) query = query.lte('created_at', aUtc(hasta, null, null, true));
 
             const { data, error } = await query;
             if (error) throw error;
-            renderMensajesChat(data || [], keyword);
+
+            let mensajes = data || [];
+            if (keyword && estricto) {
+                mensajes = mensajes.filter(m => matchEstricto(m.content || '', keyword));
+            }
+            renderMensajesChat(mensajes, keyword);
         } catch (e) {
             $('resultadosChat').innerHTML = `<div class="sin-resultados" style="color:#e74c3c;">Error: ${e.message}</div>`;
         } finally {

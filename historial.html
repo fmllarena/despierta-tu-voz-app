@@ -44,6 +44,8 @@
         .fila label { display: block; font-size: 0.8rem; font-weight: 600; color: #666; margin-bottom: 4px; }
         .fila input, .fila select { width: 100%; padding: 10px 12px; border: 2px solid #eee; border-radius: 10px; font-size: 0.93rem; outline: none; font-family: inherit; }
         .fila input:focus, .fila select:focus { border-color: #8e7d6d; }
+        .busqueda-estricta { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; font-size: 0.78rem; font-weight: 600; color: #666; cursor: pointer; margin-top: 8px; }
+        .busqueda-estricta input { width: auto; padding: 0; margin: 0; cursor: pointer; }
 
         .main-btn {
             background: #8e7d6d; color: #fff; border: none; padding: 10px 22px;
@@ -167,7 +169,10 @@
                     </div>
                     <div class="campo">
                         <label for="keywordAlumno">Palabra clave</label>
-                        <input type="text" id="keywordAlumno" placeholder="Buscar en los mensajes...">
+                        <div style="display:flex;gap:8px;align-items:center;">
+                            <input type="text" id="keywordAlumno" placeholder="Buscar en los mensajes..." style="flex:1;">
+                            <span class="busqueda-estricta"><input type="checkbox" id="estrictoAlumno"> <span>Estricta</span></span>
+                        </div>
                     </div>
                     <div class="campo">
                         <label for="fechaDesde">Desde</label>
@@ -196,7 +201,10 @@
                 <div class="fila">
                     <div class="campo" style="flex:2;">
                         <label for="keywordGlobal">Palabra o frase</label>
-                        <input type="text" id="keywordGlobal" placeholder="Texto a buscar en cualquier mensaje...">
+                        <div style="display:flex;gap:8px;align-items:center;">
+                            <input type="text" id="keywordGlobal" placeholder="Texto a buscar en cualquier mensaje..." style="flex:1;">
+                            <span class="busqueda-estricta"><input type="checkbox" id="estrictoGlobal"> <span>Estricta</span></span>
+                        </div>
                     </div>
                     <div class="campo">
                         <label for="fechaDesdeG">Desde</label>
@@ -338,6 +346,7 @@
     $('buscarAlumnoBtn').onclick = async () => {
         const userId = $('alumnoSelect').value;
         const keyword = $('keywordAlumno').value.trim();
+        const estricto = $('estrictoAlumno').checked;
         const desde = $('fechaDesde').value;
         const hasta = $('fechaHasta').value;
 
@@ -360,7 +369,7 @@
                     .limit(500);
             }
 
-            if (keyword) {
+            if (keyword && !estricto) {
                 query = query.ilike('texto', `%${keyword}%`);
             }
             if (desde) query = query.gte('created_at', desde);
@@ -368,7 +377,12 @@
 
             const { data, error } = await query;
             if (error) throw error;
-            renderMensajesAlumnoGlobal(data || [], { keyword, userId });
+
+            let mensajes = data || [];
+            if (keyword && estricto) {
+                mensajes = mensajes.filter(m => matchEstricto(m.texto || '', keyword));
+            }
+            renderMensajesAlumnoGlobal(mensajes, { keyword, userId });
         } catch (e) {
             $('resultadosAlumno').innerHTML = `<div class="sin-resultados" style="color:#e74c3c;">Error: ${e.message}</div>`;
         } finally {
@@ -400,6 +414,7 @@
     $('buscarGlobalBtn').onclick = async () => {
         const keyword = $('keywordGlobal').value.trim();
         if (!keyword) { alert('Introduce un texto para buscar.'); return; }
+        const estricto = $('estrictoGlobal').checked;
         const desde = $('fechaDesdeG').value;
         const hasta = $('fechaHastaG').value;
 
@@ -407,16 +422,21 @@
         try {
             let query = sb.from('mensajes')
                 .select('id, texto, emisor, created_at, alumno')
-                .ilike('texto', `%${keyword}%`)
                 .order('created_at', { ascending: ascendenteGlobal })
                 .limit(500);
 
+            if (!estricto) query = query.ilike('texto', `%${keyword}%`);
             if (desde) query = query.gte('created_at', desde);
             if (hasta) query = query.lte('created_at', `${hasta}T23:59:59`);
 
             const { data, error } = await query;
             if (error) throw error;
-            renderMensajesGlobal(data || [], keyword);
+
+            let mensajes = data || [];
+            if (estricto) {
+                mensajes = mensajes.filter(m => matchEstricto(m.texto || '', keyword));
+            }
+            renderMensajesGlobal(mensajes, keyword);
         } catch (e) {
             $('resultadosGlobal').innerHTML = `<div class="sin-resultados" style="color:#e74c3c;">Error: ${e.message}</div>`;
         } finally {
@@ -470,6 +490,13 @@
             </div>
             <div class="texto texto-truncado" onclick="this.classList.toggle('expandido')">${texto}</div>
         </div>`;
+    }
+
+    // Búsqueda estricta: palabra completa y respetando mayúsculas/minúsculas
+    function matchEstricto(texto, keyword) {
+        const safe = keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const re = new RegExp(`(^|[^a-zA-Z0-9áéíóúüñÁÉÍÓÚÜÑ])${safe}([^a-zA-Z0-9áéíóúüñÁÉÍÓÚÜÑ]|$)`);
+        return re.test(texto);
     }
 
     // ===== Dark Mode =====
