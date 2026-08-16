@@ -189,7 +189,9 @@
         if (rol === 'user') {
             chatBody.scrollTop = chatBody.scrollHeight;
         } else {
-            div.scrollIntoView({ block: 'start' });
+            const boxTop = chatBody.getBoundingClientRect().top;
+            const msgTop = div.getBoundingClientRect().top;
+            chatBody.scrollTop += msgTop - boxTop;
         }
     }
 
