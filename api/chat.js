@@ -1051,38 +1051,21 @@ function handleError(error, res, stream) {
 }
 
 /**
- * Chat de rol/personaje configurable (página sex.html).
- * Responde en el idioma del usuario, con memoria en la tabla persona_chat.
+ * Chat de rol/personaje configurable (página persona.html).
+ * Sin persistencia: conversación efímera por sesión (solo el historial en memoria del cliente).
  */
 async function personaChat(body) {
-    const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
-    const { message, history = [], userId, persona = '' } = body;
+    const { message, history = [], persona = '' } = body;
     if (!message) throw new Error("Se requiere un mensaje");
-    if (!userId) throw new Error("Se requiere userId");
 
-    // Guardar mensaje del usuario
-    await supabase.from('persona_chat').insert({
-        user_id: userId,
-        persona: persona || '',
-        role: 'user',
-        content: message
-    }).maybeSingle();
-
-    // Memoria desde la tabla persona_chat (últimos 50 turnos)
+    // Contexto con la persona actual y el historial enviado por el cliente
     let context = '';
-    const { data: recentMessages } = await supabase.from('persona_chat')
-        .select('role, content, persona, created_at')
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false })
-        .limit(50);
-
     if (persona) {
         context += `--- PERSONA ACTUAL ---\n${persona}\n\n`;
     }
-
-    if (recentMessages?.length > 0) {
-        const historial = recentMessages.reverse().map(m =>
-            `[${m.role === 'user' ? 'Usuario' : 'Persona'}] ${m.content}`
+    if (history?.length > 0) {
+        const historial = history.map(h =>
+            `[${h.role === 'model' ? 'Persona' : 'Usuario'}] ${h.parts?.[0]?.text || ''}`
         ).join('\n');
         context += `--- HISTORIAL DE CONVERSACIÓN ---\n${historial}\n\nUsa este historial como memoria de lo hablado. Referencia temas previos con naturalidad, no lo recapitules todo.\n`;
     }
@@ -1121,13 +1104,6 @@ async function personaChat(body) {
             }
             const data = await response.json();
             const texto = data.choices?.[0]?.message?.content || '';
-
-            await supabase.from('persona_chat').insert({
-                user_id: userId,
-                persona: persona || '',
-                role: 'assistant',
-                content: texto
-            }).maybeSingle();
 
             return { text: texto };
         } catch (e) {
