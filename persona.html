@@ -16,7 +16,7 @@
         .login-section input { width: 100%; padding: 14px; border: 2px solid #eee; border-radius: 12px; font-size: 1rem; outline: none; font-family: inherit; margin-bottom: 10px; }
         .login-section input:focus { border-color: #7a4b9e; }
         .login-error { color: #e74c3c; font-size: 0.85rem; min-height: 1.5em; margin-top: 8px; }
-        .dashboard { display: block; }
+        .dashboard { display: none; }
         .dash-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px; }
         .dash-header h2 { color: #7a4b9e; }
         .logout-btn { background: transparent; border: 1px solid #e74c3c; color: #e74c3c; padding: 6px 16px; border-radius: 8px; cursor: pointer; font-family: inherit; font-size: 0.85rem; }
@@ -75,12 +75,22 @@
 </head>
 <body>
 <div class="container" id="app">
+    <div id="loginSection" class="login-section">
+        <h1>🎭 Rol Conversacional</h1>
+        <p>Chat de rol/personaje configurable.</p>
+        <input type="email" id="loginEmail" placeholder="Email" value="fernando@despiertatuvoz.com">
+        <input type="password" id="loginPassword" placeholder="Contraseña">
+        <div class="login-error" id="loginError"></div>
+        <button id="loginBtn" class="main-btn" style="width:100%;margin-top:5px;background:#7a4b9e;">Entrar</button>
+    </div>
+
     <div id="dashboard" class="dashboard">
         <div class="dash-header">
             <h2>🎭 Rol Conversacional</h2>
             <div style="display:flex;gap:8px;">
                 <button id="darkToggle" style="background:transparent;border:1px solid #7a4b9e;color:#7a4b9e;padding:6px 12px;border-radius:8px;cursor:pointer;font-size:1rem;font-family:inherit;" title="Modo oscuro">🌙</button>
                 <button id="clearChatBtn" style="background:transparent;border:1px solid #e74c3c;color:#e74c3c;padding:6px 12px;border-radius:8px;cursor:pointer;font-size:0.85rem;font-family:inherit;">🗑 Borrar local</button>
+                <button id="logoutBtn" class="logout-btn">Cerrar Sesión</button>
             </div>
         </div>
 
@@ -102,12 +112,56 @@
     </div>
 </div>
 
-<script>
+<script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+
+    let sb;
     let history = [];
     let esperando = false;
+    let userId = null;
 
     const $ = id => document.getElementById(id);
     const chatBody = $('chatBody');
+
+    async function init() {
+        const configRes = await fetch('/api/config');
+        const config = await configRes.json();
+        sb = createClient(config.url, config.key, { auth: { persistSession: false } });
+
+        const session = localStorage.getItem('sb-session');
+        if (session) {
+            await sb.auth.setSession(JSON.parse(session));
+            const { data: { user } } = await sb.auth.getUser();
+            if (user) {
+                userId = user.id;
+                $('loginSection').style.display = 'none';
+                $('dashboard').style.display = 'block';
+            }
+        }
+    }
+
+    $('loginBtn').onclick = async () => {
+        const email = $('loginEmail').value.trim();
+        const password = $('loginPassword').value.trim();
+        if (!email || !password) { $('loginError').textContent = 'Completa ambos campos'; return; }
+        $('loginError').textContent = '';
+        const { data, error } = await sb.auth.signInWithPassword({ email, password });
+        if (error) { $('loginError').textContent = error.message; return; }
+        localStorage.setItem('sb-session', JSON.stringify(data.session));
+        userId = data.user.id;
+        $('loginSection').style.display = 'none';
+        $('dashboard').style.display = 'block';
+    };
+
+    $('logoutBtn').onclick = async () => {
+        await sb.auth.signOut();
+        localStorage.removeItem('sb-session');
+        history = [];
+        userId = null;
+        $('dashboard').style.display = 'none';
+        $('loginSection').style.display = 'block';
+        $('loginPassword').value = '';
+    };
 
     function aplicarModoOscuro(oscuro) {
         document.body.classList.toggle('dark-mode', oscuro);
@@ -155,7 +209,7 @@
 
     async function enviar() {
         const texto = $('msgInput').value.trim();
-        if (!texto || esperando) return;
+        if (!texto || esperando || !userId) return;
         $('msgInput').value = '';
         esperando = true;
 
@@ -192,6 +246,8 @@
     $('sendBtn').onclick = enviar;
     $('msgInput').onkeydown = e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); enviar(); } };
     $('personaInput').onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); $('msgInput').focus(); } };
+
+    init();
 </script>
 </body>
 </html>
