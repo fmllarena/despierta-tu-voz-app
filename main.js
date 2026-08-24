@@ -1332,14 +1332,15 @@ NO incluyas comillas. Responde solo con la frase.`;
             content.innerHTML = "<p>Sigue charlando conmigo para registrar tu camino.</p>";
         } else {
             const nivel = perfil.nivel_alquimia || 1;
+            const render = (txt) => (typeof marked !== 'undefined' && txt) ? marked.parse(txt) : (txt || "...");
             content.innerHTML = `
                 <div class="diario-seccion">
                     <h4>Nivel de Alquimia Vocal: ${nivel}/10</h4>
                     <div class="progress-bar-container"><div class="progress-fill" style="width: ${nivel * 10}%"></div></div>
                 </div>
-                <div class="diario-seccion"><h4>Última Alquimia</h4><p>${perfil.ultimo_resumen || "..."}</p></div>
-                <div class="diario-seccion"><h4>Logros ✨</h4><p>${perfil.creencias_transmutadas || "..."}</p></div>
-                <div class="diario-seccion"><h4>Creencias</h4><p>${perfil.creencias || "..."}</p></div>
+                <div class="diario-seccion"><h4>Última Alquimia</h4>${render(perfil.ultimo_resumen)}</div>
+                <div class="diario-seccion"><h4>Logros ✨</h4>${render(perfil.creencias_transmutadas)}</div>
+                <div class="diario-seccion"><h4>Creencias</h4>${render(perfil.creencias)}</div>
             `;
         }
         modal.style.display = 'flex';
