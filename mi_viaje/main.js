@@ -402,6 +402,12 @@ function renderDiarioAlquimia(cronicas, notasPersonales) {
     document.getElementById('prevQBtn').style.display = 'none';
     document.getElementById('finishModuleBtn').style.display = 'none';
 
+    const renderMd = (txt) => {
+        if (!txt) return '';
+        if (typeof marked !== 'undefined') return marked.parse(txt);
+        return txt.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>').replace(/[*\n]/g, m => m === '\n' ? '<br>' : '');
+    };
+
     let contentHtml = `
         <div class="diario-alquimia-view">
             <div class="diario-header">
@@ -447,7 +453,7 @@ function renderDiarioAlquimia(cronicas, notasPersonales) {
             contentHtml += `
                 <div class="cronica-entry">
                     <div class="cronica-date">${fechaFormateada}</div>
-                    <div class="cronica-text">${cronica.texto}</div>
+                    <div class="cronica-text">${renderMd(cronica.texto)}</div>
                 </div>
             `;
         });
