@@ -1351,9 +1351,24 @@ NO incluyas comillas. Responde solo con la frase.`;
         if (!user) return;
         try {
             console.log("🪄 [Proactivo] Generando resumen de perfil y transmutación...");
-            const prompt = `Analiza profundamente nuestra conversación y el progreso del alumno. Genera un JSON con este formato: {"resumen":"resumen técnico de los últimos avances","creencias":"creencias limitantes detectadas o trabajadas hoy","historia_vocal":"actualización de su pasado vocal si ha revelado algo","nivel_alquimia":1-10,"creencias_transmutadas":"logros y transmutaciones conseguidas"}. Responde SOLO el JSON puramente.`;
+            const prompt = `Analiza nuestra conversación y el progreso del alumno. Responde ÚNICAMENTE con un objeto JSON compacto (sin saltos de línea dentro de los valores, sin markdown y sin texto adicional) con este formato exacto: {"resumen":"resumen técnico de los últimos avances","creencias":"creencias limitantes detectadas o trabajadas hoy","historia_vocal":"actualización de su pasado vocal si ha revelado algo","nivel_alquimia":<entero 1-10>,"creencias_transmutadas":"logros y transmutaciones conseguidas"}. Usa cadenas de una sola línea.`;
             const raw = await llamarGemini(prompt, chatHistory, "mentor_chat", { userId: user.id });
-            const data = JSON.parse(raw.replace(/```json|```/g, "").trim());
+            if (!raw) return;
+            let rawClean = raw.replace(/```json|```/gi, "").trim();
+            const ini = rawClean.indexOf('{');
+            const fin = rawClean.lastIndexOf('}');
+            if (ini !== -1 && fin > ini) rawClean = rawClean.slice(ini, fin + 1);
+            let data;
+            try {
+                data = JSON.parse(rawClean);
+            } catch (e1) {
+                try {
+                    data = JSON.parse(rawClean.replace(/[\r\n]+/g, ' '));
+                } catch (e2) {
+                    console.warn("⚠️ Resumen proactivo: la IA no devolvió un JSON válido. Se omite la actualización de perfil.");
+                    return;
+                }
+            }
 
             const { error } = await supabaseClient.from('user_profiles').update({
                 ultimo_resumen: data.resumen,

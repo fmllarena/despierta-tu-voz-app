@@ -117,6 +117,9 @@ export const TOUR = window.TOUR = {
             document.getElementById('dtvTourNext').addEventListener('click', () => this.next());
             document.getElementById('dtvTourPrev').addEventListener('click', () => this.prev());
             document.getElementById('dtvTourSkip').addEventListener('click', () => this.end());
+            document.getElementById('dtvTourOverlay').addEventListener('click', (e) => {
+                if (e.target.id === 'dtvTourOverlay') this.end();
+            });
             window.addEventListener('resize', () => { if (this.isActive) this.render(); });
         }
 
