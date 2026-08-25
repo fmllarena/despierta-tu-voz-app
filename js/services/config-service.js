@@ -4,6 +4,7 @@ import { updateState } from '../modules/state.js';
  * Obtiene la configuración de Supabase desde el servidor e inicializa el cliente.
  */
 export async function inicializarSupabase() {
+    if (state.supabase) return state.supabase;
     console.log("🔍 Inicializando Supabase...");
     try {
         const response = await fetch('/api/config');
@@ -26,3 +27,6 @@ export async function inicializarSupabase() {
         return null;
     }
 }
+
+// Exponer para que el script clásico main.js pueda inicializar el cliente único
+window.inicializarSupabase = inicializarSupabase;

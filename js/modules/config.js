@@ -48,7 +48,6 @@ export const AUDIOS_BOTIQUIN = window.AUDIOS_BOTIQUIN = [
     { id: 'ecos-tibet', title: 'Ecos del Tíbet', file: 'assets/audios/Ecos del Tíbet.mp3', desc: 'Sonidos inmersivos para la concentración y paz interior.' }
 ];
 
-export let supabaseClient = window.supabaseClient = null;
 export let userProfile = window.userProfile = null;
 export let chatHistory = window.chatHistory = [];
 export let isRecoveringPassword = window.isRecoveringPassword = false;

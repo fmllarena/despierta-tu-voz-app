@@ -1,5 +1,6 @@
 import { ELEMENTS } from './elements.js';
-import { userProfile, supabaseClient } from './config.js';
+import { userProfile } from './config.js';
+import { state } from './state.js';
 
 export const EMAIL = window.EMAIL_VERIFICATION = {
     banner: null,
@@ -48,7 +49,7 @@ export const EMAIL = window.EMAIL_VERIFICATION = {
         this.resendBtn.innerText = 'Enviando...';
 
         try {
-            const { data: { user } } = await supabaseClient.auth.getUser();
+            const { data: { user } } = await state.supabase.auth.getUser();
 
             const response = await fetch('/api/email', {
                 method: 'POST',

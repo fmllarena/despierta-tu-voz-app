@@ -1,5 +1,6 @@
 import { ELEMENTS } from './elements.js';
-import { supabaseClient, userProfile, chatHistory } from './config.js';
+import { userProfile, chatHistory } from './config.js';
+import { state } from './state.js';
 import { alertCustom } from './utils.js';
 
 function aplicarModoOscuro(activo) {
@@ -51,7 +52,7 @@ export const AJUSTES = window.AJUSTES = {
 
     guardarAjustes: async () => {
         const btn = ELEMENTS.saveSettingsBtn;
-        const db = window.supabaseClient;
+        const db = state.supabase;
         btn.disabled = true;
         btn.innerText = "Guardando...";
 
@@ -98,7 +99,7 @@ export const AJUSTES = window.AJUSTES = {
         if (!confirm("¿Estás seguro de que quieres borrar todo el historial de chat? Esta acción no se puede deshacer.")) return;
 
         const btn = ELEMENTS.clearHistoryBtn;
-        const db = window.supabaseClient;
+        const db = state.supabase;
         const perfil = window.userProfile;
         btn.disabled = true;
         btn.innerText = "Borrando...";
@@ -176,7 +177,7 @@ export const PREFERENCIAS = window.PREFERENCIAS = {
                 last_active_at: new Date().toISOString()
             };
 
-            const { error } = await supabaseClient
+        const { error } = await state.supabase
                 .from('user_profiles')
                 .update(updates)
                 .eq('user_id', userProfile.user_id);
@@ -210,8 +211,8 @@ export const PREFERENCIAS = window.PREFERENCIAS = {
         this.showStatus("Procesando baja definitiva...", "success");
 
         try {
-            const { data: { session } } = await supabaseClient.auth.getSession();
-            const { error } = await supabaseClient.functions.invoke('delete-user-account', {
+            const { data: { session } } = await state.supabase.auth.getSession();
+            const { error } = await state.supabase.functions.invoke('delete-user-account', {
                 headers: { Authorization: `Bearer ${session.access_token}` }
             });
 
@@ -219,7 +220,7 @@ export const PREFERENCIAS = window.PREFERENCIAS = {
 
             this.showStatus("Cuenta eliminada. Te deseamos lo mejor. ✨", "success");
             setTimeout(async () => {
-                await supabaseClient.auth.signOut();
+                await state.supabase.auth.signOut();
                 location.reload();
             }, 3000);
         } catch (e) {

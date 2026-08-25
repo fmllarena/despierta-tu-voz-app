@@ -793,7 +793,7 @@
                     windowSESIONES: !!window.SESIONES,
                     windowELEMENTS: !!window.ELEMENTS,
                     windowCal: !!window.Cal,
-                    supabaseReady: !!window.supabaseClient
+                    supabaseReady: !!(window.state && window.state.supabase)
                 };
                 console.log("📊 Estado de salud DTV:", health);
                 if (!health.windowSESIONES) {
@@ -806,8 +806,8 @@
             if (confirm("Esto cerrará tu sesión y limpiará el estado de la app para solucionar errores de conexión. ¿Continuar?")) {
                 localStorage.clear();
                 sessionStorage.clear();
-                if (window.supabaseClient) {
-                    window.supabaseClient.auth.signOut().then(() => {
+                if (window.state && window.state.supabase) {
+                    window.state.supabase.auth.signOut().then(() => {
                         window.location.reload();
                     });
                 } else {

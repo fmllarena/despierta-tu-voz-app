@@ -12,3 +12,6 @@ export const state = {
 export function updateState(updates) {
     Object.assign(state, updates);
 }
+
+// Exponer como global para que el script clásico main.js pueda acceder al mismo estado
+window.state = state;

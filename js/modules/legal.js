@@ -1,5 +1,6 @@
 import { ELEMENTS } from './elements.js';
-import { supabaseClient, userProfile } from './config.js';
+import { userProfile } from './config.js';
+import { state } from './state.js';
 
 export const LEGAL = window.LEGAL = {
     pendingPlan: null,
@@ -37,13 +38,13 @@ export const LEGAL = window.LEGAL = {
         btn.innerText = "Registrando...";
 
         try {
-            const client = supabaseClient || window.supabaseClient;
+            const client = state.supabase;
             if (!client) throw new Error("Supabase client not initialized.");
 
             const { data: { user } } = await client.auth.getUser();
             if (!user) return;
 
-            // Actualizar en base de datos (usando supabaseClient desde config.js o window)
+            // Actualizar en base de datos (cliente único en state.supabase)
             const { error } = await client
                 .from('user_profiles')
                 .update({ accepted_terms: true })

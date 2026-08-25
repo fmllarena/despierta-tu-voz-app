@@ -191,35 +191,8 @@ async function llamarGemini(message, history, intent, extraData = {}, onChunk = 
     }
 }
 
-async function inicializarSupabase() {
-    if (supabaseClient) return; // Evitar múltiples instancias
-    console.log("🔍 Iniciando inicialización de supabaseClient...");
-    try {
-        const response = await fetch('/api/config');
-        if (!response.ok) {
-            throw new Error(`El servidor respondió con error ${response.status} al pedir la configuración.`);
-        }
-
-        const config = await response.json();
-        if (!config.url || !config.key) {
-            throw new Error("Configuración incompleta: SUPABASE_URL o SUPABASE_ANON_KEY no están definidas en Vercel.");
-        }
-
-        if (window.supabase) {
-            supabaseClient = window.supabase.createClient(config.url, config.key);
-            console.log("✅ Supabase inicializado correctamente.");
-            setupAuthListener();
-        } else {
-            throw new Error("La librería global de Supabase no está cargada en el navegador.");
-        }
-    } catch (e) {
-        console.error("❌ Error inicializando Supabase:", e);
-        window.supabaseInitError = e.message;
-    }
-}
-
 function setupAuthListener() {
-    supabaseClient.auth.onAuthStateChange((event, session) => {
+    state.supabase.auth.onAuthStateChange((event, session) => {
         console.log("🔐 Evento Auth:", event, "Session:", session?.user?.email);
         const user = session?.user;
 
@@ -341,7 +314,7 @@ async function cargarPerfil(user) {
 
 async function cargarHistorialDesdeDB(userId, render = false) {
     try {
-        const { data: mensajes, error } = await supabaseClient
+        const { data: mensajes, error } = await state.supabase
             .from('mensajes')
             .select('*')
             .eq('alumno', userId)
@@ -455,9 +428,13 @@ function revisarRedireccion() {
 }
 
 window.addEventListener('load', () => {
-    inicializarSupabase();
-    revisarRedireccion();
-
+    window.inicializarSupabase().then(() => {
+        setupAuthListener();
+        revisarRedireccion();
+    }).catch((err) => {
+        console.error("❌ Error inicializando Supabase en load:", err);
+        revisarRedireccion();
+    });
 });
 
 async function saludarUsuario(user, perfil) {
@@ -593,7 +570,7 @@ async function sendMessage() {
     try {
         ['msg-botiquin', 'msg-bienvenida'].forEach(id => document.getElementById(id)?.remove());
 
-        const { data: { user } } = await supabaseClient.auth.getUser();
+        const { data: { user } } = await state.supabase.auth.getUser();
         const extraData = {
             userId: user?.id,
             originPost: sessionStorage.getItem('dtv_origin_post'),
@@ -685,7 +662,7 @@ async function sendMessage() {
 
 async function guardarMensajeDB(texto, emisor, customDate = null) {
     try {
-        const { data: { user } } = await supabaseClient.auth.getUser();
+        const { data: { user } } = await state.supabase.auth.getUser();
         if (!user) return;
 
         console.log(`Intentando guardar mensaje de ${emisor}...`);
@@ -697,14 +674,14 @@ async function guardarMensajeDB(texto, emisor, customDate = null) {
 
         if (customDate) payload.created_at = customDate;
 
-        const { error } = await supabaseClient.from('mensajes').insert(payload);
+        const { error } = await state.supabase.from('mensajes').insert(payload);
 
         if (error) {
             console.error("Error Supabase (insert):", error);
         } else {
             console.log("Mensaje guardado correctamente.");
             // --- ACTUALIZAR ACTIVIDAD PARA EMAIL DE INACTIVIDAD ---
-            await supabaseClient
+            await state.supabase
                 .from('user_profiles')
                 .update({
                     last_active_at: new Date().toISOString(),
@@ -727,7 +704,7 @@ let sessionStartTime = new Date().toISOString();
 
 async function exportarChatDoc() {
     try {
-        if (!supabaseClient || !userProfile) {
+        if (!state.supabase || !userProfile) {
             alertCustom("Inicia sesión para descargar tu conversación.");
             return;
         }
@@ -737,7 +714,7 @@ async function exportarChatDoc() {
         // 1. Obtener todos los mensajes desde el inicio de la sesión actual.
         //    sessionStartTime se registra cuando el usuario carga su perfil,
         //    por lo que no se ve afectado por los resúmenes automáticos intermedios.
-        const { data: mensajes, error } = await supabaseClient
+        const { data: mensajes, error } = await state.supabase
             .from('mensajes')
             .select('created_at, texto, emisor')
             .eq('alumno', userProfile.user_id)
@@ -748,7 +725,7 @@ async function exportarChatDoc() {
 
         let mensajesFinales = mensajes;
         if (!mensajesFinales || mensajesFinales.length === 0) {
-            const { data: backupMsgs } = await supabaseClient
+            const { data: backupMsgs } = await state.supabase
                 .from('mensajes')
                 .select('created_at, texto, emisor')
                 .eq('alumno', userProfile.user_id)
@@ -1131,7 +1108,7 @@ if (ELEMENTS.navButtons.logout) {
                 logoutRealBtn.onclick = async () => {
                     logoutRealBtn.innerHTML = '⌛ Cerrando...';
                     logoutRealBtn.disabled = true;
-                    await supabaseClient.auth.signOut();
+                    await state.supabase.auth.signOut();
                     location.reload();
                 };
                 msgInner.appendChild(logoutRealBtn);
@@ -1158,7 +1135,7 @@ const MODULOS = {
         `;
 
         try {
-            const { data: { user } } = await supabaseClient.auth.getUser();
+            const { data: { user } } = await state.supabase.auth.getUser();
             const prompt = `[MODO EMERGENCIA] Audición/presentación inminente. Basado en mi perfil, dame: 1. Ejercicio 2min, 2. Consejo técnico, 3. Frase poder. REGLA ESTRICTA: NO incluyas links a YouTube ni menciones a "cerrar sesión" o despedidas finales. Enfócate solo en la ayuda inmediata.`;
 
             let responseText = "";
@@ -1215,7 +1192,7 @@ const MODULOS = {
 
     async mostrarInspiracion() {
         const btn = ELEMENTS.navButtons.inspiracion;
-        const { data: { user } } = await supabaseClient.auth.getUser();
+        const { data: { user } } = await state.supabase.auth.getUser();
         if (!user) return;
 
         // 1. Abrir el modal inmediatamente con feedback de carga
@@ -1235,7 +1212,7 @@ const MODULOS = {
         // Intentar usar el perfil global primero para mayor velocidad
         let perfil = window.userProfile;
         if (!perfil) {
-            const { data } = await supabaseClient.from('user_profiles').select('*').eq('user_id', user.id).single();
+            const { data } = await state.supabase.from('user_profiles').select('*').eq('user_id', user.id).single();
             perfil = data;
         }
 
@@ -1317,7 +1294,7 @@ NO incluyas comillas. Responde solo con la frase.`;
         else this.mostrarDiario(modal);
     },
     async mostrarDiario(modal) {
-        const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
+        const { data: { user }, error: authError } = await state.supabase.auth.getUser();
         if (!user || authError) {
             console.warn("⚠️ Usuario no autenticado al abrir diario");
             const content = document.getElementById('diarioContent');
@@ -1325,7 +1302,7 @@ NO incluyas comillas. Responde solo con la frase.`;
             modal.style.display = 'flex';
             return;
         }
-        const { data: perfil } = await supabaseClient.from('user_profiles').select('*').eq('user_id', user.id).single();
+        const { data: perfil } = await state.supabase.from('user_profiles').select('*').eq('user_id', user.id).single();
         const content = document.getElementById('diarioContent');
 
         if (!perfil) {
@@ -1346,8 +1323,8 @@ NO incluyas comillas. Responde solo con la frase.`;
         modal.style.display = 'flex';
     },
     async generarYGuardarResumen() {
-        if (!supabaseClient || chatHistory.length < 2) return;
-        const { data: { user } } = await supabaseClient.auth.getUser();
+        if (!state.supabase || chatHistory.length < 2) return;
+        const { data: { user } } = await state.supabase.auth.getUser();
         if (!user) return;
         try {
             console.log("🪄 [Proactivo] Generando resumen de perfil y transmutación...");
@@ -1370,7 +1347,7 @@ NO incluyas comillas. Responde solo con la frase.`;
                 }
             }
 
-            const { error } = await supabaseClient.from('user_profiles').update({
+            const { error } = await state.supabase.from('user_profiles').update({
                 ultimo_resumen: data.resumen,
                 creencias: data.creencias,
                 historia_vocal: data.historia_vocal,
@@ -1405,7 +1382,7 @@ NO incluyas comillas. Responde solo con la frase.`;
             return;
         }
 
-        const { data: { user } } = await supabaseClient.auth.getUser();
+        const { data: { user } } = await state.supabase.auth.getUser();
         if (!user) return;
 
         try {
@@ -1423,7 +1400,7 @@ NO incluyas comillas. Responde solo con la frase.`;
     },
     async sincronizarHistorialRetroactivo() {
         if (!supabase) return;
-        const { data: { user } } = await supabaseClient.auth.getUser();
+        const { data: { user } } = await state.supabase.auth.getUser();
         if (!user) return;
 
         console.log("🚀 [Sincronizador] Iniciando escaneo de historial completo...");
@@ -1496,12 +1473,12 @@ ELEMENTS.closeBotiquin?.addEventListener('click', () => ELEMENTS.botiquinModal.s
 ELEMENTS.navButtons.inspiracion?.addEventListener('click', () => MODULOS.mostrarInspiracion());
 ELEMENTS.navButtons.progreso?.addEventListener('click', () => MODULOS.toggleProgreso());
 ELEMENTS.navButtons.viaje?.addEventListener('click', async () => {
-    const { data: { user } } = await supabaseClient.auth.getUser();
+    const { data: { user } } = await state.supabase.auth.getUser();
     if (!user) return ELEMENTS.authOverlay.style.display = 'flex';
     document.getElementById('viajeModal').style.display = 'flex';
     try {
         const { initJourney } = await import(`./mi_viaje/main.js?v=${Date.now()}`);
-        initJourney(supabaseClient, user);
+        initJourney(state.supabase, user);
     } catch (e) { console.error(e); }
 });
 
