@@ -123,11 +123,26 @@ export const authActions = {
         const email = document.getElementById('authEmail').value;
         if (!email) return ELEMENTS.authError.innerText = "Introduce tu email primero.";
 
+        if (!state.supabase) {
+            console.log("⚠️ Supabase no detectado en state, intentando inicializar...");
+            await inicializarSupabase();
+        }
+        if (!state.supabase) {
+            ELEMENTS.authError.style.color = "red";
+            ELEMENTS.authError.innerText = "Error de conexión. Por favor, recarga.";
+            return;
+        }
+
         const { error } = await state.supabase.auth.resetPasswordForEmail(email, {
-            redirectTo: window.location.origin + '/index.html'
+            redirectTo: window.location.origin + window.location.pathname
         });
-        if (error) ELEMENTS.authError.innerText = "Error: " + error.message;
-        else alert("Correo de recuperación enviado. Revisa tu bandeja de entrada.");
+        if (error) {
+            ELEMENTS.authError.style.color = "red";
+            ELEMENTS.authError.innerText = "Error: " + error.message;
+        } else {
+            ELEMENTS.authError.style.color = "#2ecc71";
+            ELEMENTS.authError.innerText = "Correo de recuperación enviado. Revisa tu bandeja de entrada.";
+        }
     },
 
     async updatePassword() {
