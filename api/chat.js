@@ -357,7 +357,7 @@ async function _mistralCall({ intent, prompt, history, stream, res, fileData, re
     };
 
     const messages = [
-        { role: "system", content: `${SYSTEM_PROMPTS[intent]}\n\nFECHA ACTUAL: Hoy es ${hoy}. Ten siempre presente la fecha de hoy y la fecha de cada mensaje anterior para no confundir hechos pasados con el presente.` },
+        { role: "system", content: `${SYSTEM_PROMPTS[intent]}\n\nFECHA ACTUAL: Hoy es ${hoy}. Usa la fecha de hoy y la de cada mensaje anterior solo como contexto interno para ubicar los hechos en el tiempo (por ejemplo, para no decir que algo de hace días ocurrió hoy). IMPORTANTE: No escribas ni repitas fechas en tus respuestas, salvo que el usuario las pida explícitamente.` },
         ...filteredHistory.map(h => {
             const fecha = fmtFecha(h.created_at);
             const texto = h.parts?.[0]?.text || '';
