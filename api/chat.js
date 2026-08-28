@@ -369,19 +369,43 @@ async function _mistralCall({ intent, prompt, history, stream, res, fileData, re
 
     const keyLabel = apiKey === process.env.MISTRAL_API_KEY ? 'MISTRAL_API_KEY' : 'MISTRAL_API_KEY_2';
     console.log(`→ Usando ${keyLabel}`);
-    const response = await fetch(`${MISTRAL_BASE_URL}/chat/completions`, {
-        method: 'POST',
-        headers: {
-            'Authorization': `Bearer ${apiKey}`,
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(requestBody)
-    });
 
-    if (!response.ok) {
-        const errData = await response.json().catch(() => ({}));
-        throw new Error(`Mistral Error ${response.status}: ${errData.error?.message || 'Unknown'}`);
+    const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+    const MAX_RETRIES = 2;
+    let response;
+    let lastErr;
+    for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+        try {
+            response = await fetch(`${MISTRAL_BASE_URL}/chat/completions`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${apiKey}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(requestBody)
+            });
+            if (response.ok) break;
+            const errData = await response.json().catch(() => ({}));
+            lastErr = new Error(`Mistral Error ${response.status}: ${errData.error?.message || 'Unknown'}`);
+            const retryable = response.status === 429 || response.status === 502 || response.status === 503 || response.status === 504;
+            if (retryable && attempt < MAX_RETRIES) {
+                console.warn(`⚠️ Mistral ${response.status} (intento ${attempt}/${MAX_RETRIES}), reintentando...`);
+                await sleep(Math.min(800 * attempt, 3000));
+                continue;
+            }
+            throw lastErr;
+        } catch (e) {
+            lastErr = e;
+            const retryable = /503|502|504|429|Failed to fetch|network/i.test(e.message);
+            if (retryable && attempt < MAX_RETRIES) {
+                console.warn(`⚠️ Mistral error de red (intento ${attempt}/${MAX_RETRIES}), reintentando...`);
+                await sleep(Math.min(800 * attempt, 3000));
+                continue;
+            }
+            throw e;
+        }
     }
+    if (!response || !response.ok) throw lastErr;
 
     if (stream && res) {
         const reader = response.body.getReader();
