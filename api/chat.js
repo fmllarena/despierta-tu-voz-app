@@ -349,12 +349,23 @@ async function _mistralCall({ intent, prompt, history, stream, res, fileData, re
         return false;
     });
 
+    const hoy = new Date().toLocaleDateString('es-ES', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' });
+    const fmtFecha = (iso) => {
+        const d = new Date(iso);
+        if (isNaN(d.getTime())) return '';
+        return d.toLocaleDateString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' });
+    };
+
     const messages = [
-        { role: "system", content: SYSTEM_PROMPTS[intent] },
-        ...filteredHistory.map(h => ({
-            role: h.role === 'model' ? 'assistant' : 'user',
-            content: h.parts[0].text
-        })),
+        { role: "system", content: `${SYSTEM_PROMPTS[intent]}\n\nFECHA ACTUAL: Hoy es ${hoy}. Ten siempre presente la fecha de hoy y la fecha de cada mensaje anterior para no confundir hechos pasados con el presente.` },
+        ...filteredHistory.map(h => {
+            const fecha = fmtFecha(h.created_at);
+            const texto = h.parts?.[0]?.text || '';
+            return {
+                role: h.role === 'model' ? 'assistant' : 'user',
+                content: fecha ? `[${fecha}] ${texto}` : texto
+            };
+        }),
         { role: "user", content: buildUserContent(prompt, fileData) }
     ];
 
