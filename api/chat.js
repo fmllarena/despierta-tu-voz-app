@@ -356,16 +356,27 @@ async function _mistralCall({ intent, prompt, history, stream, res, fileData, re
         return d.toLocaleDateString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' });
     };
 
-    const messages = [
-        { role: "system", content: `${SYSTEM_PROMPTS[intent]}\n\nFECHA ACTUAL: Hoy es ${hoy}. Usa la fecha de hoy y la de cada mensaje anterior solo como contexto interno para ubicar los hechos en el tiempo (por ejemplo, para no decir que algo de hace días ocurrió hoy). IMPORTANTE: No escribas ni repitas fechas en tus respuestas, salvo que el usuario las pida explícitamente.` },
-        ...filteredHistory.map(h => {
+    // Cronología de fechas como contexto INTERNO (fuera del texto conversacional,
+    // para que la IA no imite ni escriba corchetes de fecha en sus respuestas).
+    const cronologia = filteredHistory
+        .map((h) => {
             const fecha = fmtFecha(h.created_at);
-            const texto = h.parts?.[0]?.text || '';
-            return {
-                role: h.role === 'model' ? 'assistant' : 'user',
-                content: fecha ? `[${fecha}] ${texto}` : texto
-            };
-        }),
+            if (!fecha) return null;
+            const texto = (h.parts?.[0]?.text || '').slice(0, 80).replace(/\n/g, ' ');
+            const rol = h.role === 'model' ? 'asistente' : 'usuario';
+            return `- ${fecha} (${rol}): ${texto}`;
+        })
+        .filter(Boolean)
+        .join('\n');
+
+    const fechaCtx = `FECHA ACTUAL: Hoy es ${hoy}.\nCRONOLOGÍA DE LA CONVERSACIÓN (contexto interno únicamente: úsala para ubicar los hechos en el tiempo, pero NO la menciones ni escribas fechas ni corchetes de fecha en tus respuestas, salvo petición explícita del usuario):\n${cronologia || 'Sin mensajes previos.'}`;
+
+    const messages = [
+        { role: "system", content: `${SYSTEM_PROMPTS[intent]}\n\n${fechaCtx}` },
+        ...filteredHistory.map(h => ({
+            role: h.role === 'model' ? 'assistant' : 'user',
+            content: h.parts?.[0]?.text || ''
+        })),
         { role: "user", content: buildUserContent(prompt, fileData) }
     ];
 
