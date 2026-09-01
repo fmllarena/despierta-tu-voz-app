@@ -551,13 +551,15 @@ Responde ÚNICAMENTE con un JSON válido, sin explicaciones ni markdown. El JSON
  */
 async function analizarAlumnos(body) {
     const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
-    const { pregunta } = body;
+    const { pregunta, includeTest } = body;
     if (!pregunta) throw new Error("Se requiere una pregunta");
 
-    const { data: perfiles } = await supabase.from('user_profiles')
-        .select('user_id, nombre, nivel_alquimia, historia_vocal, creencias_transmutadas, ultimo_resumen, mentor_notes, mentor_trato_preferido')
-        .not('email', 'ilike', '%@test.com')
-        .order('nombre');
+    let query = supabase.from('user_profiles')
+        .select('user_id, nombre, nivel_alquimia, historia_vocal, creencias_transmutadas, ultimo_resumen, mentor_notes, mentor_trato_preferido');
+    if (!includeTest) {
+        query = query.not('email', 'ilike', '%@test.com');
+    }
+    const { data: perfiles } = await query.order('nombre');
 
     const alumnosData = [];
     for (const p of (perfiles || [])) {

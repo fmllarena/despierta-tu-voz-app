@@ -98,6 +98,12 @@
                 <button data-q="Haz un resumen general del estado de todos los alumnos.">Resumen general</button>
             </div>
             <textarea id="preguntaInput" class="pregunta-area" placeholder="Ej: ¿Qué alumno ha practicado más la técnica de respiración diafragmática? ¿Quién muestra más inseguridad al hablar?"></textarea>
+            <div class="test-checkbox" style="margin-bottom:12px;">
+                <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:0.9rem;color:#555;">
+                    <input type="checkbox" id="includeTest" style="width:18px;height:18px;accent-color:#8e7d6d;">
+                    Incluir alumnos con @test.com en el análisis
+                </label>
+            </div>
             <button id="analizarBtn" class="main-btn">🔮 Analizar</button>
         </div>
 
@@ -186,7 +192,7 @@
             const res = await fetch('/api/chat', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ intent: 'analisis', pregunta })
+                body: JSON.stringify({ intent: 'analisis', pregunta, includeTest: $('includeTest').checked })
             });
             const data = await res.json();
             if (data.error) throw new Error(data.details || data.error);
