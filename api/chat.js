@@ -19,6 +19,8 @@ module.exports = async function handler(req, res) {
 
     if (req.method === 'OPTIONS') return res.status(200).end();
     if (req.method === "PATCH") {
+        const { table } = req.body || {};
+        if (table === 'mensajes') return await updateMensaje(req, res);
         return await updateTeacherMessage(req, res);
     }
     if (req.method !== "POST") return res.status(405).json({ error: "Método no permitido" });
@@ -1184,6 +1186,30 @@ async function updateTeacherMessage(req, res) {
 
         if (error) throw error;
         if (!data) return res.status(404).json({ error: "Mensaje no encontrado o sin permisos" });
+
+        return res.status(200).json({ success: true, id: data.id });
+    } catch (error) {
+        return res.status(500).json({ error: error.message });
+    }
+}
+
+async function updateMensaje(req, res) {
+    const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
+    const { messageId, content } = req.body || {};
+
+    if (!messageId) return res.status(400).json({ error: "Se requiere messageId" });
+    if (typeof content !== 'string') return res.status(400).json({ error: "Se requiere content" });
+
+    try {
+        const { data, error } = await supabase
+            .from('mensajes')
+            .update({ texto: content })
+            .eq('id', messageId)
+            .select('id')
+            .maybeSingle();
+
+        if (error) throw error;
+        if (!data) return res.status(404).json({ error: "Mensaje no encontrado" });
 
         return res.status(200).json({ success: true, id: data.id });
     } catch (error) {
