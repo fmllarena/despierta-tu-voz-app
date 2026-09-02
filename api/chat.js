@@ -351,6 +351,26 @@ async function _mistralCall({ intent, prompt, history, stream, res, fileData, re
         return false;
     });
 
+    // Eliminar mensajes repetitivos: si un mensaje es muy similar al anterior del mismo rol, se salta
+    function similaridad(a, b) {
+        const pa = a.toLowerCase().split(/\s+/).filter(Boolean);
+        const pb = b.toLowerCase().split(/\s+/).filter(Boolean);
+        if (!pa.length || !pb.length) return 0;
+        const setB = new Set(pb);
+        const comunes = pa.filter(w => setB.has(w)).length;
+        return comunes / Math.max(pa.length, pb.length);
+    }
+
+    const dedupedHistory = [];
+    for (const h of filteredHistory) {
+        const texto = (h.parts?.[0]?.text || '').trim();
+        if (!texto) { dedupedHistory.push(h); continue; }
+        const ultimo = dedupedHistory[dedupedHistory.length - 1];
+        const textoPrev = (ultimo?.parts?.[0]?.text || '').trim();
+        if (ultimo && ultimo.role === h.role && similaridad(texto, textoPrev) > 0.75) continue;
+        dedupedHistory.push(h);
+    }
+
     const hoy = new Date().toLocaleDateString('es-ES', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' });
     const fmtFecha = (iso) => {
         const d = new Date(iso);
@@ -360,7 +380,7 @@ async function _mistralCall({ intent, prompt, history, stream, res, fileData, re
 
     // Cronología de fechas como contexto INTERNO (fuera del texto conversacional,
     // para que la IA no imite ni escriba corchetes de fecha en sus respuestas).
-    const cronologia = filteredHistory
+    const cronologia = dedupedHistory
         .map((h) => {
             const fecha = fmtFecha(h.created_at);
             if (!fecha) return null;
@@ -375,7 +395,7 @@ async function _mistralCall({ intent, prompt, history, stream, res, fileData, re
 
     const messages = [
         { role: "system", content: `${SYSTEM_PROMPTS[intent]}\n\n${fechaCtx}` },
-        ...filteredHistory.map(h => ({
+        ...dedupedHistory.map(h => ({
             role: h.role === 'model' ? 'assistant' : 'user',
             content: h.parts?.[0]?.text || ''
         })),
