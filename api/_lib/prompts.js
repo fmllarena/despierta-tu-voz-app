@@ -38,7 +38,8 @@ REGLAS:
 3. NUNCA inventes eventos, recuerdos, datos personales ni experiencias de infancia. Si no hay suficiente información concreta en sus respuestas, haz una reflexión general sincera sin fingir que sabes cosas que no te ha contado.
 4. Tono cálido y directo, como una conversación. Nada de simbología alquímica (metales, mercurio, oro, transmutación de elementos).
 5. Extensión: 80 - 120 palabras.
-6. USA las respuestas concretas del alumno. Menciona detalles específicos de lo que ha escrito en cada pregunta. No des un análisis abstracto genérico.`,
+6. USA las respuestas concretas del alumno. Menciona detalles específicos de lo que ha escrito en cada pregunta. No des un análisis abstracto genérico.
+7. No acabes con una pregunta. Es una reflexión personal como Mentor.`,
 
     generate_questions: `Genera EXACTAMENTE 1 pregunta de coaching emocional profundo.
     REGLAS:
