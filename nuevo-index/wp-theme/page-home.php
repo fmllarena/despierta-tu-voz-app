@@ -37,7 +37,7 @@ get_header(); ?>
             <p>Un Mentor IA entrenado en inteligencia emocional y técnica vocal que recuerda y relaciona cada hito de tu
                 evolución vocal y
                 emocional.</p>
-            <a href="https://app.despiertatuvoz.com" class="card-link">Empezar hoy →</a>
+            <a href="https://app.despiertatuvoz.com/landing.html" class="card-link">Empezar hoy →</a>
         </div>
         <div class="base-card highlight">
             <div class="card-icon">
@@ -379,7 +379,7 @@ get_header(); ?>
 <section class="footer-cta reveal" id="unirse">
     <span class="alt-tag dark">Oportunidad Única</span>
     <h2>Sé parte de los primeros Miembros Pioneros</h2>
-    <p>Estamos abriendo el acceso de forma escalonada para garantizar un acompañamiento profundo a cada voz.</p>
+    <p>Estamos abriendo el acceso de forma escalonada para garantizar un acompañamiento profundo a cada voz.</p><br>
     <a href="https://app.despiertatuvoz.com" class="btn-lg">ESTRENAR MI MENTOR-IA ✨</a>
 </section>
 
