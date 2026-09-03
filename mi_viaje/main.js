@@ -1227,13 +1227,14 @@ async function finishModuleWithAI(supabase, user, skipInputCheck = false) {
 
     try {
         const historia = JSON.stringify(journeyContext);
+        const respuestasFormato = journeyContext.map(j => `- ${j.stage}: ${j.question}\n  Respuesta: ${j.answer}`).join('\n');
 
         const response = await fetch('/api/chat', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 intent: "alchemy_analysis",
-                message: "Módulo 1 completado.",
+                message: `Módulo completado. Estas son las respuestas del alumno en este módulo:\n\n${respuestasFormato}`,
                 context: historia
             })
         });
