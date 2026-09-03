@@ -78,7 +78,7 @@ get_header(); ?>
     <div class="container">
         <div class="closing-card">
             <p class="closing-quote">"No estoy aquí para enseñarte a cantar. Estoy aquí para que te atrevas a sonar
-                como tú mismo."</p>
+                como tú eres."</p>
             <div class="signature">
                 <p class="name">Fernando Martínez Llarena</p>
                 <p class="title">Tu Mentor en Alquimia Vocal</p>

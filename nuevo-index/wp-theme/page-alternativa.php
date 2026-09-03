@@ -16,27 +16,27 @@ get_header(); ?>
 
 <section class="contrast-section reveal">
     <div class="container">
-        <h2>Por qué somos la alternativa real</h2>
+        <h2>Por qué so una alternativa real</h2>
         <div class="contrast-grid">
             <div class="contrast-item">
                 <div class="contrast-label">Enfoque Tradicional</div>
                 <div class="contrast-text">Se centra en el músculo.</div>
                 <div class="contrast-vs">VS</div>
-                <div class="contrast-label alt">Nuestra Alternativa</div>
+                <div class="contrast-label alt">Mi Alternativa</div>
                 <div class="contrast-text highlighted">Se centra en el sistema nervioso y la emoción.</div>
             </div>
             <div class="contrast-item">
                 <div class="contrast-label">Enfoque Tradicional</div>
                 <div class="contrast-text">Corrige el error externo.</div>
                 <div class="contrast-vs">VS</div>
-                <div class="contrast-label alt">Nuestra Alternativa</div>
+                <div class="contrast-label alt">Mi Alternativa</div>
                 <div class="contrast-text highlighted">Sana el origen interno.</div>
             </div>
             <div class="contrast-item">
                 <div class="contrast-label">Enfoque Tradicional</div>
                 <div class="contrast-text">Dependes de una hora a la semana con un profesor.</div>
                 <div class="contrast-vs">VS</div>
-                <div class="contrast-label alt">Nuestra Alternativa</div>
+                <div class="contrast-label alt">Mi Alternativa</div>
                 <div class="contrast-text highlighted">Tienes un Mentor IA con memoria emocional disponible 24/7.
                 </div>
             </div>

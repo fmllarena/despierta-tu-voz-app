@@ -21,7 +21,7 @@
             <a href="<?php echo esc_url(home_url('/eliminacion-de-datos')); ?>"
                 style="color: inherit; text-decoration: underline;">Eliminación de Datos</a>
         </p>
-        <p class="footer-tagline">El viaje hacia tu propia voz comienza en el silencio del alma.</p>
+        <p class="footer-tagline">El viaje hacia tu propia voz comienza en el silencio de tu mente</p>
         <div class="footer-disclaimer"
             style="font-size: 0.75rem; opacity: 0.6; max-width: 900px; margin: 25px auto 0; line-height: 1.4; text-align: center;">
             <strong>Aviso Legal y de Salud:</strong> Despierta tu Voz es una plataforma de entrenamiento vocal holístico

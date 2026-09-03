@@ -8,7 +8,7 @@ get_header(); ?>
         <h1>Hablemos de tu voz</h1>
         <div class="alt-hero-quote">
             <p>Nuestra voz es el puente entre nuestro mundo interno y externo. Si sientes el llamado a profundizar o
-                tienes dudas sobre cómo empezar, escríbenos. Estaremos encantados de escucharte.</p>
+                tienes dudas sobre cómo empezar, escríbeme. Estaré encantado de escucharte.</p>
         </div>
     </div>
 </section>
@@ -19,7 +19,7 @@ get_header(); ?>
         <div class="tech-card highlight-box mb-60" style="text-align: center; margin-bottom: 60px;">
             <span class="alt-tag">¿Prefieres hablar directamente?</span>
             <h2>Reserva una Sesión de Valoración</h2>
-            <p>Si tienes claro que quieres dar el siguiente paso o necesitas que analicemos tu caso concreto en una
+            <p>Si tienes claro que quieres dar el siguiente paso o necesitas que analice tu caso concreto en una
                 videollamada rápida de 30 minutos.</p>
             <a href="https://cal.com/fernando-martinez-drmyul/30minfo" target="_blank" rel="noopener"
                 class="btn-lg mt-20" style="display: inline-block; margin-top: 20px;">RESERVAR SESIÓN GRATUITA ✨</a>
@@ -28,7 +28,7 @@ get_header(); ?>
         <div class="contact-grid">
             <!-- Formulario -->
             <div class="contact-form-container">
-                <h2>Enviarnos un mensaje</h2>
+                <h2>Envíame un mensaje</h2>
 
                 <?php
                 /**
@@ -58,7 +58,7 @@ get_header(); ?>
                                 required>
                         </div>
                         <div class="form-group">
-                            <label for="subject">¿En qué podemos ayudarte?</label>
+                            <label for="subject">¿En qué puedo ayudarte?</label>
                             <select id="subject" name="subject" class="form-control" required>
                                 <option value="" disabled selected>Selecciona una opción</option>
                                 <option value="mentoria">Mentoría Individual / Grupal</option>
@@ -70,7 +70,7 @@ get_header(); ?>
                         <div class="form-group">
                             <label for="message">Tu mensaje</label>
                             <textarea id="message" name="message" class="form-control"
-                                placeholder="Cuéntanos un poco sobre tu relación con tu voz..." required></textarea>
+                                placeholder="Cuéntame un poco sobre tu relación con tu voz..." required></textarea>
                         </div>
                         <button type="submit" class="btn-primary btn-submit">
                             ENVIAR MENSAJE ✨
@@ -121,8 +121,8 @@ get_header(); ?>
 
                 <div class="info-item">
                     <h3>Ubicación</h3>
-                    <p>Nuestra base está en Valencia, España, pero acompañamos voces de todo el mundo a través de
-                        nuestra plataforma digital.</p>
+                    <p>La base está en Valencia, España, pero acompaño voces de todo el mundo a través de
+                        la plataforma digital.</p>
                 </div>
             </div>
         </div>
