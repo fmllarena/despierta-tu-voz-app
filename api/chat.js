@@ -139,6 +139,20 @@ async function processChat(req, res = null) {
         }
     }
 
+    // OpenRouter (fallback 2)
+    if (process.env.OPENROUTER_API_KEY) {
+        try {
+            console.log("🚀 Intentando con OpenRouter (fallback 2)...");
+            const result = await callOpenRouterAPI({ intent, prompt: finalPrompt, history, stream, res });
+            if (stream && res) return;
+            return result;
+        } catch (e) {
+            console.warn("⚠️ OpenRouter falló:", e.message);
+            errors.push(`OpenRouter: ${e.message}`);
+            if (stream && res && res.writableEnded) throw e;
+        }
+    }
+
     throw new Error(`Todos los modelos fallaron: ${errors.join(" | ")}`);
 }
 
@@ -282,6 +296,73 @@ async function callGeminiAPI({ intent, prompt, history, stream, res, fileData })
         const data = await response.json();
         const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
         return { text: text, info: modelToUse };
+    }
+}
+
+/**
+ * Ejecuta la llamada a OpenRouter (fallback 2 — compatible OpenAI)
+ */
+async function callOpenRouterAPI({ intent, prompt, history, stream, res }) {
+    if (!process.env.OPENROUTER_API_KEY) throw new Error("Falta API Key de OpenRouter");
+
+    const messages = [
+        { role: "system", content: SYSTEM_PROMPTS[intent] || "" },
+        ...(history || []).map(h => ({
+            role: h.role === 'model' ? 'assistant' : 'user',
+            content: h.parts?.[0]?.text || ''
+        })),
+        { role: "user", content: prompt }
+    ];
+
+    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+            'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
+            'Content-Type': 'application/json',
+            'HTTP-Referer': 'https://despiertatuvoz.com',
+            'X-Title': 'Despierta tu Voz'
+        },
+        body: JSON.stringify({
+            model: 'mistralai/mistral-small-3.1-24b-instruct:free',
+            messages,
+            stream: !!stream
+        })
+    });
+
+    if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        throw new Error(`OpenRouter Error ${response.status}: ${errData.error?.message || 'Unknown'}`);
+    }
+
+    if (stream && res) {
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = "";
+        try {
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                buffer += decoder.decode(value, { stream: true });
+                const lines = buffer.split('\n');
+                buffer = lines.pop();
+                for (const line of lines) {
+                    if (line.startsWith('data: ') && line !== 'data: [DONE]') {
+                        try {
+                            const data = JSON.parse(line.substring(6));
+                            const text = data.choices?.[0]?.delta?.content;
+                            if (text) res.write(`data: ${JSON.stringify({ text })}\n\n`);
+                        } catch (e) { /* chunk incompleto */ }
+                    }
+                }
+            }
+        } finally {
+            res.end();
+        }
+        return;
+    } else {
+        const data = await response.json();
+        const text = data.choices?.[0]?.message?.content || "";
+        return { text: text, info: 'openrouter' };
     }
 }
 
