@@ -307,7 +307,7 @@ async function handleStreamResponse(response, res) {
  * Ejecuta la llamada a Mistral AI (primario — servidores UE)
  */
 async function callMistralAPI({ intent, prompt, history, stream, res, fileData, resumenBoundary }) {
-    const keys = [process.env.MISTRAL_API_KEY, process.env.MISTRAL_API_KEY_2].filter(Boolean);
+    const keys = [process.env.MISTRAL_API_KEY, process.env.MISTRAL_API_KEY_2, process.env.MISTRAL_API_KEY_3].filter(Boolean);
     if (!keys.length) throw new Error("Falta API Key de Mistral");
 
     let lastErr;
@@ -411,7 +411,7 @@ async function _mistralCall({ intent, prompt, history, stream, res, fileData, re
         stream: !!stream
     };
 
-    const keyLabel = apiKey === process.env.MISTRAL_API_KEY ? 'MISTRAL_API_KEY' : 'MISTRAL_API_KEY_2';
+    const keyLabel = apiKey === process.env.MISTRAL_API_KEY ? 'MISTRAL_API_KEY' : apiKey === process.env.MISTRAL_API_KEY_2 ? 'MISTRAL_API_KEY_2' : 'MISTRAL_API_KEY_3';
     console.log(`→ Usando ${keyLabel}`);
 
     const sleep = (ms) => new Promise(r => setTimeout(r, ms));
@@ -638,7 +638,7 @@ Responde de forma clara, directa y útil. Si no hay suficientes datos para respo
 
     const userPrompt = `${context}\n\nPREGUNTA DEL MENTOR:\n${pregunta}\n\nProporciona un análisis detallado basado en los datos anteriores. Si un alumno no tiene datos relevantes, menciónalo.`;
 
-    const keys = [process.env.MISTRAL_API_KEY, process.env.MISTRAL_API_KEY_2].filter(Boolean);
+    const keys = [process.env.MISTRAL_API_KEY, process.env.MISTRAL_API_KEY_2, process.env.MISTRAL_API_KEY_3].filter(Boolean);
     if (!keys.length) throw new Error("Falta API Key de Mistral");
 
     let lastErr;
@@ -1041,7 +1041,7 @@ async function teacherChat(body, intent = 'teacher') {
         : (context ? `CONTEXTO:\n${context}\n\nMENSAJE:\n${message}` : message);
 
     // Llamar a Mistral con retry
-    const keys = [process.env.MISTRAL_API_KEY, process.env.MISTRAL_API_KEY_2].filter(Boolean);
+    const keys = [process.env.MISTRAL_API_KEY, process.env.MISTRAL_API_KEY_2, process.env.MISTRAL_API_KEY_3].filter(Boolean);
     if (!keys.length) throw new Error("Falta API Key de Mistral");
 
     const promptKey = pureChat && intent === 'teacher' ? 'teacher_pure' : intent;
@@ -1152,7 +1152,7 @@ async function personaChat(body) {
     const finalPrompt = context ? `CONTEXTO:\n${context}\n\nMENSAJE:\n${message}` : message;
     const sysPrompt = SYSTEM_PROMPTS['persona_chat'];
 
-    const keys = [process.env.MISTRAL_API_KEY, process.env.MISTRAL_API_KEY_2].filter(Boolean);
+    const keys = [process.env.MISTRAL_API_KEY, process.env.MISTRAL_API_KEY_2, process.env.MISTRAL_API_KEY_3].filter(Boolean);
     if (!keys.length) throw new Error("Falta API Key de Mistral");
 
     let lastErr;
