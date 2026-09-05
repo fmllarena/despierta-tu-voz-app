@@ -420,14 +420,18 @@ async function _mistralCall({ intent, prompt, history, stream, res, fileData, re
     let lastErr;
     for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
         try {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 60000);
             response = await fetch(`${MISTRAL_BASE_URL}/chat/completions`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${apiKey}`,
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify(requestBody)
+                body: JSON.stringify(requestBody),
+                signal: controller.signal
             });
+            clearTimeout(timeoutId);
             if (response.ok) break;
             const errData = await response.json().catch(() => ({}));
             lastErr = new Error(`Mistral Error ${response.status}: ${errData.error?.message || 'Unknown'}`);
@@ -440,7 +444,7 @@ async function _mistralCall({ intent, prompt, history, stream, res, fileData, re
             throw lastErr;
         } catch (e) {
             lastErr = e;
-            const retryable = /503|502|504|429|Failed to fetch|network/i.test(e.message);
+            const retryable = /503|502|504|429|Failed to fetch|network|abort/i.test(e.message);
             if (retryable && attempt < MAX_RETRIES) {
                 console.warn(`⚠️ Mistral error de red (intento ${attempt}/${MAX_RETRIES}), reintentando...`);
                 await sleep(Math.min(800 * attempt, 3000));
@@ -454,14 +458,19 @@ async function _mistralCall({ intent, prompt, history, stream, res, fileData, re
     if (stream && res) {
         const reader = response.body.getReader();
         const decoder = new TextDecoder();
-        let buffer = "";
+        let streamBuffer = "";
+        const STREAM_TIMEOUT = 30000;
         try {
             while (true) {
-                const { done, value } = await reader.read();
+                const result = await Promise.race([
+                    reader.read(),
+                    new Promise((_, reject) => setTimeout(() => reject(new Error('Stream timeout: Mistral no respondió en 30s')), STREAM_TIMEOUT))
+                ]);
+                const { done, value } = result;
                 if (done) break;
-                buffer += decoder.decode(value, { stream: true });
-                const lines = buffer.split('\n');
-                buffer = lines.pop();
+                streamBuffer += decoder.decode(value, { stream: true });
+                const lines = streamBuffer.split('\n');
+                streamBuffer = lines.pop();
                 for (const line of lines) {
                     if (line.startsWith('data: ') && line !== 'data: [DONE]') {
                         try {

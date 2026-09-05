@@ -173,7 +173,7 @@ async function llamarGemini(message, history, intent, extraData = {}, onChunk = 
                                 if (onChunk) onChunk(data.text, fullText);
                             }
                         } catch (e) {
-                            if (e.message.includes("Error técnico")) throw e;
+                            throw e;
                         }
                     }
                 }
