@@ -236,7 +236,7 @@ async function callGeminiAPI({ intent, prompt, history, stream, res, fileData })
 
     const endpoint = stream ? 'streamGenerateContent' : 'generateContent';
     const modelToUse = GEMINI_MODEL;
-    const url = `${GEMINI_BASE_URL}/${modelToUse}:${endpoint}?alt=sse`;
+    const url = `${GEMINI_BASE_URL}/${modelToUse}:${endpoint}${stream ? '?alt=sse' : ''}`;
 
     const contents = [
         ...sanitizeGeminiHistory(history),
