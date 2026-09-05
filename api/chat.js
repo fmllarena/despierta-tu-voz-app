@@ -236,7 +236,7 @@ async function callGeminiAPI({ intent, prompt, history, stream, res, fileData })
 
     const endpoint = stream ? 'streamGenerateContent' : 'generateContent';
     const modelToUse = GEMINI_MODEL;
-    const url = `${GEMINI_BASE_URL}/${modelToUse}:${endpoint}?key=${process.env.GEMINI_API_KEY}${stream ? '&alt=sse' : ''}`;
+    const url = `${GEMINI_BASE_URL}/${modelToUse}:${endpoint}?alt=sse`;
 
     const contents = [
         ...sanitizeGeminiHistory(history),
@@ -263,7 +263,10 @@ async function callGeminiAPI({ intent, prompt, history, stream, res, fileData })
 
     const response = await fetch(url, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+            'Content-Type': 'application/json',
+            'x-goog-api-key': process.env.GEMINI_API_KEY
+        },
         body: JSON.stringify(requestBody)
     });
 
