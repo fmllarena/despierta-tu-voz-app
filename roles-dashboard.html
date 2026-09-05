@@ -391,6 +391,12 @@
                     body: JSON.stringify(body)
                 });
                 console.log('📥 Respuesta:', res.status, res.statusText);
+
+                if (!res.ok) {
+                    const errorText = await res.text();
+                    throw new Error(`Server Error (${res.status}): ${errorText}`);
+                }
+
                 const data = await res.json();
                 if (data.error) throw new Error(data.error);
                 const now = new Date().toISOString();
