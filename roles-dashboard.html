@@ -295,16 +295,26 @@
         }
 
         async function cargarListaAlumnos() {
+            console.log('📚 Cargando lista de alumnos...');
             const { data, error } = await sb
                 .from('user_profiles')
                 .select('email, nombre')
-                .not('email', 'is', null)
                 .order('nombre', { ascending: true });
-            if (error) { console.error(error); return; }
+            if (error) {
+                console.error('Error cargando alumnos:', error);
+                EL('studentStatus').textContent = '❌ Error cargando lista de alumnos.';
+                return;
+            }
+            if (!data || !data.length) {
+                console.warn('No se encontraron alumnos');
+                EL('studentStatus').textContent = '⚠️ No hay alumnos disponibles.';
+                return;
+            }
 
+            console.log(`✅ ${data.length} alumnos cargados`);
             const list = EL('studentList');
             list.innerHTML = '';
-            data.forEach(a => {
+            data.filter(a => a.email).forEach(a => {
                 const opt = document.createElement('option');
                 opt.value = a.email;
                 opt.textContent = a.nombre ? `${a.nombre} (${a.email})` : a.email;
