@@ -111,30 +111,30 @@ async function processChat(req, res = null) {
     const errors = [];
     const hasMedia = fileData && ((fileData.mimeType && fileData.mimeType.startsWith('audio/')) || (fileData.data || (Array.isArray(fileData) && fileData.length > 0)));
 
-    // Mistral (texto + imágenes)
-    if (process.env.MISTRAL_API_KEY) {
-        try {
-            console.log("🚀 Intentando con Mistral...");
-            const result = await callMistralAPI({ intent, prompt: finalPrompt, history, stream, res, fileData, resumenBoundary: ctx.resumenBoundary });
-            if (stream && res) return;
-            return result;
-        } catch (e) {
-            console.warn("⚠️ Mistral falló:", e.message);
-            errors.push(`Mistral: ${e.message}`);
-            if (stream && res && res.writableEnded) throw e;
-        }
-    }
-
-    // Gemini (fallback)
+    // Gemini (primario)
     if (process.env.GEMINI_API_KEY) {
         try {
-            console.log("🚀 Intentando con Gemini (fallback)...");
+            console.log("🚀 Intentando con Gemini...");
             const result = await callGeminiAPI({ intent, prompt: finalPrompt, history, stream, res, fileData });
             if (stream && res) return;
             return result;
         } catch (e) {
             console.warn("⚠️ Gemini falló:", e.message);
             errors.push(`Gemini: ${e.message}`);
+            if (stream && res && res.writableEnded) throw e;
+        }
+    }
+
+    // Mistral (fallback)
+    if (process.env.MISTRAL_API_KEY) {
+        try {
+            console.log("🚀 Intentando con Mistral (fallback)...");
+            const result = await callMistralAPI({ intent, prompt: finalPrompt, history, stream, res, fileData, resumenBoundary: ctx.resumenBoundary });
+            if (stream && res) return;
+            return result;
+        } catch (e) {
+            console.warn("⚠️ Mistral falló:", e.message);
+            errors.push(`Mistral: ${e.message}`);
             if (stream && res && res.writableEnded) throw e;
         }
     }
