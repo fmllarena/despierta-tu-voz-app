@@ -7,7 +7,7 @@ const MISTRAL_MODEL = "mistral-small-latest";
 const MISTRAL_BASE_URL = "https://api.mistral.ai/v1";
 
 // --- CONFIGURACIÓN GEMINI ---
-const GEMINI_MODEL = "gemini-3.5-flash";
+const GEMINI_MODEL = "gemini-3.6-flash";
 const GEMINI_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/models";
 
 /**
@@ -125,7 +125,19 @@ async function processChat(req, res = null) {
         }
     }
 
-    // Gemini eliminado temporalmente
+    // Gemini (fallback)
+    if (process.env.GEMINI_API_KEY) {
+        try {
+            console.log("🚀 Intentando con Gemini (fallback)...");
+            const result = await callGeminiAPI({ intent, prompt: finalPrompt, history, stream, res, fileData });
+            if (stream && res) return;
+            return result;
+        } catch (e) {
+            console.warn("⚠️ Gemini falló:", e.message);
+            errors.push(`Gemini: ${e.message}`);
+            if (stream && res && res.writableEnded) throw e;
+        }
+    }
 
     throw new Error(`Todos los modelos fallaron: ${errors.join(" | ")}`);
 }
