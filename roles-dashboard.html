@@ -384,11 +384,13 @@
                     history: chatHistory,
                     userId: studentId,
                 };
+                console.log('📤 Enviando mensaje:', { intent: body.intent, userId: body.userId, historyLen: body.history?.length });
                 const res = await fetch('/api/chat', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(body)
                 });
+                console.log('📥 Respuesta:', res.status, res.statusText);
                 const data = await res.json();
                 if (data.error) throw new Error(data.error);
                 const now = new Date().toISOString();
@@ -400,6 +402,7 @@
                 if (chatHistory.length > 20) chatHistory = chatHistory.slice(-20);
 
             } catch (e) {
+                console.error('❌ Error en enviarMensaje:', e);
                 addMsg('alumno', 'Error', `❌ ${e.message}`);
             } finally {
                 setLoading(false);
