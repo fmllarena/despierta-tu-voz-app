@@ -114,12 +114,12 @@ async function processChat(req, res = null) {
     // Gemini (primario)
     if (process.env.GEMINI_API_KEY) {
         try {
-            console.log("🚀 Intentando con Gemini...");
+            console.log("🚀 Intentando con Gemini...", { intent, hasHistory: !!history?.length });
             const result = await callGeminiAPI({ intent, prompt: finalPrompt, history, stream, res, fileData });
             if (stream && res) return;
             return result;
         } catch (e) {
-            console.warn("⚠️ Gemini falló:", e.message);
+            console.error("⚠️ Gemini falló:", e.message, e.stack?.slice(0, 200));
             errors.push(`Gemini: ${e.message}`);
             if (stream && res && res.writableEnded) throw e;
         }
@@ -272,6 +272,7 @@ async function callGeminiAPI({ intent, prompt, history, stream, res, fileData })
 
     if (!response.ok) {
         const errData = await response.json().catch(() => ({}));
+        console.error("Gemini API error:", response.status, JSON.stringify(errData).slice(0, 500));
         throw new Error(`Gemini Error ${response.status}: ${errData.error?.message || 'Unknown'}`);
     }
 
