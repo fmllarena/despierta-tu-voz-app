@@ -323,7 +323,7 @@ async function callOpenRouterAPI({ intent, prompt, history, stream, res }) {
             'X-Title': 'Despierta tu Voz'
         },
         body: JSON.stringify({
-            model: 'mistralai/mistral-small-3.1-24b-instruct:free',
+            model: 'openrouter/free',
             messages,
             stream: !!stream
         })
