@@ -125,30 +125,30 @@ async function processChat(req, res = null) {
         }
     }
 
-    // Mistral (fallback)
-    if (process.env.MISTRAL_API_KEY) {
-        try {
-            console.log("🚀 Intentando con Mistral (fallback)...");
-            const result = await callMistralAPI({ intent, prompt: finalPrompt, history, stream, res, fileData, resumenBoundary: ctx.resumenBoundary });
-            if (stream && res) return;
-            return result;
-        } catch (e) {
-            console.warn("⚠️ Mistral falló:", e.message);
-            errors.push(`Mistral: ${e.message}`);
-            if (stream && res && res.writableEnded) throw e;
-        }
-    }
-
-    // OpenRouter (fallback 2)
+    // OpenRouter (fallback 1)
     if (process.env.OPENROUTER_API_KEY) {
         try {
-            console.log("🚀 Intentando con OpenRouter (fallback 2)...");
+            console.log("🚀 Intentando con OpenRouter (fallback 1)...");
             const result = await callOpenRouterAPI({ intent, prompt: finalPrompt, history, stream, res });
             if (stream && res) return;
             return result;
         } catch (e) {
             console.warn("⚠️ OpenRouter falló:", e.message);
             errors.push(`OpenRouter: ${e.message}`);
+            if (stream && res && res.writableEnded) throw e;
+        }
+    }
+
+    // Mistral (fallback 2+)
+    for (const key of MISTRAL_KEYS) {
+        try {
+            console.log("🚀 Intentando con Mistral (fallback 2)...", { keyIndex: MISTRAL_KEYS.indexOf(key) + 1 });
+            const result = await callMistralAPI({ intent, prompt: finalPrompt, history, stream, res, fileData, resumenBoundary: ctx.resumenBoundary }, key);
+            if (stream && res) return;
+            return result;
+        } catch (e) {
+            console.warn("⚠️ Mistral falló:", e.message);
+            errors.push(`Mistral: ${e.message}`);
             if (stream && res && res.writableEnded) throw e;
         }
     }
