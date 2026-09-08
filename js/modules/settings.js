@@ -148,7 +148,9 @@ export const AJUSTES = window.AJUSTES = {
         });
 
         // Foto de perfil — Supabase Storage
+        console.log('🔍 userPhotoInput:', ELEMENTS.userPhotoInput);
         ELEMENTS.userPhotoInput?.addEventListener('change', async (e) => {
+            console.log('📸 Archivo seleccionado:', e.target.files[0]?.name);
             const file = e.target.files[0];
             if (!file) return;
             if (file.size > 512 * 1024) {
@@ -160,6 +162,7 @@ export const AJUSTES = window.AJUSTES = {
             const { data: { user } } = await db.auth.getUser();
             if (!user) return alertCustom('Debes iniciar sesión.');
 
+            console.log('📦 Asegurando bucket...');
             // Asegurar que el bucket existe
             await this._ensureBucket(db);
 
@@ -239,9 +242,13 @@ export const AJUSTES = window.AJUSTES = {
 
     async _ensureBucket(db) {
         // Verificar si el bucket ya existe
-        const { data: buckets } = await db.storage.listBuckets();
+        const { data: buckets, error: listError } = await db.storage.listBuckets();
+        console.log('📦 Buckets existentes:', buckets?.map(b => b.name), listError);
         const exists = buckets?.some(b => b.name === 'avatar');
-        if (exists) return;
+        if (exists) {
+            console.log('✅ Bucket avatar ya existe');
+            return;
+        }
 
         console.log('📦 Creando bucket avatar...');
         const { error } = await db.storage.createBucket('avatar', {
