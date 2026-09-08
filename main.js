@@ -979,7 +979,7 @@ function appendMessage(text, type, id = null) {
 
         const avatar = document.createElement('div');
         avatar.className = 'user-avatar';
-        const photo = localStorage.getItem('dtv_user_photo');
+        const photo = window.userProfile?.avatar_url;
         if (photo) {
             avatar.innerHTML = `<img src="${photo}" alt="Tú">`;
         } else {

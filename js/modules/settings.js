@@ -39,8 +39,8 @@ export const AJUSTES = window.AJUSTES = {
         ELEMENTS.tratoPreferidoInput.value = profile.mentor_trato_preferido || '';
         ELEMENTS.darkModeToggle.checked = localStorage.getItem('dtv_dark_mode') === 'true';
 
-        // Cargar foto de perfil
-        this._actualizarPreviewFoto(localStorage.getItem('dtv_user_photo'));
+        // Cargar foto de perfil desde Supabase
+        this._actualizarPreviewFoto(profile.avatar_url || null);
 
         if (ELEMENTS.upgradeSettingsBtn) {
             ELEMENTS.upgradeSettingsBtn.style.display = tier === 'premium' ? 'none' : 'block';
@@ -147,24 +147,75 @@ export const AJUSTES = window.AJUSTES = {
             aplicarModoOscuro(e.target.checked);
         });
 
-        // Foto de perfil
-        ELEMENTS.userPhotoInput?.addEventListener('change', (e) => {
+        // Foto de perfil — Supabase Storage
+        ELEMENTS.userPhotoInput?.addEventListener('change', async (e) => {
             const file = e.target.files[0];
             if (!file) return;
             if (file.size > 512 * 1024) {
                 alertCustom('La imagen no puede superar 512 KB.');
                 return;
             }
+
+            const db = state.supabase;
+            const { data: { user } } = await db.auth.getUser();
+            if (!user) return alertCustom('Debes iniciar sesión.');
+
+            const ext = file.name.split('.').pop().toLowerCase();
+            const path = `${user.id}/avatar.${ext}`;
+
+            // Preview inmediato
             const reader = new FileReader();
-            reader.onload = () => {
-                localStorage.setItem('dtv_user_photo', reader.result);
-                this._actualizarPreviewFoto(reader.result);
-            };
+            reader.onload = () => this._actualizarPreviewFoto(reader.result);
             reader.readAsDataURL(file);
+
+            // Subir a Storage
+            const { error: uploadError } = await db.storage
+                .from('avatars')
+                .upload(path, file, { upsert: true });
+
+            if (uploadError) {
+                console.error('Error subiendo avatar:', uploadError);
+                alertCustom('Error al subir la imagen: ' + uploadError.message);
+                return;
+            }
+
+            // Obtener URL pública
+            const { data: urlData } = db.storage.from('avatars').getPublicUrl(path);
+            const publicUrl = urlData.publicUrl;
+
+            // Guardar URL en user_profiles
+            const { error: updateError } = await db
+                .from('user_profiles')
+                .update({ avatar_url: publicUrl })
+                .eq('user_id', user.id);
+
+            if (updateError) {
+                console.error('Error guardando avatar_url:', updateError);
+                return;
+            }
+
+            // Actualizar perfil en memoria
+            window.userProfile.avatar_url = publicUrl;
+            this._actualizarPreviewFoto(publicUrl);
+            console.log('✅ Avatar actualizado:', publicUrl);
         });
 
-        ELEMENTS.removePhotoBtn?.addEventListener('click', () => {
-            localStorage.removeItem('dtv_user_photo');
+        ELEMENTS.removePhotoBtn?.addEventListener('click', async () => {
+            const db = state.supabase;
+            const { data: { user } } = await db.auth.getUser();
+            if (!user) return;
+
+            // Eliminar de Storage
+            const files = await db.storage.from('avatars').list(user.id);
+            if (files.data?.length) {
+                const paths = files.data.map(f => `${user.id}/${f.name}`);
+                await db.storage.from('avatars').remove(paths);
+            }
+
+            // Limpiar URL en user_profiles
+            await db.from('user_profiles').update({ avatar_url: null }).eq('user_id', user.id);
+            window.userProfile.avatar_url = null;
+
             this._actualizarPreviewFoto(null);
             if (ELEMENTS.userPhotoInput) ELEMENTS.userPhotoInput.value = '';
         });
