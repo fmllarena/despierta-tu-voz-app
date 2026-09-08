@@ -160,6 +160,9 @@ export const AJUSTES = window.AJUSTES = {
             const { data: { user } } = await db.auth.getUser();
             if (!user) return alertCustom('Debes iniciar sesión.');
 
+            // Asegurar que el bucket existe
+            await this._ensureBucket(db);
+
             const ext = file.name.split('.').pop().toLowerCase();
             const path = `${user.id}/avatar.${ext}`;
 
@@ -232,6 +235,26 @@ export const AJUSTES = window.AJUSTES = {
             preview.innerHTML = `<svg class="user-photo-placeholder" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/></svg>`;
             if (removeBtn) removeBtn.style.display = 'none';
         }
+    },
+
+    async _ensureBucket(db) {
+        // Verificar si el bucket ya existe
+        const { data: buckets } = await db.storage.listBuckets();
+        const exists = buckets?.some(b => b.name === 'avatars');
+        if (exists) return;
+
+        console.log('📦 Creando bucket avatars...');
+        const { error } = await db.storage.createBucket('avatars', {
+            public: true,
+            fileSizeLimit: 524288,
+            allowedMimeTypes: ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
+        });
+
+        if (error && error.message !== 'Bucket already exists') {
+            console.error('Error creando bucket:', error);
+            throw new Error('No se pudo crear el bucket de avatars: ' + error.message);
+        }
+        console.log('✅ Bucket avatars creado');
     }
 
 };
