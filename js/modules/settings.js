@@ -161,10 +161,12 @@ export const AJUSTES = window.AJUSTES = {
                 const { data: { user } } = await db.auth.getUser();
                 if (!user) return alertCustom('Debes iniciar sesión.');
 
+                // Forzar nombre único para evitar cache
                 const ext = file.name.split('.').pop().toLowerCase();
-                const path = `${user.id}/avatar.${ext}`;
+                const timestamp = Date.now();
+                const path = `${user.id}/avatar_${timestamp}.${ext}`;
 
-                // Preview inmediato
+                // Preview inmediato con el archivo local (sin cache)
                 const reader = new FileReader();
                 reader.onload = () => this._actualizarPreviewFoto(reader.result);
                 reader.readAsDataURL(file);
@@ -181,9 +183,18 @@ export const AJUSTES = window.AJUSTES = {
                     return;
                 }
 
-                // Obtener URL pública
+                // Eliminar avatars anteriores del usuario
+                const { data: oldFiles } = await db.storage.from('avatar').list(user.id);
+                if (oldFiles?.length) {
+                    const oldPaths = oldFiles
+                        .filter(f => f.name !== `avatar_${timestamp}.${ext}`)
+                        .map(f => `${user.id}/${f.name}`);
+                    if (oldPaths.length) await db.storage.from('avatar').remove(oldPaths);
+                }
+
+                // Obtener URL pública con cache-buster
                 const { data: urlData } = db.storage.from('avatar').getPublicUrl(path);
-                const publicUrl = urlData.publicUrl;
+                const publicUrl = urlData.publicUrl + '?t=' + timestamp;
 
                 // Guardar URL en user_profiles
                 const { error: updateError } = await db
