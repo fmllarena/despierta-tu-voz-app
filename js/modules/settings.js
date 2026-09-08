@@ -148,9 +148,7 @@ export const AJUSTES = window.AJUSTES = {
         });
 
         // Foto de perfil — Supabase Storage
-        console.log('🔍 userPhotoInput:', ELEMENTS.userPhotoInput);
         ELEMENTS.userPhotoInput?.addEventListener('change', async (e) => {
-            console.log('📸 Archivo seleccionado:', e.target.files[0]?.name);
             const file = e.target.files[0];
             if (!file) return;
             if (file.size > 512 * 1024) {
@@ -158,52 +156,53 @@ export const AJUSTES = window.AJUSTES = {
                 return;
             }
 
-            const db = state.supabase;
-            const { data: { user } } = await db.auth.getUser();
-            if (!user) return alertCustom('Debes iniciar sesión.');
+            try {
+                const db = window.__supabase || state.supabase;
+                const { data: { user } } = await db.auth.getUser();
+                if (!user) return alertCustom('Debes iniciar sesión.');
 
-            console.log('📦 Asegurando bucket...');
-            // Asegurar que el bucket existe
-            await this._ensureBucket(db);
+                const ext = file.name.split('.').pop().toLowerCase();
+                const path = `${user.id}/avatar.${ext}`;
 
-            const ext = file.name.split('.').pop().toLowerCase();
-            const path = `${user.id}/avatar.${ext}`;
+                // Preview inmediato
+                const reader = new FileReader();
+                reader.onload = () => this._actualizarPreviewFoto(reader.result);
+                reader.readAsDataURL(file);
 
-            // Preview inmediato
-            const reader = new FileReader();
-            reader.onload = () => this._actualizarPreviewFoto(reader.result);
-            reader.readAsDataURL(file);
+                // Subir a Storage
+                console.log('📤 Subiendo avatar a storage...');
+                const { data, error: uploadError } = await db.storage
+                    .from('avatar')
+                    .upload(path, file, { upsert: true });
 
-            // Subir a Storage
-            const { error: uploadError } = await db.storage
-                .from('avatar')
-                .upload(path, file, { upsert: true });
+                if (uploadError) {
+                    console.error('Error subiendo avatar:', uploadError);
+                    alertCustom('Error al subir: ' + uploadError.message);
+                    return;
+                }
 
-            if (uploadError) {
-                console.error('Error subiendo avatar:', uploadError);
-                alertCustom('Error al subir la imagen: ' + uploadError.message);
-                return;
+                // Obtener URL pública
+                const { data: urlData } = db.storage.from('avatar').getPublicUrl(path);
+                const publicUrl = urlData.publicUrl;
+
+                // Guardar URL en user_profiles
+                const { error: updateError } = await db
+                    .from('user_profiles')
+                    .update({ avatar_url: publicUrl })
+                    .eq('user_id', user.id);
+
+                if (updateError) {
+                    console.error('Error guardando avatar_url:', updateError);
+                    return;
+                }
+
+                window.userProfile.avatar_url = publicUrl;
+                this._actualizarPreviewFoto(publicUrl);
+                console.log('✅ Avatar actualizado:', publicUrl);
+            } catch (err) {
+                console.error('❌ Error avatar:', err);
+                alertCustom('Error: ' + err.message);
             }
-
-            // Obtener URL pública
-            const { data: urlData } = db.storage.from('avatar').getPublicUrl(path);
-            const publicUrl = urlData.publicUrl;
-
-            // Guardar URL en user_profiles
-            const { error: updateError } = await db
-                .from('user_profiles')
-                .update({ avatar_url: publicUrl })
-                .eq('user_id', user.id);
-
-            if (updateError) {
-                console.error('Error guardando avatar_url:', updateError);
-                return;
-            }
-
-            // Actualizar perfil en memoria
-            window.userProfile.avatar_url = publicUrl;
-            this._actualizarPreviewFoto(publicUrl);
-            console.log('✅ Avatar actualizado:', publicUrl);
         });
 
         ELEMENTS.removePhotoBtn?.addEventListener('click', async () => {
@@ -238,15 +237,6 @@ export const AJUSTES = window.AJUSTES = {
             preview.innerHTML = `<svg class="user-photo-placeholder" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/></svg>`;
             if (removeBtn) removeBtn.style.display = 'none';
         }
-    },
-
-    async _ensureBucket(db) {
-        const { data: buckets, error } = await db.storage.listBuckets();
-        console.log('📦 Buckets:', buckets, 'Error:', error);
-        const exists = buckets?.some(b => b.name === 'avatar');
-        if (exists) return;
-
-        throw new Error('El bucket "avatar" no existe. Créalo en: Supabase Dashboard → Storage → New Bucket → nombre: avatar, público: true');
     }
 
 };
