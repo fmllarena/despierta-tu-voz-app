@@ -656,6 +656,10 @@ textarea {
     font-size: 1em;
     transition: background 0.2s;
     flex-shrink: 0;
+    justify-content: center;
+    align-items: center;
+    padding: 0;
+    line-height: 1;
 }
 
 .stop-btn:hover {

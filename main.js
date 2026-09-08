@@ -679,14 +679,16 @@ async function sendMessage() {
         document.getElementById(thinkingId)?.remove();
         if (e.name === 'AbortError') {
             console.log('⏹ Respuesta detenida por el usuario');
+            // También eliminar mensaje de pensando si aún existe
+            document.getElementById(thinkingId)?.remove();
         } else {
             console.error("Error en sendMessage:", e);
             appendMessage("Vaya, parece que hoy tengo un nudo en la garganta. ¿Podrías intentar decírmelo de nuevo?", 'ia');
         }
     } finally {
+        document.getElementById(thinkingId)?.remove();
         ELEMENTS.chatInput.disabled = false;
         ELEMENTS.sendBtn.disabled = false;
-        // Ocultar stop, mostrar send
         if (ELEMENTS.stopBtn) ELEMENTS.stopBtn.style.display = 'none';
         if (ELEMENTS.sendBtn) ELEMENTS.sendBtn.style.display = '';
         abortController = null;
