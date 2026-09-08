@@ -241,27 +241,11 @@ export const AJUSTES = window.AJUSTES = {
     },
 
     async _ensureBucket(db) {
-        // Verificar si el bucket ya existe
-        const { data: buckets, error: listError } = await db.storage.listBuckets();
-        console.log('📦 Buckets existentes:', buckets?.map(b => b.name), listError);
+        const { data: buckets } = await db.storage.listBuckets();
         const exists = buckets?.some(b => b.name === 'avatar');
-        if (exists) {
-            console.log('✅ Bucket avatar ya existe');
-            return;
-        }
+        if (exists) return;
 
-        console.log('📦 Creando bucket avatar...');
-        const { error } = await db.storage.createBucket('avatar', {
-            public: true,
-            fileSizeLimit: 524288,
-            allowedMimeTypes: ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
-        });
-
-        if (error && error.message !== 'Bucket already exists') {
-            console.error('Error creando bucket:', error);
-            throw new Error('No se pudo crear el bucket de avatar: ' + error.message);
-        }
-        console.log('✅ Bucket avatar creado');
+        throw new Error('El bucket "avatar" no existe. Créalo en: Supabase Dashboard → Storage → New Bucket → nombre: avatar, público: true');
     }
 
 };
