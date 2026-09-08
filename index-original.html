@@ -370,6 +370,20 @@
                 </div>
             </div>
 
+            <div class="settings-section user-photo-section">
+                <h3>Foto de Perfil</h3>
+                <div class="user-photo-row">
+                    <div id="userPhotoPreview" class="user-photo-preview">
+                        <svg class="user-photo-placeholder" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/></svg>
+                    </div>
+                    <div class="user-photo-actions">
+                        <label for="userPhotoInput" class="user-photo-upload-btn">Subir foto</label>
+                        <input type="file" id="userPhotoInput" accept="image/*" style="display:none">
+                        <button id="removePhotoBtn" class="user-photo-remove-btn" style="display:none">Quitar foto</button>
+                    </div>
+                </div>
+            </div>
+
             <div class="setting-item switch-row" style="justify-content:space-between;display:flex;padding:10px 5px;margin-bottom:5px;">
                 <label for="darkModeToggle" style="font-weight:600;font-size:0.9em;">Modo Oscuro 🌙</label>
                 <label class="switch">

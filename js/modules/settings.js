@@ -39,6 +39,9 @@ export const AJUSTES = window.AJUSTES = {
         ELEMENTS.tratoPreferidoInput.value = profile.mentor_trato_preferido || '';
         ELEMENTS.darkModeToggle.checked = localStorage.getItem('dtv_dark_mode') === 'true';
 
+        // Cargar foto de perfil
+        this._actualizarPreviewFoto(localStorage.getItem('dtv_user_photo'));
+
         if (ELEMENTS.upgradeSettingsBtn) {
             ELEMENTS.upgradeSettingsBtn.style.display = tier === 'premium' ? 'none' : 'block';
         }
@@ -143,6 +146,41 @@ export const AJUSTES = window.AJUSTES = {
         ELEMENTS.darkModeToggle?.addEventListener('change', (e) => {
             aplicarModoOscuro(e.target.checked);
         });
+
+        // Foto de perfil
+        ELEMENTS.userPhotoInput?.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            if (file.size > 512 * 1024) {
+                alertCustom('La imagen no puede superar 512 KB.');
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = () => {
+                localStorage.setItem('dtv_user_photo', reader.result);
+                this._actualizarPreviewFoto(reader.result);
+            };
+            reader.readAsDataURL(file);
+        });
+
+        ELEMENTS.removePhotoBtn?.addEventListener('click', () => {
+            localStorage.removeItem('dtv_user_photo');
+            this._actualizarPreviewFoto(null);
+            if (ELEMENTS.userPhotoInput) ELEMENTS.userPhotoInput.value = '';
+        });
+    },
+
+    _actualizarPreviewFoto(dataUrl) {
+        const preview = ELEMENTS.userPhotoPreview;
+        const removeBtn = ELEMENTS.removePhotoBtn;
+        if (!preview) return;
+        if (dataUrl) {
+            preview.innerHTML = `<img src="${dataUrl}" alt="Foto de perfil">`;
+            if (removeBtn) removeBtn.style.display = 'inline-block';
+        } else {
+            preview.innerHTML = `<svg class="user-photo-placeholder" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/></svg>`;
+            if (removeBtn) removeBtn.style.display = 'none';
+        }
     }
 
 };

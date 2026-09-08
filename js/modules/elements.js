@@ -63,6 +63,9 @@ export const ELEMENTS = window.ELEMENTS = {
     get languageSelect() { return document.getElementById('languageSelect'); },
     get tratoPreferidoInput() { return document.getElementById('tratoPreferidoInput'); },
     get upgradeSettingsBtn() { return document.getElementById('upgradeSettingsBtn'); },
+    get userPhotoInput() { return document.getElementById('userPhotoInput'); },
+    get userPhotoPreview() { return document.getElementById('userPhotoPreview'); },
+    get removePhotoBtn() { return document.getElementById('removePhotoBtn'); },
 
     // Legal Modal
     get legalModal() { return document.getElementById('legalModal'); },

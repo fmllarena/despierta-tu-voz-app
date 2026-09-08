@@ -972,9 +972,23 @@ function appendMessage(text, type, id = null) {
         // Desplazar el chat
         container.scrollIntoView({ behavior: 'smooth', block: 'start' });
     } else if (type === 'user' || type === 'usuario') {
+        // Contenedor para Avatar + Mensaje
+        const container = document.createElement('div');
+        container.className = 'user-container';
+        if (id) container.id = id;
+
+        const avatar = document.createElement('div');
+        avatar.className = 'user-avatar';
+        const photo = localStorage.getItem('dtv_user_photo');
+        if (photo) {
+            avatar.innerHTML = `<img src="${photo}" alt="Tú">`;
+        } else {
+            avatar.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/></svg>`;
+        }
+
         div.innerText = text;
         div.style.whiteSpace = "pre-wrap";
-        ELEMENTS.chatBox.appendChild(div);
+
         const copyBtn = document.createElement('button');
         copyBtn.className = 'copy-msg-btn';
         copyBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>`;
@@ -984,6 +998,10 @@ function appendMessage(text, type, id = null) {
             copiarConFormato(div, text, copyBtn);
         };
         div.appendChild(copyBtn);
+
+        container.appendChild(div);
+        container.appendChild(avatar);
+        ELEMENTS.chatBox.appendChild(container);
         ELEMENTS.chatBox.scrollTop = ELEMENTS.chatBox.scrollHeight;
     } else {
         // Cualquier otro tipo (resumen_diario, sistema, etc.) no lo imprimimos en el chat

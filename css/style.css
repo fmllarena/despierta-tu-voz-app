@@ -323,6 +323,122 @@ header p {
     object-fit: cover;
 }
 
+.user-container {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 4px;
+    width: 100%;
+    justify-content: flex-end;
+}
+
+.user-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #e8e8e8;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-shrink: 0;
+    overflow: hidden;
+    border: 1px solid #ddd;
+    margin-top: 5px;
+    order: 2;
+}
+
+.user-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.user-avatar svg {
+    width: 20px;
+    height: 20px;
+    stroke: #999;
+}
+
+.user-container .message.user {
+    order: 1;
+}
+
+/* Photo upload in settings */
+.user-photo-section {
+    text-align: center;
+}
+
+.user-photo-row {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    justify-content: center;
+}
+
+.user-photo-preview {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: #f0f0f0;
+    border: 2px solid #ddd;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.user-photo-preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.user-photo-placeholder {
+    width: 36px;
+    height: 36px;
+    stroke: #999;
+}
+
+.user-photo-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.user-photo-upload-btn {
+    display: inline-block;
+    padding: 8px 16px;
+    background: var(--color-acento);
+    color: white;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.85em;
+    font-weight: 600;
+    text-align: center;
+    transition: opacity 0.2s;
+}
+
+.user-photo-upload-btn:hover {
+    opacity: 0.85;
+}
+
+.user-photo-remove-btn {
+    padding: 6px 12px;
+    background: transparent;
+    color: #c0392b;
+    border: 1px solid #c0392b;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.8em;
+    transition: background 0.2s;
+}
+
+.user-photo-remove-btn:hover {
+    background: #c0392b;
+    color: white;
+}
+
 .ia {
     align-self: flex-start;
     background: #fdfaf5;
@@ -4108,6 +4224,24 @@ html[data-theme="dark"] .ia.thinking {
 html[data-theme="dark"] .ia-botiquin {
     background: #7a6b5d !important;
     border-color: #8a7b6d !important;
+}
+
+html[data-theme="dark"] .user-avatar {
+    background: #3a3a3a;
+    border-color: #555;
+}
+
+html[data-theme="dark"] .user-avatar svg {
+    stroke: #aaa;
+}
+
+html[data-theme="dark"] .user-photo-preview {
+    background: #3a3a3a;
+    border-color: #555;
+}
+
+html[data-theme="dark"] .user-photo-placeholder {
+    stroke: #aaa;
 }
 
 html[data-theme="dark"] .input-area {
