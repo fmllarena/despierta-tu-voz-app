@@ -241,7 +241,8 @@ export const AJUSTES = window.AJUSTES = {
     },
 
     async _ensureBucket(db) {
-        const { data: buckets } = await db.storage.listBuckets();
+        const { data: buckets, error } = await db.storage.listBuckets();
+        console.log('📦 Buckets:', buckets, 'Error:', error);
         const exists = buckets?.some(b => b.name === 'avatar');
         if (exists) return;
 
