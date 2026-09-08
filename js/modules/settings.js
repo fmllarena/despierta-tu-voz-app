@@ -173,7 +173,7 @@ export const AJUSTES = window.AJUSTES = {
 
             // Subir a Storage
             const { error: uploadError } = await db.storage
-                .from('avatars')
+                .from('avatar')
                 .upload(path, file, { upsert: true });
 
             if (uploadError) {
@@ -183,7 +183,7 @@ export const AJUSTES = window.AJUSTES = {
             }
 
             // Obtener URL pública
-            const { data: urlData } = db.storage.from('avatars').getPublicUrl(path);
+            const { data: urlData } = db.storage.from('avatar').getPublicUrl(path);
             const publicUrl = urlData.publicUrl;
 
             // Guardar URL en user_profiles
@@ -209,10 +209,10 @@ export const AJUSTES = window.AJUSTES = {
             if (!user) return;
 
             // Eliminar de Storage
-            const files = await db.storage.from('avatars').list(user.id);
+            const files = await db.storage.from('avatar').list(user.id);
             if (files.data?.length) {
                 const paths = files.data.map(f => `${user.id}/${f.name}`);
-                await db.storage.from('avatars').remove(paths);
+                await db.storage.from('avatar').remove(paths);
             }
 
             // Limpiar URL en user_profiles
@@ -240,11 +240,11 @@ export const AJUSTES = window.AJUSTES = {
     async _ensureBucket(db) {
         // Verificar si el bucket ya existe
         const { data: buckets } = await db.storage.listBuckets();
-        const exists = buckets?.some(b => b.name === 'avatars');
+        const exists = buckets?.some(b => b.name === 'avatar');
         if (exists) return;
 
-        console.log('📦 Creando bucket avatars...');
-        const { error } = await db.storage.createBucket('avatars', {
+        console.log('📦 Creando bucket avatar...');
+        const { error } = await db.storage.createBucket('avatar', {
             public: true,
             fileSizeLimit: 524288,
             allowedMimeTypes: ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
@@ -252,9 +252,9 @@ export const AJUSTES = window.AJUSTES = {
 
         if (error && error.message !== 'Bucket already exists') {
             console.error('Error creando bucket:', error);
-            throw new Error('No se pudo crear el bucket de avatars: ' + error.message);
+            throw new Error('No se pudo crear el bucket de avatar: ' + error.message);
         }
-        console.log('✅ Bucket avatars creado');
+        console.log('✅ Bucket avatar creado');
     }
 
 };
