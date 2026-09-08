@@ -114,7 +114,7 @@ window.addEventListener('click', e => {
 // --- SOPORTE HÍBRIDO ---
 // Movido a js/modules/support.js
 
-async function llamarGemini(message, history, intent, extraData = {}, onChunk = null) {
+async function llamarGemini(message, history, intent, extraData = {}, onChunk = null, signal = null) {
     try {
         const stream = !!onChunk;
         const body = { message, history, intent, stream, ...extraData };
@@ -139,44 +139,56 @@ async function llamarGemini(message, history, intent, extraData = {}, onChunk = 
                 pages: Array.isArray(extraData.fileData) ? extraData.fileData : [extraData.fileData],
                 question: message,
                 stream: stream,
-                context: "" // Podría añadirse contexto si fuera necesario
+                context: ""
             };
         } else {
             requestBody = body;
         }
 
-        const response = await fetch(endpoint, {
+        const fetchOptions = {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(requestBody)
-        });
+        };
+        if (signal) fetchOptions.signal = signal;
+
+        const response = await fetch(endpoint, fetchOptions);
 
         if (stream) {
             const reader = response.body.getReader();
             const decoder = new TextDecoder();
             let fullText = "";
 
-            while (true) {
-                const { done, value } = await reader.read();
-                if (done) break;
+            try {
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
 
-                const chunk = decoder.decode(value);
-                const lines = chunk.split('\n');
+                    const chunk = decoder.decode(value);
+                    const lines = chunk.split('\n');
 
-                for (const line of lines) {
-                    if (line.startsWith('data: ')) {
-                        try {
-                            const data = JSON.parse(line.substring(6));
-                            if (data.error) throw new Error(data.error);
-                            if (data.text) {
-                                fullText += data.text;
-                                if (onChunk) onChunk(data.text, fullText);
+                    for (const line of lines) {
+                        if (line.startsWith('data: ')) {
+                            try {
+                                const data = JSON.parse(line.substring(6));
+                                if (data.error) throw new Error(data.error);
+                                if (data.text) {
+                                    fullText += data.text;
+                                    if (onChunk) onChunk(data.text, fullText);
+                                }
+                            } catch (e) {
+                                if (e.name === 'AbortError') throw e;
+                                throw e;
                             }
-                        } catch (e) {
-                            throw e;
                         }
                     }
                 }
+            } catch (e) {
+                if (e.name === 'AbortError') {
+                    console.log('⏹ Respuesta detenida por el usuario');
+                    return fullText;
+                }
+                throw e;
             }
             return fullText;
         } else {
@@ -186,6 +198,10 @@ async function llamarGemini(message, history, intent, extraData = {}, onChunk = 
             return data.text;
         }
     } catch (e) {
+        if (e.name === 'AbortError') {
+            console.log('⏹ Respuesta detenida por el usuario');
+            return '';
+        }
         console.error("Error en llamarGemini:", e);
         throw e;
     }
@@ -555,6 +571,15 @@ async function sendMessage() {
     ELEMENTS.chatInput.disabled = true;
     ELEMENTS.sendBtn.disabled = true;
 
+    // Mostrar botón de parar
+    let abortController = null;
+    if (ELEMENTS.stopBtn) {
+        ELEMENTS.stopBtn.style.display = 'flex';
+        ELEMENTS.sendBtn.style.display = 'none';
+        abortController = new AbortController();
+        ELEMENTS.stopBtn.onclick = () => abortController?.abort();
+    }
+
     // --- ESTADO PENSANDO ---
     const thinkingId = 'msg-thinking-' + Date.now();
     let thinkingMsg = "Procesando respuesta...";
@@ -608,7 +633,7 @@ async function sendMessage() {
 
                 resEl.innerHTML = cleanDisplay;
             }
-        });
+        }, abortController?.signal);
 
         // Primero actualizamos el contenido final sin el cursor y SIN el tag técnico
         const finalContainer = document.getElementById(responseId);
@@ -652,11 +677,19 @@ async function sendMessage() {
         }
     } catch (e) {
         document.getElementById(thinkingId)?.remove();
-        console.error("Error en sendMessage:", e);
-        appendMessage("Vaya, parece que hoy tengo un nudo en la garganta. ¿Podrías intentar decírmelo de nuevo?", 'ia');
+        if (e.name === 'AbortError') {
+            console.log('⏹ Respuesta detenida por el usuario');
+        } else {
+            console.error("Error en sendMessage:", e);
+            appendMessage("Vaya, parece que hoy tengo un nudo en la garganta. ¿Podrías intentar decírmelo de nuevo?", 'ia');
+        }
     } finally {
         ELEMENTS.chatInput.disabled = false;
         ELEMENTS.sendBtn.disabled = false;
+        // Ocultar stop, mostrar send
+        if (ELEMENTS.stopBtn) ELEMENTS.stopBtn.style.display = 'none';
+        if (ELEMENTS.sendBtn) ELEMENTS.sendBtn.style.display = '';
+        abortController = null;
     }
 }
 

@@ -9,6 +9,7 @@ export const ELEMENTS = window.ELEMENTS = {
     get chatInput() { return document.getElementById('chatMentoriaInput'); },
     get chatInputArea() { return document.querySelector('.input-area'); },
     get sendBtn() { return document.getElementById('sendBtn'); },
+    get stopBtn() { return document.getElementById('stopBtn'); },
     get micBtn() { return document.getElementById('micBtn'); },
     get singBtn() { return document.getElementById('singBtn'); },
     get authOverlay() { return document.getElementById('authOverlay'); },
