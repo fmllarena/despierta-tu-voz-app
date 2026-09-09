@@ -1491,33 +1491,6 @@ async function personaChat(body) {
         }
     }
 
-    // Groq (fallback 1)
-    if (process.env.GROQ_API_KEY) {
-        try {
-            console.log("🚀 personaChat: Intentando con Groq...");
-            const messages = [
-                { role: "system", content: sysPrompt },
-                ...historyParts,
-                { role: "user", content: finalPrompt }
-            ];
-            const response = await fetch(`${GROQ_BASE_URL}/chat/completions`, {
-                method: 'POST',
-                headers: { 'Authorization': `Bearer ${process.env.GROQ_API_KEY}`, 'Content-Type': 'application/json' },
-                body: JSON.stringify({ model: GROQ_MODEL, messages })
-            });
-            if (!response.ok) {
-                const errData = await response.json().catch(() => ({}));
-                throw new Error(`Groq Error ${response.status}: ${errData.error?.message || 'Unknown'}`);
-            }
-            const data = await response.json();
-            const texto = data.choices?.[0]?.message?.content || '';
-            return { text: texto, info: GROQ_MODEL };
-        } catch (e) {
-            console.warn("⚠️ personaChat Groq falló:", e.message);
-            errors.push(`Groq: ${e.message}`);
-        }
-    }
-
     // Gemini (fallback 1)
     if (process.env.GEMINI_API_KEY) {
         try {
