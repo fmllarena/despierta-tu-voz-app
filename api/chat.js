@@ -14,9 +14,13 @@ const GEMINI_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/models
 const GROQ_MODEL = "openai/gpt-oss-120b";
 const GROQ_BASE_URL = "https://api.groq.com/openai/v1";
 
-// --- CONFIGURACIÓN VENICE AI (privacidad zero-retention) ---
+// --- CONFIGURACIÓN VENICE AI (sin créditos, deshabilitado) ---
 const VENICE_MODEL = "llama-3.3-70b";
 const VENICE_BASE_URL = "https://api.venice.ai/api/v1";
+
+// --- CONFIGURACIÓN HUGGING FACE (router OpenAI-compatible, privacidad) ---
+const HF_MODEL = "meta-llama/Llama-3.3-70B-Instruct";
+const HF_BASE_URL = "https://router.huggingface.co/v1";
 
 /**
  * Orquestador principal de la API de Chat
@@ -520,6 +524,71 @@ async function callVeniceAPI({ intent, prompt, history, stream, res }) {
         const data = await response.json();
         const text = data.choices?.[0]?.message?.content || "";
         return { text: text, info: VENICE_MODEL };
+    }
+}
+
+/**
+ * Ejecuta la llamada a Hugging Face Router (OpenAI-compatible, privacidad)
+ */
+async function callHFAPI({ intent, prompt, history, stream, res }) {
+    if (!process.env.HF_API_KEY) throw new Error("Falta API Key de Hugging Face");
+
+    const messages = [
+        { role: "system", content: SYSTEM_PROMPTS[intent] || "" },
+        ...(history || []).map(h => ({
+            role: h.role === 'model' ? 'assistant' : 'user',
+            content: h.parts?.[0]?.text || ''
+        })),
+        { role: "user", content: prompt }
+    ];
+
+    const response = await fetch(`${HF_BASE_URL}/chat/completions`, {
+        method: 'POST',
+        headers: {
+            'Authorization': `Bearer ${process.env.HF_API_KEY}`,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            model: HF_MODEL,
+            messages,
+            stream: !!stream
+        })
+    });
+
+    if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        throw new Error(`HF Error ${response.status}: ${errData.error?.message || 'Unknown'}`);
+    }
+
+    if (stream && res) {
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = "";
+        try {
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                buffer += decoder.decode(value, { stream: true });
+                const lines = buffer.split('\n');
+                buffer = lines.pop();
+                for (const line of lines) {
+                    if (line.startsWith('data: ') && line !== 'data: [DONE]') {
+                        try {
+                            const data = JSON.parse(line.substring(6));
+                            const text = data.choices?.[0]?.delta?.content;
+                            if (text) res.write(`data: ${JSON.stringify({ text })}\n\n`);
+                        } catch (e) { /* chunk incompleto */ }
+                    }
+                }
+            }
+        } finally {
+            res.end();
+        }
+        return;
+    } else {
+        const data = await response.json();
+        const text = data.choices?.[0]?.message?.content || "";
+        return { text: text, info: HF_MODEL };
     }
 }
 
@@ -1464,30 +1533,15 @@ async function personaChat(body) {
 
     const errors = [];
 
-    // Venice AI (primario para personaChat — zero-retention)
-    if (process.env.VENICE_API_KEY) {
+    // Hugging Face (primario para personaChat — privacidad)
+    if (process.env.HF_API_KEY) {
         try {
-            console.log("🚀 personaChat: Intentando con Venice AI...");
-            const messages = [
-                { role: "system", content: sysPrompt },
-                ...historyParts,
-                { role: "user", content: finalPrompt }
-            ];
-            const response = await fetch(`${VENICE_BASE_URL}/chat/completions`, {
-                method: 'POST',
-                headers: { 'Authorization': `Bearer ${process.env.VENICE_API_KEY}`, 'Content-Type': 'application/json' },
-                body: JSON.stringify({ model: VENICE_MODEL, messages })
-            });
-            if (!response.ok) {
-                const errData = await response.json().catch(() => ({}));
-                throw new Error(`Venice Error ${response.status}: ${errData.error?.message || 'Unknown'}`);
-            }
-            const data = await response.json();
-            const texto = data.choices?.[0]?.message?.content || '';
-            return { text: texto, info: VENICE_MODEL };
+            console.log("🚀 personaChat: Intentando con Hugging Face...");
+            const result = await callHFAPI({ intent: 'persona_chat', prompt: finalPrompt, history });
+            return result;
         } catch (e) {
-            console.warn("⚠️ personaChat Venice falló:", e.message);
-            errors.push(`Venice: ${e.message}`);
+            console.warn("⚠️ personaChat HF falló:", e.message);
+            errors.push(`HF: ${e.message}`);
         }
     }
 
