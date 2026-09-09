@@ -1533,7 +1533,19 @@ async function personaChat(body) {
 
     const errors = [];
 
-    // Hugging Face (primario para personaChat — privacidad)
+    // OpenRouter (primario para personaChat — Llama 3.3 70B free)
+    if (process.env.OPENROUTER_API_KEY) {
+        try {
+            console.log("🚀 personaChat: Intentando con OpenRouter...");
+            const result = await callOpenRouterAPI({ intent: 'persona_chat', prompt: finalPrompt, history });
+            return result;
+        } catch (e) {
+            console.warn("⚠️ personaChat OpenRouter falló:", e.message);
+            errors.push(`OpenRouter: ${e.message}`);
+        }
+    }
+
+    // Hugging Face (fallback 1 — privacidad)
     if (process.env.HUGGINGFACE_API_KEY) {
         try {
             console.log("🚀 personaChat: Intentando con Hugging Face...");
@@ -1545,7 +1557,7 @@ async function personaChat(body) {
         }
     }
 
-    // Gemini (fallback 1)
+    // Gemini (fallback 2)
     if (process.env.GEMINI_API_KEY) {
         try {
             console.log("🚀 personaChat: Intentando con Gemini...");
@@ -1569,39 +1581,7 @@ async function personaChat(body) {
         }
     }
 
-    // OpenRouter (fallback 2)
-    if (process.env.OPENROUTER_API_KEY) {
-        try {
-            console.log("🚀 personaChat: Intentando con OpenRouter...");
-            const messages = [
-                { role: "system", content: sysPrompt },
-                ...historyParts,
-                { role: "user", content: finalPrompt }
-            ];
-            const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
-                    'Content-Type': 'application/json',
-                    'HTTP-Referer': 'https://despiertatuvoz.com',
-                    'X-Title': 'Despierta tu Voz'
-                },
-                body: JSON.stringify({ model: 'openrouter/free', messages })
-            });
-            if (!response.ok) {
-                const errData = await response.json().catch(() => ({}));
-                throw new Error(`OpenRouter Error ${response.status}: ${errData.error?.message || 'Unknown'}`);
-            }
-            const data = await response.json();
-            const texto = data.choices?.[0]?.message?.content || '';
-            return { text: texto, info: 'openrouter' };
-        } catch (e) {
-            console.warn("⚠️ personaChat OpenRouter falló:", e.message);
-            errors.push(`OpenRouter: ${e.message}`);
-        }
-    }
-
-    // Mistral (fallback 2)
+    // Mistral (fallback 3)
     const keys = [process.env.MISTRAL_API_KEY, process.env.MISTRAL_API_KEY_2, process.env.MISTRAL_API_KEY_3].filter(Boolean);
     for (const key of keys) {
         try {
