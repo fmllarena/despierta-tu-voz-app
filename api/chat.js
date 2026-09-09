@@ -352,7 +352,7 @@ async function callOpenRouterAPI({ intent, prompt, history, stream, res }) {
             'X-Title': 'Despierta tu Voz'
         },
         body: JSON.stringify({
-            model: 'meta-llama/llama-3.3-70b-instruct:free',
+            model: 'thinkingmachines/inkling-small:free',
             messages,
             stream: !!stream
         })
