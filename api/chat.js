@@ -1256,31 +1256,7 @@ async function personaChat(body) {
 
     const errors = [];
 
-    // Gemini (primario)
-    if (process.env.GEMINI_API_KEY) {
-        try {
-            console.log("🚀 personaChat: Intentando con Gemini...");
-            const messages = [{ role: "user", content: finalPrompt }];
-            const url = `${GEMINI_BASE_URL}/${GEMINI_MODEL}:generateContent`;
-            const response = await fetch(url, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'x-goog-api-key': process.env.GEMINI_API_KEY },
-                body: JSON.stringify({ contents: messages, systemInstruction: { parts: [{ text: sysPrompt }] } })
-            });
-            if (!response.ok) {
-                const errData = await response.json().catch(() => ({}));
-                throw new Error(`Gemini Error ${response.status}: ${errData.error?.message || 'Unknown'}`);
-            }
-            const data = await response.json();
-            const texto = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
-            return { text: texto };
-        } catch (e) {
-            console.warn("⚠️ personaChat Gemini falló:", e.message);
-            errors.push(`Gemini: ${e.message}`);
-        }
-    }
-
-    // OpenRouter (fallback 1)
+    // OpenRouter (primario para personaChat)
     if (process.env.OPENROUTER_API_KEY) {
         try {
             console.log("🚀 personaChat: Intentando con OpenRouter...");
@@ -1309,6 +1285,30 @@ async function personaChat(body) {
         } catch (e) {
             console.warn("⚠️ personaChat OpenRouter falló:", e.message);
             errors.push(`OpenRouter: ${e.message}`);
+        }
+    }
+
+    // Gemini (fallback 1)
+    if (process.env.GEMINI_API_KEY) {
+        try {
+            console.log("🚀 personaChat: Intentando con Gemini...");
+            const messages = [{ role: "user", content: finalPrompt }];
+            const url = `${GEMINI_BASE_URL}/${GEMINI_MODEL}:generateContent`;
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'x-goog-api-key': process.env.GEMINI_API_KEY },
+                body: JSON.stringify({ contents: messages, systemInstruction: { parts: [{ text: sysPrompt }] } })
+            });
+            if (!response.ok) {
+                const errData = await response.json().catch(() => ({}));
+                throw new Error(`Gemini Error ${response.status}: ${errData.error?.message || 'Unknown'}`);
+            }
+            const data = await response.json();
+            const texto = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+            return { text: texto };
+        } catch (e) {
+            console.warn("⚠️ personaChat Gemini falló:", e.message);
+            errors.push(`Gemini: ${e.message}`);
         }
     }
 
