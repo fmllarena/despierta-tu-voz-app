@@ -48,7 +48,7 @@ module.exports = async function handler(req, res) {
  * Procesa la lógica de negocio del chat con fallback secuencial
  */
 async function processChat(req, res = null) {
-    const { intent, message, history = [], userId, userId2 = null, stream = false, vocal_scan = null, originPost = null, originCat = null, fileData = null } = req.body;
+    const { intent, message, history = [], userId, userId2 = null, stream = false, vocal_scan = null, originPost = null, originCat = null, fileData = null, preferredProvider = null } = req.body;
 
     if (intent === 'warmup') return { text: "OK" };
 
@@ -115,58 +115,56 @@ async function processChat(req, res = null) {
     const errors = [];
     const hasMedia = fileData && ((fileData.mimeType && fileData.mimeType.startsWith('audio/')) || (fileData.data || (Array.isArray(fileData) && fileData.length > 0)));
 
-    // Gemini (primario)
-    if (process.env.GEMINI_API_KEY) {
-        try {
+    // Definir orden de providers
+    const defaultOrder = ['gemini', 'openrouter', 'groq', 'mistral'];
+    const groqFirstOrder = ['groq', 'gemini', 'openrouter', 'mistral'];
+    const providerOrder = preferredProvider === 'groq' ? groqFirstOrder : defaultOrder;
+
+    const tryProviders = {
+        gemini: async () => {
+            if (!process.env.GEMINI_API_KEY) throw new Error("No GEMINI_API_KEY");
             console.log("🚀 Intentando con Gemini...", { intent, hasHistory: !!history?.length });
             const result = await callGeminiAPI({ intent, prompt: finalPrompt, history, stream, res, fileData });
             if (stream && res) return;
             return result;
-        } catch (e) {
-            console.error("⚠️ Gemini falló:", e.message, e.stack?.slice(0, 200));
-            errors.push(`Gemini: ${e.message}`);
-            if (stream && res && res.writableEnded) throw e;
-        }
-    }
-
-    // OpenRouter (fallback 1)
-    if (process.env.OPENROUTER_API_KEY) {
-        try {
-            console.log("🚀 Intentando con OpenRouter (fallback 1)...");
+        },
+        openrouter: async () => {
+            if (!process.env.OPENROUTER_API_KEY) throw new Error("No OPENROUTER_API_KEY");
+            console.log("🚀 Intentando con OpenRouter...");
             const result = await callOpenRouterAPI({ intent, prompt: finalPrompt, history, stream, res });
             if (stream && res) return;
             return result;
-        } catch (e) {
-            console.warn("⚠️ OpenRouter falló:", e.message);
-            errors.push(`OpenRouter: ${e.message}`);
-            if (stream && res && res.writableEnded) throw e;
-        }
-    }
-
-    // Groq (fallback 2)
-    if (process.env.GROQ_API_KEY) {
-        try {
-            console.log("🚀 Intentando con Groq (fallback 2)...");
+        },
+        groq: async () => {
+            if (!process.env.GROQ_API_KEY) throw new Error("No GROQ_API_KEY");
+            console.log("🚀 Intentando con Groq...");
             const result = await callGroqAPI({ intent, prompt: finalPrompt, history, stream, res });
             if (stream && res) return;
             return result;
-        } catch (e) {
-            console.warn("⚠️ Groq falló:", e.message);
-            errors.push(`Groq: ${e.message}`);
-            if (stream && res && res.writableEnded) throw e;
+        },
+        mistral: async () => {
+            for (const key of MISTRAL_KEYS) {
+                try {
+                    console.log("🚀 Intentando con Mistral...", { keyIndex: MISTRAL_KEYS.indexOf(key) + 1 });
+                    const result = await callMistralAPI({ intent, prompt: finalPrompt, history, stream, res, fileData, resumenBoundary: ctx.resumenBoundary }, key);
+                    if (stream && res) return;
+                    return result;
+                } catch (e) {
+                    errors.push(`Mistral: ${e.message}`);
+                    if (stream && res && res.writableEnded) throw e;
+                }
+            }
+            throw new Error("Todas las keys Mistral fallaron");
         }
-    }
+    };
 
-    // Mistral (fallback 3+)
-    for (const key of MISTRAL_KEYS) {
+    for (const provider of providerOrder) {
         try {
-            console.log("🚀 Intentando con Mistral (fallback 2)...", { keyIndex: MISTRAL_KEYS.indexOf(key) + 1 });
-            const result = await callMistralAPI({ intent, prompt: finalPrompt, history, stream, res, fileData, resumenBoundary: ctx.resumenBoundary }, key);
-            if (stream && res) return;
+            const result = await tryProviders[provider]();
             return result;
         } catch (e) {
-            console.warn("⚠️ Mistral falló:", e.message);
-            errors.push(`Mistral: ${e.message}`);
+            console.warn(`⚠️ ${provider} falló:`, e.message);
+            errors.push(`${provider}: ${e.message}`);
             if (stream && res && res.writableEnded) throw e;
         }
     }
