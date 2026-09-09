@@ -531,7 +531,7 @@ async function callVeniceAPI({ intent, prompt, history, stream, res }) {
  * Ejecuta la llamada a Hugging Face Router (OpenAI-compatible, privacidad)
  */
 async function callHFAPI({ intent, prompt, history, stream, res }) {
-    if (!process.env.HF_API_KEY) throw new Error("Falta API Key de Hugging Face");
+    if (!process.env.HUGGINGFACE_API_KEY) throw new Error("Falta API Key de Hugging Face");
 
     const messages = [
         { role: "system", content: SYSTEM_PROMPTS[intent] || "" },
@@ -545,7 +545,7 @@ async function callHFAPI({ intent, prompt, history, stream, res }) {
     const response = await fetch(`${HF_BASE_URL}/chat/completions`, {
         method: 'POST',
         headers: {
-            'Authorization': `Bearer ${process.env.HF_API_KEY}`,
+            'Authorization': `Bearer ${process.env.HUGGINGFACE_API_KEY}`,
             'Content-Type': 'application/json'
         },
         body: JSON.stringify({
@@ -1534,7 +1534,7 @@ async function personaChat(body) {
     const errors = [];
 
     // Hugging Face (primario para personaChat — privacidad)
-    if (process.env.HF_API_KEY) {
+    if (process.env.HUGGINGFACE_API_KEY) {
         try {
             console.log("🚀 personaChat: Intentando con Hugging Face...");
             const result = await callHFAPI({ intent: 'persona_chat', prompt: finalPrompt, history });
