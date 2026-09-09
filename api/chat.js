@@ -1249,30 +1249,83 @@ async function personaChat(body) {
     const finalPrompt = context ? `CONTEXTO:\n${context}\n\nMENSAJE:\n${message}` : message;
     const sysPrompt = SYSTEM_PROMPTS['persona_chat'];
 
-    const keys = [process.env.MISTRAL_API_KEY, process.env.MISTRAL_API_KEY_2, process.env.MISTRAL_API_KEY_3].filter(Boolean);
-    if (!keys.length) throw new Error("Falta API Key de Mistral");
+    const historyParts = (history || []).map(h => ({
+        role: h.role === 'model' ? 'assistant' : 'user',
+        content: h.parts?.[0]?.text || ''
+    }));
 
-    let lastErr;
-    for (const key of keys) {
+    const errors = [];
+
+    // Gemini (primario)
+    if (process.env.GEMINI_API_KEY) {
         try {
+            console.log("🚀 personaChat: Intentando con Gemini...");
+            const messages = [{ role: "user", content: finalPrompt }];
+            const url = `${GEMINI_BASE_URL}/${GEMINI_MODEL}:generateContent`;
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'x-goog-api-key': process.env.GEMINI_API_KEY },
+                body: JSON.stringify({ contents: messages, systemInstruction: { parts: [{ text: sysPrompt }] } })
+            });
+            if (!response.ok) {
+                const errData = await response.json().catch(() => ({}));
+                throw new Error(`Gemini Error ${response.status}: ${errData.error?.message || 'Unknown'}`);
+            }
+            const data = await response.json();
+            const texto = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+            return { text: texto };
+        } catch (e) {
+            console.warn("⚠️ personaChat Gemini falló:", e.message);
+            errors.push(`Gemini: ${e.message}`);
+        }
+    }
+
+    // OpenRouter (fallback 1)
+    if (process.env.OPENROUTER_API_KEY) {
+        try {
+            console.log("🚀 personaChat: Intentando con OpenRouter...");
             const messages = [
                 { role: "system", content: sysPrompt },
-                ...(history || []).map(h => ({
-                    role: h.role === 'model' ? 'assistant' : 'user',
-                    content: h.parts?.[0]?.text || ''
-                })),
+                ...historyParts,
                 { role: "user", content: finalPrompt }
             ];
+            const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
+                    'Content-Type': 'application/json',
+                    'HTTP-Referer': 'https://despiertatuvoz.com',
+                    'X-Title': 'Despierta tu Voz'
+                },
+                body: JSON.stringify({ model: 'openrouter/free', messages })
+            });
+            if (!response.ok) {
+                const errData = await response.json().catch(() => ({}));
+                throw new Error(`OpenRouter Error ${response.status}: ${errData.error?.message || 'Unknown'}`);
+            }
+            const data = await response.json();
+            const texto = data.choices?.[0]?.message?.content || '';
+            return { text: texto };
+        } catch (e) {
+            console.warn("⚠️ personaChat OpenRouter falló:", e.message);
+            errors.push(`OpenRouter: ${e.message}`);
+        }
+    }
 
+    // Mistral (fallback 2)
+    const keys = [process.env.MISTRAL_API_KEY, process.env.MISTRAL_API_KEY_2, process.env.MISTRAL_API_KEY_3].filter(Boolean);
+    for (const key of keys) {
+        try {
+            console.log("🚀 personaChat: Intentando con Mistral...");
+            const messages = [
+                { role: "system", content: sysPrompt },
+                ...historyParts,
+                { role: "user", content: finalPrompt }
+            ];
             const response = await fetch(`${MISTRAL_BASE_URL}/chat/completions`, {
                 method: 'POST',
                 headers: { 'Authorization': `Bearer ${key}`, 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    model: MISTRAL_MODEL,
-                    messages,
-                    temperature: 0.85,
-                    max_tokens: 2048
-                })
+                body: JSON.stringify({ model: MISTRAL_MODEL, messages, temperature: 0.85, max_tokens: 2048 })
             });
             if (!response.ok) {
                 const err = await response.json().catch(() => ({}));
@@ -1280,15 +1333,13 @@ async function personaChat(body) {
             }
             const data = await response.json();
             const texto = data.choices?.[0]?.message?.content || '';
-
             return { text: texto };
         } catch (e) {
-            lastErr = e;
-            const isRetryable = e.message.includes('429') || e.message.includes('503') || e.message.includes('Too Many Requests') || e.message.includes('401');
-            if (!isRetryable) break;
+            errors.push(`Mistral: ${e.message}`);
         }
     }
-    throw lastErr;
+
+    throw new Error(`Todos los modelos fallaron: ${errors.join(" | ")}`);
 }
 
 /**
