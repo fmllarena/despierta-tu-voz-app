@@ -14,6 +14,10 @@ const GEMINI_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/models
 const GROQ_MODEL = "openai/gpt-oss-120b";
 const GROQ_BASE_URL = "https://api.groq.com/openai/v1";
 
+// --- CONFIGURACIÓN VENICE AI (privacidad zero-retention) ---
+const VENICE_MODEL = "llama-3.3-70b";
+const VENICE_BASE_URL = "https://api.venice.ai/api/v1";
+
 /**
  * Orquestador principal de la API de Chat
  */
@@ -117,8 +121,8 @@ async function processChat(req, res = null) {
 
     // Definir orden de providers
     const defaultOrder = ['gemini', 'openrouter', 'groq', 'mistral'];
-    const groqFirstOrder = ['groq', 'gemini', 'openrouter', 'mistral'];
-    const providerOrder = preferredProvider === 'groq' ? groqFirstOrder : defaultOrder;
+    const veniceFirstOrder = ['venice', 'gemini', 'openrouter', 'groq', 'mistral'];
+    const providerOrder = preferredProvider === 'venice' ? veniceFirstOrder : defaultOrder;
 
     const tryProviders = {
         gemini: async () => {
@@ -132,6 +136,13 @@ async function processChat(req, res = null) {
             if (!process.env.OPENROUTER_API_KEY) throw new Error("No OPENROUTER_API_KEY");
             console.log("🚀 Intentando con OpenRouter...");
             const result = await callOpenRouterAPI({ intent, prompt: finalPrompt, history, stream, res });
+            if (stream && res) return;
+            return result;
+        },
+        venice: async () => {
+            if (!process.env.VENICE_API_KEY) throw new Error("No VENICE_API_KEY");
+            console.log("🚀 Intentando con Venice AI...");
+            const result = await callVeniceAPI({ intent, prompt: finalPrompt, history, stream, res });
             if (stream && res) return;
             return result;
         },
@@ -444,6 +455,71 @@ async function callGroqAPI({ intent, prompt, history, stream, res }) {
         const data = await response.json();
         const text = data.choices?.[0]?.message?.content || "";
         return { text: text, info: GROQ_MODEL };
+    }
+}
+
+/**
+ * Ejecuta la llamada a Venice AI (privacidad zero-retention — OpenAI-compatible)
+ */
+async function callVeniceAPI({ intent, prompt, history, stream, res }) {
+    if (!process.env.VENICE_API_KEY) throw new Error("Falta API Key de Venice AI");
+
+    const messages = [
+        { role: "system", content: SYSTEM_PROMPTS[intent] || "" },
+        ...(history || []).map(h => ({
+            role: h.role === 'model' ? 'assistant' : 'user',
+            content: h.parts?.[0]?.text || ''
+        })),
+        { role: "user", content: prompt }
+    ];
+
+    const response = await fetch(`${VENICE_BASE_URL}/chat/completions`, {
+        method: 'POST',
+        headers: {
+            'Authorization': `Bearer ${process.env.VENICE_API_KEY}`,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            model: VENICE_MODEL,
+            messages,
+            stream: !!stream
+        })
+    });
+
+    if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        throw new Error(`Venice Error ${response.status}: ${errData.error?.message || 'Unknown'}`);
+    }
+
+    if (stream && res) {
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = "";
+        try {
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                buffer += decoder.decode(value, { stream: true });
+                const lines = buffer.split('\n');
+                buffer = lines.pop();
+                for (const line of lines) {
+                    if (line.startsWith('data: ') && line !== 'data: [DONE]') {
+                        try {
+                            const data = JSON.parse(line.substring(6));
+                            const text = data.choices?.[0]?.delta?.content;
+                            if (text) res.write(`data: ${JSON.stringify({ text })}\n\n`);
+                        } catch (e) { /* chunk incompleto */ }
+                    }
+                }
+            }
+        } finally {
+            res.end();
+        }
+        return;
+    } else {
+        const data = await response.json();
+        const text = data.choices?.[0]?.message?.content || "";
+        return { text: text, info: VENICE_MODEL };
     }
 }
 
@@ -1241,7 +1317,25 @@ async function teacherChat(body, intent = 'teacher') {
         }
     };
 
-    // Groq (primario)
+    // Venice AI (primario — zero-retention)
+    if (process.env.VENICE_API_KEY) {
+        try {
+            console.log("🚀 teacherChat: Intentando con Venice AI...");
+            const messages = [{ role: "system", content: sysPrompt }, ...historyMsgs, { role: "user", content: finalPrompt }];
+            const response = await fetch(`${VENICE_BASE_URL}/chat/completions`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${process.env.VENICE_API_KEY}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ model: VENICE_MODEL, messages, temperature: intent === 'teacher_review' ? 0.3 : 0.8, max_tokens: 2048 })
+            });
+            if (!response.ok) { const err = await response.json().catch(() => ({})); throw new Error(`Venice Error ${response.status}: ${err.error?.message || 'Unknown'}`); }
+            const data = await response.json();
+            const texto = data.choices?.[0]?.message?.content || '';
+            await processResponse(texto);
+            return { text: texto, info: VENICE_MODEL, newTips, totalDays: allTips?.length || 0 };
+        } catch (e) { console.warn("⚠️ teacherChat Venice falló:", e.message); errors.push(`Venice: ${e.message}`); }
+    }
+
+    // Groq (fallback 1)
     if (process.env.GROQ_API_KEY) {
         try {
             console.log("🚀 teacherChat: Intentando con Groq...");
@@ -1370,7 +1464,34 @@ async function personaChat(body) {
 
     const errors = [];
 
-    // Groq (primario para personaChat)
+    // Venice AI (primario para personaChat — zero-retention)
+    if (process.env.VENICE_API_KEY) {
+        try {
+            console.log("🚀 personaChat: Intentando con Venice AI...");
+            const messages = [
+                { role: "system", content: sysPrompt },
+                ...historyParts,
+                { role: "user", content: finalPrompt }
+            ];
+            const response = await fetch(`${VENICE_BASE_URL}/chat/completions`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${process.env.VENICE_API_KEY}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ model: VENICE_MODEL, messages })
+            });
+            if (!response.ok) {
+                const errData = await response.json().catch(() => ({}));
+                throw new Error(`Venice Error ${response.status}: ${errData.error?.message || 'Unknown'}`);
+            }
+            const data = await response.json();
+            const texto = data.choices?.[0]?.message?.content || '';
+            return { text: texto, info: VENICE_MODEL };
+        } catch (e) {
+            console.warn("⚠️ personaChat Venice falló:", e.message);
+            errors.push(`Venice: ${e.message}`);
+        }
+    }
+
+    // Groq (fallback 1)
     if (process.env.GROQ_API_KEY) {
         try {
             console.log("🚀 personaChat: Intentando con Groq...");

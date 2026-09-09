@@ -383,7 +383,7 @@
                     message: text,
                     history: chatHistory,
                     userId: studentId,
-                    preferredProvider: 'groq',
+                    preferredProvider: 'venice',
                 };
                 console.log('📤 Enviando mensaje:', { intent: body.intent, userId: body.userId, historyLen: body.history?.length });
                 const res = await fetch('/api/chat', {
