@@ -96,7 +96,7 @@
 
         <div class="chat-box">
             <div class="chat-header">
-                <h3>🎭 Personaje</h3>
+                <h3>🎭 Personaje <span id="modelInfo" style="font-size:0.7em;color:#aaa;font-weight:400;"></span></h3>
                 <div class="persona-sug">
                     <input type="text" id="personaInput" placeholder="Define tu personaje (ej: poeta melancólico, chef italiano,...)">
                 </div>
@@ -233,6 +233,12 @@
             const data = await res.json();
             quitarLoading();
             if (data.error) throw new Error(data.details || data.error);
+
+            // Mostrar modelo de IA usado
+            const modelEl = document.getElementById('modelInfo');
+            if (modelEl && data.info) {
+                modelEl.textContent = `(${data.info})`;
+            }
 
             const respuesta = data.text || '';
             agregarMensaje(respuesta, 'ia');
