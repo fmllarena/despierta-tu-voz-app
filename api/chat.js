@@ -1281,7 +1281,7 @@ async function personaChat(body) {
             }
             const data = await response.json();
             const texto = data.choices?.[0]?.message?.content || '';
-            return { text: texto };
+            return { text: texto, info: 'openrouter' };
         } catch (e) {
             console.warn("⚠️ personaChat OpenRouter falló:", e.message);
             errors.push(`OpenRouter: ${e.message}`);
@@ -1305,7 +1305,7 @@ async function personaChat(body) {
             }
             const data = await response.json();
             const texto = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
-            return { text: texto };
+            return { text: texto, info: GEMINI_MODEL };
         } catch (e) {
             console.warn("⚠️ personaChat Gemini falló:", e.message);
             errors.push(`Gemini: ${e.message}`);
@@ -1333,7 +1333,7 @@ async function personaChat(body) {
             }
             const data = await response.json();
             const texto = data.choices?.[0]?.message?.content || '';
-            return { text: texto };
+            return { text: texto, info: MISTRAL_MODEL };
         } catch (e) {
             errors.push(`Mistral: ${e.message}`);
         }
