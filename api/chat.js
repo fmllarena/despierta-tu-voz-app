@@ -10,6 +10,10 @@ const MISTRAL_BASE_URL = "https://api.mistral.ai/v1";
 const GEMINI_MODEL = "gemini-3.6-flash";
 const GEMINI_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/models";
 
+// --- CONFIGURACIÓN GROQ ---
+const GROQ_MODEL = "qwen/qwen3.8-27b";
+const GROQ_BASE_URL = "https://api.groq.com/openai/v1";
+
 /**
  * Orquestador principal de la API de Chat
  */
@@ -139,7 +143,21 @@ async function processChat(req, res = null) {
         }
     }
 
-    // Mistral (fallback 2+)
+    // Groq (fallback 2)
+    if (process.env.GROQ_API_KEY) {
+        try {
+            console.log("🚀 Intentando con Groq (fallback 2)...");
+            const result = await callGroqAPI({ intent, prompt: finalPrompt, history, stream, res });
+            if (stream && res) return;
+            return result;
+        } catch (e) {
+            console.warn("⚠️ Groq falló:", e.message);
+            errors.push(`Groq: ${e.message}`);
+            if (stream && res && res.writableEnded) throw e;
+        }
+    }
+
+    // Mistral (fallback 3+)
     for (const key of MISTRAL_KEYS) {
         try {
             console.log("🚀 Intentando con Mistral (fallback 2)...", { keyIndex: MISTRAL_KEYS.indexOf(key) + 1 });
@@ -363,6 +381,71 @@ async function callOpenRouterAPI({ intent, prompt, history, stream, res }) {
         const data = await response.json();
         const text = data.choices?.[0]?.message?.content || "";
         return { text: text, info: 'openrouter' };
+    }
+}
+
+/**
+ * Ejecuta la llamada a Groq (fallback rápido — OpenAI-compatible)
+ */
+async function callGroqAPI({ intent, prompt, history, stream, res }) {
+    if (!process.env.GROQ_API_KEY) throw new Error("Falta API Key de Groq");
+
+    const messages = [
+        { role: "system", content: SYSTEM_PROMPTS[intent] || "" },
+        ...(history || []).map(h => ({
+            role: h.role === 'model' ? 'assistant' : 'user',
+            content: h.parts?.[0]?.text || ''
+        })),
+        { role: "user", content: prompt }
+    ];
+
+    const response = await fetch(`${GROQ_BASE_URL}/chat/completions`, {
+        method: 'POST',
+        headers: {
+            'Authorization': `Bearer ${process.env.GROQ_API_KEY}`,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            model: GROQ_MODEL,
+            messages,
+            stream: !!stream
+        })
+    });
+
+    if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        throw new Error(`Groq Error ${response.status}: ${errData.error?.message || 'Unknown'}`);
+    }
+
+    if (stream && res) {
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = "";
+        try {
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                buffer += decoder.decode(value, { stream: true });
+                const lines = buffer.split('\n');
+                buffer = lines.pop();
+                for (const line of lines) {
+                    if (line.startsWith('data: ') && line !== 'data: [DONE]') {
+                        try {
+                            const data = JSON.parse(line.substring(6));
+                            const text = data.choices?.[0]?.delta?.content;
+                            if (text) res.write(`data: ${JSON.stringify({ text })}\n\n`);
+                        } catch (e) { /* chunk incompleto */ }
+                    }
+                }
+            }
+        } finally {
+            res.end();
+        }
+        return;
+    } else {
+        const data = await response.json();
+        const text = data.choices?.[0]?.message?.content || "";
+        return { text: text, info: GROQ_MODEL };
     }
 }
 
@@ -1137,71 +1220,104 @@ async function teacherChat(body, intent = 'teacher') {
         ? (context || 'Begin the review.')
         : (context ? `CONTEXTO:\n${context}\n\nMENSAJE:\n${message}` : message);
 
-    // Llamar a Mistral con retry
-    const keys = [process.env.MISTRAL_API_KEY, process.env.MISTRAL_API_KEY_2, process.env.MISTRAL_API_KEY_3].filter(Boolean);
-    if (!keys.length) throw new Error("Falta API Key de Mistral");
-
     const promptKey = pureChat && intent === 'teacher' ? 'teacher_pure' : intent;
     const sysPrompt = SYSTEM_PROMPTS[promptKey];
-    let lastErr;
+
+    const historyMsgs = (history || []).map(h => ({
+        role: h.role === 'model' ? 'assistant' : 'user',
+        content: h.parts?.[0]?.text || ''
+    }));
+
+    const errors = [];
+
+    // Helper: guardar respuesta y marcar review
+    const processResponse = async (texto) => {
+        if (intent === 'teacher_review' && texto && reviewAnswered && flatTips.length > 0) {
+            if (texto.includes('✅')) {
+                try { await supabase.from('teacher_review').insert({ user_id: userId, tip_key: flatTips[0].key }); } catch (_) {}
+            }
+        }
+        if (intent !== 'teacher_review') {
+            const tabla = pureChat ? 'teacher_pure_chat' : 'teacher';
+            await supabase.from(tabla).insert({ user_id: userId, role: 'assistant', content: texto }).maybeSingle();
+        }
+    };
+
+    // Groq (primario)
+    if (process.env.GROQ_API_KEY) {
+        try {
+            console.log("🚀 teacherChat: Intentando con Groq...");
+            const messages = [{ role: "system", content: sysPrompt }, ...historyMsgs, { role: "user", content: finalPrompt }];
+            const response = await fetch(`${GROQ_BASE_URL}/chat/completions`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${process.env.GROQ_API_KEY}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ model: GROQ_MODEL, messages, temperature: intent === 'teacher_review' ? 0.3 : 0.8, max_tokens: 2048 })
+            });
+            if (!response.ok) { const err = await response.json().catch(() => ({})); throw new Error(`Groq Error ${response.status}: ${err.error?.message || 'Unknown'}`); }
+            const data = await response.json();
+            const texto = data.choices?.[0]?.message?.content || '';
+            await processResponse(texto);
+            return { text: texto, info: GROQ_MODEL, newTips, totalDays: allTips?.length || 0 };
+        } catch (e) { console.warn("⚠️ teacherChat Groq falló:", e.message); errors.push(`Groq: ${e.message}`); }
+    }
+
+    // Gemini (fallback 1)
+    if (process.env.GEMINI_API_KEY) {
+        try {
+            console.log("🚀 teacherChat: Intentando con Gemini...");
+            const messages = [{ role: "user", content: finalPrompt }];
+            const url = `${GEMINI_BASE_URL}/${GEMINI_MODEL}:generateContent`;
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'x-goog-api-key': process.env.GEMINI_API_KEY },
+                body: JSON.stringify({ contents: messages, systemInstruction: { parts: [{ text: sysPrompt }] } })
+            });
+            if (!response.ok) { const errData = await response.json().catch(() => ({})); throw new Error(`Gemini Error ${response.status}: ${errData.error?.message || 'Unknown'}`); }
+            const data = await response.json();
+            const texto = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+            await processResponse(texto);
+            return { text: texto, info: GEMINI_MODEL, newTips, totalDays: allTips?.length || 0 };
+        } catch (e) { console.warn("⚠️ teacherChat Gemini falló:", e.message); errors.push(`Gemini: ${e.message}`); }
+    }
+
+    // OpenRouter (fallback 2)
+    if (process.env.OPENROUTER_API_KEY) {
+        try {
+            console.log("🚀 teacherChat: Intentando con OpenRouter...");
+            const messages = [{ role: "system", content: sysPrompt }, ...historyMsgs, { role: "user", content: finalPrompt }];
+            const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`, 'Content-Type': 'application/json', 'HTTP-Referer': 'https://despiertatuvoz.com', 'X-Title': 'Despierta tu Voz' },
+                body: JSON.stringify({ model: 'openrouter/free', messages })
+            });
+            if (!response.ok) { const errData = await response.json().catch(() => ({})); throw new Error(`OpenRouter Error ${response.status}: ${errData.error?.message || 'Unknown'}`); }
+            const data = await response.json();
+            const texto = data.choices?.[0]?.message?.content || '';
+            await processResponse(texto);
+            return { text: texto, info: 'openrouter', newTips, totalDays: allTips?.length || 0 };
+        } catch (e) { console.warn("⚠️ teacherChat OpenRouter falló:", e.message); errors.push(`OpenRouter: ${e.message}`); }
+    }
+
+    // Mistral (fallback 3)
+    const keys = [process.env.MISTRAL_API_KEY, process.env.MISTRAL_API_KEY_2, process.env.MISTRAL_API_KEY_3].filter(Boolean);
     for (const key of keys) {
         try {
-            const messages = [
-                { role: "system", content: sysPrompt },
-                ...(history || []).map(h => ({
-                    role: h.role === 'model' ? 'assistant' : 'user',
-                    content: h.parts?.[0]?.text || ''
-                })),
-                { role: "user", content: finalPrompt }
-            ];
-
+            console.log("🚀 teacherChat: Intentando con Mistral...");
+            const messages = [{ role: "system", content: sysPrompt }, ...historyMsgs, { role: "user", content: finalPrompt }];
             const response = await fetch(`${MISTRAL_BASE_URL}/chat/completions`, {
                 method: 'POST',
                 headers: { 'Authorization': `Bearer ${key}`, 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    model: MISTRAL_MODEL,
-                    messages,
-                    temperature: intent === 'teacher_review' ? 0.3 : 0.8,
-                    max_tokens: 2048
-                })
+                body: JSON.stringify({ model: MISTRAL_MODEL, messages, temperature: intent === 'teacher_review' ? 0.3 : 0.8, max_tokens: 2048 })
             });
-            if (!response.ok) {
-                const err = await response.json().catch(() => ({}));
-                throw new Error(`Mistral Error ${response.status}: ${err.error?.message || response.statusText}`);
-            }
+            if (!response.ok) { const err = await response.json().catch(() => ({})); throw new Error(`Mistral Error ${response.status}: ${err.error?.message || response.statusText}`); }
             const data = await response.json();
             const texto = data.choices?.[0]?.message?.content || '';
-
-            // Tras validación del quiz: marcar como completado solo si acertó
-            if (intent === 'teacher_review' && texto && reviewAnswered && flatTips.length > 0) {
-                if (texto.includes('✅')) {
-                    try {
-                        await supabase.from('teacher_review').insert({
-                            user_id: userId,
-                            tip_key: flatTips[0].key
-                        });
-                    } catch (_) {}
-                }
-            }
-
-            // Guardar respuesta de la IA (solo en modo conversación)
-            if (intent !== 'teacher_review') {
-                const tabla = pureChat ? 'teacher_pure_chat' : 'teacher';
-                await supabase.from(tabla).insert({
-                    user_id: userId,
-                    role: 'assistant',
-                    content: texto
-                }).maybeSingle();
-            }
-
-            return { text: texto, newTips, totalDays: allTips?.length || 0 };
-        } catch (e) {
-            lastErr = e;
-            const isRetryable = e.message.includes('429') || e.message.includes('503') || e.message.includes('Too Many Requests') || e.message.includes('401');
-            if (!isRetryable) break;
-        }
+            await processResponse(texto);
+            return { text: texto, info: MISTRAL_MODEL, newTips, totalDays: allTips?.length || 0 };
+        } catch (e) { errors.push(`Mistral: ${e.message}`); }
     }
-    throw lastErr;
+
+    throw new Error(`Todos los modelos fallaron: ${errors.join(" | ")}`);
 }
 
 function setupStreamHeaders(res) {
@@ -1256,7 +1372,34 @@ async function personaChat(body) {
 
     const errors = [];
 
-    // Gemini (primario)
+    // Groq (primario para personaChat)
+    if (process.env.GROQ_API_KEY) {
+        try {
+            console.log("🚀 personaChat: Intentando con Groq...");
+            const messages = [
+                { role: "system", content: sysPrompt },
+                ...historyParts,
+                { role: "user", content: finalPrompt }
+            ];
+            const response = await fetch(`${GROQ_BASE_URL}/chat/completions`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${process.env.GROQ_API_KEY}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ model: GROQ_MODEL, messages })
+            });
+            if (!response.ok) {
+                const errData = await response.json().catch(() => ({}));
+                throw new Error(`Groq Error ${response.status}: ${errData.error?.message || 'Unknown'}`);
+            }
+            const data = await response.json();
+            const texto = data.choices?.[0]?.message?.content || '';
+            return { text: texto, info: GROQ_MODEL };
+        } catch (e) {
+            console.warn("⚠️ personaChat Groq falló:", e.message);
+            errors.push(`Groq: ${e.message}`);
+        }
+    }
+
+    // Gemini (fallback 1)
     if (process.env.GEMINI_API_KEY) {
         try {
             console.log("🚀 personaChat: Intentando con Gemini...");
@@ -1280,7 +1423,7 @@ async function personaChat(body) {
         }
     }
 
-    // OpenRouter (fallback 1)
+    // OpenRouter (fallback 2)
     if (process.env.OPENROUTER_API_KEY) {
         try {
             console.log("🚀 personaChat: Intentando con OpenRouter...");
