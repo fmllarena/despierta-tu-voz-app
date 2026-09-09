@@ -11,7 +11,7 @@ const GEMINI_MODEL = "gemini-3.6-flash";
 const GEMINI_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/models";
 
 // --- CONFIGURACIÓN GROQ ---
-const GROQ_MODEL = "qwen/qwen3.8-27b";
+const GROQ_MODEL = "openai/gpt-oss-120b";
 const GROQ_BASE_URL = "https://api.groq.com/openai/v1";
 
 /**
