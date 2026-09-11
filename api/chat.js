@@ -18,6 +18,19 @@ const GROQ_BASE_URL = "https://api.groq.com/openai/v1";
 const VENICE_MODEL = "llama-3.3-70b";
 const VENICE_BASE_URL = "https://api.venice.ai/api/v1";
 
+// --- HELPER: fetch con retry + exponential backoff para 429 ---
+async function fetchWithBackoff(url, options, maxRetries = 3) {
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+        const res = await fetch(url, options);
+        if (res.status !== 429) return res;
+        const retryAfter = res.headers.get('Retry-After');
+        const wait = retryAfter ? parseInt(retryAfter) * 1000 : Math.min(2000 * Math.pow(2, attempt), 16000);
+        console.warn(`⚠️ 429 rate limited, retry ${attempt + 1}/${maxRetries} en ${wait}ms...`);
+        await new Promise(r => setTimeout(r, wait));
+    }
+    return await fetch(url, options);
+}
+
 
 
 /**
@@ -666,7 +679,7 @@ async function _mistralCall({ intent, prompt, history, stream, res, fileData, re
         try {
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 60000);
-            response = await fetch(`${MISTRAL_BASE_URL}/chat/completions`, {
+            response = await fetchWithBackoff(`${MISTRAL_BASE_URL}/chat/completions`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${apiKey}`,
@@ -770,7 +783,7 @@ Responde ÚNICAMENTE con un JSON válido, sin explicaciones ni markdown. El JSON
 
     if (!process.env.MISTRAL_API_KEY) throw new Error("Falta API Key de Mistral");
 
-    const response = await fetch(`${MISTRAL_BASE_URL}/chat/completions`, {
+    const response = await fetchWithBackoff(`${MISTRAL_BASE_URL}/chat/completions`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${process.env.MISTRAL_API_KEY}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -888,7 +901,7 @@ Responde de forma clara, directa y útil. Si no hay suficientes datos para respo
     let lastErr;
     for (const key of keys) {
         try {
-            const response = await fetch(`${MISTRAL_BASE_URL}/chat/completions`, {
+            const response = await fetchWithBackoff(`${MISTRAL_BASE_URL}/chat/completions`, {
                 method: 'POST',
                 headers: { 'Authorization': `Bearer ${key}`, 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -1313,7 +1326,7 @@ async function teacherChat(body, intent = 'teacher') {
         try {
             console.log("🚀 teacherChat: Intentando con Mistral...");
             const messages = [{ role: "system", content: sysPrompt }, ...historyMsgs, { role: "user", content: finalPrompt }];
-            const response = await fetch(`${MISTRAL_BASE_URL}/chat/completions`, {
+            const response = await fetchWithBackoff(`${MISTRAL_BASE_URL}/chat/completions`, {
                 method: 'POST',
                 headers: { 'Authorization': `Bearer ${key}`, 'Content-Type': 'application/json' },
                 body: JSON.stringify({ model: MISTRAL_MODEL, messages, temperature: intent === 'teacher_review' ? 0.3 : 0.8, max_tokens: 2048 })
@@ -1428,7 +1441,7 @@ async function personaChat(body) {
                 ...historyParts,
                 { role: "user", content: finalPrompt }
             ];
-            const response = await fetch(`${MISTRAL_BASE_URL}/chat/completions`, {
+            const response = await fetchWithBackoff(`${MISTRAL_BASE_URL}/chat/completions`, {
                 method: 'POST',
                 headers: { 'Authorization': `Bearer ${key}`, 'Content-Type': 'application/json' },
                 body: JSON.stringify({ model: MISTRAL_MODEL, messages, temperature: 0.85, max_tokens: 2048 })
