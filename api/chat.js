@@ -345,7 +345,7 @@ async function callOpenRouterAPI({ intent, prompt, history, stream, res }) {
             'X-Title': 'Despierta tu Voz'
         },
         body: JSON.stringify({
-            model: 'thinkingmachines/inkling-small:free',
+            model: 'openrouter/free',
             messages,
             stream: !!stream
         })
@@ -1466,7 +1466,7 @@ async function personaChat(body) {
     if (process.env.GEMINI_API_KEY) {
         try {
             console.log("🚀 personaChat: Intentando con Gemini...");
-            const messages = [{ role: "user", content: finalPrompt }];
+            const messages = [{ role: "user", parts: [{ text: finalPrompt }] }];
             const url = `${GEMINI_BASE_URL}/${GEMINI_MODEL}:generateContent`;
             const response = await fetch(url, {
                 method: 'POST',
