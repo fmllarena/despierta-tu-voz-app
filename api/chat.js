@@ -126,6 +126,8 @@ async function processChat(req, res = null) {
     const mistralFirstOrder = ['mistral', 'gemini', 'openrouter'];
     const providerOrder = preferredProvider === 'mistral' ? mistralFirstOrder : defaultOrder;
 
+    const MISTRAL_KEYS = [process.env.MISTRAL_API_KEY, process.env.MISTRAL_API_KEY_2, process.env.MISTRAL_API_KEY_3].filter(Boolean);
+
     const tryProviders = {
         gemini: async () => {
             if (!process.env.GEMINI_API_KEY) throw new Error("No GEMINI_API_KEY");
@@ -138,13 +140,6 @@ async function processChat(req, res = null) {
             if (!process.env.OPENROUTER_API_KEY) throw new Error("No OPENROUTER_API_KEY");
             console.log("🚀 Intentando con OpenRouter...");
             const result = await callOpenRouterAPI({ intent, prompt: finalPrompt, history, stream, res });
-            if (stream && res) return;
-            return result;
-        },
-        venice: async () => {
-            if (!process.env.VENICE_API_KEY) throw new Error("No VENICE_API_KEY");
-            console.log("🚀 Intentando con Venice AI...");
-            const result = await callVeniceAPI({ intent, prompt: finalPrompt, history, stream, res });
             if (stream && res) return;
             return result;
         },
