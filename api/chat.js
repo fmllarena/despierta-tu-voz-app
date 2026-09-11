@@ -136,8 +136,8 @@ async function processChat(req, res = null) {
 
     // Definir orden de providers
     const defaultOrder = ['gemini', 'openrouter', 'mistral'];
-    const mistralFirstOrder = ['mistral', 'openrouter', 'gemini'];
-    const providerOrder = preferredProvider === 'mistral' ? mistralFirstOrder : defaultOrder;
+    const geminiFirstOrder = ['gemini', 'openrouter', 'mistral'];
+    const providerOrder = preferredProvider === 'gemini' ? geminiFirstOrder : defaultOrder;
 
     const MISTRAL_KEYS = [process.env.MISTRAL_API_KEY, process.env.MISTRAL_API_KEY_2, process.env.MISTRAL_API_KEY_3].filter(Boolean);
 
@@ -1324,26 +1324,7 @@ async function teacherChat(body, intent = 'teacher') {
         }
     };
 
-    // Mistral (primario para teacherChat)
-    const keys = [process.env.MISTRAL_API_KEY, process.env.MISTRAL_API_KEY_2, process.env.MISTRAL_API_KEY_3].filter(Boolean);
-    for (const key of keys) {
-        try {
-            console.log("🚀 teacherChat: Intentando con Mistral...");
-            const messages = [{ role: "system", content: sysPrompt }, ...historyMsgs, { role: "user", content: finalPrompt }];
-            const response = await fetchWithBackoff(`${MISTRAL_BASE_URL}/chat/completions`, {
-                method: 'POST',
-                headers: { 'Authorization': `Bearer ${key}`, 'Content-Type': 'application/json' },
-                body: JSON.stringify({ model: MISTRAL_MODEL, messages, temperature: intent === 'teacher_review' ? 0.3 : 0.8, max_tokens: 2048 })
-            });
-            if (!response.ok) { const err = await response.json().catch(() => ({})); throw new Error(`Mistral Error ${response.status}: ${err.error?.message || response.statusText}`); }
-            const data = await response.json();
-            const texto = data.choices?.[0]?.message?.content || '';
-            await processResponse(texto);
-            return { text: texto, info: MISTRAL_MODEL, newTips, totalDays: allTips?.length || 0 };
-        } catch (e) { errors.push(`Mistral: ${e.message}`); }
-    }
-
-    // OpenRouter (fallback 1)
+    // OpenRouter (primario para teacherChat)
     if (process.env.OPENROUTER_API_KEY) {
         try {
             console.log("🚀 teacherChat: Intentando con OpenRouter...");
@@ -1361,7 +1342,7 @@ async function teacherChat(body, intent = 'teacher') {
         } catch (e) { console.warn("⚠️ teacherChat OpenRouter falló:", e.message); errors.push(`OpenRouter: ${e.message}`); }
     }
 
-    // Gemini (fallback 2)
+    // Gemini (fallback 1)
     if (process.env.GEMINI_API_KEY) {
         try {
             console.log("🚀 teacherChat: Intentando con Gemini...");
@@ -1378,6 +1359,25 @@ async function teacherChat(body, intent = 'teacher') {
             await processResponse(texto);
             return { text: texto, info: GEMINI_MODEL, newTips, totalDays: allTips?.length || 0 };
         } catch (e) { console.warn("⚠️ teacherChat Gemini falló:", e.message); errors.push(`Gemini: ${e.message}`); }
+    }
+
+    // Mistral (fallback 2 — último, free tier con rate limits bajos)
+    const keys = [process.env.MISTRAL_API_KEY, process.env.MISTRAL_API_KEY_2, process.env.MISTRAL_API_KEY_3].filter(Boolean);
+    for (const key of keys) {
+        try {
+            console.log("🚀 teacherChat: Intentando con Mistral...");
+            const messages = [{ role: "system", content: sysPrompt }, ...historyMsgs, { role: "user", content: finalPrompt }];
+            const response = await fetchWithBackoff(`${MISTRAL_BASE_URL}/chat/completions`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${key}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ model: MISTRAL_MODEL, messages, temperature: intent === 'teacher_review' ? 0.3 : 0.8, max_tokens: 2048 })
+            });
+            if (!response.ok) { const err = await response.json().catch(() => ({})); throw new Error(`Mistral Error ${response.status}: ${err.error?.message || response.statusText}`); }
+            const data = await response.json();
+            const texto = data.choices?.[0]?.message?.content || '';
+            await processResponse(texto);
+            return { text: texto, info: MISTRAL_MODEL, newTips, totalDays: allTips?.length || 0 };
+        } catch (e) { errors.push(`Mistral: ${e.message}`); }
     }
 
     throw new Error(`Todos los modelos fallaron: ${errors.join(" | ")}`);
@@ -1435,7 +1435,43 @@ async function personaChat(body) {
 
     const errors = [];
 
-    // Mistral (primario para personaChat)
+    // OpenRouter (primario para personaChat)
+    if (process.env.OPENROUTER_API_KEY) {
+        try {
+            console.log("🚀 personaChat: Intentando con OpenRouter...");
+            const result = await callOpenRouterAPI({ intent: 'persona_chat', prompt: finalPrompt, history });
+            return result;
+        } catch (e) {
+            console.warn("⚠️ personaChat OpenRouter falló:", e.message);
+            errors.push(`OpenRouter: ${e.message}`);
+        }
+    }
+
+    // Gemini (fallback 1)
+    if (process.env.GEMINI_API_KEY) {
+        try {
+            console.log("🚀 personaChat: Intentando con Gemini...");
+            const messages = [{ role: "user", parts: [{ text: finalPrompt }] }];
+            const url = `${GEMINI_BASE_URL}/${GEMINI_MODEL}:generateContent`;
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'x-goog-api-key': process.env.GEMINI_API_KEY },
+                body: JSON.stringify({ contents: messages, systemInstruction: { parts: [{ text: sysPrompt }] } })
+            });
+            if (!response.ok) {
+                const errData = await response.json().catch(() => ({}));
+                throw new Error(`Gemini Error ${response.status}: ${errData.error?.message || 'Unknown'}`);
+            }
+            const data = await response.json();
+            const texto = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+            return { text: texto, info: GEMINI_MODEL };
+        } catch (e) {
+            console.warn("⚠️ personaChat Gemini falló:", e.message);
+            errors.push(`Gemini: ${e.message}`);
+        }
+    }
+
+    // Mistral (fallback 2 — último, free tier con rate limits bajos)
     const keys = [process.env.MISTRAL_API_KEY, process.env.MISTRAL_API_KEY_2, process.env.MISTRAL_API_KEY_3].filter(Boolean);
     for (const key of keys) {
         try {
@@ -1459,42 +1495,6 @@ async function personaChat(body) {
             return { text: texto, info: MISTRAL_MODEL };
         } catch (e) {
             errors.push(`Mistral: ${e.message}`);
-        }
-    }
-
-    // OpenRouter (fallback 1)
-    if (process.env.OPENROUTER_API_KEY) {
-        try {
-            console.log("🚀 personaChat: Intentando con OpenRouter...");
-            const result = await callOpenRouterAPI({ intent: 'persona_chat', prompt: finalPrompt, history });
-            return result;
-        } catch (e) {
-            console.warn("⚠️ personaChat OpenRouter falló:", e.message);
-            errors.push(`OpenRouter: ${e.message}`);
-        }
-    }
-
-    // Gemini (fallback 2)
-    if (process.env.GEMINI_API_KEY) {
-        try {
-            console.log("🚀 personaChat: Intentando con Gemini...");
-            const messages = [{ role: "user", parts: [{ text: finalPrompt }] }];
-            const url = `${GEMINI_BASE_URL}/${GEMINI_MODEL}:generateContent`;
-            const response = await fetch(url, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'x-goog-api-key': process.env.GEMINI_API_KEY },
-                body: JSON.stringify({ contents: messages, systemInstruction: { parts: [{ text: sysPrompt }] } })
-            });
-            if (!response.ok) {
-                const errData = await response.json().catch(() => ({}));
-                throw new Error(`Gemini Error ${response.status}: ${errData.error?.message || 'Unknown'}`);
-            }
-            const data = await response.json();
-            const texto = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
-            return { text: texto, info: GEMINI_MODEL };
-        } catch (e) {
-            console.warn("⚠️ personaChat Gemini falló:", e.message);
-            errors.push(`Gemini: ${e.message}`);
         }
     }
 
