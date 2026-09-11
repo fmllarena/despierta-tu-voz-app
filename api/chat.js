@@ -360,8 +360,10 @@ async function callOpenRouterAPI({ intent, prompt, history, stream, res }) {
     });
 
     if (!response.ok) {
-        const errData = await response.json().catch(() => ({}));
-        throw new Error(`OpenRouter Error ${response.status}: ${errData.error?.message || 'Unknown'}`);
+        const text = await response.text();
+        let msg = 'Unknown';
+        try { msg = JSON.parse(text).error?.message || text; } catch { msg = text.slice(0, 200); }
+        throw new Error(`OpenRouter Error ${response.status}: ${msg}`);
     }
 
     if (stream && res) {
