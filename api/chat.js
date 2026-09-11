@@ -19,12 +19,12 @@ const VENICE_MODEL = "llama-3.3-70b";
 const VENICE_BASE_URL = "https://api.venice.ai/api/v1";
 
 // --- HELPER: fetch con retry + exponential backoff para 429 ---
-async function fetchWithBackoff(url, options, maxRetries = 3) {
+async function fetchWithBackoff(url, options, maxRetries = 2) {
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
         const res = await fetch(url, options);
         if (res.status !== 429) return res;
         const retryAfter = res.headers.get('Retry-After');
-        const wait = retryAfter ? parseInt(retryAfter) * 1000 : Math.min(2000 * Math.pow(2, attempt), 16000);
+        const wait = retryAfter ? Math.min(parseInt(retryAfter) * 1000, 5000) : Math.min(1000 * Math.pow(2, attempt), 5000);
         console.warn(`⚠️ 429 rate limited, retry ${attempt + 1}/${maxRetries} en ${wait}ms...`);
         await new Promise(r => setTimeout(r, wait));
     }
@@ -392,9 +392,11 @@ async function callOpenRouterAPI({ intent, prompt, history, stream, res }) {
         }
         return;
     } else {
-        const data = await response.json();
-        const text = data.choices?.[0]?.message?.content || "";
-        return { text: text, info: 'openrouter' };
+        const text = await response.text();
+        let data;
+        try { data = JSON.parse(text); } catch { throw new Error(`OpenRouter: respuesta no válida: ${text.slice(0, 200)}`); }
+        const result = data.choices?.[0]?.message?.content || "";
+        return { text: result, info: 'openrouter' };
     }
 }
 
