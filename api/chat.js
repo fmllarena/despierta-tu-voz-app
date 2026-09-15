@@ -137,7 +137,10 @@ async function processChat(req, res = null) {
     // Definir orden de providers
     const defaultOrder = ['gemini', 'openrouter', 'mistral'];
     const geminiFirstOrder = ['gemini', 'openrouter', 'mistral'];
-    const providerOrder = preferredProvider === 'gemini' ? geminiFirstOrder : defaultOrder;
+    const openrouterFirstOrder = ['openrouter', 'gemini', 'mistral'];
+    let providerOrder = defaultOrder;
+    if (preferredProvider === 'gemini') providerOrder = geminiFirstOrder;
+    else if (preferredProvider === 'openrouter') providerOrder = openrouterFirstOrder;
 
     const MISTRAL_KEYS = [process.env.MISTRAL_API_KEY, process.env.MISTRAL_API_KEY_2, process.env.MISTRAL_API_KEY_3].filter(Boolean);
 
