@@ -206,6 +206,7 @@
             <div class="chat-box">
                 <div class="chat-header" style="display:flex;justify-content:space-between;align-items:center;">
                     <span id="chatHeader">Selecciona un alumno para empezar</span>
+                    <span id="modelInfo" style="font-size:0.75rem;color:#aaa;"></span>
                 </div>
                 <div id="chatBody" class="chat-body">
                     <div class="chat-empty">Selecciona un alumno para conversar con él.</div>
@@ -407,6 +408,8 @@
                 addMsg('alumno', studentName, parsed);
                 chatHistory.push({ role: 'model', parts: [{ text: parsed }], created_at: now });
                 if (chatHistory.length > 20) chatHistory = chatHistory.slice(-20);
+
+                if (data.info) EL('modelInfo').textContent = `(${data.info})`;
 
             } catch (e) {
                 console.error('❌ Error en enviarMensaje:', e);
