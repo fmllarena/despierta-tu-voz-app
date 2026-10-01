@@ -155,31 +155,57 @@ async function llamarGemini(message, history, intent, extraData = {}, onChunk = 
         const response = await fetch(endpoint, fetchOptions);
 
         if (stream) {
+            if (!response.ok) {
+                const errText = await response.text().catch(() => '');
+                throw new Error(errText.slice(0, 300) || `Error del servidor (${response.status})`);
+            }
             const reader = response.body.getReader();
             const decoder = new TextDecoder();
             let fullText = "";
+            let buffer = "";
 
             try {
                 while (true) {
                     const { done, value } = await reader.read();
                     if (done) break;
 
-                    const chunk = decoder.decode(value);
-                    const lines = chunk.split('\n');
+                    buffer += decoder.decode(value, { stream: true });
+                    const lines = buffer.split('\n');
+                    buffer = lines.pop(); // fragmento parcial: se conserva para el siguiente chunk
 
                     for (const line of lines) {
-                        if (line.startsWith('data: ')) {
-                            try {
-                                const data = JSON.parse(line.substring(6));
-                                if (data.error) throw new Error(data.error);
-                                if (data.text) {
-                                    fullText += data.text;
-                                    if (onChunk) onChunk(data.text, fullText);
-                                }
-                            } catch (e) {
-                                if (e.name === 'AbortError') throw e;
-                                throw e;
-                            }
+                        const trimmed = line.trim();
+                        if (!trimmed.startsWith('data:')) continue;
+                        const payload = trimmed.slice(5).trim();
+                        if (!payload || payload === '[DONE]') continue;
+                        let data;
+                        try {
+                            data = JSON.parse(payload);
+                        } catch {
+                            continue; // línea corrupta: no abortar todo el stream
+                        }
+                        if (data.error) throw new Error(data.error);
+                        if (data.text) {
+                            fullText += data.text;
+                            if (onChunk) onChunk(data.text, fullText);
+                        }
+                    }
+                }
+                // Resto final sin salto de línea (si el stream terminó justo ahí)
+                buffer += decoder.decode();
+                const tail = buffer.trim();
+                if (tail.startsWith('data:')) {
+                    let tailData = null;
+                    try {
+                        tailData = JSON.parse(tail.slice(5).trim());
+                    } catch {
+                        tailData = null; // resto incompleto: se descarta sin abortar
+                    }
+                    if (tailData) {
+                        if (tailData.error) throw new Error(tailData.error);
+                        if (tailData.text) {
+                            fullText += tailData.text;
+                            if (onChunk) onChunk(tailData.text, fullText);
                         }
                     }
                 }
