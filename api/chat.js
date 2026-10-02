@@ -279,7 +279,8 @@ async function buildUserContext(userId, intent, originPost = null, originCat = n
  * Ejecuta la llamada REST a Gemini (mantenido como fallback opcional)
  */
 async function callGeminiAPI({ intent, prompt, history, stream, res, fileData }) {
-    if (!process.env.GEMINI_API_KEY) throw new Error("Falta API Key de Gemini");
+    const keys = [process.env.GEMINI_API_KEY, process.env.GEMINI_API_KEY_2].filter(Boolean);
+    if (!keys.length) throw new Error("Falta API Key de Gemini");
 
     const endpoint = stream ? 'streamGenerateContent' : 'generateContent';
     const modelToUse = GEMINI_MODEL;
@@ -308,28 +309,46 @@ async function callGeminiAPI({ intent, prompt, history, stream, res, fileData })
         systemInstruction: { parts: [{ text: SYSTEM_PROMPTS[intent] }] }
     };
 
-    const response = await fetch(url, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'x-goog-api-key': process.env.GEMINI_API_KEY
-        },
-        body: JSON.stringify(requestBody)
-    });
+    let lastErr;
+    for (let i = 0; i < keys.length; i++) {
+        try {
+            if (i > 0) console.log(`🔄 Gemini: reintentando con key ${i + 1}/${keys.length}...`);
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-goog-api-key': keys[i]
+                },
+                body: JSON.stringify(requestBody)
+            });
 
-    if (!response.ok) {
-        const errData = await response.json().catch(() => ({}));
-        console.error("Gemini API error:", response.status, JSON.stringify(errData).slice(0, 500));
-        throw new Error(`Gemini Error ${response.status}: ${errData.error?.message || 'Unknown'}`);
-    }
+            if (!response.ok) {
+                const errData = await response.json().catch(() => ({}));
+                console.error(`Gemini API error (key ${i + 1}):`, response.status, JSON.stringify(errData).slice(0, 500));
+                throw new Error(`Gemini Error ${response.status}: ${errData.error?.message || 'Unknown'}`);
+            }
 
-    if (stream && res) {
-        return handleStreamResponse(response, res);
-    } else {
-        const data = await response.json();
-        const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
-        return { text: text, info: modelToUse };
+            if (stream && res) {
+                try {
+                    return await handleStreamResponse(response, res);
+                } catch (e) {
+                    e._streamBroken = true; // el stream ya empezó: no reintentar con otra key
+                    throw e;
+                }
+            } else {
+                const data = await response.json();
+                const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+                return { text: text, info: modelToUse };
+            }
+        } catch (e) {
+            if (e._streamBroken) throw e;
+            lastErr = e;
+            const retryable = /429|500|502|503|overload|unavailable|high demand/i.test(e.message);
+            if (retryable && i < keys.length - 1) continue; // probar siguiente key
+            throw e;
+        }
     }
+    throw lastErr;
 }
 
 /**
