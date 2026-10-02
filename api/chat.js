@@ -31,6 +31,29 @@ async function fetchWithBackoff(url, options, maxRetries = 2) {
     return await fetch(url, options);
 }
 
+// --- HELPER: POST a Gemini rotando GEMINI_API_KEY -> GEMINI_API_KEY_2 ante errores reintentables ---
+// Devuelve el Response OK; si todas las keys fallan, lanza el último error.
+async function geminiFetchWithKeys(url, body) {
+    const keys = [process.env.GEMINI_API_KEY, process.env.GEMINI_API_KEY_2].filter(Boolean);
+    if (!keys.length) throw new Error("Falta API Key de Gemini");
+    let lastErr = new Error("Gemini: sin keys disponibles");
+    for (let i = 0; i < keys.length; i++) {
+        if (i > 0) console.log(`🔄 Gemini: reintentando con key ${i + 1}/${keys.length}...`);
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'x-goog-api-key': keys[i] },
+            body: JSON.stringify(body)
+        });
+        if (response.ok) return response;
+        const errData = await response.json().catch(() => ({}));
+        lastErr = new Error(`Gemini Error ${response.status}: ${errData.error?.message || 'Unknown'}`);
+        console.error(`Gemini API error (key ${i + 1}):`, response.status, JSON.stringify(errData).slice(0, 500));
+        const retryable = [429, 500, 502, 503].includes(response.status);
+        if (!retryable || i === keys.length - 1) throw lastErr;
+    }
+    throw lastErr;
+}
+
 
 
 /**
@@ -146,7 +169,7 @@ async function processChat(req, res = null) {
 
     const tryProviders = {
         gemini: async () => {
-            if (!process.env.GEMINI_API_KEY) throw new Error("No GEMINI_API_KEY");
+            if (!process.env.GEMINI_API_KEY && !process.env.GEMINI_API_KEY_2) throw new Error("No GEMINI_API_KEY");
             console.log("🚀 Intentando con Gemini...", { intent, hasHistory: !!history?.length });
             const result = await callGeminiAPI({ intent, prompt: finalPrompt, history, stream, res, fileData });
             if (stream && res) return;
@@ -279,8 +302,7 @@ async function buildUserContext(userId, intent, originPost = null, originCat = n
  * Ejecuta la llamada REST a Gemini (mantenido como fallback opcional)
  */
 async function callGeminiAPI({ intent, prompt, history, stream, res, fileData }) {
-    const keys = [process.env.GEMINI_API_KEY, process.env.GEMINI_API_KEY_2].filter(Boolean);
-    if (!keys.length) throw new Error("Falta API Key de Gemini");
+    if (!process.env.GEMINI_API_KEY && !process.env.GEMINI_API_KEY_2) throw new Error("Falta API Key de Gemini");
 
     const endpoint = stream ? 'streamGenerateContent' : 'generateContent';
     const modelToUse = GEMINI_MODEL;
@@ -309,46 +331,16 @@ async function callGeminiAPI({ intent, prompt, history, stream, res, fileData })
         systemInstruction: { parts: [{ text: SYSTEM_PROMPTS[intent] }] }
     };
 
-    let lastErr;
-    for (let i = 0; i < keys.length; i++) {
-        try {
-            if (i > 0) console.log(`🔄 Gemini: reintentando con key ${i + 1}/${keys.length}...`);
-            const response = await fetch(url, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'x-goog-api-key': keys[i]
-                },
-                body: JSON.stringify(requestBody)
-            });
+    // geminiFetchWithKeys ya rota key1 -> key2 ante 429/5xx; si lanza, processChat pasa a OpenRouter
+    const response = await geminiFetchWithKeys(url, requestBody);
 
-            if (!response.ok) {
-                const errData = await response.json().catch(() => ({}));
-                console.error(`Gemini API error (key ${i + 1}):`, response.status, JSON.stringify(errData).slice(0, 500));
-                throw new Error(`Gemini Error ${response.status}: ${errData.error?.message || 'Unknown'}`);
-            }
-
-            if (stream && res) {
-                try {
-                    return await handleStreamResponse(response, res);
-                } catch (e) {
-                    e._streamBroken = true; // el stream ya empezó: no reintentar con otra key
-                    throw e;
-                }
-            } else {
-                const data = await response.json();
-                const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
-                return { text: text, info: modelToUse };
-            }
-        } catch (e) {
-            if (e._streamBroken) throw e;
-            lastErr = e;
-            const retryable = /429|500|502|503|overload|unavailable|high demand/i.test(e.message);
-            if (retryable && i < keys.length - 1) continue; // probar siguiente key
-            throw e;
-        }
+    if (stream && res) {
+        return handleStreamResponse(response, res);
+    } else {
+        const data = await response.json();
+        const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+        return { text: text, info: modelToUse };
     }
-    throw lastErr;
 }
 
 /**
@@ -1365,17 +1357,12 @@ async function teacherChat(body, intent = 'teacher') {
     }
 
     // Gemini (fallback 1)
-    if (process.env.GEMINI_API_KEY) {
+    if (process.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY_2) {
         try {
             console.log("🚀 teacherChat: Intentando con Gemini...");
             const messages = [{ role: "user", parts: [{ text: finalPrompt }] }];
             const url = `${GEMINI_BASE_URL}/${GEMINI_MODEL}:generateContent`;
-            const response = await fetch(url, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'x-goog-api-key': process.env.GEMINI_API_KEY },
-                body: JSON.stringify({ contents: messages, systemInstruction: { parts: [{ text: sysPrompt }] } })
-            });
-            if (!response.ok) { const errData = await response.json().catch(() => ({})); throw new Error(`Gemini Error ${response.status}: ${errData.error?.message || 'Unknown'}`); }
+            const response = await geminiFetchWithKeys(url, { contents: messages, systemInstruction: { parts: [{ text: sysPrompt }] } });
             const data = await response.json();
             const texto = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
             await processResponse(texto);
@@ -1470,20 +1457,12 @@ async function personaChat(body) {
     }
 
     // Gemini (fallback 1)
-    if (process.env.GEMINI_API_KEY) {
+    if (process.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY_2) {
         try {
             console.log("🚀 personaChat: Intentando con Gemini...");
             const messages = [{ role: "user", parts: [{ text: finalPrompt }] }];
             const url = `${GEMINI_BASE_URL}/${GEMINI_MODEL}:generateContent`;
-            const response = await fetch(url, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'x-goog-api-key': process.env.GEMINI_API_KEY },
-                body: JSON.stringify({ contents: messages, systemInstruction: { parts: [{ text: sysPrompt }] } })
-            });
-            if (!response.ok) {
-                const errData = await response.json().catch(() => ({}));
-                throw new Error(`Gemini Error ${response.status}: ${errData.error?.message || 'Unknown'}`);
-            }
+            const response = await geminiFetchWithKeys(url, { contents: messages, systemInstruction: { parts: [{ text: sysPrompt }] } });
             const data = await response.json();
             const texto = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
             return { text: texto, info: GEMINI_MODEL };
