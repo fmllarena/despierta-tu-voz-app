@@ -216,6 +216,7 @@ async function llamarGemini(message, history, intent, extraData = {}, onChunk = 
                             continue; // línea corrupta: no abortar todo el stream
                         }
                         if (data.error) throw new Error(data.error);
+                        if (data.info) { console.log(`🤖 Modelo IA usado: ${data.info}`); continue; }
                         if (data.text) {
                             fullText += data.text;
                             if (onChunk) onChunk(data.text, fullText);
@@ -234,6 +235,7 @@ async function llamarGemini(message, history, intent, extraData = {}, onChunk = 
                     }
                     if (tailData) {
                         if (tailData.error) throw new Error(tailData.error);
+                        if (tailData.info) console.log(`🤖 Modelo IA usado: ${tailData.info}`);
                         if (tailData.text) {
                             fullText += tailData.text;
                             if (onChunk) onChunk(tailData.text, fullText);

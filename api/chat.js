@@ -436,6 +436,8 @@ async function callOpenRouterAPI({ intent, prompt, history, stream, res }) {
         const reader = response.body.getReader();
         const decoder = new TextDecoder();
         let buffer = "";
+        let modeloReal = null;
+        let streamOk = false;
         try {
             while (true) {
                 const { done, value } = await reader.read();
@@ -447,13 +449,19 @@ async function callOpenRouterAPI({ intent, prompt, history, stream, res }) {
                     if (line.startsWith('data: ') && line !== 'data: [DONE]') {
                         try {
                             const data = JSON.parse(line.substring(6));
+                            if (!modeloReal && data.model) modeloReal = data.model;
                             const text = data.choices?.[0]?.delta?.content;
                             if (text) res.write(`data: ${JSON.stringify({ text })}\n\n`);
                         } catch (e) { /* chunk incompleto */ }
                     }
                 }
             }
+            streamOk = true;
         } finally {
+            // Modelo real servido por OpenRouter (ej. deepseek/deepseek-r1:free)
+            if (streamOk && !res.writableEnded) {
+                res.write(`data: ${JSON.stringify({ info: modeloReal || 'openrouter/free' })}\n\n`);
+            }
             res.end();
         }
         return;
@@ -603,6 +611,7 @@ async function handleStreamResponse(response, res) {
     const reader = response.body.getReader();
     const decoder = new TextDecoder();
     let buffer = "";
+    let streamOk = false;
 
     try {
         while (true) {
@@ -625,7 +634,12 @@ async function handleStreamResponse(response, res) {
                 }
             }
         }
+        streamOk = true;
     } finally {
+        // Informar del modelo usado solo si el stream terminó bien (el cliente lo loguea)
+        if (streamOk && !res.writableEnded) {
+            res.write(`data: ${JSON.stringify({ info: GEMINI_MODEL })}\n\n`);
+        }
         res.end();
     }
 }
@@ -787,6 +801,8 @@ async function _mistralCall({ intent, prompt, history, stream, res, fileData, re
         const decoder = new TextDecoder();
         let streamBuffer = "";
         const STREAM_TIMEOUT = 30000;
+        let modeloReal = null;
+        let streamOk = false;
         try {
             while (true) {
                 const result = await Promise.race([
@@ -802,13 +818,19 @@ async function _mistralCall({ intent, prompt, history, stream, res, fileData, re
                     if (line.startsWith('data: ') && line !== 'data: [DONE]') {
                         try {
                             const data = JSON.parse(line.substring(6));
+                            if (!modeloReal && data.model) modeloReal = data.model;
                             const text = data.choices?.[0]?.delta?.content;
                             if (text) res.write(`data: ${JSON.stringify({ text })}\n\n`);
                         } catch (e) { /* chunk incompleto */ }
                     }
                 }
             }
+            streamOk = true;
         } finally {
+            // Modelo real servido por Mistral (los chunks lo incluyen en data.model)
+            if (streamOk && !res.writableEnded) {
+                res.write(`data: ${JSON.stringify({ info: modeloReal || `${MISTRAL_MODEL} (UE)` })}\n\n`);
+            }
             res.end();
         }
         return;
