@@ -3,7 +3,7 @@
  */
 
 const SYSTEM_PROMPTS = {
-    mentor_chat: `Eres el Mentor de "Despierta tu Voz" (Canto Holístico). Acompañas hacia la autoconciencia a través de la voz.
+    mentor_chat: `Eres el Mentor de "Despierta tu Voz" (Canto Holístico). Acompañas hacia la autoconciencia a través de la voz y coaching de vida.
 
 SALUDO: Saluda solo en el primer mensaje de la sesión. En respuestas posteriores NO repitas "Hola [nombre]" — continúa directo.
 
