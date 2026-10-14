@@ -389,7 +389,7 @@ async function cargarHistorialDesdeDB(userId, render = false) {
             chatHistory.push({ role: role, parts: [{ text: msg.texto }], created_at: msg.created_at });
 
             if (render) {
-                appendMessage(msg.texto, msg.emisor);
+                appendMessage(msg.texto, msg.emisor, null, { dbId: msg.id, reaction: msg.reaction });
             }
         });
 
@@ -681,7 +681,8 @@ async function sendMessage() {
         sessionStorage.removeItem('dtv_origin_cat');
 
         if (responseText && responseText.trim() !== "") {
-            await guardarMensajeDB(responseText, 'ia');
+            const msgId = await guardarMensajeDB(responseText, 'ia');
+            if (msgId) activarFeedback(responseId, msgId);
             const now = new Date().toISOString();
             chatHistory.push(
                 { role: "user", parts: [{ text }], created_at: now },
@@ -724,7 +725,7 @@ async function sendMessage() {
 async function guardarMensajeDB(texto, emisor, customDate = null) {
     try {
         const { data: { user } } = await state.supabase.auth.getUser();
-        if (!user) return;
+        if (!user) return null;
 
         console.log(`Intentando guardar mensaje de ${emisor}...`);
         const payload = {
@@ -735,10 +736,15 @@ async function guardarMensajeDB(texto, emisor, customDate = null) {
 
         if (customDate) payload.created_at = customDate;
 
-        const { error } = await state.supabase.from('mensajes').insert(payload);
+        const { data: nuevo, error } = await state.supabase
+            .from('mensajes')
+            .insert(payload)
+            .select('id')
+            .maybeSingle();
 
         if (error) {
             console.error("Error Supabase (insert):", error);
+            return null;
         } else {
             console.log("Mensaje guardado correctamente.");
             // --- ACTUALIZAR ACTIVIDAD PARA EMAIL DE INACTIVIDAD ---
@@ -754,9 +760,11 @@ async function guardarMensajeDB(texto, emisor, customDate = null) {
             if (emisor === 'ia') {
                 MODULOS.generarYGuardarResumen();
             }
+            return nuevo?.id || null;
         }
     } catch (e) {
         console.error("Error crítico guardando mensaje:", e);
+        return null;
     }
 }
 
@@ -960,7 +968,7 @@ function crearBotonesAccionFinal(parentDiv) {
     console.log("🔘 [Botones] Contenedor final:", actionContainer);
 }
 
-function appendMessage(text, type, id = null) {
+function appendMessage(text, type, id = null, meta = null) {
     if (!ELEMENTS.chatBox) return;
     const div = document.createElement('div');
     div.className = `message ${type}`;
@@ -1028,6 +1036,16 @@ function appendMessage(text, type, id = null) {
         };
         container.appendChild(copyBtn);
 
+        // --- BOTONES DE VALORACIÓN (👍/👎) ---
+        // Historial: llega dbId directo (botones activos con su reacción).
+        // Respuesta en vivo: id 'ia-response-*' sin dbId aún → botones pendientes
+        // hasta que guardarMensajeDB devuelva el id.
+        const dbId = meta?.dbId || null;
+        const enVivo = id && id.startsWith('ia-response-') && !dbId;
+        if (dbId || enVivo) {
+            container.appendChild(crearBotonesFeedback(dbId, meta?.reaction || null));
+        }
+
         ELEMENTS.chatBox.appendChild(container);
 
         // Desplazar el chat
@@ -1067,6 +1085,69 @@ function appendMessage(text, type, id = null) {
     } else {
         // Cualquier otro tipo (resumen_diario, sistema, etc.) no lo imprimimos en el chat
         console.log(`[Chat] Mensaje de tipo "${type}" ignorado en la interfaz.`);
+    }
+}
+
+// --- BOTONES DE VALORACIÓN DE RESPUESTAS (👍/👎) ---
+function crearBotonesFeedback(msgId, reactionActual) {
+    const wrap = document.createElement('div');
+    wrap.className = 'feedback-btns';
+    if (msgId) wrap.dataset.msgId = msgId;
+
+    const crearBtn = (tipo, emoji, titulo) => {
+        const b = document.createElement('button');
+        b.className = 'feedback-btn';
+        b.dataset.tipo = tipo;
+        b.innerHTML = emoji;
+        b.title = titulo;
+        if (reactionActual === tipo) b.classList.add('activa');
+        if (!msgId) { b.disabled = true; b.classList.add('pendiente'); }
+        b.onclick = (e) => {
+            e.stopPropagation();
+            enviarFeedback(wrap, tipo);
+        };
+        return b;
+    };
+
+    wrap.appendChild(crearBtn('like', '👍', 'Me gustó esta respuesta'));
+    wrap.appendChild(crearBtn('dislike', '👎', 'No me gustó esta respuesta'));
+    return wrap;
+}
+
+function activarFeedback(containerId, msgId) {
+    const wrap = document.getElementById(containerId)?.querySelector('.feedback-btns');
+    if (!wrap) return;
+    wrap.dataset.msgId = msgId;
+    wrap.querySelectorAll('.feedback-btn').forEach(b => {
+        b.disabled = false;
+        b.classList.remove('pendiente');
+    });
+}
+
+async function enviarFeedback(wrap, tipo) {
+    const msgId = wrap.dataset.msgId;
+    if (!msgId) return;
+
+    const actual = wrap.querySelector('.feedback-btn.activa')?.dataset.tipo || null;
+    const nuevo = actual === tipo ? null : tipo; // segundo clic en lo mismo → quitar
+
+    // Actualización optimista en UI
+    wrap.querySelectorAll('.feedback-btn').forEach(b => b.classList.remove('activa'));
+    if (nuevo) wrap.querySelector(`.feedback-btn[data-tipo="${nuevo}"]`)?.classList.add('activa');
+
+    try {
+        const res = await fetch('/api/chat', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ table: 'mensajes', messageId: msgId, reaction: nuevo })
+        });
+        const json = await res.json().catch(() => ({}));
+        if (!res.ok || !json.success) throw new Error(json.error || 'Error al guardar');
+    } catch (e) {
+        // Revertir a la reacción anterior si falló
+        wrap.querySelectorAll('.feedback-btn').forEach(b => b.classList.remove('activa'));
+        if (actual) wrap.querySelector(`.feedback-btn[data-tipo="${actual}"]`)?.classList.add('activa');
+        console.error('Error guardando valoración:', e);
     }
 }
 

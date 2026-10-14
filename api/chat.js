@@ -231,7 +231,21 @@ async function buildUserContext(userId, intent, originPost = null, originCat = n
         context += `[SISTEMA: El alumno viene de leer este artículo. Salúdale mencionando que te alegra que lo haya leído y pregúntale qué le ha parecido o cómo resuena con su situación actual].\n`;
     }
 
-    const { data: perfil } = await supabase.from('user_profiles').select('*').eq('user_id', userId).maybeSingle();
+    // Perfil y valoraciones (👍/👎) se consultan en paralelo: la query de
+    // feedback no depende del perfil, así que no añade latencia a la petición.
+    const [perfilRes, votadasRes] = await Promise.all([
+        supabase.from('user_profiles').select('*').eq('user_id', userId).maybeSingle(),
+        intent !== 'inspiracion_dia'
+            ? supabase.from('mensajes')
+                .select('texto, reaction, created_at')
+                .eq('alumno', userId)
+                .eq('emisor', 'ia')
+                .not('reaction', 'is', null)
+                .order('created_at', { ascending: false })
+                .limit(10)
+            : Promise.resolve({ data: null })
+    ]);
+    const perfil = perfilRes?.data;
     if (!perfil) return context;
 
     context += `\n--- SITUACIÓN ACTUAL ---\n- Nombre: ${perfil.nombre}\n- Último Estado: ${perfil.ultimo_resumen || 'Iniciando'}\n`;
@@ -260,6 +274,44 @@ async function buildUserContext(userId, intent, originPost = null, originCat = n
         if ((intent === 'mentor_briefing' || intent === 'mentor_advisor' || intent === 'roleplay_chat') && perfil.mentor_notes) {
             context += `\n--- ANOTACIONES DEL MENTOR ---\n${perfil.mentor_notes}\n`;
         }
+    }
+
+    // --- FEEDBACK DE VALORACIÓN (👍/👎) DEL ALUMNO ---
+    // Se inyecta aquí (y por tanto llega a cualquier modelo del fallback:
+    // Gemini, OpenRouter o Mistral) para que adopte el tono/longitud que
+    // el alumno ha premiado y evite el que ha castigado.
+    const votadas = votadasRes?.data;
+    if (votadas && votadas.length >= 3) {
+        const likes = votadas.filter(v => v.reaction === 'like');
+        const dislikes = votadas.filter(v => v.reaction === 'dislike');
+        const mediaCaracteres = arr => arr.length
+            ? Math.round(arr.reduce((s, v) => s + (v.texto || '').length, 0) / arr.length)
+            : 0;
+        const mediaLikes = mediaCaracteres(likes);
+        const mediaDislikes = mediaCaracteres(dislikes);
+        const recortar = t => {
+            const limpio = String(t || '').replace(/\s+/g, ' ').trim();
+            return limpio.length > 150 ? limpio.slice(0, 150) + '…' : limpio;
+        };
+
+        context += `\n--- VALORACIÓN DE TUS RESPUESTAS (feedback real; no lo menciones al alumno) ---\n`;
+        context += `- En tus últimas ${votadas.length} respuestas valoradas: ${likes.length} 👍, ${dislikes.length} 👎\n`;
+
+        if (likes.length && dislikes.length && mediaLikes + 100 < mediaDislikes) {
+            context += `- Longitud: prefiere respuestas breves (~${mediaLikes} caracteres); las respuestas largas (~${mediaDislikes} caracteres) reciben 👎\n`;
+        } else if (likes.length && dislikes.length && mediaLikes > mediaDislikes + 100) {
+            context += `- Longitud: prefiere respuestas desarrolladas (~${mediaLikes} caracteres); las muy cortas (~${mediaDislikes} caracteres) reciben 👎\n`;
+        } else if (likes.length && !dislikes.length) {
+            context += `- Longitud: sus 👍 promedian ~${mediaLikes} caracteres\n`;
+        } else if (!likes.length && dislikes.length) {
+            context += `- Longitud: sus 👎 promedian ~${mediaDislikes} caracteres; evita esa extensión\n`;
+        }
+
+        const ultimoLike = votadas.find(v => v.reaction === 'like');
+        const ultimoDislike = votadas.find(v => v.reaction === 'dislike');
+        if (ultimoLike) context += `- Estilo que SÍ le gustó (imita tono y longitud): «${recortar(ultimoLike.texto)}»\n`;
+        if (ultimoDislike) context += `- Estilo que NO le gustó (evita ese tono y longitud): «${recortar(ultimoDislike.texto)}»\n`;
+        context += `[SISTEMA: Ajusta tu próxima respuesta a este feedback sin mencionar los votos].\n`;
     }
 
     const userTier = perfil.subscription_tier || 'free';
@@ -1532,15 +1584,29 @@ async function updateTeacherMessage(req, res) {
 
 async function updateMensaje(req, res) {
     const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
-    const { messageId, content } = req.body || {};
+    const { messageId, content, reaction } = req.body || {};
 
     if (!messageId) return res.status(400).json({ error: "Se requiere messageId" });
-    if (typeof content !== 'string') return res.status(400).json({ error: "Se requiere content" });
+
+    // Patch atómico: acepta content (edición de texto desde historial),
+    // reaction (👍/👎 del chat) o ambos a la vez.
+    const patch = {};
+    if (content !== undefined) {
+        if (typeof content !== 'string') return res.status(400).json({ error: "Se requiere content" });
+        patch.texto = content;
+    }
+    if (reaction !== undefined) {
+        if (reaction !== 'like' && reaction !== 'dislike' && reaction !== null) {
+            return res.status(400).json({ error: "reaction debe ser 'like', 'dislike' o null" });
+        }
+        patch.reaction = reaction;
+    }
+    if (Object.keys(patch).length === 0) return res.status(400).json({ error: "Se requiere content o reaction" });
 
     try {
         const { data, error } = await supabase
             .from('mensajes')
-            .update({ texto: content })
+            .update(patch)
             .eq('id', messageId)
             .select('id')
             .maybeSingle();
