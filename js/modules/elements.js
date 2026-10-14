@@ -110,7 +110,9 @@ export const ELEMENTS = window.ELEMENTS = {
     // Alert Custom
     get customAlert() { return document.getElementById('customAlert'); },
     get alertMessage() { return document.getElementById('alertMessage'); },
+    get alertTitle() { return document.getElementById('alertTitle'); },
     get alertConfirmBtn() { return document.getElementById('alertConfirmBtn'); },
+    get alertCancelBtn() { return document.getElementById('alertCancelBtn'); },
     get promoTermsBox() { return document.getElementById('promoTermsBox'); },
 
     // Top Bar Music Player

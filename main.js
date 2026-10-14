@@ -102,13 +102,44 @@ window.alertCustom = function (mensaje) {
     ELEMENTS.customAlert.style.display = 'flex';
 };
 
-// Cerrar alerta con el botón
-ELEMENTS.alertConfirmBtn?.addEventListener('click', () => {
-    ELEMENTS.customAlert.style.display = 'none';
-});
-// Cerrar alerta al hacer clic fuera
+// --- CONFIRMACIÓN CUSTOM (Promise) para acciones destructivas ---
+// Reutiliza el modal #customAlert con un segundo botón "Cancelar".
+// Clic fuera / Cancelar => resolve(false): por defecto NO se ejecuta nada.
+let confirmCustomResolver = null;
+const ALERT_TITLE_DEFECTO = ELEMENTS.alertTitle?.innerText || 'app Mentor DTV';
+
+function cerrarAlerta(resolverCon) {
+    if (ELEMENTS.customAlert) ELEMENTS.customAlert.style.display = 'none';
+    if (ELEMENTS.alertCancelBtn) ELEMENTS.alertCancelBtn.style.display = 'none';
+    if (ELEMENTS.alertTitle) ELEMENTS.alertTitle.innerText = ALERT_TITLE_DEFECTO;
+    if (confirmCustomResolver) {
+        const resolver = confirmCustomResolver;
+        confirmCustomResolver = null;
+        resolver(resolverCon);
+    }
+}
+
+window.confirmCustom = function (mensaje, titulo = "⚠️ Advertencia") {
+    if (!ELEMENTS.customAlert || !ELEMENTS.alertMessage || !ELEMENTS.alertCancelBtn) {
+        // Fallback: si el modal no está disponible, confirmación nativa
+        return Promise.resolve(confirm(mensaje));
+    }
+    // Si ya había una confirmación pendiente, se cierra sin confirmar
+    if (confirmCustomResolver) cerrarAlerta(false);
+    if (ELEMENTS.alertTitle) ELEMENTS.alertTitle.innerText = titulo;
+    ELEMENTS.alertMessage.innerText = mensaje;
+    ELEMENTS.alertCancelBtn.style.display = '';
+    ELEMENTS.customAlert.style.display = 'flex';
+    return new Promise(resolve => { confirmCustomResolver = resolve; });
+};
+
+// Cerrar alerta con el botón Aceptar
+ELEMENTS.alertConfirmBtn?.addEventListener('click', () => cerrarAlerta(true));
+// Cerrar con Cancelar (solo visible durante confirmaciones)
+ELEMENTS.alertCancelBtn?.addEventListener('click', () => cerrarAlerta(false));
+// Cerrar alerta al hacer clic fuera (en confirmaciones => cancela)
 window.addEventListener('click', e => {
-    if (e.target === ELEMENTS.customAlert) ELEMENTS.customAlert.style.display = 'none';
+    if (e.target === ELEMENTS.customAlert) cerrarAlerta(false);
 });
 
 // --- SOPORTE HÍBRIDO ---
@@ -386,7 +417,7 @@ async function cargarHistorialDesdeDB(userId, render = false) {
             if (msg.emisor === 'resumen_diario' || msg.emisor === 'sistema') return;
 
             const role = msg.emisor === 'ia' ? 'model' : 'user';
-            chatHistory.push({ role: role, parts: [{ text: msg.texto }], created_at: msg.created_at });
+            chatHistory.push({ role: role, parts: [{ text: msg.texto }], created_at: msg.created_at, msgId: msg.id });
 
             if (render) {
                 appendMessage(msg.texto, msg.emisor, null, { dbId: msg.id, reaction: msg.reaction });
@@ -583,8 +614,19 @@ async function sendMessage() {
         }
     }
 
-    appendMessage(text, 'user');
-    guardarMensajeDB(text, 'user'); // Fire & forget: guardar en paralelo sin bloquear la IA
+    const contenedorUsuario = appendMessage(text, 'user', null, { pending: true });
+    // Fire & forget: guardar en paralelo sin bloquear la IA.
+    // .then: enlaza el id en cuanto exista (así el 🗑 se activa aunque
+    // la respuesta de la IA falle) y se reutiliza abajo para el push.
+    const guardadoUsuario = guardarMensajeDB(text, 'user');
+    guardadoUsuario.then(id => {
+        if (id && contenedorUsuario) {
+            enlazarMsgId(contenedorUsuario, id);
+        } else if (contenedorUsuario) {
+            // Sin id en BD no hay nada que borrar: se oculta el 🗑
+            contenedorUsuario.querySelectorAll('.trash-msg-btn').forEach(b => b.remove());
+        }
+    });
 
     // Obtener datos de archivo si existen
     const fileData = window.FILES ? await window.FILES.getFileData() : null;
@@ -682,11 +724,17 @@ async function sendMessage() {
 
         if (responseText && responseText.trim() !== "") {
             const msgId = await guardarMensajeDB(responseText, 'ia');
-            if (msgId) activarFeedback(responseId, msgId);
+            if (msgId) {
+                activarFeedback(responseId, msgId);
+            } else {
+                // Sin id en BD no hay nada que votar/borrar: se quita el cluster
+                document.getElementById(responseId)?.querySelector('.feedback-btns')?.remove();
+            }
+            const userIdMsg = await guardadoUsuario;
             const now = new Date().toISOString();
             chatHistory.push(
-                { role: "user", parts: [{ text }], created_at: now },
-                { role: "model", parts: [{ text: responseText }], created_at: now }
+                { role: "user", parts: [{ text }], created_at: now, msgId: userIdMsg || undefined },
+                { role: "model", parts: [{ text: responseText }], created_at: now, msgId: msgId || undefined }
             );
 
             if (chatHistory.length % 4 === 0 && chatHistory.length >= 4) {
@@ -1050,6 +1098,7 @@ function appendMessage(text, type, id = null, meta = null) {
 
         // Desplazar el chat
         container.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        return container;
     } else if (type === 'user' || type === 'usuario') {
         // Contenedor para Avatar + Mensaje
         const container = document.createElement('div');
@@ -1078,10 +1127,32 @@ function appendMessage(text, type, id = null, meta = null) {
         };
         div.appendChild(copyBtn);
 
+        // --- 🗑 ELIMINAR MENSAJE ---
+        // Se muestra si ya tiene id en BD (historial) o si estará en vivo
+        // (pending: se activa cuando guardarMensajeDB devuelva el id).
+        if (meta?.dbId || meta?.pending) {
+            const trashBtn = document.createElement('button');
+            trashBtn.className = 'trash-msg-btn';
+            trashBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>`;
+            trashBtn.title = 'Eliminar mensaje';
+            if (meta?.dbId) {
+                container.dataset.msgId = meta.dbId;
+            } else {
+                trashBtn.disabled = true;
+                trashBtn.classList.add('pendiente');
+            }
+            trashBtn.onclick = (e) => {
+                e.stopPropagation();
+                eliminarMensaje(container);
+            };
+            div.appendChild(trashBtn);
+        }
+
         container.appendChild(div);
         container.appendChild(avatar);
         ELEMENTS.chatBox.appendChild(container);
         ELEMENTS.chatBox.scrollTop = ELEMENTS.chatBox.scrollHeight;
+        return container;
     } else {
         // Cualquier otro tipo (resumen_diario, sistema, etc.) no lo imprimimos en el chat
         console.log(`[Chat] Mensaje de tipo "${type}" ignorado en la interfaz.`);
@@ -1111,17 +1182,71 @@ function crearBotonesFeedback(msgId, reactionActual) {
 
     wrap.appendChild(crearBtn('like', '👍', 'Me gustó esta respuesta'));
     wrap.appendChild(crearBtn('dislike', '👎', 'No me gustó esta respuesta'));
+
+    // --- 🗑 ELIMINAR MENSAJE (hereda activación de activarFeedback) ---
+    const trashBtn = document.createElement('button');
+    trashBtn.className = 'feedback-btn trash-btn';
+    trashBtn.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>`;
+    trashBtn.title = 'Eliminar mensaje';
+    if (!msgId) { trashBtn.disabled = true; trashBtn.classList.add('pendiente'); }
+    trashBtn.onclick = (e) => {
+        e.stopPropagation();
+        eliminarMensaje(wrap);
+    };
+    wrap.appendChild(trashBtn);
+
     return wrap;
+}
+
+// Asocia el id de BD a un elemento (contenedor user o .feedback-btns de IA)
+// y habilita sus botones pendientes
+function enlazarMsgId(host, msgId) {
+    if (!host) return;
+    host.dataset.msgId = msgId;
+    host.querySelectorAll('.pendiente').forEach(b => {
+        b.disabled = false;
+        b.classList.remove('pendiente');
+    });
 }
 
 function activarFeedback(containerId, msgId) {
     const wrap = document.getElementById(containerId)?.querySelector('.feedback-btns');
-    if (!wrap) return;
-    wrap.dataset.msgId = msgId;
-    wrap.querySelectorAll('.feedback-btn').forEach(b => {
-        b.disabled = false;
-        b.classList.remove('pendiente');
-    });
+    enlazarMsgId(wrap, msgId);
+}
+
+// --- ELIMINAR MENSAJE (BD + DOM + contexto de la IA) ---
+async function eliminarMensaje(host) {
+    const msgId = host?.dataset?.msgId;
+    if (!msgId) return;
+
+    // No permitir borrar mientras la IA genera: el push final de
+    // sendMessage volvería a meter el mensaje en chatHistory
+    if (ELEMENTS.chatInput?.disabled) return;
+
+    const ok = await confirmCustom(
+        "¿Eliminar este mensaje de la conversación? Se borrará de la base de datos, no se puede deshacer y la IA dejará de tenerlo en cuenta."
+    );
+    if (!ok) return;
+
+    try {
+        const { error } = await state.supabase
+            .from('mensajes')
+            .delete()
+            .eq('id', msgId);
+        if (error) throw error;
+
+        // Quitar del contexto que ve la IA
+        chatHistory = chatHistory.filter(e => String(e.msgId) !== String(msgId));
+
+        // Quitar del DOM (host es el .feedback-btns de IA o el .user-container)
+        const contenedor = host.classList.contains('feedback-btns')
+            ? host.closest('.ia-container')
+            : host;
+        contenedor?.remove();
+    } catch (e) {
+        console.error('Error eliminando mensaje:', e);
+        alertCustom('No se pudo eliminar el mensaje: ' + (e.message || 'error desconocido'));
+    }
 }
 
 async function enviarFeedback(wrap, tipo) {

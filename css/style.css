@@ -5022,3 +5022,63 @@ html[data-theme="dark"] .feedback-btn[data-tipo="dislike"].activa {
     color: #ef9a9a;
     box-shadow: inset 0 0 0 1px rgba(239,154,154,0.5);
 }
+
+/* --- 🗑 ELIMINAR MENSAJE (junto al botón de copiar, mensajes user) --- */
+.trash-msg-btn {
+    position: absolute;
+    bottom: 4px;
+    right: 34px;
+    background: rgba(128,128,128,0.15);
+    border: none;
+    border-radius: 6px;
+    padding: 4px 6px;
+    cursor: pointer;
+    opacity: 0.6;
+    transition: opacity 0.2s, background 0.2s, color 0.2s;
+    color: var(--color-acento, #8e7d6d);
+    line-height: 1;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+}
+.trash-msg-btn:hover:not(:disabled) {
+    opacity: 1;
+    background: rgba(231,76,60,0.18);
+    color: #e74c3c;
+}
+.trash-msg-btn:disabled,
+.trash-msg-btn.pendiente {
+    cursor: default;
+    opacity: 0.25;
+}
+.user .trash-msg-btn {
+    color: #fff;
+    background: rgba(255,255,255,0.15);
+}
+.user .trash-msg-btn:hover:not(:disabled) {
+    background: rgba(231,76,60,0.35);
+    color: #fff;
+}
+html[data-theme="dark"] .trash-msg-btn {
+    color: #d4af37;
+    background: rgba(255,255,255,0.08);
+}
+html[data-theme="dark"] .trash-msg-btn:hover:not(:disabled) {
+    background: rgba(239,154,154,0.15);
+    color: #ef9a9a;
+}
+html[data-theme="dark"] .user .trash-msg-btn {
+    color: #fff;
+    background: rgba(255,255,255,0.2);
+}
+
+/* 🗑 dentro del cluster de feedback (mensajes IA) */
+.feedback-btn.trash-btn:hover:not(:disabled) {
+    color: #e74c3c;
+    background: rgba(231,76,60,0.18);
+    box-shadow: none;
+}
+html[data-theme="dark"] .feedback-btn.trash-btn:hover:not(:disabled) {
+    color: #ef9a9a;
+    background: rgba(239,154,154,0.15);
+}
