@@ -1071,8 +1071,13 @@ function appendMessage(text, type, id = null, meta = null) {
         avatar.className = 'ia-avatar';
         avatar.innerHTML = `<img src="assets/foto-avatar.PNG" alt="Mentor">`;
 
+        // Columna: burbuja + fila de acciones debajo (fuera de la caja)
+        const col = document.createElement('div');
+        col.className = 'ia-col';
+        col.appendChild(div);
+
         container.appendChild(avatar);
-        container.appendChild(div);
+        container.appendChild(col);
 
         const copyBtn = document.createElement('button');
         copyBtn.className = 'copy-msg-btn';
@@ -1091,7 +1096,7 @@ function appendMessage(text, type, id = null, meta = null) {
         const dbId = meta?.dbId || null;
         const enVivo = id && id.startsWith('ia-response-') && !dbId;
         if (dbId || enVivo) {
-            container.appendChild(crearBotonesFeedback(dbId, meta?.reaction || null));
+            col.appendChild(crearBotonesFeedback(dbId, meta?.reaction || null));
         }
 
         ELEMENTS.chatBox.appendChild(container);
@@ -1160,16 +1165,20 @@ function appendMessage(text, type, id = null, meta = null) {
 }
 
 // --- BOTONES DE VALORACIÓN DE RESPUESTAS (👍/👎) ---
+// Iconos outline (silueta estilo Feather), igual que copiar/🗑
+const SVG_THUMBS_UP = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg>`;
+const SVG_THUMBS_DOWN = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3zm7-13h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17"/></svg>`;
+
 function crearBotonesFeedback(msgId, reactionActual) {
     const wrap = document.createElement('div');
     wrap.className = 'feedback-btns';
     if (msgId) wrap.dataset.msgId = msgId;
 
-    const crearBtn = (tipo, emoji, titulo) => {
+    const crearBtn = (tipo, svg, titulo) => {
         const b = document.createElement('button');
         b.className = 'feedback-btn';
         b.dataset.tipo = tipo;
-        b.innerHTML = emoji;
+        b.innerHTML = svg;
         b.title = titulo;
         if (reactionActual === tipo) b.classList.add('activa');
         if (!msgId) { b.disabled = true; b.classList.add('pendiente'); }
@@ -1180,8 +1189,8 @@ function crearBotonesFeedback(msgId, reactionActual) {
         return b;
     };
 
-    wrap.appendChild(crearBtn('like', '👍', 'Me gustó esta respuesta'));
-    wrap.appendChild(crearBtn('dislike', '👎', 'No me gustó esta respuesta'));
+    wrap.appendChild(crearBtn('like', SVG_THUMBS_UP, 'Me gustó esta respuesta'));
+    wrap.appendChild(crearBtn('dislike', SVG_THUMBS_DOWN, 'No me gustó esta respuesta'));
 
     // --- 🗑 ELIMINAR MENSAJE (hereda activación de activarFeedback) ---
     const trashBtn = document.createElement('button');

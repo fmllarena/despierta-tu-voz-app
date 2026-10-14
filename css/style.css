@@ -303,6 +303,21 @@ header p {
     position: relative;
 }
 
+/* Columna del mensaje IA: burbuja + fila de acciones debajo */
+.ia-col {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    flex: 1;
+    min-width: 0;
+}
+
+/* Preserva el comportamiento de burbuja "a medida del contenido"
+   (antes era flex-item directo; ahora dentro de la columna) */
+.ia-col > .message {
+    width: fit-content;
+}
+
 .ia-avatar {
     width: 32px;
     height: 32px;
@@ -4963,13 +4978,12 @@ html[data-theme="dark"] .copy-msg-btn:hover {
 }
 
 /* --- BOTONES DE VALORACIÓN DE RESPUESTAS (👍/👎) --- */
+/* Fila en flujo normal bajo la burbuja (fuera de la caja) */
 .feedback-btns {
-    position: absolute;
-    bottom: 4px;
-    right: 36px;
     display: flex;
+    align-items: center;
     gap: 4px;
-    z-index: 10;
+    margin-top: 4px;
 }
 .feedback-btn {
     background: rgba(128,128,128,0.15);
