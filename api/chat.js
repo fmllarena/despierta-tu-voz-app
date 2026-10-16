@@ -421,7 +421,8 @@ async function callOpenRouterAPI({ intent, prompt, history, stream, res }) {
         body: JSON.stringify({
             model: 'openrouter/free',
             messages,
-            stream: !!stream
+            stream: !!stream,
+            max_tokens: 4096
         })
     });
 
@@ -437,7 +438,11 @@ async function callOpenRouterAPI({ intent, prompt, history, stream, res }) {
         const decoder = new TextDecoder();
         let buffer = "";
         let modeloReal = null;
-        let streamOk = false;
+        let wroteText = false;
+        let pending = "";
+        let totalLen = 0;
+        const UMBRAL_JUNK = 60; // chars mínimos: junk tipo "User Safety: safe" no llega al cliente
+
         try {
             while (true) {
                 const { done, value } = await reader.read();
@@ -446,22 +451,64 @@ async function callOpenRouterAPI({ intent, prompt, history, stream, res }) {
                 const lines = buffer.split('\n');
                 buffer = lines.pop();
                 for (const line of lines) {
-                    if (line.startsWith('data: ') && line !== 'data: [DONE]') {
-                        try {
-                            const data = JSON.parse(line.substring(6));
-                            if (!modeloReal && data.model) modeloReal = data.model;
-                            const text = data.choices?.[0]?.delta?.content;
-                            if (text) res.write(`data: ${JSON.stringify({ text })}\n\n`);
-                        } catch (e) { /* chunk incompleto */ }
+                    if (!line.startsWith('data: ') || line === 'data: [DONE]') continue;
+                    let data;
+                    try { data = JSON.parse(line.substring(6)); } catch (e) { continue; }
+
+                    if (data.error) {
+                        throw new Error(`OpenRouter Error: ${data.error.message || JSON.stringify(data.error)}`);
+                    }
+
+                    if (!modeloReal && data.model) modeloReal = data.model;
+                    const choice = data.choices?.[0];
+                    if (choice?.finish_reason === 'length') {
+                        console.warn(`⚠️ OpenRouter: finish_reason=length (tope max_tokens) con modelo ${modeloReal || '?'}`);
+                    }
+                    const text = choice?.delta?.content;
+                    if (text) {
+                        totalLen += text.length;
+                        if (!wroteText) {
+                            // Retener hasta acumular umbral: detecta respuestas degeneradas antes de emitir
+                            pending += text;
+                            if (pending.length >= UMBRAL_JUNK) {
+                                wroteText = true;
+                                res.write(`data: ${JSON.stringify({ text: pending })}\n\n`);
+                                pending = "";
+                            }
+                        } else {
+                            res.write(`data: ${JSON.stringify({ text })}\n\n`);
+                        }
                     }
                 }
             }
-            streamOk = true;
-        } finally {
-            // Modelo real servido por OpenRouter (ej. deepseek/deepseek-r1:free)
-            if (streamOk && !res.writableEnded) {
-                res.write(`data: ${JSON.stringify({ info: modeloReal || 'openrouter/free' })}\n\n`);
+        } catch (e) {
+            if (!wroteText) {
+                // Nada emitido → res intacto: el siguiente proveedor puede continuar el mismo stream
+                reader.cancel().catch(() => { });
+                throw e;
             }
+            // Texto ya emitido → avisar al cliente y cerrar (evita corte silencioso)
+            console.warn(`⚠️ OpenRouter: stream interrumpido con texto emitido: ${e.message}`);
+            if (!res.writableEnded) {
+                res.write(`data: ${JSON.stringify({ error: e.message })}\n\n`);
+                res.end();
+            }
+            return;
+        }
+
+        // Fin del stream: ¿respuesta real o degenerada? (fallback a Mistral si es junk)
+        if (totalLen < UMBRAL_JUNK) {
+            console.warn(`⚠️ OpenRouter: respuesta degenerada (${totalLen} chars, modelo ${modeloReal || '?'}) → fallback al siguiente proveedor`);
+            reader.cancel().catch(() => { });
+            throw new Error(`OpenRouter: respuesta degenerada (${totalLen} chars)`);
+        }
+        if (pending) {
+            res.write(`data: ${JSON.stringify({ text: pending })}\n\n`);
+            pending = "";
+        }
+        // Modelo real servido por OpenRouter (ej. deepseek/deepseek-r1:free)
+        if (!res.writableEnded) {
+            res.write(`data: ${JSON.stringify({ info: modeloReal || 'openrouter/free' })}\n\n`);
             res.end();
         }
         return;
@@ -611,7 +658,7 @@ async function handleStreamResponse(response, res) {
     const reader = response.body.getReader();
     const decoder = new TextDecoder();
     let buffer = "";
-    let streamOk = false;
+    let wroteText = false;
 
     try {
         while (true) {
@@ -623,23 +670,63 @@ async function handleStreamResponse(response, res) {
             buffer = lines.pop();
 
             for (const line of lines) {
-                if (line.startsWith('data: ')) {
-                    try {
-                        const data = JSON.parse(line.substring(6));
-                        const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-                        if (text) {
-                            res.write(`data: ${JSON.stringify({ text })}\n\n`);
-                        }
-                    } catch (e) { /* chunk incompleto */ }
+                if (!line.startsWith('data: ')) continue;
+                let data;
+                try { data = JSON.parse(line.substring(6)); } catch (e) { continue; }
+
+                if (data.error) {
+                    throw new Error(`Gemini Error: ${data.error.message || JSON.stringify(data.error)}`);
+                }
+
+                const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+                if (text) {
+                    wroteText = true;
+                    res.write(`data: ${JSON.stringify({ text })}\n\n`);
                 }
             }
         }
-        streamOk = true;
-    } finally {
-        // Informar del modelo usado solo si el stream terminó bien (el cliente lo loguea)
-        if (streamOk && !res.writableEnded) {
-            res.write(`data: ${JSON.stringify({ info: GEMINI_MODEL })}\n\n`);
+    } catch (e) {
+        if (!wroteText) {
+            // Nada emitido → res intacto: el siguiente proveedor continúa el mismo stream
+            reader.cancel().catch(() => { });
+            throw e;
         }
+        // Texto ya emitido → avisar al cliente y cerrar (evita corte silencioso)
+        console.warn(`⚠️ Gemini: stream interrumpido con texto emitido: ${e.message}`);
+        if (!res.writableEnded) {
+            res.write(`data: ${JSON.stringify({ error: e.message })}\n\n`);
+            res.end();
+        }
+        return;
+    }
+
+    // Resto final sin salto de línea (si el stream terminó justo ahí)
+    const tail = buffer.trim();
+    if (tail.startsWith('data: ')) {
+        let d = null;
+        try { d = JSON.parse(tail.slice(6)); } catch (e) { /* incompleto */ }
+        if (d && d.error) {
+            const msg = d.error.message || JSON.stringify(d.error);
+            if (!wroteText) { throw new Error(`Gemini Error: ${msg}`); }
+            if (!res.writableEnded) {
+                res.write(`data: ${JSON.stringify({ error: msg })}\n\n`);
+                res.end();
+            }
+            return;
+        }
+        const t = d && d.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (t) {
+            wroteText = true;
+            res.write(`data: ${JSON.stringify({ text: t })}\n\n`);
+        }
+    }
+
+    // Stream "exitoso" pero sin texto (bloqueo de seguridad / respuesta vacía) → fallback
+    if (!wroteText) throw new Error('Gemini Error: stream sin texto');
+
+    // Éxito: informar del modelo usado solo si el stream terminó bien (el cliente lo loguea)
+    if (!res.writableEnded) {
+        res.write(`data: ${JSON.stringify({ info: GEMINI_MODEL })}\n\n`);
         res.end();
     }
 }
@@ -802,35 +889,54 @@ async function _mistralCall({ intent, prompt, history, stream, res, fileData, re
         let streamBuffer = "";
         const STREAM_TIMEOUT = 30000;
         let modeloReal = null;
-        let streamOk = false;
+        let wroteText = false;
+
         try {
             while (true) {
-                const result = await Promise.race([
+                const { done, value } = await Promise.race([
                     reader.read(),
                     new Promise((_, reject) => setTimeout(() => reject(new Error('Stream timeout: Mistral no respondió en 30s')), STREAM_TIMEOUT))
                 ]);
-                const { done, value } = result;
                 if (done) break;
                 streamBuffer += decoder.decode(value, { stream: true });
                 const lines = streamBuffer.split('\n');
                 streamBuffer = lines.pop();
                 for (const line of lines) {
-                    if (line.startsWith('data: ') && line !== 'data: [DONE]') {
-                        try {
-                            const data = JSON.parse(line.substring(6));
-                            if (!modeloReal && data.model) modeloReal = data.model;
-                            const text = data.choices?.[0]?.delta?.content;
-                            if (text) res.write(`data: ${JSON.stringify({ text })}\n\n`);
-                        } catch (e) { /* chunk incompleto */ }
+                    if (!line.startsWith('data: ') || line === 'data: [DONE]') continue;
+                    let data;
+                    try { data = JSON.parse(line.substring(6)); } catch (e) { continue; }
+
+                    if (data.error) {
+                        throw new Error(`Mistral Error: ${data.error.message || JSON.stringify(data.error)}`);
+                    }
+
+                    if (!modeloReal && data.model) modeloReal = data.model;
+                    const choice = data.choices?.[0];
+                    if (choice?.finish_reason === 'length') {
+                        console.warn(`⚠️ Mistral: finish_reason=length (tope max_tokens) con modelo ${modeloReal || '?'}`);
+                    }
+                    const text = choice?.delta?.content;
+                    if (text) {
+                        wroteText = true;
+                        res.write(`data: ${JSON.stringify({ text })}\n\n`);
                     }
                 }
             }
-            streamOk = true;
-        } finally {
-            // Modelo real servido por Mistral (los chunks lo incluyen en data.model)
-            if (streamOk && !res.writableEnded) {
-                res.write(`data: ${JSON.stringify({ info: modeloReal || `${MISTRAL_MODEL} (UE)` })}\n\n`);
+        } catch (e) {
+            if (!wroteText) throw e; // sin texto emitido → error global (Mistral es el último proveedor)
+            // Texto ya emitido → avisar al cliente y cerrar (evita corte silencioso)
+            console.warn(`⚠️ Mistral: stream interrumpido con texto emitido: ${e.message}`);
+            if (!res.writableEnded) {
+                res.write(`data: ${JSON.stringify({ error: e.message })}\n\n`);
+                res.end();
             }
+            return;
+        }
+
+        if (!wroteText) throw new Error('Mistral Error: stream sin texto');
+        if (!res.writableEnded) {
+            // Modelo real servido por Mistral (los chunks lo incluyen en data.model)
+            res.write(`data: ${JSON.stringify({ info: modeloReal || `${MISTRAL_MODEL} (UE)` })}\n\n`);
             res.end();
         }
         return;
