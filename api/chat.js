@@ -154,6 +154,10 @@ async function processChat(req, res = null) {
     const finalPrompt = context ? `CONTEXTO:\n${context}\n\nMENSAJE:\n${message}` : message;
 
     // --- CADENA DE REINTENTOS CON FALLBACK ---
+    // index-original.html trabaja SOLO con Gemini (2 keys con rotación interna en geminiFetchWithKeys);
+    // si Gemini falla (p. ej. 503 por saturación), simplemente se avisa y el usuario reintenta.
+    // El resto de intents (roles-dashboard, compendio, persona, teacher) conservan la cadena completa.
+    const GEMINI_ONLY_INTENTS = ['mentor_chat', 'inspiracion_dia', 'session_chronicle'];
     const errors = [];
     const hasMedia = fileData && ((fileData.mimeType && fileData.mimeType.startsWith('audio/')) || (fileData.data || (Array.isArray(fileData) && fileData.length > 0)));
 
@@ -161,9 +165,14 @@ async function processChat(req, res = null) {
     const defaultOrder = ['gemini', 'openrouter', 'mistral'];
     const geminiFirstOrder = ['gemini', 'openrouter', 'mistral'];
     const openrouterFirstOrder = ['openrouter', 'gemini', 'mistral'];
-    let providerOrder = defaultOrder;
-    if (preferredProvider === 'gemini') providerOrder = geminiFirstOrder;
-    else if (preferredProvider === 'openrouter') providerOrder = openrouterFirstOrder;
+    let providerOrder;
+    if (GEMINI_ONLY_INTENTS.includes(intent)) {
+        providerOrder = ['gemini'];
+    } else {
+        providerOrder = defaultOrder;
+        if (preferredProvider === 'gemini') providerOrder = geminiFirstOrder;
+        else if (preferredProvider === 'openrouter') providerOrder = openrouterFirstOrder;
+    }
 
     const MISTRAL_KEYS = [process.env.MISTRAL_API_KEY, process.env.MISTRAL_API_KEY_2, process.env.MISTRAL_API_KEY_3].filter(Boolean);
 
