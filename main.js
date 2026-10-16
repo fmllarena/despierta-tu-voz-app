@@ -1087,7 +1087,12 @@ function appendMessage(text, type, id = null, meta = null) {
         copyBtn.title = 'Copiar mensaje';
         copyBtn.onclick = (e) => {
             e.stopPropagation();
-            copiarConFormato(div, text.replace(/\[\s*SESION\\?_?FINAL\s*\]/gi, "").trim(), copyBtn);
+            // Leer el texto vivo del div: el closure captura "" durante el streaming
+            const liveText = div.textContent
+                .replace(/\[\s*SESION\\?_?FINAL\s*\]/gi, "")
+                .replace(/▮/g, "")
+                .trim();
+            copiarConFormato(div, liveText, copyBtn);
         };
         container.appendChild(copyBtn);
 
