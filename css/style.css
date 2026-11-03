@@ -5114,9 +5114,6 @@ html[data-theme="dark"] .feedback-btn.trash-btn:hover:not(:disabled) {
     background: rgba(142, 125, 109, 0.28);
     box-shadow: inset 0 0 0 1px rgba(142, 125, 109, 0.55);
 }
-html[data-theme="dark"] .feedback-btn.save-msg-btn img {
-    filter: invert(1);
-}
 html[data-theme="dark"] .feedback-btn.save-msg-btn.saved {
     background: rgba(212, 175, 55, 0.22);
     box-shadow: inset 0 0 0 1px rgba(212, 175, 55, 0.5);
@@ -5144,8 +5141,4 @@ html[data-theme="dark"] .feedback-btn.save-msg-btn.saved {
 .dtv-toast.visible {
     opacity: 1;
     transform: translate(-50%, 0);
-}
-
-html[data-theme="dark"] #savedMessagesBtn img {
-    filter: invert(1) !important;
 }
