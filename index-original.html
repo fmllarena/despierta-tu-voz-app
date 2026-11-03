@@ -35,8 +35,8 @@
     <!-- Stripe SDK -->
     <script src="https://js.stripe.com/v3/"></script>
 
-    <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="css/modals.css">
+    <link rel="stylesheet" href="css/style.css?v=7.2">
+    <link rel="stylesheet" href="css/modals.css?v=7.2">
     <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="shortcut icon" href="/favicon.ico" />
@@ -219,6 +219,9 @@
             </button>
             <button id="botiquinBtn" class="icon-nav-btn" title="Emergencias">
                 <img src="assets/icon_emergencia.png" alt="Emergencias">
+            </button>
+            <button id="savedMessagesBtn" class="icon-nav-btn" title="Mensajes Guardados" style="display: none;">
+                <img src="assets/marcador2.png" alt="Mensajes Guardados">
             </button>
             <button id="sesionBtn" class="premium-btn icon-nav-btn" title="Sesiones 1/1" style="display: none;">
                 <img src="assets/icon_sesiones.png" alt="Sesiones">
@@ -648,6 +651,26 @@
         </div>
     </div>
 
+    <!-- Modal de Mensajes Guardados (similar a guardar un reel de Instagram) -->
+    <div id="savedMessagesModal" class="modal saved-messages-modal">
+        <div class="modal-content saved-messages-content">
+            <div class="saved-messages-header">
+                <h3>
+                    <img src="assets/marcador2.png" alt="" class="saved-header-icon">
+                    Tus Mensajes Guardados
+                    <span id="savedMessagesCount" class="saved-messages-count"></span>
+                </h3>
+                <span class="close-saved-messages">&times;</span>
+            </div>
+            <div class="saved-messages-body" id="savedMessagesContent">
+                <!-- Se poblará dinámicamente con JavaScript -->
+                <div class="ia thinking" style="padding: 30px; text-align: center;">
+                    Cargando tus mensajes guardados...
+                </div>
+            </div>
+        </div>
+    </div>
+
     <footer class="app-footer">
         <p>© 2026 Despierta tu Voz. Todos los derechos reservados. | <a href="cookies.html"
                 style="color: inherit; text-decoration: underline;">Cookies</a></p>
@@ -785,12 +808,12 @@
     <script src="https://cdn.jsdelivr.net/npm/tone@14.7.77/build/Tone.js"></script>
     <script src="js/stripe-checkout.js"></script>
     <script type="module" src="js/modules/config.js?v=7.1"></script>
-    <script type="module" src="js/modules/elements.js?v=7.1"></script>
+    <script type="module" src="js/modules/elements.js?v=7.2"></script>
     <script type="module" src="js/modules/music.js?v=7.1"></script>
     <script type="module" src="js/modules/voice.js?v=7.1"></script>
     <script type="module" src="js/modules/legal.js?v=7.1"></script>
     <script type="module" src="js/modules/support.js?v=7.1"></script>
-    <script type="module" src="js/modules/settings.js?v=7.1"></script>
+    <script type="module" src="js/modules/settings.js?v=7.2"></script>
     <script src="js/modules/sessions.js?v=7.2" defer></script>
     <script type="module" src="js/modules/payments.js?v=7.1"></script>
     <script type="module" src="js/modules/email.js?v=7.1"></script>
@@ -798,7 +821,7 @@
     <script type="module" src="js/modules/tour.js?v=7.1"></script>
     <script type="module" src="js/modules/files.js?v=7.1"></script>
     <script type="module" src="js/modules/pronunciation.js?v=7.1"></script>
-    <script src="main.js?v=7.7" defer></script>
+    <script src="main.js?v=7.8" defer></script>
 
     <!-- Script de Diagnóstico DTV (No-módulo para evitar fallos de carga) -->
     <script>

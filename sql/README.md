@@ -18,6 +18,9 @@ Esta carpeta contiene todos los scripts SQL necesarios para recrear la base de d
 ### Seguridad (08)
 - **08_rls_policies.sql** - Políticas de Row Level Security
 
+### Mensajes guardados (09)
+- **09_create_table_mensajes_guardados.sql** - Respuestas del Mentor marcadas por el alumno (tabla, índices, RLS y permisos)
+
 ### Migraciones
 - **add_email_verification.sql** - Añade columnas para verificación de email
 
@@ -42,7 +45,10 @@ Si necesitas recrear la base de datos desde cero, ejecuta los scripts en este or
 # 4. Aplicar políticas RLS
 08_rls_policies.sql
 
-# 5. Migraciones adicionales
+# 5. Mensajes guardados (imprescindible para el marcador del chat)
+09_create_table_mensajes_guardados.sql
+
+# 6. Migraciones adicionales
 add_email_verification.sql
 ```
 
@@ -64,6 +70,13 @@ Historial completo de conversaciones:
 - Respuestas del mentor IA
 - Resúmenes diarios generados automáticamente
 - Mensajes del sistema
+
+### `mensajes_guardados`
+Respuestas del Mentor marcadas por el alumno con el icono de marcador:
+- Pregunta del alumno y respuesta del Mentor (copias desacopladas del mensaje original)
+- Fecha del mensaje y fecha de guardado
+- Etiquetas opcionales
+- Un registro por alumno y mensaje (índice único)
 
 ### `user_coaching_data`
 Datos del viaje "Mi Viaje" (5 módulos):

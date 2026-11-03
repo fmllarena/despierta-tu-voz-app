@@ -2,6 +2,7 @@ import { ELEMENTS } from './elements.js';
 import { userProfile, chatHistory } from './config.js';
 import { state } from './state.js';
 import { alertCustom } from './utils.js';
+import { MENSAJES_GUARDADOS } from './saved-messages.js';
 
 function aplicarModoOscuro(activo) {
     if (activo) {
@@ -355,9 +356,11 @@ if (document.readyState === 'loading') {
         initDarkMode();
         AJUSTES.setup();
         PREFERENCIAS.setup();
+        MENSAJES_GUARDADOS.setup();
     });
 } else {
     initDarkMode();
     AJUSTES.setup();
     PREFERENCIAS.setup();
+    MENSAJES_GUARDADOS.setup();
 }

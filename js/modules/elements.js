@@ -126,5 +126,11 @@ export const ELEMENTS = window.ELEMENTS = {
     // Quick Actions
     get quickUploadBtn() { return document.getElementById('quickUploadBtn'); },
     get quickPhoneticsBtn() { return document.getElementById('quickPhoneticsBtn'); },
-    get phoneticsMenu() { return document.getElementById('phoneticsMenu'); }
+    get phoneticsMenu() { return document.getElementById('phoneticsMenu'); },
+
+    // Botón y modal de Mensajes Guardados
+    get savedMessagesBtn() { return document.getElementById('savedMessagesBtn'); },
+    get savedMessagesModal() { return document.getElementById('savedMessagesModal'); },
+    get savedMessagesContent() { return document.getElementById('savedMessagesContent'); },
+    get closeSavedMessages() { return document.querySelector('.close-saved-messages'); }
 };

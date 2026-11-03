@@ -142,8 +142,67 @@ window.addEventListener('click', e => {
     if (e.target === ELEMENTS.customAlert) cerrarAlerta(false);
 });
 
-// --- SOPORTE HÍBRIDO ---
-// Movido a js/modules/support.js
+// --- ACTUALIZAR UI SEGÚN EL USUARIO ---
+function updateUI(user) {
+    if (!ELEMENTS) {
+        console.warn("⚠️ updateUI llamada antes de cargar ELEMENTS");
+        return;
+    }
+    const isVisible = user ? 'block' : 'none';
+    const isFlex = user ? 'flex' : 'none';
+
+    if (ELEMENTS.authOverlay) ELEMENTS.authOverlay.style.display = (user && !isRecoveringPassword) ? 'none' : 'flex';
+    if (ELEMENTS.headerButtons) ELEMENTS.headerButtons.style.display = isFlex;
+    if (ELEMENTS.mainHelpBtn) ELEMENTS.mainHelpBtn.style.display = isFlex;
+
+    if (ELEMENTS && ELEMENTS.navButtons) {
+        Object.values(ELEMENTS.navButtons).forEach(btn => {
+            if (btn) btn.style.display = isVisible;
+        });
+    }
+
+    if (user) {
+        if (!isRecoveringPassword) {
+            ELEMENTS.authOverlay.style.display = 'none';
+        }
+
+        // El perfil puede tardar un poco en cargar, usamos el tier del perfil si existe
+        const tier = (userProfile?.subscription_tier || 'free').toLowerCase().trim();
+        if (tier === 'premium' || tier === 'transforma') {
+            if (ELEMENTS.upgradeBtn) ELEMENTS.upgradeBtn.style.display = 'none';
+            if (ELEMENTS.sesionBtn) ELEMENTS.sesionBtn.style.display = 'flex'; // Usar flex si es icon-nav-btn
+            if (ELEMENTS.savedMessagesBtn) ELEMENTS.savedMessagesBtn.style.display = 'flex'; // Mostrar botón de guardar
+        } else if (tier === 'pro' || tier === 'profundiza' || tier === 'miembro promo inicial') {
+            if (ELEMENTS.upgradeBtn) {
+                ELEMENTS.upgradeBtn.title = "Mejorar a Transforma";
+                ELEMENTS.upgradeBtn.style.display = 'flex';
+            }
+            if (ELEMENTS.sesionBtn) ELEMENTS.sesionBtn.style.display = 'flex';
+            if (ELEMENTS.savedMessagesBtn) ELEMENTS.savedMessagesBtn.style.display = 'flex'; // Mostrar botón de guardar
+        } else {
+            if (ELEMENTS.upgradeBtn) {
+                ELEMENTS.upgradeBtn.title = "Mejorar Plan";
+                ELEMENTS.upgradeBtn.style.display = 'flex';
+            }
+            if (ELEMENTS.sesionBtn) ELEMENTS.sesionBtn.style.display = 'none';
+            if (ELEMENTS.savedMessagesBtn) ELEMENTS.savedMessagesBtn.style.display = 'flex'; // Mostrar botón de guardar
+        }
+        if (ELEMENTS.ajustesBtn) ELEMENTS.ajustesBtn.style.display = 'block';
+        if (ELEMENTS.supportBubble) ELEMENTS.supportBubble.style.display = 'flex';
+    } else {
+        ELEMENTS.authOverlay.style.display = 'flex';
+        ELEMENTS.upgradeBtn.style.display = 'none';
+        ELEMENTS.sesionBtn.style.display = 'none';
+        if (ELEMENTS.ajustesBtn) ELEMENTS.ajustesBtn.style.display = 'none';
+        if (ELEMENTS.supportBubble) ELEMENTS.supportBubble.style.display = 'none';
+        if (ELEMENTS.savedMessagesBtn) ELEMENTS.savedMessagesBtn.style.display = 'none'; // Ocultar botón si no hay sesión
+    }
+
+    if (!user) {
+        ELEMENTS.chatBox.innerHTML = "";
+        appendMessage(MENSAJE_BIENVENIDA, 'ia');
+    }
+}
 
 async function llamarGemini(message, history, intent, extraData = {}, onChunk = null, signal = null) {
     try {
@@ -288,6 +347,7 @@ function setupAuthListener() {
             console.log("🚪 Usuario cerró sesión.");
             userProfile = null;
             window.userProfile = null;
+            state.userProfile = null;
             isRecoveringPassword = false;
             updateUI(null);
         } else if (user && newUserIsDifferent) {
@@ -324,6 +384,7 @@ async function cargarPerfil(user) {
 
         userProfile = perfil;
         window.userProfile = perfil; // Exportar para otros módulos (Mi Viaje)
+        state.userProfile = perfil; // Estado compartido (Ajustes, Mensajes Guardados, etc.)
         sessionStartTime = new Date().toISOString(); // Marcar inicio de sesión para exportarChatDoc
         // Asegurar que accepted_terms esté presente en el objeto local
         userProfile.accepted_terms = !!perfil.accepted_terms;
@@ -422,7 +483,7 @@ async function cargarHistorialDesdeDB(userId, render = false) {
             chatHistory.push({ role: role, parts: [{ text: msg.texto }], created_at: msg.created_at, msgId: msg.id });
 
             if (render) {
-                appendMessage(msg.texto, msg.emisor, null, { dbId: msg.id, reaction: msg.reaction });
+                appendMessage(msg.texto, msg.emisor, null, { dbId: msg.id, reaction: msg.reaction, createdAt: msg.created_at });
             }
         });
 
@@ -435,63 +496,6 @@ async function cargarHistorialDesdeDB(userId, render = false) {
 
     } catch (e) {
         console.error("Error crítico recuperando historial:", e);
-    }
-}
-
-function updateUI(user) {
-    if (!ELEMENTS) {
-        console.warn("⚠️ updateUI llamada antes de cargar ELEMENTS");
-        return;
-    }
-    const isVisible = user ? 'block' : 'none';
-    const isFlex = user ? 'flex' : 'none';
-
-    if (ELEMENTS.authOverlay) ELEMENTS.authOverlay.style.display = (user && !isRecoveringPassword) ? 'none' : 'flex';
-    if (ELEMENTS.headerButtons) ELEMENTS.headerButtons.style.display = isFlex;
-    if (ELEMENTS.mainHelpBtn) ELEMENTS.mainHelpBtn.style.display = isFlex;
-
-    if (ELEMENTS && ELEMENTS.navButtons) {
-        Object.values(ELEMENTS.navButtons).forEach(btn => {
-            if (btn) btn.style.display = isVisible;
-        });
-    }
-
-    if (user) {
-        if (!isRecoveringPassword) {
-            ELEMENTS.authOverlay.style.display = 'none';
-        }
-
-        // El perfil puede tardar un poco en cargar, usamos el tier del perfil si existe
-        const tier = (userProfile?.subscription_tier || 'free').toLowerCase().trim();
-        if (tier === 'premium' || tier === 'transforma') {
-            if (ELEMENTS.upgradeBtn) ELEMENTS.upgradeBtn.style.display = 'none';
-            if (ELEMENTS.sesionBtn) ELEMENTS.sesionBtn.style.display = 'flex'; // Usar flex si es icon-nav-btn
-        } else if (tier === 'pro' || tier === 'profundiza' || tier === 'miembro promo inicial') {
-            if (ELEMENTS.upgradeBtn) {
-                ELEMENTS.upgradeBtn.title = "Mejorar a Transforma";
-                ELEMENTS.upgradeBtn.style.display = 'flex';
-            }
-            if (ELEMENTS.sesionBtn) ELEMENTS.sesionBtn.style.display = 'flex';
-        } else {
-            if (ELEMENTS.upgradeBtn) {
-                ELEMENTS.upgradeBtn.title = "Mejorar Plan";
-                ELEMENTS.upgradeBtn.style.display = 'flex';
-            }
-            if (ELEMENTS.sesionBtn) ELEMENTS.sesionBtn.style.display = 'none';
-        }
-        if (ELEMENTS.ajustesBtn) ELEMENTS.ajustesBtn.style.display = 'block';
-        if (ELEMENTS.supportBubble) ELEMENTS.supportBubble.style.display = 'flex';
-    } else {
-        ELEMENTS.authOverlay.style.display = 'flex';
-        ELEMENTS.upgradeBtn.style.display = 'none';
-        ELEMENTS.sesionBtn.style.display = 'none';
-        if (ELEMENTS.ajustesBtn) ELEMENTS.ajustesBtn.style.display = 'none';
-        if (ELEMENTS.supportBubble) ELEMENTS.supportBubble.style.display = 'none';
-    }
-
-    if (!user) {
-        ELEMENTS.chatBox.innerHTML = "";
-        appendMessage(MENSAJE_BIENVENIDA, 'ia');
     }
 }
 
@@ -760,7 +764,8 @@ async function sendMessage() {
             document.getElementById(thinkingId)?.remove();
         } else {
             console.error("Error en sendMessage:", e);
-            appendMessage("Vaya, parece que hoy tengo un nudo en la garganta. ¿Podrías intentar decírmelo de nuevo?", 'ia');
+            // Para errores, usar función de borrado que no requiere meta/dbId
+            appendErrorMessage("Vaya, parece que hoy tengo un nudo en la garganta. ¿Podrías intentar decírmelo de nuevo?");
         }
     } finally {
         document.getElementById(thinkingId)?.remove();
@@ -1018,6 +1023,45 @@ function crearBotonesAccionFinal(parentDiv) {
     console.log("🔘 [Botones] Contenedor final:", actionContainer);
 }
 
+async function appendErrorMessage(texto) {
+    const container = document.createElement('div');
+    container.className = 'ia-container';
+    const id = 'msg-error-' + Date.now();
+    container.id = id;
+
+    const avatar = document.createElement('div');
+    avatar.className = 'ia-avatar';
+    avatar.innerHTML = `<img src="assets/foto-avatar.PNG" alt="Mentor">`;
+
+    const col = document.createElement('div');
+    col.className = 'ia-col';
+
+    const div = document.createElement('div');
+    div.className = 'message ia';
+    div.innerHTML = `
+        <div style="padding: 8px 12px; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 8px; color: #dc2626; font-size: 0.9em;">
+            ${texto}
+        </div>
+    `;
+
+    const trashBtn = document.createElement('button');
+    trashBtn.className = 'trash-msg-btn';
+    trashBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>`;
+    trashBtn.title = 'Eliminar mensaje de error';
+    trashBtn.onclick = (e) => {
+        e.stopPropagation();
+        eliminarMensaje(container);
+    };
+    div.appendChild(trashBtn);
+
+    container.appendChild(avatar);
+    container.appendChild(col);
+    col.appendChild(div);
+
+    ELEMENTS.chatBox.appendChild(container);
+    container.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
 function appendMessage(text, type, id = null, meta = null) {
     if (!ELEMENTS.chatBox) return;
     const div = document.createElement('div');
@@ -1103,7 +1147,7 @@ function appendMessage(text, type, id = null, meta = null) {
         const dbId = meta?.dbId || null;
         const enVivo = id && id.startsWith('ia-response-') && !dbId;
         if (dbId || enVivo) {
-            col.appendChild(crearBotonesFeedback(dbId, meta?.reaction || null));
+            col.appendChild(crearBotonesFeedback(dbId, meta?.reaction || null, meta?.createdAt || null));
         }
 
         ELEMENTS.chatBox.appendChild(container);
@@ -1176,10 +1220,11 @@ function appendMessage(text, type, id = null, meta = null) {
 const SVG_THUMBS_UP = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg>`;
 const SVG_THUMBS_DOWN = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3zm7-13h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17"/></svg>`;
 
-function crearBotonesFeedback(msgId, reactionActual) {
+function crearBotonesFeedback(msgId, reactionActual, createdAt = null) {
     const wrap = document.createElement('div');
     wrap.className = 'feedback-btns';
     if (msgId) wrap.dataset.msgId = msgId;
+    if (createdAt) wrap.dataset.createdAt = createdAt;
 
     const crearBtn = (tipo, svg, titulo) => {
         const b = document.createElement('button');
@@ -1199,6 +1244,18 @@ function crearBotonesFeedback(msgId, reactionActual) {
     wrap.appendChild(crearBtn('like', SVG_THUMBS_UP, 'Me gustó esta respuesta'));
     wrap.appendChild(crearBtn('dislike', SVG_THUMBS_DOWN, 'No me gustó esta respuesta'));
 
+    // --- 🔖 GUARDAR RESPUESTA (marcador estilo Instagram) ---
+    const saveBtn = document.createElement('button');
+    saveBtn.className = 'feedback-btn save-msg-btn';
+    saveBtn.innerHTML = `<img src="assets/marcador0.png" alt="Guardar" width="13" height="13">`;
+    saveBtn.title = 'Guardar esta respuesta';
+    if (!msgId) { saveBtn.disabled = true; saveBtn.classList.add('pendiente'); }
+    saveBtn.onclick = (e) => {
+        e.stopPropagation();
+        guardarRespuestaDesdeChat(wrap, saveBtn);
+    };
+    wrap.appendChild(saveBtn);
+
     // --- 🗑 ELIMINAR MENSAJE (hereda activación de activarFeedback) ---
     const trashBtn = document.createElement('button');
     trashBtn.className = 'feedback-btn trash-btn';
@@ -1212,6 +1269,57 @@ function crearBotonesFeedback(msgId, reactionActual) {
     wrap.appendChild(trashBtn);
 
     return wrap;
+}
+
+// --- GUARDAR UNA RESPUESTA CONCRETA EN "MENSAJES GUARDADOS" ---
+async function guardarRespuestaDesdeChat(host, boton) {
+    const msgId = host?.dataset?.msgId;
+    if (!msgId) {
+        alertCustom('Espera a que la respuesta termine de guardarse para poder marcarla.');
+        return;
+    }
+    if (!window.MENSAJES_GUARDADOS?.guardar) {
+        alertCustom('La utilidad de mensajes guardados no está disponible. Recarga la página.');
+        return;
+    }
+
+    const contenedor = host.closest('.ia-container');
+    const mensajeEl = contenedor?.querySelector('.message.ia');
+    // Clonamos para no arrastrar botones (copiar, descargar sesión...) al texto guardado.
+    const clon = mensajeEl?.cloneNode(true);
+    clon?.querySelectorAll('button, .chat-action-container, .feedback-btns').forEach(el => el.remove());
+    const respuesta = (clon?.textContent || '').replace(/▮/g, '').trim();
+    if (!respuesta) {
+        alertCustom('No he podido leer esta respuesta.');
+        return;
+    }
+
+    // La pregunta es el último mensaje del alumno antes de esta respuesta.
+    let pregunta = '';
+    let anterior = contenedor?.previousElementSibling;
+    while (anterior) {
+        const userEl = anterior.matches?.('.user-container') ? anterior.querySelector('.message.user') : null;
+        if (userEl) {
+            pregunta = (userEl.textContent || '').trim();
+            break;
+        }
+        anterior = anterior.previousElementSibling;
+    }
+
+    boton.disabled = true;
+    const resultado = await window.MENSAJES_GUARDADOS.guardar({
+        mensajeId: msgId,
+        pregunta,
+        respuesta,
+        fecha: host.dataset.createdAt || null
+    });
+    boton.disabled = false;
+
+    if (resultado === 'saved' || resultado === 'duplicate') {
+        boton.classList.add('saved');
+        boton.innerHTML = `<img src="assets/marcador.png" alt="Guardado" width="13" height="13">`;
+        boton.title = 'Guardado en tus mensajes';
+    }
 }
 
 // Asocia el id de BD a un elemento (contenedor user o .feedback-btns de IA)
