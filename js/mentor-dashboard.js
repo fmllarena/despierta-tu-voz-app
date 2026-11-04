@@ -313,7 +313,24 @@ async function generateBriefing() {
             })
         });
 
-        const briefingData = await briefingResponse.json();
+        // Vercel devuelve texto plano si la función agota su tiempo (504).
+        // Leemos como texto y parseamos a mano para no mostrar un SyntaxError críptico.
+        const raw = await briefingResponse.text();
+        let briefingData = {};
+        if (raw) {
+            try {
+                briefingData = JSON.parse(raw);
+            } catch {
+                const detalle = briefingResponse.status === 504
+                    ? 'El servidor ha tardado demasiado.'
+                    : `El servidor no devolvió una respuesta válida (HTTP ${briefingResponse.status}).`;
+                throw new Error(`${detalle} Inténtalo de nuevo.`);
+            }
+        }
+
+        if (!briefingResponse.ok && !briefingData.error) {
+            throw new Error(`El servidor devolvió un error (HTTP ${briefingResponse.status}). Inténtalo de nuevo.`);
+        }
 
         if (briefingData.error) {
             if (briefingData.isTimeout) {

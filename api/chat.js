@@ -31,6 +31,21 @@ async function fetchWithBackoff(url, options, maxRetries = 2) {
     return await fetch(url, options);
 }
 
+// --- HELPER: límite de tiempo para peticiones no-stream ---
+// Vercel corta la función a los 60 s y devuelve texto plano ("An error occurred...").
+// Con este límite respondemos antes con JSON y un mensaje claro.
+function withTimeout(promise, ms, message) {
+    let timer;
+    const timeout = new Promise((_, reject) => {
+        timer = setTimeout(() => {
+            const error = new Error(message);
+            error.isTimeout = true;
+            reject(error);
+        }, ms);
+    });
+    return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
+}
+
 // --- HELPER: POST a Gemini rotando GEMINI_API_KEY -> GEMINI_API_KEY_2 ante errores reintentables ---
 // Devuelve el Response OK; si todas las keys fallan, lanza el último error.
 async function geminiFetchWithKeys(url, body) {
@@ -78,7 +93,12 @@ module.exports = async function handler(req, res) {
             setupStreamHeaders(res);
             await processChat(req, res);
         } else {
-            const result = await processChat(req);
+            // 52 s: margen de 8 s antes del corte de Vercel (60 s).
+            const result = await withTimeout(
+                processChat(req),
+                52000,
+                "El servidor ha tardado demasiado. Prueba de nuevo."
+            );
             return res.status(200).json(result);
         }
     } catch (error) {
@@ -157,6 +177,8 @@ async function processChat(req, res = null) {
     // index-original.html trabaja SOLO con Gemini (2 keys con rotación interna en geminiFetchWithKeys);
     // si Gemini falla (p. ej. 503 por saturación), simplemente se avisa y el usuario reintenta.
     // El resto de intents (roles-dashboard, compendio, persona, teacher) conservan la cadena completa.
+    // Excepción: el informe del mentor es largo y OpenRouter free suele agotar los 60 s de Vercel;
+    // para ese intent se salta OpenRouter y se usa Gemini -> Mistral.
     const GEMINI_ONLY_INTENTS = ['mentor_chat', 'inspiracion_dia', 'session_chronicle'];
     const errors = [];
     const hasMedia = fileData && ((fileData.mimeType && fileData.mimeType.startsWith('audio/')) || (fileData.data || (Array.isArray(fileData) && fileData.length > 0)));
@@ -168,6 +190,8 @@ async function processChat(req, res = null) {
     let providerOrder;
     if (GEMINI_ONLY_INTENTS.includes(intent)) {
         providerOrder = ['gemini'];
+    } else if (intent === 'mentor_briefing') {
+        providerOrder = ['gemini', 'mistral'];
     } else {
         providerOrder = defaultOrder;
         if (preferredProvider === 'gemini') providerOrder = geminiFirstOrder;
@@ -1591,15 +1615,19 @@ function handleError(error, res, stream) {
     console.error("⛔ [Backend Chat Error]:", error);
     if (res.writableEnded) return;
 
-    const msg = error.message.includes("Gemini Error") || error.message.includes("Mistral Error")
-        ? "El Mentor está meditando profundamente... Prueba de nuevo."
-        : "Error técnico temporal.";
+    const rawMessage = String(error?.message || '');
+    const isTimeout = !!error?.isTimeout;
+    const msg = isTimeout
+        ? "El servidor ha tardado demasiado. Prueba de nuevo."
+        : rawMessage.includes("Gemini Error") || rawMessage.includes("Mistral Error") || rawMessage.includes("OpenRouter Error")
+            ? "El Mentor está meditando profundamente... Prueba de nuevo."
+            : "Error técnico temporal.";
 
     if (stream) {
         res.write(`data: ${JSON.stringify({ error: msg })}\n\n`);
         res.end();
     } else {
-        res.status(500).json({ error: msg, details: error.message });
+        res.status(isTimeout ? 504 : 500).json({ error: msg, details: rawMessage, isTimeout });
     }
 }
 
