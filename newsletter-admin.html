@@ -302,14 +302,33 @@
             status.innerHTML = 'Conectando con el motor de envío...';
 
             try {
+                // Clave de administración (se guarda solo en esta pestaña)
+                let adminKey = sessionStorage.getItem('dtvNewsletterAdminKey');
+                if (!adminKey) {
+                    adminKey = prompt('Clave de administración de la newsletter:');
+                    if (!adminKey) {
+                        btn.disabled = false;
+                        btn.innerText = 'Lanzar Newsletter a todos 🚀';
+                        status.innerHTML = '';
+                        return;
+                    }
+                    sessionStorage.setItem('dtvNewsletterAdminKey', adminKey);
+                }
+
                 // Llamada a nuestro servidor Node o Edge Function
                 const response = await fetch('/api/send-newsletter', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-admin-key': adminKey
+                    },
                     body: JSON.stringify({
                         subject, title, content, ctaText, ctaLink, templateId: 3
                     })
                 });
+                if (response.status === 401) {
+                    sessionStorage.removeItem('dtvNewsletterAdminKey');
+                }
 
                 const result = await response.json();
 

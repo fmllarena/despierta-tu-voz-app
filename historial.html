@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+    <script src="js/services/api-auth.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Historial de Chat - Despierta tu Voz</title>
@@ -280,6 +281,7 @@
         const config = await configRes.json();
 
         sb = createClient(config.url, config.key, { auth: { persistSession: false } });
+        window.__supabase = sb;
         sbService = createClient(config.url, config.key, { auth: { persistSession: false } });
 
         const session = localStorage.getItem('sb-session');

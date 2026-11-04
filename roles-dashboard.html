@@ -3,6 +3,7 @@
 <script>if (localStorage.getItem('rolesDarkMode') === 'true') document.documentElement.setAttribute('data-theme', 'dark')</script>
 
 <head>
+    <script src="js/services/api-auth.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Roles Dashboard - Despierta tu Voz</title>
@@ -237,6 +238,7 @@
             sb = createClient(config.url, config.key, {
                 auth: { storageKey: 'sb-roleplay-auth-token', autoRefreshToken: true, persistSession: true }
             });
+            window.__supabase = sb;
 
             const { data: { session } } = await sb.auth.getSession();
             if (session) mostrarDashboard();
@@ -355,7 +357,10 @@
             if (empty) empty.remove();
             const div = document.createElement('div');
             div.className = `msg ${cls}`;
-            const html = text
+            const safeText = String(text == null ? '' : text).replace(/[&<>"']/g, c => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+            })[c]);
+            const html = safeText
                 .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
                 .replace(/\*(.+?)\*/g, '<em>$1</em>')
                 .replace(/\n/g, '<br>');

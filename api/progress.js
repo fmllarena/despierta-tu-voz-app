@@ -1,16 +1,20 @@
 const { createClient } = require('@supabase/supabase-js');
+const { applyCors, handlePreflight } = require('./_lib/http');
+const { requireUser, canAccessUser } = require('./_lib/auth');
 
 module.exports = async function handler(req, res) {
-    res.setHeader('Access-Control-Allow-Credentials', true);
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'POST,OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-
-    if (req.method === 'OPTIONS') return res.status(200).end();
+    applyCors(req, res);
+    if (handlePreflight(req, res)) return;
     if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-    const { userId } = req.body;
+    const user = await requireUser(req, res);
+    if (!user) return;
+
+    const { userId } = req.body || {};
     if (!userId) return res.status(400).json({ error: 'Falta userId' });
+    if (!canAccessUser(user, userId)) {
+        return res.status(403).json({ error: 'Sin acceso a este alumno' });
+    }
 
     try {
         const supabase = createClient(

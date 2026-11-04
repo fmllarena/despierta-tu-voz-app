@@ -57,7 +57,7 @@ export const SOPORTE = window.SOPORTE = {
         if (text === "...") msgDiv.classList.add('typing');
 
         // Soporte usa marked para IA
-        msgDiv.innerHTML = role === 'ia' ? (text === "..." ? text : window.marked.parse(text)) : text;
+        msgDiv.innerHTML = role === 'ia' ? (text === "..." ? text : window.renderSafeMarkdown(text)) : text;
 
         ELEMENTS.supportChatBox.appendChild(msgDiv);
         ELEMENTS.supportChatBox.scrollTop = ELEMENTS.supportChatBox.scrollHeight;

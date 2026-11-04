@@ -1,17 +1,27 @@
 const { createClient } = require('@supabase/supabase-js');
+const { applyCors, handlePreflight, rateLimit } = require('./_lib/http');
+const { requireUser, canAccessUser } = require('./_lib/auth');
 
 module.exports = async function handler(req, res) {
-    res.setHeader('Access-Control-Allow-Credentials', true).setHeader('Access-Control-Allow-Origin', '*').setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT').setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version');
-    if (req.method === 'OPTIONS') return res.status(200).end();
+    applyCors(req, res);
+    if (handlePreflight(req, res)) return;
 
     if (req.method !== 'POST') return res.status(405).json({ error: 'Método no permitido' });
+    if (!rateLimit(req, res, { key: 'profile', limit: 60, windowMs: 60000 })) return;
+
+    const user = await requireUser(req, res);
+    if (!user) return;
+
+    const { userId } = req.body || {};
+    if (!userId) return res.status(400).json({ error: 'Falta userId' });
+    if (!canAccessUser(user, userId)) {
+        return res.status(403).json({ error: 'Sin acceso a este perfil' });
+    }
 
     const { SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY } = process.env;
-    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
     try {
-        const { userId } = req.body;
-        if (!userId) return res.status(400).json({ error: 'Falta userId' });
+        const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
         // 1. Intentar obtener el perfil
         const { data: profile, error } = await supabase

@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+    <script src="js/services/api-auth.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Compendio de Alumnos - Despierta tu Voz</title>
@@ -196,6 +197,7 @@
             sb = createClient(supabaseUrl, supabaseKey, {
                 auth: { persistSession: false }
             });
+            window.__supabase = sb;
             await sb.auth.setSession(JSON.parse(session));
             const { data: { user } } = await sb.auth.getUser();
             if (user) {
@@ -209,6 +211,7 @@
         sb = createClient(supabaseUrl, supabaseKey, {
             auth: { persistSession: false }
         });
+        window.__supabase = sb;
     }
 
     loginBtn.onclick = async () => {
@@ -243,16 +246,19 @@
         const q = filter.toLowerCase();
         const filtered = todosAlumnos.filter(a => (a.nombre + ' ' + a.email).toLowerCase().includes(q));
         const checked = [...document.querySelectorAll('.alumno-item input:checked')].map(c => c.value);
+        const esc = (v) => String(v == null ? '' : v).replace(/[&<>"']/g, c => ({
+            '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+        })[c]);
 
         alumnosList.innerHTML = filtered.map(a => {
             const idx = checked.indexOf(a.user_id);
             const checkedAttr = idx >= 0 ? 'checked' : '';
             const numLabel = idx >= 0 ? `<span class="sel-count">#${idx + 1}</span>` : '';
             return `<label class="alumno-item">
-                <input type="checkbox" value="${a.user_id}" ${checkedAttr}>
+                <input type="checkbox" value="${esc(a.user_id)}" ${checkedAttr}>
                 <div class="info">
-                    <div class="nombre">${a.nombre}</div>
-                    <div class="meta">${a.email} · Nivel ${a.nivel_alquimia || '?'}/10</div>
+                    <div class="nombre">${esc(a.nombre)}</div>
+                    <div class="meta">${esc(a.email)} · Nivel ${esc(a.nivel_alquimia || '?')}/10</div>
                 </div>
                 ${numLabel}
             </label>`;
@@ -292,15 +298,18 @@
             if (data.error) throw new Error(data.details || data.error);
 
             const p = data.perfil;
+            const esc = (v) => String(v == null ? '' : v).replace(/[&<>"']/g, c => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+            })[c]);
             resultadoBody.innerHTML = `
-                <div class="resultado-field"><label>Nombre</label><div class="val">${p.nombre || 'Sin nombre'}</div></div>
-                <div class="resultado-field"><label>Email</label><div class="val">${p.email || 'N/A'}</div></div>
-                <div class="resultado-field"><label>Historia Vocal</label><div class="val">${p.historia_vocal || 'N/A'}</div></div>
-                <div class="resultado-field"><label>Creencias Transmutadas</label><div class="val">${p.creencias_transmutadas || 'N/A'}</div></div>
-                <div class="resultado-field"><label>Último Resumen</label><div class="val">${p.ultimo_resumen || 'N/A'}</div></div>
-                <div class="resultado-field"><label>Nivel Alquimia</label><div class="val">${p.nivel_alquimia || 'N/A'}/10</div></div>
-                <div class="resultado-field"><label>Notas del Mentor</label><div class="val">${p.mentor_notes || 'N/A'}</div></div>
-                <div class="resultado-field"><label>Trato Preferido</label><div class="val">${p.mentor_trato_preferido || 'N/A'}</div></div>
+                <div class="resultado-field"><label>Nombre</label><div class="val">${esc(p.nombre || 'Sin nombre')}</div></div>
+                <div class="resultado-field"><label>Email</label><div class="val">${esc(p.email || 'N/A')}</div></div>
+                <div class="resultado-field"><label>Historia Vocal</label><div class="val">${esc(p.historia_vocal || 'N/A')}</div></div>
+                <div class="resultado-field"><label>Creencias Transmutadas</label><div class="val">${esc(p.creencias_transmutadas || 'N/A')}</div></div>
+                <div class="resultado-field"><label>Último Resumen</label><div class="val">${esc(p.ultimo_resumen || 'N/A')}</div></div>
+                <div class="resultado-field"><label>Nivel Alquimia</label><div class="val">${esc(p.nivel_alquimia || 'N/A')}/10</div></div>
+                <div class="resultado-field"><label>Notas del Mentor</label><div class="val">${esc(p.mentor_notes || 'N/A')}</div></div>
+                <div class="resultado-field"><label>Trato Preferido</label><div class="val">${esc(p.mentor_trato_preferido || 'N/A')}</div></div>
             `;
             resultado.style.display = 'block';
             resultado.scrollIntoView({ behavior: 'smooth' });

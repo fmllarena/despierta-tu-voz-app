@@ -12,6 +12,10 @@ export const PRONUNCIATION = window.PRONUNCIATION = {
      * Extracts [PRONUNCIAR: word, lang] and replaces it with a Play button
      */
     parseTags(html) {
+        const escapeHtml = (value) => String(value).replace(/[&<>"']/g, c => ({
+            '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+        })[c]);
+
         // Capturamos todo lo contenido entre [PRONUNCIAR: y ]
         const regex = /\\?\[{1,2}\s*PRONUNCIAR:\s*([^\]]+?)\s*\\?\]{1,2}/gi;
 
@@ -27,19 +31,21 @@ export const PRONUNCIATION = window.PRONUNCIATION = {
             const cleanWord = rawWord.replace(/^["']|["']$/g, '');
             const cleanLang = rawLang.toLowerCase();
 
-            // Escapamos comillas simples para el onclick
-            const safeWord = cleanWord.replace(/'/g, "\\'");
-            const safeLang = cleanLang.replace(/'/g, "\\'");
+            // El texto viene de la IA: lo escapamos antes de meterlo en HTML
+            // y en el atributo onclick (JSON + escape de comillas HTML).
+            const attrWord = escapeHtml(JSON.stringify(cleanWord));
+            const attrLang = escapeHtml(JSON.stringify(cleanLang));
+            const displayWord = escapeHtml(cleanWord);
 
             return `
                 <div class="pronunciation-widget" style="display:flex; align-items:center; gap:5px; margin: 8px 0; flex-wrap: wrap;">
                     <button class="play-pronunciation-btn" 
-                            onclick="window.playPronunciation('${safeWord}', '${safeLang}', 1.0)"
+                            onclick="window.playPronunciation(${attrWord}, ${attrLang}, 1.0)"
                             style="cursor:pointer; background:#f8f9fa; border:1px solid #ddd; border-top-left-radius:18px; border-bottom-left-radius:18px; padding:6px 14px; font-size:0.9em; display:flex; align-items:center; gap:8px; margin-right: -5px;">
-                        <span>🔊 Escuchar </span> <strong>${cleanWord}</strong>
+                        <span>🔊 Escuchar </span> <strong>${displayWord}</strong>
                     </button>
                     <button class="slow-pronunciation-btn" 
-                            onclick="window.playPronunciation('${safeWord}', '${safeLang}', 0.7)"
+                            onclick="window.playPronunciation(${attrWord}, ${attrLang}, 0.7)"
                             title="Escuchar más lento"
                             style="cursor:pointer; background:#fdfaf5; border:1px solid #ddd; border-left: none; border-top-right-radius:18px; border-bottom-right-radius:18px; padding:6px 10px; font-size:0.85em; display:flex; align-items:center; gap:4px; font-weight: bold; color: var(--color-acento);">
                         <span style="font-size: 1.2em;">🐌</span>

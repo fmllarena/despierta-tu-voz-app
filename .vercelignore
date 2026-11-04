@@ -1,0 +1,22 @@
+# Archivos que no deben desplegarse en Vercel
+node_modules
+.git
+.agent
+backups
+docs
+brevo
+n8n
+sql
+supabase
+temp
+.env
+.env.*
+
+# Copias y backups antiguos
+*.bak
+*_backup*
+main_pre_phase1_backup.js
+main_backup.js
+index_backup.html
+main.js.v5.4.txt
+modified_files_*.txt

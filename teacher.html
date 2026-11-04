@@ -1,12 +1,24 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+    <script src="js/services/api-auth.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>English Teacher - Despierta tu Voz</title>
     <link rel="stylesheet" href="css/style.css">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3/dist/purify.min.js"></script>
+    <script>
+        window.renderSafeMarkdown = function (text) {
+            const raw = text == null ? '' : String(text);
+            const html = window.marked ? window.marked.parse(raw) : raw;
+            if (window.DOMPurify) {
+                return window.DOMPurify.sanitize(html, { USE_PROFILES: { html: true } });
+            }
+            return html.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        };
+    </script>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: 'Outfit', sans-serif; background: #f0f5fa; color: #333; min-height: 100vh; }
@@ -243,6 +255,7 @@
         const configRes = await fetch('/api/config');
         const config = await configRes.json();
         sb = createClient(config.url, config.key, { auth: { persistSession: false } });
+        window.__supabase = sb;
 
         const session = localStorage.getItem('sb-session');
         if (session) {
@@ -427,7 +440,7 @@
         if (rol === 'user' && skipDisplay) { skipDisplay = false; return; }
         const div = document.createElement('div');
         div.className = `msg ${rol}`;
-        div.innerHTML = marked.parse(texto);
+        div.innerHTML = window.renderSafeMarkdown(texto);
         if (rol === 'ia') {
             const tts = document.createElement('button');
             tts.className = 'tts-btn';

@@ -1,13 +1,31 @@
 // api/send-newsletter.js
-const axios = require('axios');
+const crypto = require('crypto');
+const { applyCors, handlePreflight, rateLimit } = require('./_lib/http');
+
+function safeEqual(a, b) {
+    const left = Buffer.from(String(a || ''));
+    const right = Buffer.from(String(b || ''));
+    return left.length === right.length && crypto.timingSafeEqual(left, right);
+}
 
 module.exports = async (req, res) => {
+    applyCors(req, res);
+    if (handlePreflight(req, res)) return;
     // Solo permitir POST
     if (req.method !== 'POST') {
         return res.status(405).json({ error: 'Método no permitido' });
     }
+    if (!rateLimit(req, res, { key: 'newsletter', limit: 5, windowMs: 60000 })) return;
 
-    const { subject, title, content, ctaText, ctaLink, templateId } = req.body;
+    const adminKey = process.env.NEWSLETTER_ADMIN_KEY;
+    if (!adminKey) {
+        return res.status(503).json({ error: 'Falta configurar NEWSLETTER_ADMIN_KEY en el servidor.' });
+    }
+    if (!safeEqual(req.headers['x-admin-key'], adminKey)) {
+        return res.status(401).json({ error: 'No autorizado.' });
+    }
+
+    const { subject, title, content, ctaText, ctaLink, templateId } = req.body || {};
     const BREVO_API_KEY = process.env.BREVO_API_KEY;
 
     if (!BREVO_API_KEY) {
@@ -38,22 +56,34 @@ module.exports = async (req, res) => {
         };
 
         // Crear la campaña
-        const response = await axios.post('https://api.brevo.com/v3/emailCampaigns', campaignData, {
+        const createResponse = await fetch('https://api.brevo.com/v3/emailCampaigns', {
+            method: 'POST',
             headers: {
                 'api-key': BREVO_API_KEY,
                 'Content-Type': 'application/json'
-            }
+            },
+            body: JSON.stringify(campaignData)
         });
-
-        const campaignId = response.data.id;
+        if (!createResponse.ok) {
+            const errData = await createResponse.json().catch(() => ({}));
+            throw new Error(`Brevo ${createResponse.status}: ${errData.message || createResponse.statusText}`);
+        }
+        const createData = await createResponse.json();
+        const campaignId = createData.id;
 
         // Enviar la campaña inmediatamente
-        await axios.post(`https://api.brevo.com/v3/emailCampaigns/${campaignId}/sendNow`, {}, {
+        const sendResponse = await fetch(`https://api.brevo.com/v3/emailCampaigns/${campaignId}/sendNow`, {
+            method: 'POST',
             headers: {
                 'api-key': BREVO_API_KEY,
                 'Content-Type': 'application/json'
-            }
+            },
+            body: JSON.stringify({})
         });
+        if (!sendResponse.ok) {
+            const errData = await sendResponse.json().catch(() => ({}));
+            throw new Error(`Brevo sendNow ${sendResponse.status}: ${errData.message || sendResponse.statusText}`);
+        }
 
         return res.status(200).json({
             message: 'Campaña creada y enviada con éxito',
@@ -61,10 +91,10 @@ module.exports = async (req, res) => {
         });
 
     } catch (error) {
-        console.error('❌ Error en el envío de Newsletter:', error.response ? error.response.data : error.message);
+        console.error('❌ Error en el envío de Newsletter:', error.message);
         return res.status(500).json({
             error: 'Error al conectar con Brevo',
-            details: error.response ? error.response.data : error.message
+            details: error.message
         });
     }
 };

@@ -3,12 +3,24 @@
 <script>if (localStorage.getItem('mentorDarkMode') === 'true') document.documentElement.setAttribute('data-theme', 'dark')</script>
 
 <head>
+    <script src="js/services/api-auth.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Panel del Mentor - Despierta tu Voz</title>
     <link rel="stylesheet" href="css/style.css">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3/dist/purify.min.js"></script>
+    <script>
+        window.renderSafeMarkdown = function (text) {
+            const raw = text == null ? '' : String(text);
+            const html = window.marked ? window.marked.parse(raw) : raw;
+            if (window.DOMPurify) {
+                return window.DOMPurify.sanitize(html, { USE_PROFILES: { html: true } });
+            }
+            return html.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        };
+    </script>
     <style>
         :root {
             --color-acento: #8e7d6d;
@@ -858,7 +870,7 @@
         </div>
     </div>
 
-    <script type="module" src="js/mentor-dashboard.js?v=1.1"></script>
+    <script type="module" src="js/mentor-dashboard.js?v=1.2"></script>
 </body>
 
 </html>

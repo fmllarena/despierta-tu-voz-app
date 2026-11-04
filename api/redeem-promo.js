@@ -1,7 +1,15 @@
 const { createClient } = require('@supabase/supabase-js');
+const { applyCors, handlePreflight, rateLimit } = require('./_lib/http');
+const { requireUser, canAccessUser } = require('./_lib/auth');
 
 module.exports = async function handler(req, res) {
+    applyCors(req, res);
+    if (handlePreflight(req, res)) return;
     if (req.method !== 'POST') return res.status(405).json({ error: 'Método no permitido' });
+    if (!rateLimit(req, res, { key: 'promo', limit: 10, windowMs: 60000 })) return;
+
+    const user = await requireUser(req, res);
+    if (!user) return;
 
     // 1. Comprobar Variables de Entorno
     const { SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY } = process.env;
@@ -20,6 +28,9 @@ module.exports = async function handler(req, res) {
 
         if (!code || !userId) {
             return res.status(400).json({ error: 'Faltan datos (code, userId)' });
+        }
+        if (!canAccessUser(user, userId)) {
+            return res.status(403).json({ error: 'Sin acceso a este usuario' });
         }
 
         const normalizedCode = code.trim().toUpperCase();

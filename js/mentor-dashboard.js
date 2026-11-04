@@ -51,6 +51,7 @@ async function init() {
         supabase = createClient(config.url, config.key, {
             auth: { storageKey: 'sb-mentor-auth-token' }
         });
+        window.__supabase = supabase;
 
         ELEMENTS.loginBtn.onclick = login;
         ELEMENTS.loginPassword.onkeypress = (e) => { if (e.key === 'Enter') login(); };
@@ -339,8 +340,8 @@ async function generateBriefing() {
             throw new Error(briefingData.error);
         }
 
-        if (window.marked) {
-            ELEMENTS.reportContent.innerHTML = window.marked.parse(briefingData.text);
+        if (window.renderSafeMarkdown) {
+            ELEMENTS.reportContent.innerHTML = window.renderSafeMarkdown(briefingData.text);
         } else {
             ELEMENTS.reportContent.innerText = briefingData.text;
         }
@@ -449,8 +450,8 @@ function appendChatMessage(role, text) {
     const msgDiv = document.createElement('div');
     msgDiv.className = `chat-msg ${role}`;
 
-    if (role === 'ia' && window.marked) {
-        msgDiv.innerHTML = window.marked.parse(text);
+    if (role === 'ia' && window.renderSafeMarkdown) {
+        msgDiv.innerHTML = window.renderSafeMarkdown(text);
     } else {
         msgDiv.innerText = text;
     }

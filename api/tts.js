@@ -1,9 +1,18 @@
+const { applyCors, handlePreflight, rateLimit } = require('./_lib/http');
+const { requireUser } = require('./_lib/auth');
+
 module.exports = async function handler(req, res) {
+    applyCors(req, res);
+    if (handlePreflight(req, res)) return;
     if (req.method !== 'POST') {
         return res.status(405).json({ error: 'Method not allowed' });
     }
+    if (!rateLimit(req, res, { key: 'tts', limit: 30, windowMs: 60000 })) return;
 
-    const { text, languageCode = 'es-ES', voiceName, gender, speakingRate = 1.0 } = req.body;
+    const user = await requireUser(req, res);
+    if (!user) return;
+
+    const { text, languageCode = 'es-ES', voiceName, gender, speakingRate = 1.0 } = req.body || {};
     // Intentamos usar la clave específica de TTS, si no, usamos la de Gemini como fallback
     const apiKey = process.env.GOOGLE_TTS_API_KEY || process.env.GEMINI_API_KEY;
 

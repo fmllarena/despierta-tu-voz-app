@@ -696,9 +696,7 @@ async function sendMessage() {
             if (resEl) {
                 let cleanDisplay = responseText.replace(/\[\s*SESION\\?_?FINAL\s*\]/gi, "").trim();
 
-                if (window.marked) {
-                    cleanDisplay = window.marked.parse(cleanDisplay + " ▮");
-                }
+                cleanDisplay = window.renderSafeMarkdown(cleanDisplay + " ▮");
 
                 // Parsear tags de pronunciación (SOBRE EL HTML GENERADO POR MARKED)
                 if (window.PRONUNCIATION) {
@@ -715,10 +713,7 @@ async function sendMessage() {
 
         const cleanFinalText = responseText.replace(/\[\s*SESION\\?_?FINAL\s*\]/gi, "").trim();
         if (finalEl) {
-            let parsedText = cleanFinalText;
-            if (window.marked) {
-                parsedText = window.marked.parse(parsedText);
-            }
+            let parsedText = window.renderSafeMarkdown(cleanFinalText);
             if (window.PRONUNCIATION) {
                 parsedText = window.PRONUNCIATION.parseTags(parsedText);
             }
@@ -1073,11 +1068,9 @@ function appendMessage(text, type, id = null, meta = null) {
 
     if (type.startsWith('ia')) {
         // Limpiamos siempre el tag técnico para que el usuario nunca lo vea en la interfaz (vía regex flexible)
-        let cleanText = text.replace(/\[\s*SESION\\?_?FINAL\s*\]/gi, "").trim();
-
-        if (window.marked) {
-            cleanText = window.marked.parse(cleanText);
-        }
+        let cleanText = window.renderSafeMarkdown(
+            text.replace(/\[\s*SESION\\?_?FINAL\s*\]/gi, "").trim()
+        );
 
         // Parsear tags de pronunciación (SOBRE EL HTML GENERADO POR MARKED)
         if (window.PRONUNCIATION) {
@@ -1561,13 +1554,13 @@ const MODULOS = {
                 responseText = fullText;
                 ELEMENTS.botiquinContent.innerHTML = `
                     <div class="botiquin-response">
-                        ${window.marked ? window.marked.parse(responseText + " ▮") : responseText}
+                        ${window.renderSafeMarkdown(responseText + " ▮")}
                     </div>
                 `;
             });
 
             if (responseText) {
-                ELEMENTS.botiquinContent.innerHTML = `<div class="botiquin-response">${window.marked ? window.marked.parse(responseText) : responseText}</div>`;
+                ELEMENTS.botiquinContent.innerHTML = `<div class="botiquin-response">${window.renderSafeMarkdown(responseText)}</div>`;
             }
 
             // Añadir lista de audios al mensaje del botiquín con menú desplegable
@@ -1727,7 +1720,7 @@ NO incluyas comillas. Responde solo con la frase.`;
             content.innerHTML = "<p>Sigue charlando conmigo para registrar tu camino.</p>";
         } else {
             const nivel = perfil.nivel_alquimia || 1;
-            const render = (txt) => (typeof marked !== 'undefined' && txt) ? marked.parse(txt) : (txt || "...");
+            const render = (txt) => window.renderSafeMarkdown(txt || "...");
             content.innerHTML = `
                 <div class="diario-seccion">
                     <h4>Nivel de Alquimia Vocal: ${nivel}/10</h4>

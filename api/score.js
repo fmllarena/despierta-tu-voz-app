@@ -4,6 +4,9 @@
  * Temporalmente solo Mistral (imágenes/partituras).
  */
 
+const { applyCors, handlePreflight, rateLimit } = require('./_lib/http');
+const { requireUser } = require('./_lib/auth');
+
 // Límites de seguridad
 const MAX_PAGES = 6;          // Máximo de páginas por solicitud
 const MAX_PAGE_SIZE_MB = 4;   // Tamaño máximo por página en MB
@@ -20,14 +23,13 @@ Cuando el alumno te muestre una partitura, debes:
 Si el alumno hace preguntas específicas sobre pasajes concretos, enfócate en esas secciones.`;
 
 module.exports = async function handler(req, res) {
-    // CORS
-    res.setHeader('Access-Control-Allow-Credentials', true);
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'POST,OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-
-    if (req.method === 'OPTIONS') return res.status(200).end();
+    applyCors(req, res);
+    if (handlePreflight(req, res)) return;
     if (req.method !== 'POST') return res.status(405).json({ error: 'Método no permitido' });
+    if (!rateLimit(req, res, { key: 'score', limit: 20, windowMs: 60000 })) return;
+
+    const user = await requireUser(req, res);
+    if (!user) return;
 
     if (!process.env.MISTRAL_API_KEY && !process.env.ANTHROPIC_API_KEY) {
         return res.status(500).json({ error: 'Ninguna API Key de IA configurada' });

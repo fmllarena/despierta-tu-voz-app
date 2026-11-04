@@ -3,14 +3,22 @@
 // POST /api/payments  con body.type === 'payment-intent' → crea Stripe Payment Intent
 
 const Stripe = require('stripe');
+const { applyCors, handlePreflight, rateLimit } = require('./_lib/http');
+const { requireUser, canAccessUser } = require('./_lib/auth');
 const stripe = new Stripe((process.env.STRIPE_SECRET_KEY || '').trim());
 
 module.exports = async function handler(req, res) {
+    applyCors(req, res);
+    if (handlePreflight(req, res)) return;
     if (req.method !== 'POST') {
         return res.status(405).json({ error: 'Método no permitido' });
     }
+    if (!rateLimit(req, res, { key: 'payments', limit: 10, windowMs: 60000 })) return;
 
-    const { type } = req.body;
+    const user = await requireUser(req, res);
+    if (!user) return;
+
+    const { type } = req.body || {};
 
     // ── Checkout Session ─────────────────────────────────────────────────────
     if (type === 'checkout') {
@@ -20,6 +28,9 @@ module.exports = async function handler(req, res) {
 
             if (!planType || !userId) {
                 return res.status(400).json({ error: 'Faltan datos obligatorios (planType, userId)' });
+            }
+            if (!canAccessUser(user, userId)) {
+                return res.status(403).json({ error: 'Sin acceso a este usuario' });
             }
 
             let stripePriceId = '';
@@ -80,6 +91,9 @@ module.exports = async function handler(req, res) {
 
             if (!planType || !userId) {
                 return res.status(400).json({ error: 'Faltan datos obligatorios (planType, userId)' });
+            }
+            if (!canAccessUser(user, userId)) {
+                return res.status(403).json({ error: 'Sin acceso a este usuario' });
             }
 
             let stripePriceId = '';

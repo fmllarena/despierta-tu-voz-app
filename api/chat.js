@@ -1,6 +1,8 @@
 const { createClient } = require('@supabase/supabase-js');
 const { SYSTEM_PROMPTS } = require('./_lib/prompts');
 const { sanitizeGeminiHistory } = require('./_lib/utils');
+const { applyCors, handlePreflight, rateLimit } = require('./_lib/http');
+const { requireUser, isMentor, canAccessUser } = require('./_lib/auth');
 
 // --- CONFIGURACIÓN MISTRAL (primario — servidores UE, Francia) ---
 const MISTRAL_MODEL = "mistral-small-latest";
@@ -75,18 +77,47 @@ async function geminiFetchWithKeys(url, body) {
  * Orquestador principal de la API de Chat
  */
 module.exports = async function handler(req, res) {
-    // SOPORTE CORS
-    res.setHeader('Access-Control-Allow-Credentials', true).setHeader('Access-Control-Allow-Origin', '*').setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT').setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version');
+    applyCors(req, res);
+    if (handlePreflight(req, res)) return;
 
-    if (req.method === 'OPTIONS') return res.status(200).end();
     if (req.method === "PATCH") {
+        const user = await requireUser(req, res);
+        if (!user) return;
         const { table } = req.body || {};
-        if (table === 'mensajes') return await updateMensaje(req, res);
-        return await updateTeacherMessage(req, res);
+        if (table === 'mensajes') return await updateMensaje(req, res, user);
+        return await updateTeacherMessage(req, res, user);
     }
     if (req.method !== "POST") return res.status(405).json({ error: "Método no permitido" });
+    if (!rateLimit(req, res, { key: 'chat', limit: 30, windowMs: 60000 })) return;
 
-    const { stream } = req.body;
+    const body = req.body || {};
+    const intent = body.intent;
+    const { stream } = body;
+
+    const SPECIAL_INTENTS = new Set([
+        'warmup', 'compendio', 'analisis', 'teacher', 'persona_chat',
+        'add_teacher_tip', 'get_teacher_tips'
+    ]);
+    if (!intent || (!SYSTEM_PROMPTS[intent] && !SPECIAL_INTENTS.has(intent))) {
+        return res.status(400).json({ error: "Intento no válido" });
+    }
+
+    // warmup es el único intent público: no toca datos ni llama al modelo.
+    if (intent !== 'warmup') {
+        const user = await requireUser(req, res);
+        if (!user) return;
+
+        const mentorOnly = new Set([
+            'mentor_briefing', 'mentor_advisor', 'analisis', 'compendio',
+            'add_teacher_tip', 'teacher_review'
+        ]);
+        if (mentorOnly.has(intent) && !isMentor(user)) {
+            return res.status(403).json({ error: "Solo el mentor puede usar esta función." });
+        }
+        if (body.userId && !isMentor(user) && String(body.userId) !== String(user.id)) {
+            return res.status(403).json({ error: "Sin acceso a este alumno." });
+        }
+    }
 
     try {
         if (stream) {
@@ -102,7 +133,7 @@ module.exports = async function handler(req, res) {
             return res.status(200).json(result);
         }
     } catch (error) {
-        handleError(error, res, stream);
+        handleError(error, res, stream, req);
     }
 };
 
@@ -231,9 +262,19 @@ async function processChat(req, res = null) {
         }
     };
 
+    // Presupuesto por proveedor: evita que uno solo consuma todo el tiempo de Vercel.
+    const PROVIDER_TIMEOUT_MS = { gemini: 40000, openrouter: 15000, mistral: 25000 };
+
     for (const provider of providerOrder) {
         try {
-            const result = await tryProviders[provider]();
+            const attempt = tryProviders[provider]();
+            const result = stream
+                ? await attempt
+                : await withTimeout(
+                    attempt,
+                    PROVIDER_TIMEOUT_MS[provider],
+                    `${provider}: tiempo de espera agotado`
+                );
             return result;
         } catch (e) {
             console.warn(`⚠️ ${provider} falló:`, e.message);
@@ -279,7 +320,7 @@ async function buildUserContext(userId, intent, originPost = null, originCat = n
             : Promise.resolve({ data: null })
     ]);
     const perfil = perfilRes?.data;
-    if (!perfil) return context;
+    if (!perfil) return { context, resumenBoundary: null };
 
     context += `\n--- SITUACIÓN ACTUAL ---\n- Nombre: ${perfil.nombre}\n- Último Estado: ${perfil.ultimo_resumen || 'Iniciando'}\n`;
 
@@ -1611,8 +1652,9 @@ function setupStreamHeaders(res) {
     res.setHeader('Connection', 'keep-alive');
 }
 
-function handleError(error, res, stream) {
-    console.error("⛔ [Backend Chat Error]:", error);
+function handleError(error, res, stream, req) {
+    const requestId = req?.headers?.['x-vercel-id'] || null;
+    console.error("⛔ [Backend Chat Error]:", { requestId, intent: req?.body?.intent, error });
     if (res.writableEnded) return;
 
     const rawMessage = String(error?.message || '');
@@ -1624,10 +1666,10 @@ function handleError(error, res, stream) {
             : "Error técnico temporal.";
 
     if (stream) {
-        res.write(`data: ${JSON.stringify({ error: msg })}\n\n`);
+        res.write(`data: ${JSON.stringify({ error: msg, requestId })}\n\n`);
         res.end();
     } else {
-        res.status(isTimeout ? 504 : 500).json({ error: msg, details: rawMessage, isTimeout });
+        res.status(isTimeout ? 504 : 500).json({ error: msg, details: rawMessage, isTimeout, requestId });
     }
 }
 
@@ -1722,12 +1764,13 @@ async function personaChat(body) {
 /**
  * Actualiza el contenido de un mensaje de la tabla teacher (edición de correcciones IA).
  */
-async function updateTeacherMessage(req, res) {
+async function updateTeacherMessage(req, res, user) {
     const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
     const { userId, messageId, content } = req.body || {};
 
     if (!userId || !messageId) return res.status(400).json({ error: "Se requiere userId y messageId" });
     if (typeof content !== 'string') return res.status(400).json({ error: "Se requiere content" });
+    if (!canAccessUser(user, userId)) return res.status(403).json({ error: "Sin acceso a este alumno" });
 
     try {
         const { data, error } = await supabase
@@ -1747,7 +1790,7 @@ async function updateTeacherMessage(req, res) {
     }
 }
 
-async function updateMensaje(req, res) {
+async function updateMensaje(req, res, user) {
     const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
     const { messageId, content, reaction } = req.body || {};
 
@@ -1769,6 +1812,18 @@ async function updateMensaje(req, res) {
     if (Object.keys(patch).length === 0) return res.status(400).json({ error: "Se requiere content o reaction" });
 
     try {
+        // Comprobar que el mensaje pertenece al usuario (o que es mentor)
+        const { data: actual, error: actualError } = await supabase
+            .from('mensajes')
+            .select('alumno')
+            .eq('id', messageId)
+            .maybeSingle();
+        if (actualError) throw actualError;
+        if (!actual) return res.status(404).json({ error: "Mensaje no encontrado" });
+        if (!isMentor(user) && String(actual.alumno) !== String(user.id)) {
+            return res.status(403).json({ error: "Sin acceso a este mensaje" });
+        }
+
         const { data, error } = await supabase
             .from('mensajes')
             .update(patch)
