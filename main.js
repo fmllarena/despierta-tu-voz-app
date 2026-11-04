@@ -1028,6 +1028,8 @@ async function appendErrorMessage(texto) {
     container.className = 'ia-container';
     const id = 'msg-error-' + Date.now();
     container.id = id;
+    // Este aviso no existe en la BD: se borra solo del DOM.
+    container.dataset.localOnly = 'true';
 
     const avatar = document.createElement('div');
     avatar.className = 'ia-avatar';
@@ -1340,27 +1342,34 @@ function activarFeedback(containerId, msgId) {
 
 // --- ELIMINAR MENSAJE (BD + DOM + contexto de la IA) ---
 async function eliminarMensaje(host) {
-    const msgId = host?.dataset?.msgId;
-    if (!msgId) return;
+    if (!host) return;
+    const msgId = host.dataset?.msgId;
+    const soloLocal = host.dataset?.localOnly === 'true';
+    if (!msgId && !soloLocal) return;
 
-    // No permitir borrar mientras la IA genera: el push final de
-    // sendMessage volvería a meter el mensaje en chatHistory
-    if (ELEMENTS.chatInput?.disabled) return;
+    // No permitir borrar mensajes de la BD mientras la IA genera: el push
+    // final de sendMessage volvería a meter el mensaje en chatHistory.
+    // Los avisos locales (errores) sí se pueden quitar en cualquier momento.
+    if (msgId && ELEMENTS.chatInput?.disabled) return;
 
     const ok = await confirmCustom(
-        "¿Eliminar este mensaje de la conversación? Se borrará de la base de datos, no se puede deshacer y la IA dejará de tenerlo en cuenta."
+        msgId
+            ? "¿Eliminar este mensaje de la conversación? Se borrará de la base de datos, no se puede deshacer y la IA dejará de tenerlo en cuenta."
+            : "¿Eliminar este aviso de error del chat?"
     );
     if (!ok) return;
 
     try {
-        const { error } = await state.supabase
-            .from('mensajes')
-            .delete()
-            .eq('id', msgId);
-        if (error) throw error;
+        if (msgId) {
+            const { error } = await state.supabase
+                .from('mensajes')
+                .delete()
+                .eq('id', msgId);
+            if (error) throw error;
 
-        // Quitar del contexto que ve la IA
-        chatHistory = chatHistory.filter(e => String(e.msgId) !== String(msgId));
+            // Quitar del contexto que ve la IA
+            chatHistory = chatHistory.filter(e => String(e.msgId) !== String(msgId));
+        }
 
         // Quitar del DOM (host es el .feedback-btns de IA o el .user-container)
         const contenedor = host.classList.contains('feedback-btns')
