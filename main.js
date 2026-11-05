@@ -247,6 +247,9 @@ async function llamarGemini(message, history, intent, extraData = {}, onChunk = 
         if (stream) {
             if (!response.ok) {
                 const errText = await response.text().catch(() => '');
+                if (response.status === 504 || /FUNCTION_INVOCATION_TIMEOUT|An error occurred/i.test(errText)) {
+                    throw new Error('El Mentor ha tardado demasiado en responder. Inténtalo de nuevo.');
+                }
                 throw new Error(errText.slice(0, 300) || `Error del servidor (${response.status})`);
             }
             const reader = response.body.getReader();
@@ -310,7 +313,16 @@ async function llamarGemini(message, history, intent, extraData = {}, onChunk = 
             }
             return fullText;
         } else {
-            const data = await response.json();
+            const raw = await response.text();
+            let data;
+            try {
+                data = JSON.parse(raw);
+            } catch {
+                if (response.status === 504 || /FUNCTION_INVOCATION_TIMEOUT|An error occurred/i.test(raw)) {
+                    throw new Error('El Mentor ha tardado demasiado en responder. Inténtalo de nuevo.');
+                }
+                throw new Error('El servidor no devolvió una respuesta válida. Inténtalo de nuevo.');
+            }
             if (data.error) throw new Error(data.error);
             if (data.info) console.log(`🤖 Modelo IA usado: ${data.info}`);
             return data.text;

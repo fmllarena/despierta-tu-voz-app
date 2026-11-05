@@ -50,7 +50,7 @@ function withTimeout(promise, ms, message) {
 
 // --- HELPER: POST a Gemini rotando GEMINI_API_KEY -> GEMINI_API_KEY_2 ante errores reintentables ---
 // Devuelve el Response OK; si todas las keys fallan, lanza el último error.
-async function geminiFetchWithKeys(url, body) {
+async function geminiFetchWithKeys(url, body, signal = null) {
     const keys = [process.env.GEMINI_API_KEY, process.env.GEMINI_API_KEY_2].filter(Boolean);
     if (!keys.length) throw new Error("Falta API Key de Gemini");
     let lastErr = new Error("Gemini: sin keys disponibles");
@@ -59,7 +59,8 @@ async function geminiFetchWithKeys(url, body) {
         const response = await fetch(url, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'x-goog-api-key': keys[i] },
-            body: JSON.stringify(body)
+            body: JSON.stringify(body),
+            ...(signal ? { signal } : {})
         });
         if (response.ok) return response;
         const errData = await response.json().catch(() => ({}));
@@ -122,7 +123,23 @@ module.exports = async function handler(req, res) {
     try {
         if (stream) {
             setupStreamHeaders(res);
-            await processChat(req, res);
+            // Vercel corta a los 60 s: cerramos el stream con un error JSON
+            // 8 s antes para que el cliente reciba un mensaje claro.
+            const streamDeadline = setTimeout(() => {
+                if (res.writableEnded) return;
+                try {
+                    res.write(`data: ${JSON.stringify({ error: 'El Mentor ha tardado demasiado. Prueba de nuevo.' })}\n\n`);
+                    res.end();
+                } catch (e) {
+                    console.warn('No se pudo cerrar el stream a tiempo:', e?.message || e);
+                }
+            }, 52000);
+
+            try {
+                await processChat(req, res);
+            } finally {
+                clearTimeout(streamDeadline);
+            }
         } else {
             // 52 s: margen de 8 s antes del corte de Vercel (60 s).
             const result = await withTimeout(
@@ -457,15 +474,22 @@ async function callGeminiAPI({ intent, prompt, history, stream, res, fileData })
         systemInstruction: { parts: [{ text: SYSTEM_PROMPTS[intent] }] }
     };
 
-    // geminiFetchWithKeys ya rota key1 -> key2 ante 429/5xx; si lanza, processChat pasa a OpenRouter
-    const response = await geminiFetchWithKeys(url, requestBody);
+    // geminiFetchWithKeys ya rota key1 -> key2 ante 429/5xx; si lanza, processChat pasa a OpenRouter.
+    // 45 s de margen: si Gemini se queda colgado, se aborta y el stream puede pasar al siguiente proveedor.
+    const controller = new AbortController();
+    const geminiTimer = setTimeout(() => controller.abort(), 45000);
+    try {
+        const response = await geminiFetchWithKeys(url, requestBody, controller.signal);
 
-    if (stream && res) {
-        return handleStreamResponse(response, res);
-    } else {
-        const data = await response.json();
-        const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
-        return { text: text, info: modelToUse };
+        if (stream && res) {
+            return await handleStreamResponse(response, res);
+        } else {
+            const data = await response.json();
+            const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+            return { text: text, info: modelToUse };
+        }
+    } finally {
+        clearTimeout(geminiTimer);
     }
 }
 

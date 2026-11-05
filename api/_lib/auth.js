@@ -42,9 +42,29 @@ async function getAuthUser(req) {
     if (!client) return null;
 
     try {
-        const { data, error } = await client.auth.getUser(token);
-        if (error || !data?.user) return null;
-        const user = data.user;
+        // La verificación no puede consumir el presupuesto de 60 s de Vercel:
+        // si Supabase Auth no responde en 5 s, se rechaza la petición.
+        let timer;
+        const timeout = new Promise(resolve => {
+            timer = setTimeout(() => resolve({ timedOut: true }), 5000);
+        });
+        const authPromise = client.auth.getUser(token)
+            .then(({ data, error }) => ({ data, error }))
+            .catch(error => ({ error }));
+
+        let result;
+        try {
+            result = await Promise.race([authPromise, timeout]);
+        } finally {
+            clearTimeout(timer);
+        }
+
+        if (result.timedOut) {
+            console.warn('⛔ [Auth] Tiempo de espera agotado verificando el token');
+            return null;
+        }
+        if (result.error || !result.data?.user) return null;
+        const user = result.data.user;
         userCache.set(token, { user, expiresAt: Date.now() + 60000 });
         if (userCache.size > 500) userCache.clear();
         return user;
