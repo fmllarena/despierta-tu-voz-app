@@ -222,8 +222,9 @@ async function processChat(req, res = null) {
     const finalPrompt = context ? `CONTEXTO:\n${context}\n\nMENSAJE:\n${message}` : message;
 
     // --- CADENA DE REINTENTOS CON FALLBACK ---
-    // index-original.html trabaja SOLO con Gemini (2 keys con rotación interna en geminiFetchWithKeys);
-    // si Gemini falla (p. ej. 503 por saturación), simplemente se avisa y el usuario reintenta.
+    // index-original.html usa Gemini como proveedor principal (2 keys con rotación interna).
+    // Si Gemini devuelve 429/503, se queda sin cuota o no responde, se activa un fallback
+    // de emergencia a OpenRouter/Mistral para no dejar el chat muerto.
     // El resto de intents (roles-dashboard, compendio, persona, teacher) conservan la cadena completa.
     // Excepción: el informe del mentor es largo y OpenRouter free suele agotar los 60 s de Vercel;
     // para ese intent se salta OpenRouter y se usa Gemini -> Mistral.
@@ -282,7 +283,19 @@ async function processChat(req, res = null) {
     // Presupuesto por proveedor: evita que uno solo consuma todo el tiempo de Vercel.
     const PROVIDER_TIMEOUT_MS = { gemini: 40000, openrouter: 15000, mistral: 25000 };
 
-    for (const provider of providerOrder) {
+    // Si Gemini se queda sin cuota, está saturado o no responde, los intents
+    // que normalmente son Gemini-only pueden degradar a OpenRouter/Mistral.
+    function isQuotaOrTimeoutError(error) {
+        const msg = String(error?.message || '');
+        return error?.name === 'AbortError'
+            || /(^|\D)(429|503)(\D|$)/.test(msg)
+            || /quota|RESOURCE_EXHAUSTED|high demand|overload|rate limit|tiempo de espera|timeout|timed out|abort/i.test(msg);
+    }
+
+    let providerIndex = 0;
+    let emergencyFallbackUsed = false;
+    while (providerIndex < providerOrder.length) {
+        const provider = providerOrder[providerIndex++];
         try {
             const attempt = tryProviders[provider]();
             const result = stream
@@ -297,6 +310,12 @@ async function processChat(req, res = null) {
             console.warn(`⚠️ ${provider} falló:`, e.message);
             errors.push(`${provider}: ${e.message}`);
             if (stream && res && res.writableEnded) throw e;
+
+            if (!emergencyFallbackUsed && GEMINI_ONLY_INTENTS.includes(intent) && isQuotaOrTimeoutError(e)) {
+                emergencyFallbackUsed = true;
+                console.warn(`⚠️ ${intent}: Gemini sin cuota o sin respuesta; probando OpenRouter/Mistral`);
+                providerOrder.push('openrouter', 'mistral');
+            }
         }
     }
 
