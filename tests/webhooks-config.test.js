@@ -62,6 +62,29 @@ for (const caso of casos) {
     });
 }
 
+/* ── Patrón literal que Vercel detecta por análisis estático ────────────── */
+console.log('\n🔎 Patrón estático module.exports.config\n');
+
+const fs = require('fs');
+const path = require('path');
+
+test('los ficheros declaran module.exports.config de forma literal', () => {
+    const ficheros = ['../api/webhook.js', '../api/calcom-webhook.js'];
+
+    for (const rel of ficheros) {
+        const src = fs.readFileSync(path.join(__dirname, rel), 'utf8');
+        const nombre = path.basename(rel);
+
+        // Vercel busca esta asignación literal en el fichero; si solo se asigna
+        // a una variable local, no la ve y acaba parseando el cuerpo.
+        const patron = /module\.exports\.config\s*=\s*\{[^}]*api\s*:\s*\{[^}]*bodyParser\s*:\s*false/s;
+        assert.ok(
+            patron.test(src),
+            `${nombre}: falta el patrón literal "module.exports.config = { api: { bodyParser: false } }"`
+        );
+    }
+});
+
 /* ── readRawBody: diagnóstico cuando el cuerpo no llega crudo ───────────── */
 console.log('\n📦 Lectura del cuerpo crudo\n');
 

@@ -164,3 +164,12 @@ handler.config = {
 };
 
 module.exports = withMonitoring('/api/webhook', handler);
+
+// Vercel lee `bodyParser` por ANÁLISIS ESTÁTICO del fichero, buscando este
+// patrón literal. Sin él, Stripe recibe el cuerpo ya parseado y
+// `constructEvent` falla siempre.
+module.exports.config = {
+    api: {
+        bodyParser: false
+    }
+};

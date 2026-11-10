@@ -249,8 +249,12 @@ exactamente qué falló (visible en el detalle del intento en Cal.com):
 esperada=3d81ee04… (64 car.) | secreto=42 car.
 ```
 
-- `cuerpo=0B` → el cuerpo llegó vacío: el deployment no incluye
-  `config.api.bodyParser = false` (despliega el commit `ca6643c` o posterior).
+- `cuerpo=0B` → el cuerpo llegó vacío. Vercel no desactivó el bodyParser:
+  comprueba que el fichero contiene **literalmente**
+  `module.exports.config = { api: { bodyParser: false } }`. Vercel lee esa
+  opción por **análisis estático**: si se asigna a una variable local
+  (`handler.config = …`) o a través de una función envolvente, **no la detecta**
+  y entrega el cuerpo ya parseado.
 - Longitudes distintas → Cal.com usa otro algoritmo o la cabecera está corrupta.
 - **Longitudes iguales y contenido distinto → los secretos no coinciden.** Es el
   caso más habitual: vuelve a copiar el secreto desde Cal.com a Vercel (sin

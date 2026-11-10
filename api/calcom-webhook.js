@@ -184,3 +184,13 @@ handler.config = {
 };
 
 module.exports = withMonitoring('/api/calcom-webhook', handler);
+
+// Vercel lee `bodyParser` por ANÁLISIS ESTÁTICO del fichero, buscando este
+// patrón literal. Asignarlo a una variable local (handler.config) o a través
+// de la función envolvente NO se detecta, y entonces el runtime entrega el
+// cuerpo ya parseado → la firma HMAC nunca valida.
+module.exports.config = {
+    api: {
+        bodyParser: false
+    }
+};

@@ -22,18 +22,36 @@ async function readRawBody(req) {
     if (Buffer.isBuffer(req.body)) return req.body;
     if (typeof req.body === 'string') return Buffer.from(req.body);
 
-    // 2. Diagnóstico: si ya viene parseado a objeto, los bytes originales se
+    // 2. Aunque el cuerpo venga parseado, se intenta el stream: en algunos
+    //    runtimes sigue disponible y así se recuperan los bytes exactos.
+    if (!req.readableEnded) {
+        try {
+            const chunks = [];
+            for await (const chunk of req) {
+                chunks.push(typeof chunk === 'string' ? Buffer.from(chunk) : chunk);
+            }
+            if (chunks.length > 0) {
+                const crudo = Buffer.concat(chunks);
+                if (crudo.length > 0) return crudo;
+            }
+        } catch (_) {
+            // Stream ya consumido: se continúa al diagnóstico de abajo.
+        }
+    }
+
+    // 3. Diagnóstico: si ya venía parseado a objeto, los bytes originales se
     //    perdieron (bodyParser activo) y la firma NO se puede verificar.
     //    Sin este aviso el síntoma sería un 401 incomprensible.
     if (req.body && typeof req.body === 'object') {
         console.error(
             '⛔ [Webhook] El cuerpo llegó ya parseado: no se puede verificar la firma. ' +
-            'Falta `module.exports.config.api.bodyParser = false` en esta función.'
+            'Falta que Vercel desactive el bodyParser para esta función: ' +
+            '`module.exports.config = { api: { bodyParser: false } }` (literal).'
         );
         return Buffer.from('');
     }
 
-    // 3. Stream ya consumido por el runtime (mismo problema que el punto 2).
+    // 4. Stream ya consumido por el runtime (mismo problema que el punto 3).
     if (req.readableEnded) {
         console.error(
             '⛔ [Webhook] El stream ya estaba consumido antes de leerlo: ' +
@@ -42,12 +60,7 @@ async function readRawBody(req) {
         return Buffer.from('');
     }
 
-    // 4. Camino normal: leer el stream.
-    const chunks = [];
-    for await (const chunk of req) {
-        chunks.push(typeof chunk === 'string' ? Buffer.from(chunk) : chunk);
-    }
-    return Buffer.concat(chunks);
+    return Buffer.from('');
 }
 
 /** Comparación en tiempo constante para evitar timing attacks. */
