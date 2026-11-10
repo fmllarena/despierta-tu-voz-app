@@ -581,6 +581,83 @@
     padding: 8px 20px;
 }
 
+/* ── Exportación de datos (Ajustes) ─────────────────────────────────────── */
+.account-export-section {
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 1px dashed #ddd;
+    text-align: center;
+}
+
+.account-export-hint {
+    font-size: 0.8em;
+    color: #6b5a47;
+    margin: 0 0 10px;
+    line-height: 1.5;
+}
+
+#downloadMyDataBtn {
+    font-size: 0.8em;
+    padding: 8px 18px;
+    border: 1px solid #8e7d6d;
+    background: transparent;
+    color: #7b6b5c;
+    border-radius: 20px;
+    cursor: pointer;
+    min-height: 36px;
+    transition: background 0.2s, color 0.2s;
+}
+
+#downloadMyDataBtn:hover {
+    background: rgba(142, 125, 109, 0.12);
+}
+
+#downloadDataStatus {
+    display: none;
+    margin-top: 10px;
+    font-size: 0.8em;
+    font-weight: 600;
+    line-height: 1.4;
+}
+
+#downloadDataStatus.is-ok {
+    color: #2e7d32;
+}
+
+#downloadDataStatus.is-error {
+    color: #c0392b;
+}
+
+/* Modo oscuro: el fondo del modal es marrón, así que el texto tiene que ser
+   claro y el botón usa el amarillo de "Guardar Preferencias". */
+html[data-theme="dark"] .account-export-section {
+    border-top-color: #4a3f35 !important;
+}
+
+html[data-theme="dark"] .account-export-hint {
+    color: #e8e2d8 !important;
+}
+
+html[data-theme="dark"] #downloadMyDataBtn {
+    background: var(--color-acento, #d4af37) !important;
+    border-color: var(--color-acento, #d4af37) !important;
+    color: #1a1a1a !important;
+    font-weight: 700;
+}
+
+html[data-theme="dark"] #downloadMyDataBtn:hover {
+    background: #c49a2e !important;
+    border-color: #c49a2e !important;
+}
+
+html[data-theme="dark"] #downloadDataStatus.is-ok {
+    color: #9be7a8 !important;
+}
+
+html[data-theme="dark"] #downloadDataStatus.is-error {
+    color: #ff9b8a !important;
+}
+
 /* ── Acciones de mensaje (escuchar / reintentar / editar) ──────────────── */
 .msg-actions {
     display: flex;

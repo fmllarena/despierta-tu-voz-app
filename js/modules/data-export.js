@@ -139,7 +139,9 @@ export const DATOS = window.DATOS = {
         if (el) {
             el.textContent = texto;
             el.style.display = 'block';
-            el.style.color = esError ? '#c0392b' : '#2e7d32';
+            // El color se decide en CSS (claro/oscuro); aquí solo el estado.
+            el.classList.toggle('is-error', !!esError);
+            el.classList.toggle('is-ok', !esError);
             if (!esError) {
                 setTimeout(() => { el.style.display = 'none'; }, 6000);
             }

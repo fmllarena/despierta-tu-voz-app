@@ -165,6 +165,73 @@ function createFakeClient(datos, fallos = {}) {
         assert(/mensajes_guardados/.test(capturado.avisos[0]), 'el aviso debe nombrar la sección');
     });
 
+    await test('el estado usa clases, no color inline (para adaptarse al tema)', async () => {
+        const el = document.getElementById('downloadDataStatus');
+        assert(el.classList.contains('is-ok'), `clases: "${el.className}"`);
+        const estilo = el.getAttribute('style') || '';
+        assert(!/color/i.test(estilo), `no debe fijar color inline: "${estilo}"`);
+    });
+
+    await test('sin conexión el estado se marca como error', async () => {
+        const sb = window.__STATE.supabase;
+        window.__STATE.supabase = null;
+        DATOS._descargando = false;
+
+        await DATOS.descargar();
+
+        window.__STATE.supabase = sb;
+        const el = document.getElementById('downloadDataStatus');
+        assert(el.classList.contains('is-error'), `clases: "${el.className}"`);
+        assert(!el.classList.contains('is-ok'), 'no debería quedar marcado como ok');
+    });
+
+    await test('el modo oscuro define contraste para texto, botón y estado', () => {
+        const css = fs.readFileSync(path.join(__dirname, '../css/chat-extras.css'), 'utf8');
+
+        assert(/html\[data-theme="dark"\]\s+\.account-export-hint/.test(css),
+            'falta el color del texto en modo oscuro');
+        assert(/html\[data-theme="dark"\]\s+#downloadMyDataBtn/.test(css),
+            'falta el estilo del botón en modo oscuro');
+        assert(/html\[data-theme="dark"\]\s+#downloadDataStatus\.is-ok/.test(css),
+            'falta el estado correcto en modo oscuro');
+        assert(/html\[data-theme="dark"\]\s+#downloadDataStatus\.is-error/.test(css),
+            'falta el estado de error en modo oscuro');
+        assert(/html\[data-theme="dark"\]\s+#downloadMyDataBtn\s*\{[^}]*var\(--color-acento/.test(css),
+            'el botón oscuro debería usar el amarillo de acento');
+    });
+
+    await test('los colores del modo oscuro superan 4.5:1 de contraste', () => {
+        // Contraste WCAG AA para texto normal.
+        function luminancia(hex) {
+            const c = hex.replace('#', '').match(/../g).map(h => {
+                const v = parseInt(h, 16) / 255;
+                return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+            });
+            return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
+        }
+        function ratio(a, b) {
+            const l1 = luminancia(a), l2 = luminancia(b);
+            const [hi, lo] = l1 > l2 ? [l1, l2] : [l2, l1];
+            return (hi + 0.05) / (lo + 0.05);
+        }
+
+        const fondoOscuro = '#2a2520';   // fondo del modal en modo oscuro
+        const casos = [
+            ['texto explicativo', '#e8e2d8'],
+            ['estado ok', '#9be7a8'],
+            ['estado error', '#ff9b8a']
+        ];
+
+        casos.forEach(([nombre, color]) => {
+            const r = ratio(color, fondoOscuro);
+            assert(r >= 4.5, `${nombre}: contraste ${r.toFixed(2)}:1 (mínimo 4.5)`);
+        });
+
+        // Texto del botón sobre el amarillo de acento.
+        const rBoton = ratio('#1a1a1a', '#d4af37');
+        assert(rBoton >= 4.5, `botón: contraste ${rBoton.toFixed(2)}:1`);
+    });
+
     await test('el nombre del fichero incluye la fecha', () => {
         // Se restaura el método real (antes estaba interceptado).
         DATOS._descargarJSON = descargarJSONOriginal;
