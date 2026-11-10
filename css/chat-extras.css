@@ -109,6 +109,54 @@
     padding: 0 12px 10px;
 }
 
+/* Campo con botón de limpiar superpuesto. */
+.search-field {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.search-field input[type="search"] {
+    /* Se oculta la "x" nativa para no duplicar con la nuestra. */
+    -webkit-appearance: none;
+    appearance: none;
+    padding-right: 34px;
+}
+
+.search-field input[type="search"]::-webkit-search-cancel-button,
+.search-field input[type="search"]::-webkit-search-decoration {
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+.search-clear-btn {
+    position: absolute;
+    right: 6px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: #ece2d6;
+    color: #6b5a47;
+    cursor: pointer;
+}
+
+.search-clear-btn:hover {
+    background: #dfd2c1;
+    color: #4a3f35;
+}
+
+/* El atributo hidden debe ganar a `display:inline-flex`. */
+.search-clear-btn[hidden] {
+    display: none !important;
+}
+
 .sidebar-search input {
     width: 100%;
     box-sizing: border-box;
@@ -162,6 +210,44 @@
     color: #a1927f;
     padding: 12px 10px 4px;
     font-weight: 700;
+}
+
+/* Cabecera de resultados de búsqueda con botón "Volver". */
+.conv-search-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 10px 8px 8px;
+    border-bottom: 1px solid #efe6d9;
+    margin-bottom: 4px;
+}
+
+.conv-search-label {
+    font-size: 0.72rem;
+    color: #8b7a66;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+}
+
+.conv-back-btn {
+    flex: 0 0 auto;
+    border: 1px solid #ddcdb7;
+    background: #faf6ef;
+    color: #6b5a47;
+    border-radius: 8px;
+    padding: 4px 10px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+    min-height: 28px;
+}
+
+.conv-back-btn:hover {
+    background: #f2eade;
+    border-color: #b9a68d;
 }
 
 .conv-item {

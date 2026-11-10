@@ -304,6 +304,7 @@ export const CONVERSATIONS = window.CONVERSATIONS = {
         const term = String(q || '').trim();
         if (!term) {
             this.searchResults = null;
+            this._updateClearButton();
             this.renderSidebar();
             return null;
         }
@@ -331,6 +332,7 @@ export const CONVERSATIONS = window.CONVERSATIONS = {
         }
 
         this.searchResults = { term, porTitulo, porTexto };
+        this._updateClearButton();
         this.renderSidebar();
         return this.searchResults;
     },
@@ -366,19 +368,35 @@ export const CONVERSATIONS = window.CONVERSATIONS = {
         const searchInput = document.getElementById('conversationSearch');
         if (searchInput) {
             let timer = null;
-            searchInput.addEventListener('input', e => {
-                this.filter = e.target.value;
+            const programarBusqueda = valor => {
+                this.filter = valor;
+                this._updateClearButton();
                 clearTimeout(timer);
                 timer = setTimeout(() => this.search(this.filter), 300);
-            });
+            };
+
+            searchInput.addEventListener('input', e => programarBusqueda(e.target.value));
+
+            // La "x" nativa de <input type="search"> no siempre dispara `input`
+            // en todos los navegadores; `search` sí.
+            searchInput.addEventListener('search', e => programarBusqueda(e.target.value));
+
             searchInput.addEventListener('keydown', e => {
                 if (e.key === 'Escape') {
-                    searchInput.value = '';
-                    this.filter = '';
-                    this.search('');
+                    e.preventDefault();
+                    clearSearch();
+                    searchInput.focus();
                 }
             });
         }
+
+        // Botón propio para limpiar: al vaciar el campo se vuelve al listado.
+        document.getElementById('clearSearchBtn')?.addEventListener('click', () => {
+            clearSearch();
+            document.getElementById('conversationSearch')?.focus();
+        });
+
+        this._updateClearButton();
 
         // Foco al abrir con teclado + cierre con Escape.
         sidebar.addEventListener('keydown', e => {
@@ -392,6 +410,19 @@ export const CONVERSATIONS = window.CONVERSATIONS = {
         const guardado = localStorage.getItem(SIDEBAR_KEY);
         const abrir = guardado === null ? window.innerWidth > 900 : guardado === 'true';
         this.toggleSidebar(abrir, { persist: false });
+    },
+
+    /** Muestra u oculta la "x" del buscador según haya texto o resultados. */
+    _updateClearButton() {
+        const btn = document.getElementById('clearSearchBtn');
+        const input = document.getElementById('conversationSearch');
+        if (!btn) return;
+
+        const hayTexto = !!(input && input.value.trim());
+        const hayResultados = !!this.searchResults;
+
+        // `hidden` se respeta aunque el CSS use display:flex.
+        btn.hidden = !(hayTexto || hayResultados);
     },
 
     toggleSidebar(force, { persist = true } = {}) {
@@ -447,6 +478,26 @@ export const CONVERSATIONS = window.CONVERSATIONS = {
         // ── Resultados de búsqueda ──
         if (this.searchResults) {
             const { term, porTitulo, porTexto } = this.searchResults;
+
+            // Cabecera con "Volver": la forma explícita de regresar al listado
+            // de conversaciones con sus fechas.
+            const cabeza = document.createElement('div');
+            cabeza.className = 'conv-search-head';
+
+            const etiqueta = document.createElement('span');
+            etiqueta.className = 'conv-search-label';
+            etiqueta.textContent = `Resultados para «${term}»`;
+
+            const volver = document.createElement('button');
+            volver.type = 'button';
+            volver.className = 'conv-back-btn';
+            volver.textContent = 'Volver';
+            volver.setAttribute('aria-label', 'Volver al historial completo de conversaciones');
+            volver.addEventListener('click', () => clearSearch());
+
+            cabeza.appendChild(etiqueta);
+            cabeza.appendChild(volver);
+            listEl.appendChild(cabeza);
 
             if (porTitulo.length === 0 && porTexto.length === 0) {
                 const vacio = document.createElement('p');
@@ -608,6 +659,10 @@ function clearSearch() {
     if (input) input.value = '';
     CONVERSATIONS.filter = '';
     CONVERSATIONS.searchResults = null;
+    CONVERSATIONS._updateClearButton();
+    // Volver a pintar el listado completo (con sus fechas). Sin esto la barra
+    // se quedaba mostrando los resultados de la búsqueda anterior.
+    CONVERSATIONS.renderSidebar();
 }
 
 // Mantener `updated_at` de la lista al día tras cada mensaje nuevo.

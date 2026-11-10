@@ -72,7 +72,7 @@
 
     <link rel="stylesheet" href="css/style.css?v=7.3">
     <link rel="stylesheet" href="css/modals.css?v=7.4">
-    <link rel="stylesheet" href="css/chat-extras.css?v=1.0">
+    <link rel="stylesheet" href="css/chat-extras.css?v=1.1">
     <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="shortcut icon" href="/favicon.ico" />
@@ -175,8 +175,15 @@
 
             <div class="sidebar-search">
                 <label class="sr-only" for="conversationSearch">Buscar en tus conversaciones</label>
-                <input type="search" id="conversationSearch" placeholder="Buscar en el historial…"
-                    autocomplete="off" aria-label="Buscar en tus conversaciones">
+                <div class="search-field">
+                    <input type="search" id="conversationSearch" placeholder="Buscar en el historial…"
+                        autocomplete="off" aria-label="Buscar en tus conversaciones">
+                    <button id="clearSearchBtn" class="search-clear-btn" type="button" hidden
+                        aria-label="Limpiar la búsqueda y volver al historial">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12" /></svg>
+                    </button>
+                </div>
             </div>
 
             <button id="newConversationBtn" class="sidebar-new-btn" type="button">
@@ -953,9 +960,9 @@
     <script type="module" src="js/modules/tour.js?v=7.1"></script>
     <script type="module" src="js/modules/files.js?v=7.1"></script>
     <script type="module" src="js/modules/pronunciation.js?v=7.2"></script>
-    <script type="module" src="js/modules/conversations.js?v=1.0"></script>
+    <script type="module" src="js/modules/conversations.js?v=1.1"></script>
     <script type="module" src="js/modules/a11y.js?v=1.0"></script>
-    <script type="module" src="js/modules/pwa.js?v=1.0"></script>
+    <script type="module" src="js/modules/pwa.js?v=1.1"></script>
     <script src="main.js?v=7.11" defer></script>
 
     <!-- Script de Diagnóstico DTV (No-módulo para evitar fallos de carga) -->

@@ -10,7 +10,6 @@
 
 const SW_URL = '/service-worker.js';
 
-let deferredPrompt = null;
 let registrando = false;
 
 /* ── Registro del service worker ─────────────────────────────────────────── */
@@ -58,7 +57,7 @@ function mostrarAvisoActualizacion(worker) {
     banner.id = 'dtvUpdateBanner';
     banner.setAttribute('role', 'status');
     banner.style.cssText =
-        'position:fixed;left:50%;bottom:16px;transform:translateX(-50%);z-index:2147483000;' +
+        'position:fixed;left:50%;bottom:88px;transform:translateX(-50%);z-index:2147483000;' +
         'background:#2b2621;color:#f3ede3;padding:12px 16px;border-radius:12px;' +
         'font:14px/1.4 system-ui,sans-serif;display:flex;gap:12px;align-items:center;' +
         'box-shadow:0 10px 30px rgba(0,0,0,.35);max-width:92vw';
@@ -83,46 +82,10 @@ function mostrarAvisoActualizacion(worker) {
 }
 
 /* ── Instalación ─────────────────────────────────────────────────────────── */
-function crearBotonInstalar() {
-    if (document.getElementById('dtvInstallBtn')) return;
-
-    const btn = document.createElement('button');
-    btn.id = 'dtvInstallBtn';
-    btn.type = 'button';
-    btn.textContent = 'Instalar app';
-    btn.setAttribute('aria-label', 'Instalar la aplicación en este dispositivo');
-    btn.style.cssText =
-        'position:fixed;right:14px;bottom:14px;z-index:2147482500;' +
-        'background:#8e7d6d;color:#fff;border:0;border-radius:999px;' +
-        'padding:10px 18px;font:600 14px/1 system-ui,sans-serif;cursor:pointer;' +
-        'box-shadow:0 8px 24px rgba(0,0,0,.2);min-height:40px';
-
-    btn.addEventListener('click', async () => {
-        if (!deferredPrompt) return;
-        deferredPrompt.prompt();
-        try {
-            await deferredPrompt.userChoice;
-        } catch (_) { /* el usuario canceló */ }
-        deferredPrompt = null;
-        btn.remove();
-    });
-
-    document.body.appendChild(btn);
-}
-
-window.addEventListener('beforeinstallprompt', e => {
-    // Evitamos el mini-infobar por defecto y mostramos nuestro botón.
-    e.preventDefault();
-    deferredPrompt = e;
-    crearBotonInstalar();
-});
-
-window.addEventListener('appinstalled', () => {
-    deferredPrompt = null;
-    document.getElementById('dtvInstallBtn')?.remove();
-    console.log('✅ [PWA] App instalada.');
-    window.dtvAnnounce?.('Aplicación instalada correctamente.');
-});
+// NO se pinta un botón flotante propio: se solapaba con la burbuja de
+// "Asistencia" del pie de la app. La instalación sigue disponible desde el
+// propio navegador (icono en la barra de direcciones / menú → "Instalar app"),
+// que es donde el usuario la busca. El service worker es lo que la habilita.
 
 /* ── Arranque ────────────────────────────────────────────────────────────── */
 if (document.readyState === 'loading') {

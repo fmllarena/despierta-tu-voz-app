@@ -320,6 +320,80 @@ const titulosSidebar = () =>
         await CONV.search('');
     });
 
+    await test('los resultados muestran cabecera con botón Volver', async () => {
+        await CONV.search('escenario');
+        const cabeza = document.querySelector('#conversationList .conv-search-head');
+        assert(!!cabeza, 'falta la cabecera de resultados');
+        const volver = cabeza.querySelector('.conv-back-btn');
+        assert(!!volver, 'falta el botón Volver');
+        assert(/escenario/i.test(cabeza.textContent), 'la cabecera no menciona el término buscado');
+        await CONV.search('');
+    });
+
+    await test('el botón Volver devuelve al listado completo con fechas', async () => {
+        await CONV.search('escenario');
+        assert(!!document.querySelector('#conversationList .conv-search-head'),
+            'debería estar en modo resultados');
+
+        document.querySelector('#conversationList .conv-back-btn').click();
+
+        // Tras volver: sin cabecera de resultados, sin resultados, y con la lista.
+        assert(!document.querySelector('#conversationList .conv-search-head'),
+            'la cabecera de resultados sigue visible');
+        assert(document.querySelectorAll('#conversationList .conv-result').length === 0,
+            'siguen apareciendo resultados de mensajes');
+        assert(document.querySelectorAll('#conversationList .conv-item').length === CONV.list.length,
+            'no se restauró el listado completo');
+
+        const fechas = [...document.querySelectorAll('#conversationList .conv-item .conv-date')];
+        assert(fechas.length > 0, 'las conversaciones deberían mostrar su fecha');
+        assert(fechas.some(f => f.textContent.trim().length > 0), 'las fechas están vacías');
+
+        // El campo de búsqueda debe quedar limpio.
+        const input = document.getElementById('conversationSearch');
+        assert(input.value === '', `el buscador no se limpió: "${input.value}"`);
+    });
+
+    await test('vaciar el buscador a mano también restaura el listado', async () => {
+        const input = document.getElementById('conversationSearch');
+        const nConversaciones = CONV.list.length;
+
+        // Simula que el usuario escribe y luego borra (evento `input` real).
+        input.value = 'escenario';
+        input.dispatchEvent(new window.Event('input', { bubbles: true }));
+        await new Promise(r => setTimeout(r, 400));
+        assert(!!document.querySelector('#conversationList .conv-search-head'),
+            'no se mostraron resultados al escribir');
+
+        input.value = '';
+        input.dispatchEvent(new window.Event('input', { bubbles: true }));
+        await new Promise(r => setTimeout(r, 400));
+
+        assert(!document.querySelector('#conversationList .conv-search-head'),
+            'al vaciar el buscador siguen los resultados');
+        assert(document.querySelectorAll('#conversationList .conv-item').length === nConversaciones,
+            'no volvió el listado completo');
+    });
+
+    await test('el botón de limpiar aparece solo cuando hay búsqueda', async () => {
+        const btn = document.getElementById('clearSearchBtn');
+        assert(!!btn, 'falta el botón de limpiar');
+
+        // Estado inicial: sin texto ni resultados.
+        CONV.searchResults = null;
+        document.getElementById('conversationSearch').value = '';
+        CONV._updateClearButton();
+        assert(btn.hidden === true, 'debería estar oculto sin búsqueda');
+
+        await CONV.search('escenario');
+        assert(btn.hidden === false, 'debería mostrarse con resultados');
+
+        btn.click();
+        assert(btn.hidden === true, 'debería ocultarse al limpiar');
+        assert(!document.querySelector('#conversationList .conv-search-head'),
+            'al limpiar siguen los resultados');
+    });
+
     await test('renombrar actualiza el título en la lista', async () => {
         await CONV.rename('c-2', 'Pánico escénico');
         const titulos = titulosSidebar();

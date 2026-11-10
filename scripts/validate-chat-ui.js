@@ -115,6 +115,25 @@ if (!fs.existsSync('service-worker.js')) errors.push('Falta service-worker.js');
 if (!fs.existsSync('offline.html')) errors.push('Falta offline.html');
 if (!fs.existsSync('manifest.json')) errors.push('Falta manifest.json');
 
+// El botón flotante de instalación se retiró: se solapaba con la burbuja de
+// "Asistencia" (right:25px / bottom:25px).
+const pwaSrc = fs.readFileSync('js/modules/pwa.js', 'utf8');
+if (pwaSrc.includes('dtvInstallBtn')) {
+    errors.push('pwa.js vuelve a crear el botón flotante "Instalar app" (se solapa con Asistencia)');
+}
+if (/beforeinstallprompt/.test(pwaSrc) && /appendChild\(\s*btn/.test(pwaSrc)) {
+    errors.push('pwa.js vuelve a pintar un botón de instalación propio');
+}
+if (!pwaSrc.includes('serviceWorker')) {
+    errors.push('pwa.js no registra el service worker');
+}
+
+// La burbuja de asistencia ocupa bottom:25px; nada flotante debe invadirla.
+const styleSrc = fs.readFileSync('css/style.css', 'utf8');
+if (!/\.whatsapp-float\s*\{[^}]*bottom:\s*25px/.test(styleSrc)) {
+    warnings.push('La posición de .whatsapp-float cambió: revisa solapes con elementos fijos');
+}
+
 console.log('\n=== Validación de index-original.html ===\n');
 
 if (warnings.length) {

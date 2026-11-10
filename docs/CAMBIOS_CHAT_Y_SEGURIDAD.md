@@ -71,6 +71,9 @@ Reglas aplicadas:
   pintaban si volvías de una reserva: `cargarHistorialDesdeDB(user.id, isBookingSuccess)`).
 - Barra lateral con: búsqueda (título + texto de los mensajes), **nueva conversación**,
   renombrar, eliminar y fecha/contador.
+- **Volver de la búsqueda**: la cabecera de resultados tiene un botón "Volver",
+  la "x" del buscador limpia el campo y, al vaciarlo, reaparece el listado
+  completo con sus fechas. También `Escape` limpia la búsqueda.
 - Título automático con el primer mensaje.
 - **`resumen_diario` y `sistema` nunca se muestran**: son material interno para que la
   IA recupere contexto. Se filtran en la lista, en el chat, en la búsqueda y en la
@@ -139,8 +142,11 @@ Reglas aplicadas:
   - **`/api/*`, Supabase y CDNs nunca se cachean.**
   - Aviso de versión nueva y limpieza de cachés antiguas.
 - `offline.html` como página de respaldo.
-- `js/modules/pwa.js`: registro del SW y botón **Instalar app**
-  (`beforeinstallprompt`).
+- `js/modules/pwa.js`: registro del SW y aviso de versión nueva.
+  **Sin botón flotante de instalación**: se solapaba con la burbuja de
+  "Asistencia" (`right:25px / bottom:25px`). La instalación sigue disponible
+  desde el propio navegador (icono de la barra de direcciones o menú →
+  "Instalar app"), que es lo que habilita el service worker.
 
 ---
 
