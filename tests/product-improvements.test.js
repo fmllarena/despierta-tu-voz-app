@@ -434,6 +434,26 @@ function createFakeClient(datos, fallos = {}) {
             '.privacy-notice-box está duplicado (debe vivir solo en style.css)');
     });
 
+    await test('no quedan variables muertas ni colores sin token', () => {
+        const ficheros = ['style.css', 'modals.css', 'chat-extras.css']
+            .map(f => fs.readFileSync(path.join(__dirname, '../css', f), 'utf8'))
+            .join('\n')
+            // Los comentarios mencionan colores para documentar: se ignoran.
+            .replace(/\/\*[\s\S]*?\*\//g, '');
+
+        // --white-bg se definía y no se usaba en ningún sitio.
+        assert(!/--white-bg\s*:/.test(ficheros),
+            '--white-bg sigue definida pero no se usa en ninguna regla');
+
+        // #a09080 solo debe aparecer en las dos definiciones de variable.
+        const literales = (ficheros.match(/#a09080/gi) || []).length;
+        assert(literales === 2,
+            `#a09080 debería aparecer solo en las 2 definiciones, aparece ${literales} veces`);
+
+        assert(/--chat-border:\s*#a09080/.test(ficheros), 'falta --chat-border');
+        assert(/--hover-bg:\s*#a09080/.test(ficheros), 'falta --hover-bg');
+    });
+
     await test('los textos del modal legal superan 4.5:1 en modo oscuro', () => {
         function luminancia(hex) {
             const c = hex.replace('#', '').match(/../g).map(h => {

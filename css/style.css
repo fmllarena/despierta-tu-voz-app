@@ -4194,6 +4194,16 @@ input:disabled+.slider {
    DARK MODE
    ======================================== */
 html[data-theme="dark"] {
+    /* ── Paleta del tema oscuro ──────────────────────────────────────────
+       Estos tokens solo existen aquí: el tema claro usa valores literales,
+       así que siempre deben aplicarse dentro de `html[data-theme="dark"]`.
+
+       Dos parejas comparten valor a propósito, por tener roles distintos:
+         --chat-bg (#8e7d6d)      fondo del chat
+         --chat-border (#a09080)  bordes
+         --hover-bg (#a09080)     fondos de hover
+       No son alias: si mañana cambia el borde, no debe cambiar el hover.
+       ---------------------------------------------------------------- */
     --color-fondo: #1a1a1a;
     --color-texto: #e0e0e0;
     --color-acento: #d4af37;
@@ -4211,7 +4221,6 @@ html[data-theme="dark"] {
     --card-border: #4a3f35;
     --header-bg: #d4af37;
     --hover-bg: #a09080;
-    --white-bg: #8e7d6d;
     --shadow-color: rgba(0, 0, 0, 0.4);
 }
 
@@ -4414,7 +4423,7 @@ html[data-theme="dark"] .question-slide p {
 }
 
 html[data-theme="dark"] .diario-seccion {
-    border-bottom-color: #a09080;
+    border-bottom-color: var(--chat-border);
 }
 
 html[data-theme="dark"] .diario-seccion p {
