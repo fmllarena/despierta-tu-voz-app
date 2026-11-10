@@ -4,3 +4,10 @@ node_modules
 .vercel
 package-lock.json
 supabase/.temp
+
+# Copias locales de imágenes que no se usan en la app
+assets/marcador0-512.png
+assets/marcador2-512.png
+
+# Fichero descargado que acabó en sql/ por error
+sql/River_Pleasy*.json
