@@ -383,6 +383,58 @@ function createFakeClient(datos, fallos = {}) {
         });
     });
 
+    /* ── Modal legal en modo oscuro ──────────────────────────────────────── */
+    console.log('\n⚖️  Modal "Compromiso y Privacidad" en modo oscuro\n');
+
+    await test('define contraste para el modal legal en modo oscuro', () => {
+        const css = fs.readFileSync(path.join(__dirname, '../css/chat-extras.css'), 'utf8');
+
+        const selectores = [
+            '.legal-modal-content',
+            '.legal-intro',
+            '.legal-section h3',
+            '.legal-section p',
+            '.legal-scroll-area',
+            '.privacy-notice-box',
+            '.check-item'
+        ];
+
+        selectores.forEach(sel => {
+            const re = new RegExp(`html\\[data-theme="dark"\\]\\s+\\${sel.replace(/\./g, '.')}[^{]*\\{`);
+            assert(re.test(css), `falta el estilo oscuro de ${sel}`);
+        });
+    });
+
+    await test('los textos del modal legal superan 4.5:1 en modo oscuro', () => {
+        function luminancia(hex) {
+            const c = hex.replace('#', '').match(/../g).map(h => {
+                const v = parseInt(h, 16) / 255;
+                return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+            });
+            return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
+        }
+        function ratio(a, b) {
+            const l1 = luminancia(a), l2 = luminancia(b);
+            const [hi, lo] = l1 > l2 ? [l1, l2] : [l2, l1];
+            return (hi + 0.05) / (lo + 0.05);
+        }
+
+        const pares = [
+            ['párrafos sobre el modal', '#e8e2d8', '#241f1a'],
+            ['intro sobre el modal', '#d8cfc4', '#241f1a'],
+            ['texto del área de scroll', '#e8e2d8', '#1c1815'],
+            ['títulos sobre el scroll', '#d4af37', '#1c1815'],
+            ['texto de la nota de privacidad', '#f0ead9', '#332f1c'],
+            ['negritas de la nota', '#f7d774', '#332f1c'],
+            ['checkboxes', '#e8e2d8', '#241f1a']
+        ];
+
+        pares.forEach(([nombre, texto, fondo]) => {
+            const r = ratio(texto, fondo);
+            assert(r >= 4.5, `${nombre}: ${r.toFixed(2)}:1 (mínimo 4.5)`);
+        });
+    });
+
     console.log(`\n${failed === 0 ? '✅' : '❌'} ${passed} pasadas, ${failed} fallidas\n`);
     process.exit(failed === 0 ? 0 : 1);
 })();
