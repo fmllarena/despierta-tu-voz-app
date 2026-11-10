@@ -266,6 +266,7 @@ export const CONVERSATIONS = window.CONVERSATIONS = {
             // Sin migración no se pueden separar hilos: al menos limpiamos la vista.
             this._clearChat();
             this._syncChatHistory([]);
+            this._cerrarTrasElegir();
             window.saludarUsuario?.(null, window.userProfile);
             return null;
         }
@@ -281,6 +282,8 @@ export const CONVERSATIONS = window.CONVERSATIONS = {
         this._clearChat();
         this._syncChatHistory([]);
         this.renderSidebar();
+        // Se cierra para poder escribir en el chat nuevo.
+        this._cerrarTrasElegir();
         window.saludarUsuario?.(null, window.userProfile);
         ELEMENTS.chatInput?.focus();
         return conv;
@@ -412,6 +415,14 @@ export const CONVERSATIONS = window.CONVERSATIONS = {
         this.toggleSidebar(abrir, { persist: false });
     },
 
+    /** Cierra el cajón tras elegir un hilo, sin tocar la preferencia guardada. */
+    _cerrarTrasElegir() {
+        this.toggleSidebar(false, { persist: false });
+        // Mantener un foco sensato para quien navegue con teclado: el botón
+        // que vuelve a abrir el historial.
+        document.getElementById('sidebarToggleBtn')?.focus({ preventScroll: true });
+    },
+
     /** Muestra u oculta la "x" del buscador según haya texto o resultados. */
     _updateClearButton() {
         const btn = document.getElementById('clearSearchBtn');
@@ -528,6 +539,7 @@ export const CONVERSATIONS = window.CONVERSATIONS = {
                     btn.addEventListener('click', async () => {
                         if (m.conversacion_id) {
                             clearSearch();
+                            this._cerrarTrasElegir();
                             await this.setCurrent(m.conversacion_id, { render: true });
                         }
                     });
@@ -622,7 +634,12 @@ export const CONVERSATIONS = window.CONVERSATIONS = {
         item.appendChild(meta);
         item.appendChild(acciones);
 
-        const abrir = () => this.setCurrent(conv.id, { render: true });
+        // Al elegir una conversación se cierra el cajón para dejar ver el chat.
+        // Sin persistir: es una acción automática, no una preferencia del usuario.
+        const abrir = async () => {
+            this._cerrarTrasElegir();
+            await this.setCurrent(conv.id, { render: true });
+        };
         item.addEventListener('click', abrir);
         item.addEventListener('keydown', e => {
             if (e.key === 'Enter' || e.key === ' ') {

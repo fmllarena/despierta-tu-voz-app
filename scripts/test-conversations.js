@@ -394,6 +394,59 @@ const titulosSidebar = () =>
             'al limpiar siguen los resultados');
     });
 
+    await test('al elegir una conversación se cierra la barra lateral', async () => {
+        const sidebar = document.getElementById('chatSidebar');
+        localStorage.setItem('dtv_sidebar_open', 'true');
+        CONV.toggleSidebar(true, { persist: false });
+        assert(sidebar.classList.contains('open'), 'la barra debería estar abierta de partida');
+
+        const item = document.querySelector('#conversationList .conv-item');
+        assert(!!item, 'no hay conversaciones que pulsar');
+
+        item.dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+        await new Promise(r => setTimeout(r, 20));
+
+        assert(!sidebar.classList.contains('open'), 'la barra debería cerrarse al elegir');
+        assert(sidebar.getAttribute('aria-hidden') === 'true', 'aria-hidden debería ser true');
+    });
+
+    await test('cerrar al elegir NO cambia la preferencia guardada', async () => {
+        // Si el usuario la tenía abierta por defecto, debe seguir así al recargar.
+        assert(localStorage.getItem('dtv_sidebar_open') === 'true',
+            `preferencia alterada: "${localStorage.getItem('dtv_sidebar_open')}"`);
+    });
+
+    await test('al pulsar un resultado de búsqueda también se cierra', async () => {
+        const sidebar = document.getElementById('chatSidebar');
+        CONV.toggleSidebar(true, { persist: false });
+
+        await CONV.search('diafragmática');
+        const resultado = document.querySelector('#conversationList .conv-result');
+        assert(!!resultado, 'no hay resultados de búsqueda');
+
+        resultado.dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+        await new Promise(r => setTimeout(r, 20));
+
+        assert(!sidebar.classList.contains('open'), 'debería cerrarse al abrir un resultado');
+        await CONV.search('');
+    });
+
+    await test('una conversación nueva también cierra la barra', async () => {
+        const sidebar = document.getElementById('chatSidebar');
+        CONV.toggleSidebar(true, { persist: false });
+
+        await CONV.newConversation();
+
+        assert(!sidebar.classList.contains('open'), 'debería cerrarse al crear una conversación');
+    });
+
+    await test('la barra se puede volver a abrir sin problema', async () => {
+        const sidebar = document.getElementById('chatSidebar');
+        CONV.toggleSidebar(true, { persist: false });
+        assert(sidebar.classList.contains('open'), 'debería reabrirse');
+        assert(sidebar.getAttribute('aria-hidden') === 'false', 'aria-hidden debería ser false');
+    });
+
     await test('renombrar actualiza el título en la lista', async () => {
         await CONV.rename('c-2', 'Pánico escénico');
         const titulos = titulosSidebar();
