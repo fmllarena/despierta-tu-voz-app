@@ -1,7 +1,7 @@
-// Pruebas de las defensas de seguridad aÃ±adidas a /api.
+// Pruebas de las defensas de seguridad añadidas a /api.
 // Ejecutar con:  node api/_lib/__tests__/security.test.js
 //
-// No hay framework de test en el proyecto, asÃ­ que se usa el runner de Node.
+// No hay framework de test en el proyecto, así que se usa el runner de Node.
 
 const assert = require('assert');
 const crypto = require('crypto');
@@ -27,11 +27,11 @@ function test(name, fn) {
         .then(fn)
         .then(() => {
             passed++;
-            console.log(`  âœ… ${name}`);
+            console.log(`  ✅ ${name}`);
         })
         .catch(err => {
             failed++;
-            console.error(`  âŒ ${name}\n     ${err.message}`);
+            console.error(`  ❌ ${name}\n     ${err.message}`);
         });
 }
 
@@ -42,9 +42,9 @@ function reqFromBuffer(buf, headers = {}) {
 }
 
 (async () => {
-    console.log('\nðŸ” webhook-security');
+    console.log('\n🔐 webhook-security');
 
-    await test('firma Cal.com vÃ¡lida en hex es aceptada', () => {
+    await test('firma Cal.com válida en hex es aceptada', () => {
         const body = Buffer.from(JSON.stringify({ triggerEvent: 'BOOKING_CREATED' }));
         const secret = 'secreto-de-prueba';
         const sig = hmacSha256(body, secret, 'hex');
@@ -52,7 +52,7 @@ function reqFromBuffer(buf, headers = {}) {
         assert.strictEqual(r.ok, true);
     });
 
-    await test('firma Cal.com vÃ¡lida en base64 es aceptada', () => {
+    await test('firma Cal.com válida en base64 es aceptada', () => {
         const body = Buffer.from('{"a":1}');
         const secret = 's3cr3t';
         const sig = hmacSha256(body, secret, 'base64');
@@ -76,7 +76,7 @@ function reqFromBuffer(buf, headers = {}) {
         assert.strictEqual(r.reason, 'missing_signature');
     });
 
-    await test('secreto ausente en producciÃ³n es rechazado (no fail-open)', () => {
+    await test('secreto ausente en producción es rechazado (no fail-open)', () => {
         const prev = process.env.VERCEL_ENV;
         process.env.VERCEL_ENV = 'production';
         const r = verifyCalcomSignature(Buffer.from('{}'), { 'x-cal-signature-256': 'x' }, undefined);
@@ -85,7 +85,7 @@ function reqFromBuffer(buf, headers = {}) {
         process.env.VERCEL_ENV = prev;
     });
 
-    await test('secreto ausente en local solo se salta con la flag explÃ­cita', () => {
+    await test('secreto ausente en local solo se salta con la flag explícita', () => {
         const prevEnv = process.env.VERCEL_ENV;
         process.env.VERCEL_ENV = 'development';
         const r1 = verifyCalcomSignature(Buffer.from('{}'), {}, undefined);
@@ -138,7 +138,7 @@ function reqFromBuffer(buf, headers = {}) {
     });
 
     await test('readRawBody preserva los bytes exactos', async () => {
-        const body = Buffer.from('{"emoji":"ðŸŽ™ï¸"}');
+        const body = Buffer.from('{"emoji":"🎙️"}');
         const raw = await readRawBody(reqFromBuffer(body));
         assert.ok(Buffer.isBuffer(raw));
         assert.strictEqual(raw.toString('utf8'), body.toString('utf8'));
@@ -155,7 +155,7 @@ function reqFromBuffer(buf, headers = {}) {
         assert.strictEqual(r.ok, true);
     });
 
-    console.log('\nðŸ“Š monitoring');
+    console.log('\n📊 monitoring');
 
     await test('captureError registra el evento en el buffer', () => {
         const before = getRecentErrors().length;
@@ -181,7 +181,7 @@ function reqFromBuffer(buf, headers = {}) {
     });
 
     await test('withMonitoring captura excepciones y responde 500', async () => {
-        const boom = async () => { throw new Error('explotÃ³'); };
+        const boom = async () => { throw new Error('explotó'); };
         const wrapped = withMonitoring('/api/boom', boom);
 
         let statusCode = null;
@@ -218,6 +218,6 @@ function reqFromBuffer(buf, headers = {}) {
         assert.deepStrictEqual(payload, { fine: true });
     });
 
-    console.log(`\n${failed === 0 ? 'âœ…' : 'âŒ'} ${passed} pasadas, ${failed} fallidas\n`);
+    console.log(`\n${failed === 0 ? '✅' : '❌'} ${passed} pasadas, ${failed} fallidas\n`);
     process.exit(failed === 0 ? 0 : 1);
 })();

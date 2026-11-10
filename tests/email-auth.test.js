@@ -1,4 +1,4 @@
-﻿// Pruebas del handler de /api/email: comprueban que el endpoint dejÃ³ de ser
+// Pruebas del handler de /api/email: comprueban que el endpoint dejó de ser
 // un relay de correo abierto.
 // Ejecutar con:  node api/_lib/__tests__/email-auth.test.js
 
@@ -10,7 +10,7 @@ process.env.SUPABASE_ANON_KEY = 'anon-fake';
 const assert = require('assert');
 const Module = require('module');
 
-// â”€â”€ Stubs â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Stubs ──────────────────────────────────────────────────────────────────
 // Interceptamos @supabase/supabase-js y fetch para no tocar red real.
 let authUserResult = { data: { user: null }, error: null };
 let adminUserResult = { data: { user: null }, error: null };
@@ -37,7 +37,7 @@ Module._load = function (request, parent, isMain) {
     return originalLoad.apply(this, arguments);
 };
 
-// fetch: intercepta Brevo y la verificaciÃ³n de Supabase Auth.
+// fetch: intercepta Brevo y la verificación de Supabase Auth.
 global.fetch = async (url, opts) => {
     if (String(url).includes('api.brevo.com')) {
         lastBrevoCall = { url: String(url), body: JSON.parse(opts.body) };
@@ -55,10 +55,10 @@ async function test(name, fn) {
     try {
         await fn();
         passed++;
-        console.log(`  âœ… ${name}`);
+        console.log(`  ✅ ${name}`);
     } catch (err) {
         failed++;
-        console.error(`  âŒ ${name}\n     ${err.message}`);
+        console.error(`  ❌ ${name}\n     ${err.message}`);
     }
 }
 
@@ -91,9 +91,9 @@ function mockReq({ method = 'POST', body = {}, headers = {}, query = {} } = {}) 
 }
 
 (async () => {
-    console.log('\nðŸ“§ /api/email â€” control de acceso');
+    console.log('\n📧 /api/email — control de acceso');
 
-    await test('POST sin sesiÃ³n y sin email â†’ 401', async () => {
+    await test('POST sin sesión y sin email → 401', async () => {
         authUserResult = { data: { user: null }, error: null };
         adminUserResult = { data: { user: null }, error: null };
         lastBrevoCall = null;
@@ -105,7 +105,7 @@ function mockReq({ method = 'POST', body = {}, headers = {}, query = {} } = {}) 
         assert.strictEqual(lastBrevoCall, null, 'NO debe haberse enviado email');
     });
 
-    await test('POST sin sesiÃ³n con email de otra cuenta â†’ 401 y sin envÃ­o', async () => {
+    await test('POST sin sesión con email de otra cuenta → 401 y sin envío', async () => {
         authUserResult = { data: { user: null }, error: null };
         // La cuenta existe pero su email real es otro distinto del solicitado.
         adminUserResult = {
@@ -124,7 +124,7 @@ function mockReq({ method = 'POST', body = {}, headers = {}, query = {} } = {}) 
         assert.strictEqual(lastBrevoCall, null, 'no debe enviarse a un email no verificado');
     });
 
-    await test('POST sin sesiÃ³n pero cuenta no confirmada y email coincidente â†’ permitido', async () => {
+    await test('POST sin sesión pero cuenta no confirmada y email coincidente → permitido', async () => {
         authUserResult = { data: { user: null }, error: null };
         adminUserResult = {
             data: {
@@ -145,7 +145,7 @@ function mockReq({ method = 'POST', body = {}, headers = {}, query = {} } = {}) 
         assert.strictEqual(lastBrevoCall.body.to[0].email, 'nuevo@ejemplo.com');
     });
 
-    await test('cuenta ya confirmada en Auth â†’ 401 (no se reenvÃ­a sin sesiÃ³n)', async () => {
+    await test('cuenta ya confirmada en Auth → 401 (no se reenvía sin sesión)', async () => {
         authUserResult = { data: { user: null }, error: null };
         adminUserResult = {
             data: {
@@ -165,7 +165,7 @@ function mockReq({ method = 'POST', body = {}, headers = {}, query = {} } = {}) 
         assert.strictEqual(lastBrevoCall, null);
     });
 
-    await test('con sesiÃ³n: el destinatario sale del token, no del body', async () => {
+    await test('con sesión: el destinatario sale del token, no del body', async () => {
         authUserResult = {
             data: { user: { id: 'u-1', email: 'yo@ejemplo.com' } },
             error: null
@@ -189,7 +189,7 @@ function mockReq({ method = 'POST', body = {}, headers = {}, query = {} } = {}) 
         );
     });
 
-    await test('con sesiÃ³n de otro usuario â†’ 403 y sin envÃ­o', async () => {
+    await test('con sesión de otro usuario → 403 y sin envío', async () => {
         authUserResult = {
             data: { user: { id: 'atacante', email: 'atacante@ejemplo.com' } },
             error: null
@@ -217,16 +217,16 @@ function mockReq({ method = 'POST', body = {}, headers = {}, query = {} } = {}) 
         );
         assert.ok(
             String(res._redirect).includes('missing_params'),
-            `esperaba redirecciÃ³n a missing_params, obtuve ${res._redirect}`
+            `esperaba redirección a missing_params, obtuve ${res._redirect}`
         );
     });
 
-    await test('mÃ©todo PUT â†’ 405', async () => {
+    await test('método PUT → 405', async () => {
         const res = mockRes();
         await emailHandler(mockReq({ method: 'PUT', headers: {} }), res);
         assert.strictEqual(res._status, 405);
     });
 
-    console.log(`\n${failed === 0 ? 'âœ…' : 'âŒ'} ${passed} pasadas, ${failed} fallidas\n`);
+    console.log(`\n${failed === 0 ? '✅' : '❌'} ${passed} pasadas, ${failed} fallidas\n`);
     process.exit(failed === 0 ? 0 : 1);
 })();
