@@ -659,11 +659,9 @@ html[data-theme="dark"] #downloadDataStatus.is-error {
 }
 
 /* ── Modal "Compromiso y Privacidad" en modo oscuro ─────────────────────── */
-/* El modal heredaba el fondo --card-bg (#7a6b5d) y varios textos con colores
-   de tema claro: el resultado era ilegible. Se fija una base oscura y texto
-   claro, con los títulos en el amarillo de acento. */
+/* El fondo lo aporta ya --card-bg (superficie común de modales en oscuro);
+   aquí solo se ajustan los colores del texto, que venían del tema claro. */
 html[data-theme="dark"] .legal-modal-content {
-    background: #241f1a;
     color: #e8e2d8;
 }
 
@@ -679,21 +677,8 @@ html[data-theme="dark"] .legal-section p {
     color: #e8e2d8;
 }
 
-html[data-theme="dark"] .legal-scroll-area {
-    background: #1c1815;
-    border-color: #4a3f35;
-    color: #e8e2d8;
-}
-
-html[data-theme="dark"] .privacy-notice-box {
-    background: #332f1c;
-    border-left-color: var(--color-acento, #d4af37);
-    color: #f0ead9;
-}
-
-html[data-theme="dark"] .privacy-notice-box strong {
-    color: #f7d774;
-}
+/* .legal-scroll-area y .privacy-notice-box se definen en style.css (una sola
+   vez); aquí no se repiten. */
 
 html[data-theme="dark"] .check-item {
     color: #e8e2d8;

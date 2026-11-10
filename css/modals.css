@@ -762,12 +762,14 @@
 }
 
 /* Tema oscuro */
+/* Unificado: usa la superficie común de modales (--card-bg) en vez de un
+   marrón propio, para que todos los modales se vean igual en modo oscuro. */
 html[data-theme="dark"] .saved-messages-content {
-    background: #211d19;
+    background: var(--card-bg);
 }
 
 html[data-theme="dark"] .saved-message-card {
-    background: #2a2520;
+    background: var(--card-bg);
     border-color: #3a332c;
 }
 

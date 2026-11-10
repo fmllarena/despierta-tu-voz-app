@@ -9,7 +9,8 @@
         "test:limits": "node scripts/validate-vercel-limits.js",
         "test:chat": "node scripts/test-conversations.js && node scripts/test-markdown.js && node scripts/test-a11y.js && node scripts/test-message-actions.js",
         "test:pwa": "node scripts/test-service-worker.js",
-        "test:product": "node tests/product-improvements.test.js"
+        "test:product": "node tests/product-improvements.test.js",
+        "audit:css": "node scripts/audit-css.js"
     },
     "dependencies": {
         "@google/generative-ai": "^0.1.0",

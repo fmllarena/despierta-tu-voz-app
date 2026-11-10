@@ -387,7 +387,9 @@ function createFakeClient(datos, fallos = {}) {
     console.log('\n⚖️  Modal "Compromiso y Privacidad" en modo oscuro\n');
 
     await test('define contraste para el modal legal en modo oscuro', () => {
-        const css = fs.readFileSync(path.join(__dirname, '../css/chat-extras.css'), 'utf8');
+        // Algunas reglas viven ahora en style.css (se consolidaron allí).
+        const css = fs.readFileSync(path.join(__dirname, '../css/chat-extras.css'), 'utf8') +
+            fs.readFileSync(path.join(__dirname, '../css/style.css'), 'utf8');
 
         const selectores = [
             '.legal-modal-content',
@@ -400,9 +402,36 @@ function createFakeClient(datos, fallos = {}) {
         ];
 
         selectores.forEach(sel => {
-            const re = new RegExp(`html\\[data-theme="dark"\\]\\s+\\${sel.replace(/\./g, '.')}[^{]*\\{`);
+            const re = new RegExp(`html\\[data-theme="dark"\\]\\s+\\${sel}[^{]*\\{`);
             assert(re.test(css), `falta el estilo oscuro de ${sel}`);
         });
+    });
+
+    await test('todos los modales comparten una única superficie en oscuro', () => {
+        const style = fs.readFileSync(path.join(__dirname, '../css/style.css'), 'utf8');
+
+        assert(/--card-bg:\s*#2a2520/.test(style),
+            'la superficie común (--card-bg) debería ser #2a2520 en modo oscuro');
+
+        assert(/html\[data-theme="dark"\]\s+\.modal-content\s*\{[^}]*var\(--card-bg\)/.test(style),
+            '.modal-content debería usar var(--card-bg)');
+
+        // Ningún *modal-content debe fijar un fondo literal propio.
+        const conFondoPropio = [...style.matchAll(/html\[data-theme="dark"\]\s+\.([\w-]*modal-content[\w-]*)\s*\{([^}]*)\}/g)]
+            .filter(m => /background:\s*#/.test(m[2]))
+            .map(m => m[1]);
+
+        assert(conFondoPropio.length === 0,
+            `modales con fondo propio (deberían usar la variable): ${conFondoPropio.join(', ')}`);
+    });
+
+    await test('las reglas consolidadas no se repiten en chat-extras', () => {
+        const extras = fs.readFileSync(path.join(__dirname, '../css/chat-extras.css'), 'utf8');
+
+        assert(!/html\[data-theme="dark"\]\s+\.legal-scroll-area\s*\{/.test(extras),
+            '.legal-scroll-area está duplicado (debe vivir solo en style.css)');
+        assert(!/html\[data-theme="dark"\]\s+\.privacy-notice-box\s*\{/.test(extras),
+            '.privacy-notice-box está duplicado (debe vivir solo en style.css)');
     });
 
     await test('los textos del modal legal superan 4.5:1 en modo oscuro', () => {
@@ -420,13 +449,13 @@ function createFakeClient(datos, fallos = {}) {
         }
 
         const pares = [
-            ['párrafos sobre el modal', '#e8e2d8', '#241f1a'],
-            ['intro sobre el modal', '#d8cfc4', '#241f1a'],
+            ['párrafos sobre el modal', '#e8e2d8', '#2a2520'],
+            ['intro sobre el modal', '#d8cfc4', '#2a2520'],
             ['texto del área de scroll', '#e8e2d8', '#1c1815'],
             ['títulos sobre el scroll', '#d4af37', '#1c1815'],
             ['texto de la nota de privacidad', '#f0ead9', '#332f1c'],
             ['negritas de la nota', '#f7d774', '#332f1c'],
-            ['checkboxes', '#e8e2d8', '#241f1a']
+            ['checkboxes', '#e8e2d8', '#2a2520']
         ];
 
         pares.forEach(([nombre, texto, fondo]) => {

@@ -4204,8 +4204,11 @@ html[data-theme="dark"] {
     --msg-ia-border: #ae9d8d;
     --input-bg: #6a5b4d;
     --input-border: #9e8d7d;
-    --card-bg: #7a6b5d;
-    --card-border: #9e8d7d;
+    /* Superficie de tarjetas y modales. Antes #7a6b5d: un marrón medio que
+       dejaba el texto claro en ~3,9:1. Unificada para TODOS los modales y
+       tarjetas; ningún contenedor con este fondo usa texto oscuro. */
+    --card-bg: #2a2520;
+    --card-border: #4a3f35;
     --header-bg: #d4af37;
     --hover-bg: #a09080;
     --white-bg: #8e7d6d;
@@ -4688,8 +4691,9 @@ html[data-theme="dark"] .progreso-upgrade {
 }
 
 html[data-theme="dark"] .legal-scroll-area {
-    background: var(--card-bg);
+    background: #1c1815;
     border-color: var(--card-border);
+    color: #e8e2d8;
 }
 
 html[data-theme="dark"] .check-item {
@@ -4697,8 +4701,13 @@ html[data-theme="dark"] .check-item {
 }
 
 html[data-theme="dark"] .privacy-notice-box {
-    background: #3a3a1a;
-    color: var(--color-texto);
+    background: #332f1c;
+    border-left-color: var(--color-acento, #d4af37);
+    color: #f0ead9;
+}
+
+html[data-theme="dark"] .privacy-notice-box strong {
+    color: #f7d774;
 }
 
 html[data-theme="dark"] #promoTermsBox {
@@ -4811,8 +4820,8 @@ html[data-theme="dark"] .btn-whatsapp-direct:hover {
 }
 
 html[data-theme="dark"] .botiquin-modal-content {
-    background: #5a4d3d !important;
-    border-color: #7a6b5d !important;
+    background: var(--card-bg) !important;
+    border-color: var(--card-border) !important;
 }
 
 html[data-theme="dark"] .botiquin-response {
