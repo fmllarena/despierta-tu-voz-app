@@ -222,5 +222,107 @@ test('en móvil también es una columna', () => {
     }
 });
 
+/* ── Posición del botón Copiar en los mensajes de la IA ─────────────────── */
+console.log('\n📋 Colocación del botón Copiar (IA)\n');
+
+// Se extrae appendMessage completo para verificar la estructura real del DOM.
+const bloqueAppend = mainSrc.match(
+    /function appendMessage\(text, type, id = null, meta = null\) \{[\s\S]*?\n\}\n/
+);
+
+test('appendMessage se puede extraer del código fuente', () => {
+    assert(bloqueAppend, 'no se encontró la función appendMessage');
+});
+
+if (bloqueAppend) {
+    // Stubs de las dependencias que usa appendMessage.
+    window.copiarConFormato = () => { };
+    window.crearBotonesAccionFinal = () => { };
+    window.renderSafeMarkdown = t => String(t);
+    window.PRONUNCIATION = null;
+    window.userProfile = { nombre: 'Test' };
+    // jsdom no implementa scrollIntoView.
+    window.Element.prototype.scrollIntoView = function () { };
+
+    window.eval(`
+        const copiarConFormato = window.copiarConFormato;
+        const crearBotonesAccionFinal = window.crearBotonesAccionFinal;
+        const ELEMENTS = { get chatBox() { return document.getElementById('chatBox'); } };
+        const renderSafeMarkdown = window.renderSafeMarkdown;
+        ${bloqueFeedback[0]}
+        ${bloqueAcciones[0]}
+        ${bloqueAppend[0]}
+        window.__appendMessage = appendMessage;
+    `);
+
+    const append = window.__appendMessage;
+    const chatBox = document.getElementById('chatBox');
+
+    test('copiar está en la fila de iconos, no suelto en el contenedor', () => {
+        chatBox.innerHTML = '';
+        const cont = append('Respuesta de prueba', 'ia', 'ia-response-1', { dbId: 99 });
+
+        const copiar = cont.querySelector('.msg-copy-btn');
+        assert(!!copiar, 'no se ha creado el botón de copiar');
+
+        // Lo importante: su padre debe ser la fila de iconos.
+        assert(copiar.parentElement.classList.contains('feedback-btns'),
+            `el padre de copiar es .${copiar.parentElement.className}, debería ser .feedback-btns`);
+
+        // Y NO debe colgar directamente del contenedor (ese era el bug).
+        assert(copiar.parentElement !== cont,
+            'copiar sigue siendo hijo directo de .ia-container (posición absoluta)');
+    });
+
+    test('copiar comparte fila con like, dislike, guardar y borrar', () => {
+        chatBox.innerHTML = '';
+        const cont = append('Otra respuesta', 'ia', 'ia-response-2', { dbId: 100 });
+
+        const fila = cont.querySelector('.feedback-btns');
+        assert(!!fila, 'falta la fila de iconos');
+
+        const tieneLike = !!fila.querySelector('[data-tipo="like"]');
+        const tieneDislike = !!fila.querySelector('[data-tipo="dislike"]');
+        const tieneGuardar = !!fila.querySelector('.save-msg-btn');
+        const tieneBorrar = !!fila.querySelector('.trash-btn');
+        const tieneCopiar = !!fila.querySelector('.msg-copy-btn');
+
+        assert(tieneLike && tieneDislike && tieneGuardar && tieneBorrar && tieneCopiar,
+            `fila incompleta: like=${tieneLike} dislike=${tieneDislike} guardar=${tieneGuardar} borrar=${tieneBorrar} copiar=${tieneCopiar}`);
+    });
+
+    test('Escuchar y Regenerar van en una fila aparte, debajo', () => {
+        chatBox.innerHTML = '';
+        const cont = append('Respuesta con acciones', 'ia', 'ia-response-3', { dbId: 101 });
+
+        const filas = [...cont.querySelectorAll('.ia-col > div')];
+        const idxIconos = filas.findIndex(f => f.classList.contains('feedback-btns'));
+        const idxAcciones = filas.findIndex(f => f.classList.contains('msg-actions'));
+
+        assert(idxIconos !== -1, 'no hay fila de iconos');
+        assert(idxAcciones !== -1, 'no hay fila de acciones');
+        assert(idxIconos < idxAcciones, 'los iconos deben ir ANTES que Escuchar/Regenerar');
+    });
+
+    test('en el saludo inicial (sin id) copiar sigue existiendo, solo', () => {
+        chatBox.innerHTML = '';
+        const cont = append('Bienvenido', 'ia', 'msg-bienvenida');
+
+        const copiar = cont.querySelector('.msg-copy-btn');
+        assert(!!copiar, 'el saludo debería tener botón copiar');
+        assert(copiar.parentElement.classList.contains('feedback-btns'),
+            'copiar debería ir en su propia fila de iconos');
+    });
+
+    test('el mensaje del usuario conserva su copiar anclado', () => {
+        chatBox.innerHTML = '';
+        const cont = append('Mi mensaje', 'user', 'msg-user-1', { dbId: 5 });
+        const copiar = cont.querySelector('.copy-msg-btn');
+        assert(!!copiar, 'el mensaje del usuario debería tener .copy-msg-btn');
+        assert(copiar.parentElement.classList.contains('message'),
+            'el copiar del usuario debe seguir dentro de la burbuja');
+    });
+}
+
 console.log(`\n${failed === 0 ? '✅' : '❌'} ${passed} pasadas, ${failed} fallidas\n`);
 process.exit(failed === 0 ? 0 : 1);

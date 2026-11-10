@@ -1711,10 +1711,16 @@ function appendMessage(text, type, id = null, meta = null) {
         container.appendChild(avatar);
         container.appendChild(col);
 
+        // --- COPIAR ---
+        // Va DENTRO de la fila de iconos (👍👎🔖🗑), no anclado al contenedor:
+        // al añadir la fila de Escuchar/Regenerar, el ancla inferior lo dejaba
+        // a esa altura en vez de con el resto de iconos.
         const copyBtn = document.createElement('button');
-        copyBtn.className = 'copy-msg-btn';
+        copyBtn.type = 'button';
+        copyBtn.className = 'feedback-btn msg-copy-btn';
         copyBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>`;
         copyBtn.title = 'Copiar mensaje';
+        copyBtn.setAttribute('aria-label', 'Copiar mensaje del mentor');
         copyBtn.onclick = (e) => {
             e.stopPropagation();
             // Leer el texto vivo del div: el closure captura "" durante el streaming
@@ -1724,7 +1730,6 @@ function appendMessage(text, type, id = null, meta = null) {
                 .trim();
             copiarConFormato(div, liveText, copyBtn);
         };
-        container.appendChild(copyBtn);
 
         // --- BOTONES DE VALORACIÓN (👍/👎) ---
         // Historial: llega dbId directo (botones activos con su reacción).
@@ -1732,9 +1737,14 @@ function appendMessage(text, type, id = null, meta = null) {
         // hasta que guardarMensajeDB devuelva el id.
         const dbId = meta?.dbId || null;
         const enVivo = id && id.startsWith('ia-response-') && !dbId;
-        if (dbId || enVivo) {
-            col.appendChild(crearBotonesFeedback(dbId, meta?.reaction || null, meta?.createdAt || null));
-        }
+
+        const filaIconos = (dbId || enVivo)
+            ? crearBotonesFeedback(dbId, meta?.reaction || null, meta?.createdAt || null)
+            : Object.assign(document.createElement('div'), { className: 'feedback-btns' });
+
+        // Copiar al final de la fila: 👍 👎 🔖 🗑 📋
+        filaIconos.appendChild(copyBtn);
+        col.appendChild(filaIconos);
 
         // --- ESCUCHAR / REGENERAR ---
         // Disponibles en cualquier respuesta real (no en el saludo inicial ni

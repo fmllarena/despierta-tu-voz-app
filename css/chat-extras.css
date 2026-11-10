@@ -494,6 +494,21 @@
     margin: 12px 0;
 }
 
+/* Botón copiar de la IA: ahora vive en la fila de iconos (👍👎🔖🗑📋).
+   Antes estaba anclado al contenedor con `position:absolute` y caía a la
+   altura de Escuchar/Regenerar. */
+.feedback-btn.msg-copy-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 3px 6px;
+    line-height: 1;
+}
+
+.feedback-btn.msg-copy-btn svg {
+    display: block;
+}
+
 /* ── Acciones de mensaje (escuchar / reintentar / editar) ──────────────── */
 .msg-actions {
     display: flex;
