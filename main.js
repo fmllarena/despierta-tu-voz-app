@@ -1652,6 +1652,9 @@ function editarMensaje(userContainer, textoOriginal) {
 
 function appendMessage(text, type, id = null, meta = null) {
     if (!ELEMENTS.chatBox) return;
+    // En un render en bloque (abrir una conversación del historial) no se debe
+    // hacer scroll por cada mensaje: eso dejaba la vista al final del hilo.
+    const silencioso = !!(meta && meta.silencioso);
     const div = document.createElement('div');
     div.className = `message ${type}`;
     // Si no es IA, asignamos el ID directamente al div
@@ -1679,9 +1682,11 @@ function appendMessage(text, type, id = null, meta = null) {
             if (id) div.id = id;
             ELEMENTS.chatBox.appendChild(div);
             // Pequeño retardo para asegurar el scroll correcto
-            setTimeout(() => {
-                div.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }, 100);
+            if (!silencioso) {
+                setTimeout(() => {
+                    div.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }, 100);
+            }
             return;
         }
 
@@ -1755,8 +1760,10 @@ function appendMessage(text, type, id = null, meta = null) {
 
         ELEMENTS.chatBox.appendChild(container);
 
-        // Desplazar el chat
-        container.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        // Desplazar el chat (salvo en renders en bloque del historial)
+        if (!silencioso) {
+            container.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
         return container;
     } else if (type === 'user' || type === 'usuario') {
         // Contenedor para Avatar + Mensaje
@@ -1833,7 +1840,9 @@ function appendMessage(text, type, id = null, meta = null) {
         container.appendChild(div);
         container.appendChild(avatar);
         ELEMENTS.chatBox.appendChild(container);
-        ELEMENTS.chatBox.scrollTop = ELEMENTS.chatBox.scrollHeight;
+        if (!silencioso) {
+            ELEMENTS.chatBox.scrollTop = ELEMENTS.chatBox.scrollHeight;
+        }
         return container;
     } else {
         // Cualquier otro tipo (resumen_diario, sistema, etc.) no lo imprimimos en el chat

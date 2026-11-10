@@ -176,7 +176,10 @@ window.localStorage.setItem('dtv_sidebar_open', 'true');
 window.innerWidth = 1280;
 
 const appendLog = [];
-window.appendMessage = (texto, tipo) => { appendLog.push({ texto, tipo }); return document.createElement('div'); };
+window.appendMessage = (texto, tipo, id, meta) => {
+    appendLog.push({ texto, tipo, meta });
+    return document.createElement('div');
+};
 window.saludarUsuario = () => { };
 window.alertCustom = (m) => appendLog.push({ alerta: m });
 window.confirmCustom = async () => true;
@@ -394,8 +397,68 @@ const titulosSidebar = () =>
             'al limpiar siguen los resultados');
     });
 
-    await test('al elegir una conversación se cierra la barra lateral', async () => {
-        const sidebar = document.getElementById('chatSidebar');
+    await test('el render en bloque pinta sin hacer scroll por cada mensaje', async () => {
+        appendLog.length = 0;
+        await CONV.setCurrent('c-1', { render: true, scroll: 'top' });
+
+        assert(appendLog.length > 0, 'no se pintó nada');
+        const todosSilenciosos = appendLog.every(e => e.meta && e.meta.silencioso === true);
+        assert(todosSilenciosos, 'los mensajes del historial deben pintarse en silencio');
+    });
+
+    await test('al abrir un hilo desde el historial se ancla al principio', async () => {
+        const chatBox = document.getElementById('chatBox');
+        Object.defineProperty(chatBox, 'scrollHeight', { configurable: true, value: 500 });
+
+        CONV.toggleSidebar(true, { persist: false });
+        const item = document.querySelector('#conversationList .conv-item');
+        item.dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+        await new Promise(r => setTimeout(r, 20));
+
+        assert(chatBox.scrollTop === 0, `debería quedar al principio, scrollTop=${chatBox.scrollTop}`);
+    });
+
+    await test('al arrancar se muestra el final del hilo (lo más reciente)', async () => {
+        const chatBox = document.getElementById('chatBox');
+        Object.defineProperty(chatBox, 'scrollHeight', { configurable: true, value: 500 });
+
+        await CONV.setCurrent('c-1', { render: true, scroll: 'bottom' });
+        assert(chatBox.scrollTop === 500, `debería quedar al final, scrollTop=${chatBox.scrollTop}`);
+    });
+
+    await test('descarta mensajes de otro hilo aunque el backend los devuelva', async () => {
+        const sbMezclado = {
+            from() {
+                const api = {
+                    select() { return api; },
+                    eq() { return api; },
+                    order() { return api; },
+                    then(res) {
+                        return Promise.resolve({
+                            data: [
+                                { id: 1, texto: 'del hilo', emisor: 'usuario', created_at: '2026-01-01', conversacion_id: 'c-1' },
+                                { id: 2, texto: 'de otro día', emisor: 'usuario', created_at: '2026-01-02', conversacion_id: 'c-9' }
+                            ],
+                            error: null
+                        }).then(res);
+                    }
+                };
+                return api;
+            }
+        };
+
+        const CONV2 = Object.assign(
+            Object.create(Object.getPrototypeOf(CONV)),
+            CONV,
+            { _sb: sbMezclado, _userId: USER }
+        );
+
+        const msgs = await CONV2.loadMessages('c-1');
+        assert(msgs.length === 1, `esperaba 1 mensaje, hay ${msgs.length}`);
+        assert(msgs[0].texto === 'del hilo', `se coló: ${msgs[0].texto}`);
+    });
+
+    await test('al elegir una conversación se cierra la barra lateral', async () => {        const sidebar = document.getElementById('chatSidebar');
         localStorage.setItem('dtv_sidebar_open', 'true');
         CONV.toggleSidebar(true, { persist: false });
         assert(sidebar.classList.contains('open'), 'la barra debería estar abierta de partida');

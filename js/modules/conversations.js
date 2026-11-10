@@ -53,7 +53,8 @@ export const CONVERSATIONS = window.CONVERSATIONS = {
             null;
 
         if (target) {
-            await this.setCurrent(target.id, { render: true });
+            // Al entrar se muestra lo último; al elegir un hilo, su inicio.
+            await this.setCurrent(target.id, { render: true, scroll: 'bottom' });
         } else {
             this.currentId = null;
             this._clearChat();
@@ -172,7 +173,7 @@ export const CONVERSATIONS = window.CONVERSATIONS = {
         return true;
     },
 
-    async setCurrent(id, { render = true } = {}) {
+    async setCurrent(id, { render = true, scroll = 'top' } = {}) {
         if (!id) return;
         this.currentId = id;
         localStorage.setItem(ACTIVE_KEY, id);
@@ -180,7 +181,7 @@ export const CONVERSATIONS = window.CONVERSATIONS = {
 
         const mensajes = await this.loadMessages(id);
         if (render) {
-            await this.renderMessages(mensajes);
+            await this.renderMessages(mensajes, { scroll });
         }
         return mensajes;
     },
@@ -217,7 +218,11 @@ export const CONVERSATIONS = window.CONVERSATIONS = {
             return [];
         }
 
-        const visibles = (data || []).filter(m => !INTERNAL_SENDERS.includes(m.emisor));
+        const visibles = (data || [])
+            .filter(m => !INTERNAL_SENDERS.includes(m.emisor))
+            // Cinturón y tirantes: si el backend ignorara el filtro, no se
+            // cuelan mensajes de otros hilos en la conversación abierta.
+            .filter(m => this.migrationReady ? String(m.conversacion_id) === String(conversationId) : true);
         this._syncChatHistory(visibles);
         return visibles;
     },
@@ -239,20 +244,35 @@ export const CONVERSATIONS = window.CONVERSATIONS = {
         return history;
     },
 
-    async renderMessages(mensajes) {
+    /**
+     * Pinta una conversación completa.
+     * @param {object} opts.scroll  'top' para anclar al inicio del hilo
+     *                              (al elegirlo en el historial) o 'bottom'
+     *                              para mostrar lo último (al arrancar).
+     */
+    async renderMessages(mensajes, { scroll = 'top' } = {}) {
         this._clearChat();
-        if (!mensajes || mensajes.length === 0) return;
+        if (!mensajes || mensajes.length === 0) {
+            if (ELEMENTS.chatBox) ELEMENTS.chatBox.scrollTop = 0;
+            return;
+        }
 
         for (const m of mensajes) {
             window.appendMessage?.(m.texto, m.emisor, null, {
                 dbId: m.id,
                 reaction: m.reaction,
-                createdAt: m.created_at
+                createdAt: m.created_at,
+                // Sin esto cada mensaje hace scrollIntoView y la vista acaba
+                // al final del hilo en vez de en su principio.
+                silencioso: true
             });
         }
-        // Al final, sin animación de scroll para no marear al entrar.
+
+        // Ancla explícita: al principio del hilo elegido, o al final al entrar.
         if (ELEMENTS.chatBox) {
-            ELEMENTS.chatBox.scrollTop = ELEMENTS.chatBox.scrollHeight;
+            ELEMENTS.chatBox.scrollTop = scroll === 'bottom'
+                ? ELEMENTS.chatBox.scrollHeight
+                : 0;
         }
     },
 
@@ -540,7 +560,7 @@ export const CONVERSATIONS = window.CONVERSATIONS = {
                         if (m.conversacion_id) {
                             clearSearch();
                             this._cerrarTrasElegir();
-                            await this.setCurrent(m.conversacion_id, { render: true });
+                            await this.setCurrent(m.conversacion_id, { render: true, scroll: 'top' });
                         }
                     });
                     listEl.appendChild(btn);
@@ -638,7 +658,8 @@ export const CONVERSATIONS = window.CONVERSATIONS = {
         // Sin persistir: es una acción automática, no una preferencia del usuario.
         const abrir = async () => {
             this._cerrarTrasElegir();
-            await this.setCurrent(conv.id, { render: true });
+            // Ancla al principio del hilo elegido.
+            await this.setCurrent(conv.id, { render: true, scroll: 'top' });
         };
         item.addEventListener('click', abrir);
         item.addEventListener('keydown', e => {
