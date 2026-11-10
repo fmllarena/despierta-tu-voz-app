@@ -228,6 +228,34 @@ desde una función ya existente.
 
 ---
 
+## 3.ter Si Cal.com devuelve 401 (solución de problemas)
+
+El webhook rechaza con 401 cuando la firma no valida. Como en el plan Hobby los
+logs de Vercel están limitados, la respuesta incluye un campo `code` que dice
+exactamente qué falló (visible en el detalle del intento en Cal.com):
+
+| `code` | Significado | Qué hacer |
+|---|---|---|
+| `missing_secret` | La función no ve `CALCOM_WEBHOOK_SECRET` | Definirla en Vercel **en el entorno Production** y **redesplegar** |
+| `missing_signature` | Cal.com no envió `x-cal-signature-256` | El webhook de Cal.com no tiene *Secret*: añádeselo |
+| `invalid_signature` | Hay secreto pero no coincide | Igualar el secreto en Cal.com y en Vercel; si el cuerpo llega alterado, revisar `bodyParser` |
+
+**Comprobar si la variable llegó al deployment sin mirar logs:**
+
+```
+GET /api/config?health=1      (con sesión de mentor)
+```
+
+Devuelve `config.calcomWebhookSecret: true|false` (solo booleanos, nunca el valor).
+
+**Los dos errores más frecuentes:**
+
+1. Añadir la variable en Vercel pero **no redesplegar**. Las variables de entorno
+   solo se aplican a deployments nuevos: *Deployments → ⋯ → Redeploy*.
+2. Añadirla solo en *Preview* o *Development* y no en **Production**.
+
+---
+
 ## 4. Verificación manual recomendada
 
 1. **Historial**: entra, cierra sesión y vuelve a entrar → debes ver tus

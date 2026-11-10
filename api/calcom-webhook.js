@@ -42,7 +42,18 @@ const handler = async function (req, res) {
                 tags: { reason: signatureCheck.reason }
             }
         );
-        return res.status(401).json({ error: 'Firma no válida' });
+        // El `code` permite diagnosticar el 401 sin acceso a los logs de
+        // Vercel: Cal.com lo muestra en el detalle del intento. No revela
+        // ningún secreto, solo qué comprobación falló.
+        return res.status(401).json({
+            error: 'Firma no válida',
+            code: signatureCheck.reason || 'invalid_signature',
+            hint: signatureCheck.reason === 'missing_secret'
+                ? 'Falta CALCOM_WEBHOOK_SECRET en el entorno de esta función.'
+                : signatureCheck.reason === 'missing_signature'
+                    ? 'Cal.com no envió la cabecera x-cal-signature-256: revisa que el webhook tenga un Secret configurado.'
+                    : 'El secreto de Vercel no coincide con el de Cal.com, o el cuerpo llegó alterado.'
+        });
     }
 
     const { SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY } = process.env;

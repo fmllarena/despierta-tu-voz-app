@@ -107,6 +107,52 @@ function mockReq({ method = 'GET', query = {}, headers = {} } = {}) {
             `el validador de límites falló (exit ${r.status}); ejecuta "node scripts/validate-vercel-limits.js"`);
     });
 
+    await test('?health=1 con mentor muestra qué variables llegan (solo booleanos)', async () => {
+        const Module = require('module');
+        const originalLoad = Module._load;
+
+        // Se simula un mentor válido sin tocar Supabase.
+        Module._load = function (request, parent) {
+            if (request === './_lib/auth' && parent && /api[\\/]config\.js$/.test(parent.filename)) {
+                return {
+                    getAuthUser: async () => ({ id: 'mentor-1', email: 'fernando@despiertatuvoz.com' }),
+                    isMentor: () => true
+                };
+            }
+            return originalLoad.apply(this, arguments);
+        };
+
+        let handlerMentor;
+        const ruta = require.resolve('../api/config');
+        delete require.cache[ruta];
+        try {
+            handlerMentor = require('../api/config');
+        } finally {
+            Module._load = originalLoad;
+        }
+
+        const anterior = process.env.CALCOM_WEBHOOK_SECRET;
+        process.env.CALCOM_WEBHOOK_SECRET = 'secreto-que-no-debe-filtrarse';
+
+        const res = mockRes();
+        await handlerMentor(mockReq({ query: { health: '1' } }), res);
+
+        process.env.CALCOM_WEBHOOK_SECRET = anterior;
+        delete require.cache[ruta];
+
+        assert.strictEqual(res._status, 200, `status=${res._status}`);
+        assert.ok(res._body.config, 'falta el bloque config');
+
+        // Presencia de la variable, en booleanos.
+        assert.strictEqual(res._body.config.calcomWebhookSecret, true);
+        assert.strictEqual(typeof res._body.config.stripeWebhookSecret, 'boolean');
+
+        // Nunca el valor del secreto.
+        const serializado = JSON.stringify(res._body.config);
+        assert.ok(!serializado.includes('secreto-que-no-debe-filtrarse'),
+            'el diagnóstico está exponiendo el valor del secreto');
+    });
+
     console.log(`\n${failed === 0 ? '✅' : '❌'} ${passed} pasadas, ${failed} fallidas\n`);
     process.exit(failed === 0 ? 0 : 1);
 })();

@@ -66,7 +66,6 @@ for (const caso of casos) {
 console.log('\n📦 Lectura del cuerpo crudo\n');
 
 const { readRawBody } = require('../api/_lib/webhook-security');
-
 function reqStream(body, extra = {}) {
     const { Readable } = require('stream');
     const s = Readable.from([Buffer.from(body)]);
@@ -115,6 +114,80 @@ function reqStream(body, extra = {}) {
         const raw = await readRawBody(req);
         assert.ok(Buffer.isBuffer(raw));
         assert.strictEqual(raw.length, 0);
+    });
+
+    /* ── Diagnóstico del 401 (sin logs) ─────────────────────────────────── */
+    console.log('\n🩺 Diagnóstico del 401 de Cal.com\n');
+
+    function mockRes() {
+        return {
+            _status: null,
+            _body: null,
+            headersSent: false,
+            setHeader() { return this; },
+            status(c) { this._status = c; return this; },
+            json(b) { this._body = b; return this; },
+            send(b) { this._body = b; return this; },
+            end() { return this; }
+        };
+    }
+
+    function mockReq(headers = {}) {
+        return {
+            method: 'POST',
+            headers,
+            body: Buffer.from('{"triggerEvent":"BOOKING_CREATED","payload":{}}'),
+            query: {},
+            socket: { remoteAddress: '203.0.113.9' }
+        };
+    }
+
+    const calcom = require('../api/calcom-webhook');
+
+    await esperar('sin cabecera de firma → 401 con code "missing_signature"', async () => {
+        const res = mockRes();
+        await calcom(mockReq(), res);
+        assert.strictEqual(res._status, 401, `status=${res._status}`);
+        assert.strictEqual(res._body.code, 'missing_signature', `code=${res._body.code}`);
+        assert.ok(res._body.hint, 'debería incluir una pista para el operador');
+    });
+
+    await esperar('sin secreto en el entorno → 401 con code "missing_secret"', async () => {
+        const anterior = process.env.CALCOM_WEBHOOK_SECRET;
+        delete process.env.CALCOM_WEBHOOK_SECRET;
+
+        const res = mockRes();
+        await calcom(mockReq({ 'x-cal-signature-256': 'deadbeef' }), res);
+
+        process.env.CALCOM_WEBHOOK_SECRET = anterior;
+
+        assert.strictEqual(res._status, 401);
+        assert.strictEqual(res._body.code, 'missing_secret', `code=${res._body.code}`);
+    });
+
+    await esperar('secreto distinto → 401 con code "invalid_signature"', async () => {
+        const res = mockRes();
+        await calcom(mockReq({ 'x-cal-signature-256': 'a'.repeat(64) }), res);
+        assert.strictEqual(res._status, 401);
+        assert.strictEqual(res._body.code, 'invalid_signature', `code=${res._body.code}`);
+    });
+
+    await esperar('firma correcta → no devuelve 401', async () => {
+        const crypto = require('crypto');
+        const body = Buffer.from('{"triggerEvent":"BOOKING_CREATED","payload":{}}');
+        const firma = crypto
+            .createHmac('sha256', process.env.CALCOM_WEBHOOK_SECRET)
+            .update(body)
+            .digest('hex');
+
+        const req = mockReq({ 'x-cal-signature-256': firma });
+        req.body = body;
+
+        const res = mockRes();
+        await calcom(req, res);
+
+        // Debe pasar la verificación: cualquier código salvo 401.
+        assert.notStrictEqual(res._status, 401, `sigue rechazando: ${JSON.stringify(res._body)}`);
     });
 
     console.log(`\n${failed === 0 ? '✅' : '❌'} ${passed} pasadas, ${failed} fallidas\n`);

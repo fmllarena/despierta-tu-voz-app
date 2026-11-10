@@ -43,6 +43,17 @@ module.exports = async function handler(req, res) {
                 sentryConfigured: monitoringEnabled,
                 bufferedErrors: errors.length
             },
+            // Presencia de variables críticas: SOLO booleanos, nunca su valor.
+            // Permite comprobar si un secreto llegó a este deployment sin
+            // depender de los logs (en Hobby están limitados).
+            config: {
+                calcomWebhookSecret: !!process.env.CALCOM_WEBHOOK_SECRET,
+                stripeWebhookSecret: !!process.env.STRIPE_WEBHOOK_SECRET,
+                emailTokenSecret: !!process.env.EMAIL_TOKEN_SECRET,
+                brevoApiKey: !!process.env.BREVO_API_KEY,
+                ttsApiKey: !!(process.env.GOOGLE_TTS_API_KEY || process.env.GEMINI_API_KEY),
+                appUrl: !!(process.env.APP_URL || process.env.NEXT_PUBLIC_APP_URL)
+            },
             recentErrors: errors.slice(-20).reverse()
         });
     }
