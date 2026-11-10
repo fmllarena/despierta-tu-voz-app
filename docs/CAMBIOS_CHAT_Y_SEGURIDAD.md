@@ -56,7 +56,9 @@ Reglas aplicadas:
 - **Redacta** campos sensibles (`token`, `secret`, `key`, `password`, `authorization`…).
 - `withMonitoring()` envuelve los handlers: captura excepciones no controladas
   y responde `500` uniforme sin filtrar detalles.
-- `GET /api/health` expone estado y últimos errores (solo mentor; `?ping=1` es público y mínimo).
+- `GET /api/config?health=1` expone estado y últimos errores (solo mentor;
+  `?ping=1` es público y mínimo). Antes vivía en `/api/health`, pero se integró
+  en `config` para no superar el límite de **12 funciones** de Vercel Hobby.
 
 ---
 
@@ -192,6 +194,34 @@ npm i -D jsdom
 
 ---
 
+## 3.bis Límite de 12 funciones de Vercel (plan Hobby)
+
+Vercel Hobby permite **12 Serverless Functions por deployment**. Al superarlo,
+el deployment falla y no se publica nada.
+
+- `api/` tenía ya **12** funciones, así que un nuevo fichero ahí rompe el deploy.
+- Por eso el diagnóstico vive ahora en **`GET /api/config?health=1`** en lugar de
+  en un `api/health.js` propio.
+- Las rutas que empiezan por `_` **no generan función**: `api/_lib/*.js`
+  (utilidades compartidas) no cuentan.
+- Los tests se movieron a **`tests/`** (antes `api/_lib/__tests__/`), para que no
+  puedan contarse como función ni quedar expuestos como endpoint.
+
+Comprobación rápida antes de cada push:
+
+```bash
+npm run test:limits
+```
+
+Falla si hay más de 12, y avisa cuando estás justo en el límite. `npm test` también
+lo verifica.
+
+**Si en el futuro necesitas otra función**, tienes dos opciones: fusionarla en una
+existente (como se hizo con `config`) o mover su lógica a `api/_lib/` y exponerla
+desde una función ya existente.
+
+---
+
 ## 4. Verificación manual recomendada
 
 1. **Historial**: entra, cierra sesión y vuelve a entrar → debes ver tus
@@ -213,7 +243,7 @@ npm i -D jsdom
 | `api/email.js` | Autenticación, propiedad, token hasheado, rate limit |
 | `api/webhook.js` | Firma Stripe robusta + monitorización + errores de Supabase |
 | `api/calcom-webhook.js` | Firma HMAC obligatoria, sin CORS abierto |
-| `api/health.js` | **Nuevo** estado y errores recientes |
+| `api/config.js` | Diagnóstico mentor en `?health=1` (sustituye a `/api/health` para respetar el límite de 12 funciones) |
 | `api/_lib/monitoring.js` | **Nuevo** monitorización tipo Sentry |
 | `api/_lib/webhook-security.js` | **Nuevo** lectura de cuerpo crudo y HMAC |
 | `supabase/conversations_migration.sql` | **Nuevo** conversaciones + RLS |
