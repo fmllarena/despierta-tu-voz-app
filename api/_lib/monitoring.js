@@ -206,7 +206,7 @@ function captureError(error, context = {}) {
  * controlada y responder 500 de forma uniforme.
  */
 function withMonitoring(endpoint, handler) {
-    return async function monitored(req, res) {
+    const monitored = async function monitored(req, res) {
         try {
             return await handler(req, res);
         } catch (error) {
@@ -225,6 +225,15 @@ function withMonitoring(endpoint, handler) {
             return res.status(500).json({ error: 'Error interno del servidor' });
         }
     };
+
+    // IMPORTANTE: Vercel lee `.config` de la función EXPORTADA. Al envolver el
+    // handler en una función nueva hay que copiarla, o se pierde algo crítico
+    // como `api.bodyParser: false` y la firma de los webhooks deja de validar.
+    if (handler && handler.config) {
+        monitored.config = handler.config;
+    }
+
+    return monitored;
 }
 
 /** Devuelve los últimos errores capturados (para health checks). */

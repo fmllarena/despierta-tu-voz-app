@@ -18,9 +18,31 @@ const crypto = require('crypto');
  * cualquier reserialización del JSON invalidaría el HMAC.
  */
 async function readRawBody(req) {
+    // 1. Lo ideal: el runtime nos da los bytes tal cual.
     if (Buffer.isBuffer(req.body)) return req.body;
     if (typeof req.body === 'string') return Buffer.from(req.body);
 
+    // 2. Diagnóstico: si ya viene parseado a objeto, los bytes originales se
+    //    perdieron (bodyParser activo) y la firma NO se puede verificar.
+    //    Sin este aviso el síntoma sería un 401 incomprensible.
+    if (req.body && typeof req.body === 'object') {
+        console.error(
+            '⛔ [Webhook] El cuerpo llegó ya parseado: no se puede verificar la firma. ' +
+            'Falta `module.exports.config.api.bodyParser = false` en esta función.'
+        );
+        return Buffer.from('');
+    }
+
+    // 3. Stream ya consumido por el runtime (mismo problema que el punto 2).
+    if (req.readableEnded) {
+        console.error(
+            '⛔ [Webhook] El stream ya estaba consumido antes de leerlo: ' +
+            'la verificación de firma fallará aunque el secreto sea correcto.'
+        );
+        return Buffer.from('');
+    }
+
+    // 4. Camino normal: leer el stream.
     const chunks = [];
     for await (const chunk of req) {
         chunks.push(typeof chunk === 'string' ? Buffer.from(chunk) : chunk);
