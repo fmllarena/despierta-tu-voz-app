@@ -2,86 +2,40 @@ export const TOUR = window.TOUR = {
     currentStep: 0,
     isActive: false,
     elements: null,
+    // Tour esencial: solo lo que el usuario necesita para empezar a usar la
+    // app. Antes eran 16 pasos de golpe (antes de escribir nada), lo que
+    // saturaba. El resto de funciones se explican en la guía "?" (#mainHelpBtn)
+    // y en el momento de usarlas.
     steps: [
         {
             target: null,
             title: "¡Bienvenido/a!",
-            text: "Soy tu Mentor Vocal. Vamos a realizar un breve recorrido para que sepas cómo puedo acompañarte en tu transformación."
+            text: "Soy tu Mentor Vocal. Te enseño lo esencial en cuatro pasos; el resto lo tienes siempre en la guía «?»."
         },
         {
-            target: "#inspiracionBtn",
-            title: "Inspiración del Día",
-            text: "Cada día recibirás una frase motivadora personalizada según tu progreso (planes Pro/Transforma) o frases de grandes músicos si estás en el plan Explora."
+            target: "#chatMentoriaInput",
+            title: "Empieza aquí",
+            text: "Escríbeme cómo te sientes hoy o qué te gustaría trabajar con tu voz. Es el único paso obligatorio para empezar."
         },
         {
             target: "#viajeBtn",
             title: "Tu Hoja de Ruta",
-            text: "Aquí encontrarás los 5 Módulos de Sanación Vocal. Es el corazón de tu proceso de desbloqueo y crecimiento."
+            text: "Los 5 Módulos de Sanación Vocal: el corazón de tu proceso. Puedes empezar cuando quieras, sin prisa."
         },
         {
             target: "#progresoBtn",
             title: "Tu Evolución",
-            text: "En este apartado registro tus hitos, cambios emocionales y el progreso técnico que vamos logrando juntos."
+            text: "Aquí iré registrando tus hitos y avances a medida que conversemos. Al principio estará vacío: es normal."
         },
         {
             target: "#botiquinBtn",
             title: "S.O.S Vocal",
-            text: "¿Nervios antes de cantar o un bloqueo repentino? Pulsa aquí para recibir calma y pautas inmediatas."
-        },
-        {
-            target: "#musicToggleBtn",
-            title: "Música de Alquimia",
-            text: "Elige una frecuencia sonora para que te acompañe mientras chateas. ¡La música no se detendrá aunque navegues por la app!"
-        },
-        {
-            target: "#sesionBtn",
-            title: "Tutorías Privadas",
-            text: "Gestiona aquí tus encuentros personales 1/1 conmigo para profundizar en tu voz y mentalidad."
-        },
-        {
-            target: "#upgradeBtn",
-            title: "Mejorar Plan",
-            text: "Sube de nivel para desbloquear la memoria profunda ilimitada y funciones exclusivas de acompañamiento."
-        },
-        {
-            target: "#ajustesBtn",
-            title: "A tu Medida",
-            text: "Cambia mi idioma, ajusta mi personalidad (más técnico o motivador) y define tus objetivos semanales."
+            text: "Si te bloqueas antes de cantar, pulsa aquí para recibir calma y pautas inmediatas."
         },
         {
             target: "#mainHelpBtn",
-            title: "Guía Rápida",
-            text: "Si alguna vez olvidas para qué sirve un icono, esta señal te mostrará un resumen visual de cada función."
-        },
-        {
-            target: "#chatMentoriaInput",
-            title: "Caja de Chat",
-            text: "Escríbeme aquí tus dudas, sensaciones tras ensayar o simplemente cómo te sientes hoy. ¡Estoy aquí para ti!"
-        },
-        {
-            target: "#micBtn",
-            title: "Habla conmigo",
-            text: "Si no te apetece escribir, pulsa el micro y transcribiré tus palabras para que nuestra charla sea más fluida."
-        },
-        {
-            target: "#singBtn",
-            title: "Analiza tu Canto 🎵",
-            text: "Graba tu voz cantando con este botón. El Mentor escuchará y te dará feedback sobre tu afinación, resonancia y proyección vocal."
-        },
-        {
-            target: "#quickUploadBtn",
-            title: "Tus Archivos",
-            text: "Haz clic aquí para compartir conmigo una partitura en PDF o un audio de tu ensayo. Lo analizaré para darte feedback específico. Archivos de hasta 3.5 Mb. Recomend: súbelo en modo mono."
-        },
-        {
-            target: "#quickPhoneticsBtn",
-            title: "Maestría en Idiomas",
-            text: "¿Dudas con la letra? Selecciona un idioma y te explicaré la fonética paso a paso, con audios para que escuches la pronunciación correcta."
-        },
-        {
-            target: "#logoutBtn",
-            title: "Guardar y Salir",
-            text: "<strong>MUY IMPORTANTE</strong>: Cierra sesión siempre aquí para que pueda procesar y guardar todo nuestro avance."
+            title: "El resto, cuando lo necesites",
+            text: "En esta guía encontrarás qué hace cada icono: música, fonética, archivos, sesiones 1/1 y ajustes. Sin prisa."
         }
     ],
 

@@ -12,6 +12,7 @@ const suites = [
     { nombre: 'Control de acceso de /api/email', archivo: 'tests/email-auth.test.js' },
     { nombre: '/api/config y límite de 12 funciones de Vercel', archivo: 'tests/config.test.js' },
     { nombre: 'Firma de webhooks (bodyParser y cuerpo crudo)', archivo: 'tests/webhooks-config.test.js' },
+    { nombre: 'Producto: exportación, estados vacíos y onboarding', archivo: 'tests/product-improvements.test.js' },
     { nombre: 'Historial de conversaciones', archivo: 'scripts/test-conversations.js' },
     { nombre: 'Markdown seguro y texto para TTS', archivo: 'scripts/test-markdown.js' },
     { nombre: 'Accesibilidad', archivo: 'scripts/test-a11y.js' },

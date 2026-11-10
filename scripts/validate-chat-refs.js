@@ -19,7 +19,8 @@ let okCount = 0;
 // ids que se crean dinámicamente en tiempo de ejecución (no están en el HTML)
 const DINAMICOS = new Set([
     'dtvLiveRegion', 'dtvUpdateBanner', 'dtvInstallBtn',
-    'dtvPromptInput', 'dtvGlobalError', 'msg-thinking', 'ia-response'
+    'dtvPromptInput', 'dtvGlobalError', 'msg-thinking', 'ia-response',
+    'progresoEmpezarBtn', 'progresoChart'
 ]);
 
 for (const archivo of archivos) {

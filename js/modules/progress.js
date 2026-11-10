@@ -36,6 +36,20 @@ export const PROGRESO = window.PROGRESO = {
     },
 
     render(container, data) {
+        if (!data || !data.perfil) {
+            container.innerHTML = '<p style="text-align:center;color:#999;">No he podido cargar tu progreso. Inténtalo de nuevo.</p>';
+            return;
+        }
+
+        // Usuario recién llegado: un gráfico vacío es peor que una explicación.
+        const sinActividad = (data.mensajes?.total || 0) === 0
+            && (data.viaje?.hitoProgress || 0) === 0;
+
+        if (sinActividad) {
+            this.renderVacio(container, data);
+            return;
+        }
+
         container.innerHTML = `
             <div class="progreso-header">
                 <div class="progreso-greeting">
@@ -112,6 +126,49 @@ export const PROGRESO = window.PROGRESO = {
             bitacoraBtn.addEventListener('click', () => {
                 document.getElementById('progresoModal').style.display = 'none';
                 if (window.MODULOS) window.MODULOS.toggleProgreso();
+            });
+        }
+    },
+
+    /**
+     * Estado vacío: explica qué aparecerá aquí y cómo empezar, en lugar de
+     * mostrar un gráfico sin datos.
+     */
+    renderVacio(container, data) {
+        const nombre = data?.perfil?.nombre ? `, ${data.perfil.nombre}` : '';
+        const tier = data?.perfil?.tier || 'free';
+        const tierLabel = data?.perfil?.tierLabel || 'Explora';
+
+        container.innerHTML = `
+            <div class="progreso-header">
+                <div class="progreso-greeting">
+                    <h2>Hola${nombre}</h2>
+                    <span class="progreso-tier tier-${tier}">${tierLabel}</span>
+                </div>
+                <p class="progreso-subtitle">Tu viaje acaba de empezar</p>
+            </div>
+
+            <div class="progreso-vacio">
+                <div class="progreso-vacio-icono" aria-hidden="true">🌱</div>
+                <h3>Aún no hay progreso que mostrar</h3>
+                <p>Esto se llena solo: en cuanto hablemos, iré registrando tus avances aquí.</p>
+                <ul class="progreso-vacio-lista">
+                    <li>Tu actividad mes a mes</li>
+                    <li>Los módulos de Mi Viaje que completes</li>
+                    <li>Los minutos de sesión 1/1 que uses</li>
+                </ul>
+                <button id="progresoEmpezarBtn" class="save-btn" type="button">
+                    Empezar a hablar con el mentor
+                </button>
+            </div>
+        `;
+
+        const btn = document.getElementById('progresoEmpezarBtn');
+        if (btn) {
+            btn.addEventListener('click', () => {
+                const modal = document.getElementById('progresoModal');
+                if (modal) modal.style.display = 'none';
+                document.getElementById('chatMentoriaInput')?.focus();
             });
         }
     },

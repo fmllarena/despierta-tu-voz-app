@@ -68,13 +68,26 @@ window.SESIONES = {
                 if (ELEMENTS.book60Btn) ELEMENTS.book60Btn.innerText = "Reservar 1 hora";
             }
         } else {
-            // Caso PRO o FREE
+            // Caso PRO o FREE: no basta con decir que no está incluido,
+            // hay que explicar qué es y ofrecer la salida natural.
             if (ELEMENTS.sessionQuotaInfo) {
                 ELEMENTS.sessionQuotaInfo.innerHTML = `
-                    <div class="quota-badge">
-                        <span class="quota-label">Tu plan actual no incluye sesiones 1/1 individuales.</span>
+                    <div class="quota-badge quota-vacio">
+                        <p class="quota-titulo">Las sesiones 1/1 son parte del plan Transforma</p>
+                        <p class="quota-detalle">Una hora al mes con Fernando para trabajar tu voz y tus bloqueos en directo, con seguimiento personalizado.</p>
+                        <button type="button" class="save-btn quota-cta-btn" data-abrir-upgrade>
+                            Ver el plan Transforma
+                        </button>
                     </div>
                 `;
+
+                const cta = ELEMENTS.sessionQuotaInfo.querySelector('[data-abrir-upgrade]');
+                if (cta) {
+                    cta.addEventListener('click', () => {
+                        if (ELEMENTS.sesionModal) ELEMENTS.sesionModal.style.display = 'none';
+                        if (ELEMENTS.upgradeModal) ELEMENTS.upgradeModal.style.display = 'flex';
+                    });
+                }
             }
             if (ELEMENTS.book30Btn) {
                 ELEMENTS.book30Btn.disabled = true;
