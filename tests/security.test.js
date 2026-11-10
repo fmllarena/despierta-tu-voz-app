@@ -1,4 +1,4 @@
-﻿// Pruebas de las defensas de seguridad aÃ±adidas a /api.
+// Pruebas de las defensas de seguridad aÃ±adidas a /api.
 // Ejecutar con:  node api/_lib/__tests__/security.test.js
 //
 // No hay framework de test en el proyecto, asÃ­ que se usa el runner de Node.
@@ -105,6 +105,31 @@ function reqFromBuffer(buf, headers = {}) {
         const sig = 'sha256=' + hmacSha256(body, secret, 'hex');
         const r = verifyCalcomSignature(body, { 'x-cal-signature-256': sig }, secret);
         assert.strictEqual(r.ok, true);
+    });
+
+    await test('Cal.com sin secreto ("no-secret-provided") se detecta aparte', () => {
+        const body = Buffer.from('{"a":1}');
+        const r = verifyCalcomSignature(
+            body,
+            { 'x-cal-signature-256': 'no-secret-provided' },
+            'un-secreto-cualquiera'
+        );
+        assert.strictEqual(r.ok, false);
+        assert.strictEqual(r.reason, 'calcom_without_secret');
+    });
+
+    await test('un secreto con espacios o salto de línea final sigue validando', () => {
+        const body = Buffer.from('{"c":3}');
+        const secret = 'miSecreto123';
+        const sig = hmacSha256(body, secret, 'hex');
+
+        // Al pegarlo en Vercel es habitual arrastrar espacios/salto de línea.
+        const r = verifyCalcomSignature(
+            body,
+            { 'x-cal-signature-256': sig },
+            `  ${secret}\n`
+        );
+        assert.strictEqual(r.ok, true, 'el secreto debería recortarse antes de comparar');
     });
 
     await test('safeEqual compara longitudes distintas sin lanzar', () => {

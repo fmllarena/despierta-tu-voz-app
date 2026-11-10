@@ -87,7 +87,11 @@ function extractCalSignature(headers = {}) {
  * @returns {{ok: boolean, reason?: string, skipped?: boolean}}
  */
 function verifyCalcomSignature(rawBody, headers, secret) {
-    if (!secret) {
+    // Se recorta el secreto: al pegarlo en Vercel es habitual arrastrar un
+    // salto de línea o espacios, y eso invalida el HMAC sin dar ninguna pista.
+    const limpio = secret == null ? '' : String(secret).trim();
+
+    if (!limpio) {
         if (unverifiedAllowed() && !isProduction()) {
             console.warn('⚠️ [Webhook] CALCOM_WEBHOOK_SECRET ausente: firma no verificada (solo desarrollo)');
             return { ok: true, skipped: true };
@@ -99,13 +103,55 @@ function verifyCalcomSignature(rawBody, headers, secret) {
     const signature = extractCalSignature(headers);
     if (!signature) return { ok: false, reason: 'missing_signature' };
 
-    const expected = hmacSha256(rawBody, secret, 'hex');
+    const recibida = String(signature).trim();
+
+    // Cal.com envía este literal cuando el webhook no tiene secreto configurado.
+    if (recibida.toLowerCase() === 'no-secret-provided') {
+        console.error(
+            '⛔ [Webhook] Cal.com envía "no-secret-provided": el webhook NO tiene Secret configurado. ' +
+            'El valor de CALCOM_WEBHOOK_SECRET en Vercel no se está usando.'
+        );
+        return { ok: false, reason: 'calcom_without_secret' };
+    }
+
+    const expected = hmacSha256(rawBody, limpio, 'hex');
 
     // Cal.com puede enviar la firma en hex o en base64 según versión.
-    const candidates = [expected, hmacSha256(rawBody, secret, 'base64')];
-    const normalized = String(signature).trim().replace(/^sha256=/i, '');
+    const candidates = [expected, hmacSha256(rawBody, limpio, 'base64')];
+    const normalized = recibida.replace(/^sha256=/i, '');
 
     const match = candidates.some(c => safeEqual(c, normalized));
+
+    if (!match) {
+        // Diagnóstico seguro: prefijos de 8 caracteres y longitudes no permiten
+        // falsificar nada, pero distinguen las dos causas habituales.
+        const prefijo = s => String(s).slice(0, 8) + '…';
+        console.warn(
+            '[Webhook] La firma no coincide. ' +
+            `cuerpo=${rawBody.length}B | ` +
+            `recibida=${prefijo(recibida)} (${recibida.length} car.) | ` +
+            `esperada=${prefijo(expected)} (${expected.length} car.) | ` +
+            `secreto=${limpio.length} car.`
+        );
+
+        if (rawBody.length === 0) {
+            console.error(
+                '⛔ [Webhook] El cuerpo llegó VACÍO: la firma se calcula sobre los bytes crudos. ' +
+                'Comprueba que el deployment incluye `config.api.bodyParser = false`.'
+            );
+        } else if (recibida.length !== expected.length) {
+            console.error(
+                '⛔ [Webhook] La firma recibida no tiene la longitud esperada (64 hex). ' +
+                'Puede que Cal.com esté usando otro algoritmo o que el secreto esté desincronizado.'
+            );
+        } else {
+            console.error(
+                '⛔ [Webhook] Longitudes correctas pero contenido distinto: ' +
+                'el secreto de Vercel NO coincide con el de Cal.com.'
+            );
+        }
+    }
+
     return match ? { ok: true } : { ok: false, reason: 'invalid_signature' };
 }
 

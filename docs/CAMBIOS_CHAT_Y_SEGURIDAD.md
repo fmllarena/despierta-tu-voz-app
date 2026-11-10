@@ -238,7 +238,24 @@ exactamente qué falló (visible en el detalle del intento en Cal.com):
 |---|---|---|
 | `missing_secret` | La función no ve `CALCOM_WEBHOOK_SECRET` | Definirla en Vercel **en el entorno Production** y **redesplegar** |
 | `missing_signature` | Cal.com no envió `x-cal-signature-256` | El webhook de Cal.com no tiene *Secret*: añádeselo |
-| `invalid_signature` | Hay secreto pero no coincide | Igualar el secreto en Cal.com y en Vercel; si el cuerpo llega alterado, revisar `bodyParser` |
+| `calcom_without_secret` | Cal.com envía literalmente `no-secret-provided` | Añadir un Secret al webhook en Cal.com y el mismo valor en Vercel |
+| `invalid_signature` | Hay secreto y cabecera, pero el HMAC no coincide | Ver abajo |
+
+**Si el código es `invalid_signature`**, el log añade una línea con el detalle
+(prefijos y longitudes, nunca el secreto):
+
+```
+[Webhook] La firma no coincide. cuerpo=312B | recibida=9f2c1a7b… (64 car.) |
+esperada=3d81ee04… (64 car.) | secreto=42 car.
+```
+
+- `cuerpo=0B` → el cuerpo llegó vacío: el deployment no incluye
+  `config.api.bodyParser = false` (despliega el commit `ca6643c` o posterior).
+- Longitudes distintas → Cal.com usa otro algoritmo o la cabecera está corrupta.
+- **Longitudes iguales y contenido distinto → los secretos no coinciden.** Es el
+  caso más habitual: vuelve a copiar el secreto desde Cal.com a Vercel (sin
+  espacios) y redespliega. Esto último ya se tolera solo: el secreto se recorta
+  antes de comparar.
 
 **Comprobar si la variable llegó al deployment sin mirar logs:**
 
