@@ -1,0 +1,123 @@
+// Verificación de firmas para los webhooks entrantes.
+//
+// Estrategia por proveedor:
+//  - Stripe: usa la librería oficial (constructEvent) → ya validaba firma.
+//  - Cal.com: HMAC-SHA256 del cuerpo crudo con cabecera x-cal-signature-256.
+//  - Genérico: HMAC-SHA256 en hex o base64 (cabecera configurable).
+//
+// Regla de seguridad: si hay un secreto configurado, la firma es
+// OBLIGATORIA. Solo se permite el modo "sin verificar" cuando no hay
+// secreto Y explícitamente se activa ALLOW_UNVERIFIED_WEBHOOKS=true
+// (pensado para desarrollo local, nunca para producción).
+
+const crypto = require('crypto');
+
+/**
+ * Lee el cuerpo crudo de la petición.
+ * Necesario porque la firma se calcula sobre los bytes exactos recibidos:
+ * cualquier reserialización del JSON invalidaría el HMAC.
+ */
+async function readRawBody(req) {
+    if (Buffer.isBuffer(req.body)) return req.body;
+    if (typeof req.body === 'string') return Buffer.from(req.body);
+
+    const chunks = [];
+    for await (const chunk of req) {
+        chunks.push(typeof chunk === 'string' ? Buffer.from(chunk) : chunk);
+    }
+    return Buffer.concat(chunks);
+}
+
+/** Comparación en tiempo constante para evitar timing attacks. */
+function safeEqual(a, b) {
+    const bufA = Buffer.from(String(a));
+    const bufB = Buffer.from(String(b));
+    if (bufA.length !== bufB.length) return false;
+    return crypto.timingSafeEqual(bufA, bufB);
+}
+
+/** Calcula HMAC-SHA256 del cuerpo con el secreto dado. */
+function hmacSha256(rawBody, secret, encoding = 'hex') {
+    return crypto.createHmac('sha256', secret).update(rawBody).digest(encoding);
+}
+
+function isProduction() {
+    return (process.env.VERCEL_ENV || process.env.NODE_ENV) === 'production';
+}
+
+function unverifiedAllowed() {
+    return String(process.env.ALLOW_UNVERIFIED_WEBHOOKS || '').toLowerCase() === 'true';
+}
+
+/** Extrae la firma de las cabeceras habituales de Cal.com. */
+function extractCalSignature(headers = {}) {
+    return (
+        headers['x-cal-signature-256'] ||
+        headers['x-cal-signature'] ||
+        headers['X-Cal-Signature-256'] ||
+        null
+    );
+}
+
+/**
+ * Verifica un webhook de Cal.com (HMAC-SHA256 hex del cuerpo crudo).
+ *
+ * @returns {{ok: boolean, reason?: string, skipped?: boolean}}
+ */
+function verifyCalcomSignature(rawBody, headers, secret) {
+    if (!secret) {
+        if (unverifiedAllowed() && !isProduction()) {
+            console.warn('⚠️ [Webhook] CALCOM_WEBHOOK_SECRET ausente: firma no verificada (solo desarrollo)');
+            return { ok: true, skipped: true };
+        }
+        console.error('⛔ [Webhook] CALCOM_WEBHOOK_SECRET no configurado: se rechaza el webhook');
+        return { ok: false, reason: 'missing_secret' };
+    }
+
+    const signature = extractCalSignature(headers);
+    if (!signature) return { ok: false, reason: 'missing_signature' };
+
+    const expected = hmacSha256(rawBody, secret, 'hex');
+
+    // Cal.com puede enviar la firma en hex o en base64 según versión.
+    const candidates = [expected, hmacSha256(rawBody, secret, 'base64')];
+    const normalized = String(signature).trim().replace(/^sha256=/i, '');
+
+    const match = candidates.some(c => safeEqual(c, normalized));
+    return match ? { ok: true } : { ok: false, reason: 'invalid_signature' };
+}
+
+/**
+ * Verificación genérica por HMAC-SHA256 para cualquier proveedor.
+ *
+ * @param {Buffer} rawBody
+ * @param {object} headers
+ * @param {object} opts { secret, header, encoding: 'hex'|'base64' }
+ */
+function verifyHmacSignature(rawBody, headers, { secret, header, encoding = 'hex' } = {}) {
+    if (!secret) {
+        if (unverifiedAllowed() && !isProduction()) {
+            return { ok: true, skipped: true };
+        }
+        return { ok: false, reason: 'missing_secret' };
+    }
+
+    const signature = headers[String(header || '').toLowerCase()];
+    if (!signature) return { ok: false, reason: 'missing_signature' };
+
+    const expected = hmacSha256(rawBody, secret, encoding);
+    const normalized = String(signature).trim().replace(/^sha256=/i, '');
+    return safeEqual(expected, normalized)
+        ? { ok: true }
+        : { ok: false, reason: 'invalid_signature' };
+}
+
+module.exports = {
+    readRawBody,
+    safeEqual,
+    hmacSha256,
+    verifyCalcomSignature,
+    verifyHmacSignature,
+    unverifiedAllowed,
+    isProduction
+};

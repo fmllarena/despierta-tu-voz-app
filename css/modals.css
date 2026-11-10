@@ -353,7 +353,9 @@
 }
 
 .saved-messages-content {
-    max-width: 900px !important;
+    /* Ancho fijado para que la cabecera y las tarjetas queden alineadas
+       en una única columna de lectura. */
+    max-width: 760px !important;
     width: 95% !important;
     background: white;
     min-height: 600px;
@@ -446,9 +448,18 @@
 
 .saved-messages-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
-    gap: 20px;
-    padding: 30px;
+    /* Una sola columna SIEMPRE: un mensaje debajo de otro, también en PC.
+       Antes era `repeat(auto-fill, minmax(380px, 1fr))`, que en el modal de
+       900px creaba dos columnas y descolocaba las tarjetas. */
+    grid-template-columns: 1fr;
+    gap: 18px;
+    padding: 24px 30px;
+    /* Ancho forzado y centrado para que la lectura siga un orden vertical. */
+    width: 100%;
+    max-width: 720px;
+    margin: 0 auto;
+    box-sizing: border-box;
+    align-items: start;
 }
 
 .saved-message-card {
@@ -460,6 +471,11 @@
     position: relative;
     overflow: hidden;
     box-shadow: 0 4px 15px rgba(142, 125, 109, 0.08);
+    /* Ocupa todo el ancho de la columna: nunca dos lado a lado. */
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
 }
 
 .saved-message-card:hover {

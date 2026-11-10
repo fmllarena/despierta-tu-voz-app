@@ -142,6 +142,100 @@ window.addEventListener('click', e => {
     if (e.target === ELEMENTS.customAlert) cerrarAlerta(false);
 });
 
+/**
+ * Diálogo de entrada de texto (Promise).
+ * Se usa, por ejemplo, para renombrar conversaciones.
+ * Devuelve el texto o null si se cancela.
+ */
+window.promptCustom = function (mensaje, valorInicial = '', titulo = 'Editar') {
+    return new Promise(resolve => {
+        const overlay = document.createElement('div');
+        overlay.className = 'modal';
+        overlay.style.display = 'flex';
+        overlay.setAttribute('role', 'dialog');
+        overlay.setAttribute('aria-modal', 'true');
+
+        const box = document.createElement('div');
+        box.className = 'modal-content';
+        box.style.maxWidth = '420px';
+
+        const h = document.createElement('h3');
+        h.textContent = titulo;
+        h.style.marginTop = '0';
+
+        const label = document.createElement('label');
+        label.textContent = mensaje;
+        label.style.display = 'block';
+        label.style.marginBottom = '8px';
+        label.style.fontSize = '0.9em';
+        label.htmlFor = 'dtvPromptInput';
+
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.id = 'dtvPromptInput';
+        input.value = valorInicial;
+        input.maxLength = 80;
+        input.style.cssText =
+            'width:100%;box-sizing:border-box;padding:10px 12px;border:1px solid #d8c9b4;' +
+            'border-radius:10px;font-size:16px;color:#3a322a;background:#fff';
+
+        const actions = document.createElement('div');
+        actions.style.cssText = 'display:flex;gap:8px;justify-content:flex-end;margin-top:16px';
+
+        const cancelar = document.createElement('button');
+        cancelar.type = 'button';
+        cancelar.textContent = 'Cancelar';
+        cancelar.className = 'action-btn';
+
+        const aceptar = document.createElement('button');
+        aceptar.type = 'button';
+        aceptar.textContent = 'Guardar';
+        aceptar.className = 'premium-btn';
+
+        actions.appendChild(cancelar);
+        actions.appendChild(aceptar);
+        box.appendChild(h);
+        box.appendChild(label);
+        box.appendChild(input);
+        box.appendChild(actions);
+        overlay.appendChild(box);
+        document.body.appendChild(overlay);
+
+        // Recuperar el foco al cerrar.
+        const anteriorFoco = document.activeElement;
+
+        const cerrar = valor => {
+            overlay.remove();
+            document.removeEventListener('keydown', onKey);
+            if (anteriorFoco && typeof anteriorFoco.focus === 'function') {
+                anteriorFoco.focus();
+            }
+            resolve(valor);
+        };
+
+        const onKey = e => {
+            if (e.key === 'Escape') {
+                e.preventDefault();
+                cerrar(null);
+            }
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                cerrar(input.value.trim() || null);
+            }
+        };
+
+        document.addEventListener('keydown', onKey);
+        aceptar.addEventListener('click', () => cerrar(input.value.trim() || null));
+        cancelar.addEventListener('click', () => cerrar(null));
+        overlay.addEventListener('click', e => {
+            if (e.target === overlay) cerrar(null);
+        });
+
+        input.focus();
+        input.select();
+    });
+};
+
 // --- ACTUALIZAR UI SEGÚN EL USUARIO ---
 function updateUI(user) {
     if (!ELEMENTS) {
@@ -414,9 +508,26 @@ async function cargarPerfil(user) {
         updateUI(user);
 
         // Al cargar el perfil, recuperamos el historial para el contexto de la IA.
-        // Solo lo renderizamos visualmente si venimos de una reserva exitosa.
+        // El historial se muestra SIEMPRE al entrar (no solo al volver de una
+        // reserva): el usuario debe ver sus conversaciones anteriores.
         const isBookingSuccess = urlParams.get('booking') === 'success';
-        await cargarHistorialDesdeDB(user.id, isBookingSuccess);
+
+        if (window.CONVERSATIONS) {
+            try {
+                await window.CONVERSATIONS.init(state.supabase, user.id);
+            } catch (e) {
+                console.error('❌ [Conversaciones] Fallo inicializando:', e);
+                // Respaldo: comportamiento anterior (historial en el contexto).
+                await cargarHistorialDesdeDB(user.id, false);
+            }
+        } else {
+            await cargarHistorialDesdeDB(user.id, false);
+        }
+
+        // Si venimos de una reserva, dejamos el historial visible y avisamos.
+        if (isBookingSuccess) {
+            console.log('📅 [Reserva] Vuelta desde Cal.com: historial visible.');
+        }
 
         // --- REPARACIÓN AUTOMÁTICA ---
         // Si el perfil está vacío pero tenemos mensajes cargados, disparamos el resumen 
@@ -462,6 +573,16 @@ async function cargarPerfil(user) {
 
 async function cargarHistorialDesdeDB(userId, render = false) {
     try {
+        // Si el módulo de conversaciones está disponible, es él quien manda:
+        // carga la conversación activa y sincroniza chatHistory.
+        if (window.CONVERSATIONS?.ready) {
+            const mensajes = await window.CONVERSATIONS.loadMessages(
+                window.CONVERSATIONS.currentId
+            );
+            if (render) await window.CONVERSATIONS.renderMessages(mensajes);
+            return mensajes;
+        }
+
         const { data: mensajes, error } = await state.supabase
             .from('mensajes')
             .select('*')
@@ -531,23 +652,29 @@ window.addEventListener('load', () => {
 async function saludarUsuario(user, perfil) {
     if (!ELEMENTS.chatBox) return;
 
-    // Solo mantenemos el chat si venimos de una reserva exitosa.
-    // En cualquier otro caso, limpiamos para empezar de cero.
-    const isBookingSuccess = urlParams.get('booking') === 'success';
-    if (!isBookingSuccess) {
-        ELEMENTS.chatBox.innerHTML = "";
-    }
+    // Si la conversación activa ya tiene mensajes, NO se limpia ni se saluda:
+    // el usuario está viendo su historial y debe permanecer visible.
+    const tieneHistorial = chatHistory && chatHistory.length > 0;
+    if (tieneHistorial) return;
+
+    // Conversación vacía: limpiamos restos (avisos, mensajes locales) y
+    // mostramos el saludo de apertura.
+    ELEMENTS.chatBox.innerHTML = "";
 
     // Si es la primera vez (no hay resumen previo), mostrar mensaje FIJO de bienvenida
     // Esto evita problemas con variables de nombre en el primer contacto
     if (!perfil || !perfil.ultimo_resumen) {
         appendMessage(MENSAJE_BIENVENIDA, 'ia', 'msg-bienvenida');
     } else {
-        const nombre = perfil?.nombre || (user.email || "viajero/a").split('@')[0];
+        const email = user?.email || '';
+        const nombre = perfil?.nombre || (email ? email.split('@')[0] : 'viajero/a');
         const nombreCap = nombre.charAt(0).toUpperCase() + nombre.slice(1);
         appendMessage(`Qué alegría encontrarte de nuevo, <strong>${nombreCap}</strong>. ¿Cómo te sientes hoy?`, 'ia');
     }
 }
+
+// Accesible desde el módulo de conversaciones (script clásico → global).
+window.saludarUsuario = saludarUsuario;
 
 // El objeto authActions se ha movido a js/services/auth-service.js
 // para centralizar la lógica de autenticación (Email + Social)
@@ -668,6 +795,7 @@ async function sendMessage() {
 
     // --- ESTADO PENSANDO ---
     const thinkingId = 'msg-thinking-' + Date.now();
+    const responseId = 'ia-response-' + Date.now();
     let thinkingMsg = "Procesando respuesta...";
     if (fileData) {
         if (fileData.mimeType && fileData.mimeType.startsWith('audio')) {
@@ -691,8 +819,8 @@ async function sendMessage() {
             fileData: fileData // <--- CRITICAL FIX: Include the file data
         };
 
-        // Contenedor para la respuesta progresiva
-        const responseId = 'ia-response-' + Date.now();
+        // Contenedor para la respuesta progresiva (declarado fuera del try
+        // para poder limpiarlo también en el catch).
         let responseText = "";
 
         await llamarGemini(text, chatHistory, "mentor_chat", extraData, (chunk, fullText) => {
@@ -769,10 +897,24 @@ async function sendMessage() {
             console.log('⏹ Respuesta detenida por el usuario');
             // También eliminar mensaje de pensando si aún existe
             document.getElementById(thinkingId)?.remove();
+            // La respuesta parcial (si la hay) se conserva y el usuario puede
+            // pedir "Regenerar" desde su propia burbuja.
         } else {
             console.error("Error en sendMessage:", e);
-            // Para errores, usar función de borrado que no requiere meta/dbId
-            appendErrorMessage("Vaya, parece que hoy tengo un nudo en la garganta. ¿Podrías intentar decírmelo de nuevo?");
+
+            // Mensaje de error claro y accionable, con botón de reintento.
+            const esRed = e instanceof TypeError || /fetch|network|Failed to fetch/i.test(e.message || '');
+            const textoError = esRed
+                ? 'No he podido conectar con el servidor. Revisa tu conexión e inténtalo de nuevo.'
+                : 'Vaya, parece que hoy tengo un nudo en la garganta. ¿Puedes intentarlo otra vez?';
+
+            appendErrorMessage(textoError, { texto: text, contenedor: contenedorUsuario });
+
+            // Si la respuesta quedó a medias, se elimina la burbuja vacía.
+            const parcial = document.getElementById(responseId);
+            if (parcial && !parcial.querySelector('.message.ia')?.textContent?.trim()) {
+                parcial.remove();
+            }
         }
     } finally {
         document.getElementById(thinkingId)?.remove();
@@ -790,11 +932,30 @@ async function guardarMensajeDB(texto, emisor, customDate = null) {
         if (!user) return null;
 
         console.log(`Intentando guardar mensaje de ${emisor}...`);
+
+        // Aseguramos que existe una conversación activa donde colgarlo.
+        let conversacionId = null;
+        if (emisor !== 'resumen_diario' && emisor !== 'sistema' && window.CONVERSATIONS?.migrationReady) {
+            try {
+                conversacionId = await window.CONVERSATIONS.ensureCurrent();
+            } catch (e) {
+                console.warn('[Chat] No se pudo asegurar la conversación:', e?.message || e);
+            }
+        } else if (window.CONVERSATIONS?.currentId) {
+            conversacionId = window.CONVERSATIONS.currentId;
+        }
+
         const payload = {
             texto: texto,
             emisor: emisor,
             alumno: user.id
         };
+
+        // Los mensajes internos (crónica/resumen) se guardan sin conversación:
+        // así nunca aparecen en la barra lateral ni se mezclan con el hilo.
+        if (conversacionId && emisor !== 'resumen_diario' && emisor !== 'sistema') {
+            payload.conversacion_id = conversacionId;
+        }
 
         if (customDate) payload.created_at = customDate;
 
@@ -809,6 +970,17 @@ async function guardarMensajeDB(texto, emisor, customDate = null) {
             return null;
         } else {
             console.log("Mensaje guardado correctamente.");
+
+            // Refrescar la barra lateral (contador / fecha / título).
+            window.dispatchEvent(new CustomEvent('dtv:message-saved', {
+                detail: { id: nuevo?.id || null, emisor }
+            }));
+
+            // Poner título automático a la conversación con su primer mensaje.
+            if (emisor === 'user' && conversacionId) {
+                window.CONVERSATIONS?.autoTitle?.(conversacionId, texto);
+            }
+
             // --- ACTUALIZAR ACTIVIDAD PARA EMAIL DE INACTIVIDAD ---
             await state.supabase
                 .from('user_profiles')
@@ -833,24 +1005,34 @@ async function guardarMensajeDB(texto, emisor, customDate = null) {
 // Timestamp de inicio de la sesión actual (se actualiza al cargar el perfil)
 let sessionStartTime = new Date().toISOString();
 
-async function exportarChatDoc() {
+async function exportarChatDoc(conversacionId = null) {
     try {
         if (!state.supabase || !userProfile) {
             alertCustom("Inicia sesión para descargar tu conversación.");
             return;
         }
 
-        console.log("📥 Generando documento de la sesión actual...");
+        console.log("📥 Generando documento de la conversación...");
 
-        // 1. Obtener todos los mensajes desde el inicio de la sesión actual.
-        //    sessionStartTime se registra cuando el usuario carga su perfil,
-        //    por lo que no se ve afectado por los resúmenes automáticos intermedios.
-        const { data: mensajes, error } = await state.supabase
+        // 1. Mensajes a exportar:
+        //    - Si hay conversación activa, SOLO esa conversación.
+        //    - Si no (modo degradado), los de la sesión actual como antes.
+        const convId = conversacionId || window.CONVERSATIONS?.currentId || null;
+        const usaConversacion = !!(convId && window.CONVERSATIONS?.migrationReady);
+
+        let query = state.supabase
             .from('mensajes')
-            .select('created_at, texto, emisor')
+            .select('created_at, texto, emisor, conversacion_id')
             .eq('alumno', userProfile.user_id)
-            .gte('created_at', sessionStartTime)
             .order('created_at', { ascending: true });
+
+        if (usaConversacion) {
+            query = query.eq('conversacion_id', convId);
+        } else {
+            query = query.gte('created_at', sessionStartTime);
+        }
+
+        const { data: mensajes, error } = await query;
 
         if (error) throw error;
 
@@ -866,10 +1048,26 @@ async function exportarChatDoc() {
             if (backupMsgs && backupMsgs.length > 0) {
                 mensajesFinales = backupMsgs.reverse();
             } else {
-                alertCustom("No he encontrado mensajes nuevos en esta sesión.");
+                alertCustom("No he encontrado mensajes que descargar en esta conversación.");
                 return;
             }
         }
+
+        // Nunca exportar material interno (crónicas/resúmenes).
+        mensajesFinales = mensajesFinales.filter(
+            m => m.emisor !== 'resumen_diario' && m.emisor !== 'sistema'
+        );
+
+        if (mensajesFinales.length === 0) {
+            alertCustom("Esta conversación aún no tiene mensajes que descargar.");
+            return;
+        }
+
+        // Título de la conversación para la cabecera y el nombre del archivo.
+        const convMeta = window.CONVERSATIONS?.list?.find(c => c.id === convId);
+        const tituloConv = usaConversacion
+            ? (convMeta?.titulo || 'Conversación')
+            : 'Sesión actual';
 
         // 3. Crear el contenido en HTML para el .doc
 
@@ -920,6 +1118,7 @@ async function exportarChatDoc() {
 
                 <div class='metadata'>
                     Alumno: ${userProfile.nombre || userProfile.email}<br>
+                    Conversación: ${tituloConv}<br>
                     Fecha de la sesión: ${new Date().toLocaleDateString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' })}
                 </div>
 
@@ -967,7 +1166,7 @@ async function exportarChatDoc() {
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
-        link.download = `Sesion_DTV_${userProfile.nombre || 'Alquimia'}_${new Date().toISOString().split('T')[0]}.doc`;
+        link.download = `Sesion_DTV_${(userProfile.nombre || 'Alquimia').replace(/[^\p{L}\p{N}_-]+/gu, '_')}_${new Date().toISOString().split('T')[0]}.doc`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
@@ -1030,7 +1229,7 @@ function crearBotonesAccionFinal(parentDiv) {
     console.log("🔘 [Botones] Contenedor final:", actionContainer);
 }
 
-async function appendErrorMessage(texto) {
+async function appendErrorMessage(texto, retry = null) {
     const container = document.createElement('div');
     container.className = 'ia-container';
     const id = 'msg-error-' + Date.now();
@@ -1047,14 +1246,47 @@ async function appendErrorMessage(texto) {
 
     const div = document.createElement('div');
     div.className = 'message ia';
-    div.innerHTML = `
-        <div style="padding: 8px 12px; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 8px; color: #dc2626; font-size: 0.9em;">
-            ${texto}
-        </div>
-    `;
+    div.setAttribute('role', 'alert');
+
+    const box = document.createElement('div');
+    box.className = 'msg-error-box';
+    box.textContent = texto;
+    div.appendChild(box);
+
+    // Botón de reintento: descarta el mensaje que falló (BD + DOM) y lo
+    // vuelve a enviar, para no acumular duplicados en la conversación.
+    if (retry?.texto) {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'msg-error-retry';
+        btn.innerHTML = `
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/>
+                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+            </svg>
+            Reintentar`;
+        btn.addEventListener('click', async e => {
+            e.stopPropagation();
+            btn.disabled = true;
+            btn.textContent = 'Reintentando…';
+            try {
+                const msgId = retry.contenedor?.dataset?.msgId;
+                if (msgId) {
+                    await state.supabase.from('mensajes').delete().eq('id', msgId);
+                }
+                retry.contenedor?.remove();
+                container.remove();
+            } catch (err) {
+                console.warn('[Reintentar] No se pudo limpiar el mensaje previo:', err?.message || err);
+            }
+            await enviarMensajeTexto(retry.texto);
+        });
+        box.appendChild(btn);
+    }
 
     const trashBtn = document.createElement('button');
     trashBtn.className = 'trash-msg-btn';
+    trashBtn.setAttribute('aria-label', 'Descartar este aviso de error');
     trashBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>`;
     trashBtn.title = 'Eliminar mensaje de error';
     trashBtn.onclick = (e) => {
@@ -1070,6 +1302,353 @@ async function appendErrorMessage(texto) {
     ELEMENTS.chatBox.appendChild(container);
     container.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
+
+// ─────────────────────────────────────────────────────────────────────────
+// ACCIONES DE MENSAJE: escuchar (TTS), regenerar, editar y reintentar
+// ─────────────────────────────────────────────────────────────────────────
+
+/** Convierte markdown a texto plano para que el TTS no lea asteriscos. */
+function markdownToPlain(text) {
+    return String(text || '')
+        .replace(/```[\s\S]*?```/g, ' (bloque de código) ')
+        .replace(/`([^`]+)`/g, '$1')
+        .replace(/!\[[^\]]*\]\([^)]*\)/g, '')
+        .replace(/\[([^\]]+)\]\([^)]*\)/g, '$1')
+        .replace(/^\s{0,3}#{1,6}\s+/gm, '')
+        .replace(/[*_~]{1,3}/g, '')
+        .replace(/^\s*[>\-+]\s+/gm, '')
+        .replace(/^\s*\d+\.\s+/gm, '')
+        .replace(/\|/g, ' ')
+        .replace(/\[\s*SESION\\?_?FINAL\s*\]/gi, '')
+        .replace(/▮/g, '')
+        .replace(/<[^>]+>/g, '')
+        .replace(/\n{3,}/g, '\n\n')
+        .trim();
+}
+
+/**
+ * Reproductor TTS compartido: una sola locución a la vez.
+ * Usa /api/tts (Google TTS), que ya existía en el proyecto.
+ */
+const TTS_PLAYER = window.DTV_TTS = {
+    audio: null,
+    btn: null,
+
+    stop() {
+        if (this.audio) {
+            try { this.audio.pause(); } catch (_) { /* noop */ }
+            this.audio = null;
+        }
+        if (this.btn) {
+            this.btn.classList.remove('playing');
+            this.btn.classList.remove('activo');
+            this.btn.setAttribute('aria-label', 'Escuchar respuesta en voz alta');
+            this.btn = null;
+        }
+        if (window.speechSynthesis) {
+            try { window.speechSynthesis.cancel(); } catch (_) { /* noop */ }
+        }
+    },
+
+    async toggle(textoRaw, btn) {
+        // Si ya está sonando este mismo mensaje → parar.
+        if (this.btn === btn && this.audio) {
+            this.stop();
+            return;
+        }
+        this.stop();
+
+        const texto = markdownToPlain(textoRaw);
+        if (!texto) return;
+
+        this.btn = btn;
+        btn.classList.add('playing');
+        btn.classList.add('activo');
+        btn.setAttribute('aria-label', 'Detener la lectura en voz alta');
+        btn.disabled = true;
+
+        try {
+            const response = await fetch('/api/tts', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ text: texto.slice(0, 4500), languageCode: 'es-ES' })
+            });
+
+            if (!response.ok) {
+                const err = await response.json().catch(() => ({}));
+                throw new Error(err.error || `TTS respondió ${response.status}`);
+            }
+
+            const { audioContent } = await response.json();
+            if (!audioContent) throw new Error('La respuesta de voz vino vacía.');
+
+            const audio = new Audio(`data:audio/mp3;base64,${audioContent}`);
+            this.audio = audio;
+            audio.onended = () => this.stop();
+            audio.onerror = () => this.stop();
+            await audio.play();
+
+        } catch (e) {
+            console.error('[TTS] Error:', e);
+            this.stop();
+            alertCustom(
+                'No he podido leerlo en voz alta ahora mismo. ' +
+                'Puede que la voz esté desactivada en este momento.'
+            );
+        } finally {
+            if (btn) btn.disabled = false;
+        }
+    }
+};
+
+/** Crea la fila de acciones de un mensaje de la IA. */
+function crearAccionesIA(textoRaw, hostContainer) {
+    const acciones = document.createElement('div');
+    acciones.className = 'msg-actions';
+    acciones.setAttribute('role', 'group');
+    acciones.setAttribute('aria-label', 'Acciones del mensaje');
+
+    // ── Escuchar ──
+    const btnEscuchar = document.createElement('button');
+    btnEscuchar.type = 'button';
+    btnEscuchar.className = 'msg-action-btn';
+    btnEscuchar.title = 'Escuchar esta respuesta';
+    btnEscuchar.setAttribute('aria-label', 'Escuchar respuesta en voz alta');
+    btnEscuchar.innerHTML = `
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+            <path d="M15.54 8.46a5 5 0 0 1 0 7.07M19.07 4.93a10 10 0 0 1 0 14.14"/>
+        </svg>
+        <span>Escuchar</span>`;
+    btnEscuchar.addEventListener('click', e => {
+        e.stopPropagation();
+        // Se lee el texto vivo del contenedor (puede haber cambiado por streaming).
+        const el = hostContainer?.querySelector('.message.ia');
+        TTS_PLAYER.toggle(el ? el.textContent : textoRaw, btnEscuchar);
+    });
+
+    // ── Regenerar ──
+    const btnRegenerar = document.createElement('button');
+    btnRegenerar.type = 'button';
+    btnRegenerar.className = 'msg-action-btn';
+    btnRegenerar.title = 'Generar otra respuesta a partir de tu último mensaje';
+    btnRegenerar.setAttribute('aria-label', 'Regenerar respuesta');
+    btnRegenerar.innerHTML = `
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/>
+            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+        </svg>
+        <span>Regenerar</span>`;
+    btnRegenerar.addEventListener('click', e => {
+        e.stopPropagation();
+        regenerarRespuesta(hostContainer);
+    });
+
+    acciones.appendChild(btnEscuchar);
+    acciones.appendChild(btnRegenerar);
+    return acciones;
+}
+
+/**
+ * Regenera la respuesta: descarta el último par usuario/IA y vuelve a
+ * preguntar lo mismo. Así no se duplica el mensaje del usuario.
+ */
+async function regenerarRespuesta(iaContainer) {
+    if (!iaContainer) return;
+    if (ELEMENTS.chatInput?.disabled) {
+        alertCustom('Espera a que termine la respuesta actual.');
+        return;
+    }
+
+    // Localizar el mensaje de usuario inmediatamente anterior en el DOM.
+    let prev = iaContainer.previousElementSibling;
+    while (prev && !prev.classList.contains('user-container')) {
+        prev = prev.previousElementSibling;
+    }
+    if (!prev) {
+        alertCustom('No encuentro tu mensaje anterior para regenerar la respuesta.');
+        return;
+    }
+
+    const textoUsuario = prev.querySelector('.message')?.textContent
+        ?.replace(/▮/g, '')
+        .replace(/Copiar mensaje/gi, '')
+        .trim();
+
+    if (!textoUsuario) {
+        alertCustom('No he podido recuperar el texto de tu mensaje.');
+        return;
+    }
+
+    const iaId = iaContainer.dataset.msgId || iaContainer.querySelector('.feedback-btns')?.dataset.msgId;
+    const userId = prev.dataset.msgId;
+    const iaMsgId = iaContainer.querySelector('[data-msg-id]')?.dataset.msgId || iaId;
+
+    TTS_PLAYER.stop();
+
+    try {
+        // Borrar de la BD (si están persistidos) y del DOM.
+        if (userId) await state.supabase.from('mensajes').delete().eq('id', userId);
+        if (iaMsgId) await state.supabase.from('mensajes').delete().eq('id', iaMsgId);
+
+        // Quitar de chatHistory ambos turnos finales.
+        chatHistory = chatHistory.filter(entry => {
+            const id = String(entry.msgId || '');
+            return !(id && (id === String(userId) || id === String(iaMsgId)));
+        });
+        // Si no tenían id (no persistidos), quitamos los dos últimos turnos.
+        if (!userId && !iaMsgId) chatHistory = chatHistory.slice(0, -2);
+
+        iaContainer.remove();
+        prev.remove();
+
+        await enviarMensajeTexto(textoUsuario);
+    } catch (e) {
+        console.error('[Regenerar] Error:', e);
+        alertCustom('No he podido regenerar la respuesta. Inténtalo de nuevo.');
+    }
+}
+
+/**
+ * Envía un texto como si el usuario lo hubiera escrito.
+ * Lo usan los botones de reintentar / regenerar / editar.
+ */
+async function enviarMensajeTexto(texto) {
+    if (!texto) return;
+    if (!ELEMENTS.chatInput) return;
+    ELEMENTS.chatInput.value = texto;
+    await sendMessage();
+}
+
+/** Edita un mensaje del usuario, en la BD y en el contexto de la IA. */
+function editarMensaje(userContainer, textoOriginal) {
+    if (!userContainer) return;
+    if (ELEMENTS.chatInput?.disabled) {
+        alertCustom('Espera a que termine la respuesta actual.');
+        return;
+    }
+    if (userContainer.querySelector('.msg-edit-area')) return; // ya editando
+
+    const messageDiv = userContainer.querySelector('.message');
+    if (!messageDiv) return;
+
+    // El texto vive en un nodo de texto suelto. Se conserva su referencia y
+    // NO se hace innerHTML de ida y vuelta: eso destruiría los listeners de
+    // los botones de copiar / editar / borrar.
+    const nodoTexto = [...messageDiv.childNodes].find(n => n.nodeType === Node.TEXT_NODE);
+    if (!nodoTexto) {
+        // Formato inesperado: no se intenta editar en caliente.
+        console.warn('[Editar] No se encontró el nodo de texto del mensaje.');
+        return;
+    }
+
+    const valorOriginal = nodoTexto.nodeValue;
+
+    const area = document.createElement('textarea');
+    area.className = 'msg-edit-area';
+    area.value = textoOriginal;
+    area.setAttribute('aria-label', 'Editar tu mensaje');
+
+    const acciones = document.createElement('div');
+    acciones.className = 'msg-edit-actions';
+
+    const guardar = document.createElement('button');
+    guardar.type = 'button';
+    guardar.className = 'msg-edit-save';
+    guardar.textContent = 'Guardar y responder';
+
+    const cancelar = document.createElement('button');
+    cancelar.type = 'button';
+    cancelar.className = 'msg-edit-cancel';
+    cancelar.textContent = 'Cancelar';
+
+    acciones.appendChild(guardar);
+    acciones.appendChild(cancelar);
+
+    // Ocultar el texto y montar el editor al principio del mensaje.
+    nodoTexto.nodeValue = '';
+    messageDiv.insertBefore(area, messageDiv.firstChild);
+    messageDiv.insertBefore(acciones, area.nextSibling);
+    userContainer.classList.add('editando');
+    area.focus();
+    area.setSelectionRange(area.value.length, area.value.length);
+
+    const cerrarEditor = (textoFinal) => {
+        area.remove();
+        acciones.remove();
+        nodoTexto.nodeValue = textoFinal;
+        userContainer.classList.remove('editando');
+    };
+
+    const restaurar = () => cerrarEditor(valorOriginal);
+
+    cancelar.addEventListener('click', e => {
+        e.stopPropagation();
+        restaurar();
+    });
+
+    area.addEventListener('keydown', e => {
+        if (e.key === 'Escape') {
+            e.preventDefault();
+            restaurar();
+        }
+        if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+            e.preventDefault();
+            guardar.click();
+        }
+    });
+
+    guardar.addEventListener('click', async e => {
+        e.stopPropagation();
+        const nuevo = area.value.trim();
+        if (!nuevo) {
+            area.focus();
+            return;
+        }
+        if (nuevo === valorOriginal.trim()) {
+            restaurar();
+            return;
+        }
+
+        guardar.disabled = true;
+        try {
+            const msgId = userContainer.dataset.msgId;
+
+            // 1. BD
+            if (msgId) {
+                const { error } = await state.supabase
+                    .from('mensajes')
+                    .update({ texto: nuevo })
+                    .eq('id', msgId);
+                if (error) throw error;
+            }
+
+            // 2. Contexto de la IA
+            const entry = chatHistory.find(x => String(x.msgId) === String(msgId));
+            if (entry?.parts?.[0]) entry.parts[0].text = nuevo;
+
+            // 3. DOM (conservando los botones existentes)
+            cerrarEditor(nuevo);
+
+            // 4. Regenerar la respuesta que seguía a este mensaje.
+            const siguiente = userContainer.nextElementSibling;
+            if (siguiente && siguiente.classList.contains('ia-container')) {
+                const textoPrevio = nuevo;
+                const iaId = siguiente.querySelector('[data-msg-id]')?.dataset.msgId;
+                if (iaId) await state.supabase.from('mensajes').delete().eq('id', iaId);
+                chatHistory = chatHistory.filter(x => String(x.msgId) !== String(iaId));
+                siguiente.remove();
+                await enviarMensajeTexto(textoPrevio);
+            }
+        } catch (err) {
+            console.error('[Editar] Error:', err);
+            guardar.disabled = false;
+            alertCustom('No he podido guardar el cambio. Inténtalo de nuevo.');
+        }
+    });
+}
+
+// ─────────────────────────────────────────────────────────────────────────
 
 function appendMessage(text, type, id = null, meta = null) {
     if (!ELEMENTS.chatBox) return;
@@ -1157,6 +1736,13 @@ function appendMessage(text, type, id = null, meta = null) {
             col.appendChild(crearBotonesFeedback(dbId, meta?.reaction || null, meta?.createdAt || null));
         }
 
+        // --- ESCUCHAR / REGENERAR ---
+        // Disponibles en cualquier respuesta real (no en el saludo inicial ni
+        // en mensajes técnicos), también al reabrir una conversación del historial.
+        if (type === 'ia' && text && id !== 'msg-bienvenida') {
+            col.appendChild(crearAccionesIA(text, container));
+        }
+
         ELEMENTS.chatBox.appendChild(container);
 
         // Desplazar el chat
@@ -1184,11 +1770,34 @@ function appendMessage(text, type, id = null, meta = null) {
         copyBtn.className = 'copy-msg-btn';
         copyBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>`;
         copyBtn.title = 'Copiar mensaje';
+        copyBtn.setAttribute('aria-label', 'Copiar tu mensaje');
         copyBtn.onclick = (e) => {
             e.stopPropagation();
-            copiarConFormato(div, text, copyBtn);
+            // Texto vivo: refleja ediciones sin depender del closure.
+            const vivo = [...div.childNodes]
+                .filter(n => n.nodeType === Node.TEXT_NODE)
+                .map(n => n.nodeValue)
+                .join('')
+                .trim() || text;
+            copiarConFormato(div, vivo, copyBtn);
         };
         div.appendChild(copyBtn);
+
+        // --- ✏️ EDITAR MENSAJE ---
+        const editBtn = document.createElement('button');
+        editBtn.className = 'edit-msg-btn';
+        editBtn.title = 'Editar y volver a preguntar';
+        editBtn.setAttribute('aria-label', 'Editar tu mensaje');
+        editBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>`;
+        editBtn.onclick = (e) => {
+            e.stopPropagation();
+            editarMensaje(container, text);
+        };
+        if (meta?.pending) {
+            editBtn.disabled = true;
+            editBtn.classList.add('pendiente');
+        }
+        div.appendChild(editBtn);
 
         // --- 🗑 ELIMINAR MENSAJE ---
         // Se muestra si ya tiene id en BD (historial) o si estará en vivo
@@ -1882,6 +2491,18 @@ NO incluyas comillas. Responde solo con la frase.`;
 window.generarYGuardarResumen = MODULOS.generarYGuardarResumen;
 window.generarCronicaSesion = MODULOS.generarCronicaSesion;
 window.sincronizarHistorialRetroactivo = MODULOS.sincronizarHistorialRetroactivo;
+
+// Necesarias desde js/modules/conversations.js
+window.appendMessage = appendMessage;
+window.exportarChatDoc = exportarChatDoc;
+window.guardarMensajeDB = guardarMensajeDB;
+window.enviarMensajeTexto = enviarMensajeTexto;
+
+// Descarga de la conversación siempre accesible desde la cabecera del chat.
+document.getElementById('headerExportBtn')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    exportarChatDoc();
+});
 
 // Ajustes y Preferencias movidos a js/modules/settings.js
 

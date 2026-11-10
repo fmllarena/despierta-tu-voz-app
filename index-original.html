@@ -71,7 +71,8 @@
     <script src="https://js.stripe.com/v3/"></script>
 
     <link rel="stylesheet" href="css/style.css?v=7.3">
-    <link rel="stylesheet" href="css/modals.css?v=7.3">
+    <link rel="stylesheet" href="css/modals.css?v=7.4">
+    <link rel="stylesheet" href="css/chat-extras.css?v=1.0">
     <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="shortcut icon" href="/favicon.ico" />
@@ -162,10 +163,50 @@
     </header>
 
     <div class="chat-container">
+        <!-- ── Barra lateral: historial de conversaciones ─────────────────── -->
+        <div id="sidebarOverlay" class="sidebar-overlay" aria-hidden="true"></div>
+        <aside id="chatSidebar" class="chat-sidebar" aria-label="Historial de conversaciones" aria-hidden="true">
+            <div class="sidebar-head">
+                <h3>Tu historial</h3>
+                <button id="sidebarCloseBtn" class="sidebar-icon-btn" type="button" aria-label="Cerrar historial">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                </button>
+            </div>
+
+            <div class="sidebar-search">
+                <label class="sr-only" for="conversationSearch">Buscar en tus conversaciones</label>
+                <input type="search" id="conversationSearch" placeholder="Buscar en el historial…"
+                    autocomplete="off" aria-label="Buscar en tus conversaciones">
+            </div>
+
+            <button id="newConversationBtn" class="sidebar-new-btn" type="button">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+                Nueva conversación
+            </button>
+
+            <nav id="conversationList" class="conversation-list" aria-label="Tus conversaciones"></nav>
+
+            <div class="sidebar-foot">
+                <button id="exportConversationBtn" class="sidebar-export-btn" type="button">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><path d="M12 15V3"/></svg>
+                    Descargar esta conversación
+                </button>
+            </div>
+        </aside>
+
         <div class="chat-header">
             <div class="chat-header-top">
+                <button id="sidebarToggleBtn" class="sidebar-toggle-btn" type="button"
+                    aria-label="Mostrar historial de conversaciones" aria-expanded="false"
+                    aria-controls="chatSidebar">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+                </button>
                 <span>Sesión con<br>el Mentor</span>
                 <div class="header-top-actions">
+                    <button id="headerExportBtn" class="header-export-btn" type="button"
+                        title="Descargar la conversación en Word" aria-label="Descargar la conversación en Word">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><path d="M12 15V3"/></svg>
+                    </button>
                     <div class="music-player-container">
                         <input type="range" id="volumeSlider" class="volume-slider" min="0" max="1" step="0.05" value="0.5" title="Volumen">
                         <button id="musicToggleBtn" class="music-icon-btn" title="Música ambiental">
@@ -842,13 +883,57 @@
     <script src="https://cdn.jsdelivr.net/npm/dompurify@3/dist/purify.min.js"></script>
     <script>
         // Renderiza markdown de la IA saneando el HTML antes de insertarlo.
+        // Soporta GitHub Flavored Markdown: tablas, bloques de código,
+        // listas, citas y enlaces. Los enlaces externos abren en pestaña nueva.
         window.renderSafeMarkdown = function (text) {
             const raw = text == null ? '' : String(text);
-            const html = window.marked ? window.marked.parse(raw) : raw;
-            if (window.DOMPurify) {
-                return window.DOMPurify.sanitize(html, { USE_PROFILES: { html: true } });
+
+            const escapeHtml = s => s
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;');
+
+            if (!window.marked) return escapeHtml(raw);
+
+            try {
+                if (window.marked.setOptions) {
+                    window.marked.setOptions({
+                        gfm: true,
+                        breaks: false,
+                        pedantic: false
+                    });
+                }
+            } catch (_) { /* versión antigua de marked */ }
+
+            const html = window.marked.parse(raw);
+
+            // Saneado: sin scripts, sin atributos de evento, sin javascript:.
+            const clean = window.DOMPurify
+                ? window.DOMPurify.sanitize(html, {
+                    USE_PROFILES: { html: true },
+                    ADD_ATTR: ['target', 'rel']
+                })
+                : escapeHtml(raw);
+
+            // Endurecer enlaces: target=_blank + rel de seguridad.
+            try {
+                const tpl = document.createElement('template');
+                tpl.innerHTML = clean;
+                tpl.content.querySelectorAll('a[href]').forEach(a => {
+                    const href = (a.getAttribute('href') || '').trim();
+                    if (/^\s*javascript:/i.test(href)) {
+                        a.removeAttribute('href');
+                        return;
+                    }
+                    if (/^(https?:)?\/\//i.test(href) || /^mailto:/i.test(href)) {
+                        a.setAttribute('target', '_blank');
+                        a.setAttribute('rel', 'noopener noreferrer nofollow');
+                    }
+                });
+                return tpl.innerHTML;
+            } catch (_) {
+                return clean;
             }
-            return html.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
         };
     </script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
@@ -868,6 +953,9 @@
     <script type="module" src="js/modules/tour.js?v=7.1"></script>
     <script type="module" src="js/modules/files.js?v=7.1"></script>
     <script type="module" src="js/modules/pronunciation.js?v=7.2"></script>
+    <script type="module" src="js/modules/conversations.js?v=1.0"></script>
+    <script type="module" src="js/modules/a11y.js?v=1.0"></script>
+    <script type="module" src="js/modules/pwa.js?v=1.0"></script>
     <script src="main.js?v=7.11" defer></script>
 
     <!-- Script de Diagnóstico DTV (No-módulo para evitar fallos de carga) -->

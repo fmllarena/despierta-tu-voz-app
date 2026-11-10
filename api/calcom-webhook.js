@@ -1,25 +1,60 @@
 const { createClient } = require('@supabase/supabase-js');
+const { readRawBody, verifyCalcomSignature } = require('./_lib/webhook-security');
+const { captureError, withMonitoring } = require('./_lib/monitoring');
 
-module.exports = async function handler(req, res) {
-    // SOPORTE CORS
-    res.setHeader('Access-Control-Allow-Credentials', true);
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version');
+const handler = async function (req, res) {
+    // CORS: este endpoint lo llama Cal.com (servidor a servidor), no el
+    // navegador. Ya no se emite Access-Control-Allow-Origin: * porque eso
+    // permitía a cualquier web invocar el webhook desde el navegador.
+    res.setHeader('X-Content-Type-Options', 'nosniff');
 
     if (req.method === 'OPTIONS') {
-        return res.status(200).end();
+        return res.status(204).end();
     }
 
     if (req.method !== 'POST') {
         return res.status(405).json({ error: 'Método no permitido' });
     }
 
+    // ── Verificación de firma ──────────────────────────────────────────────
+    // Se calcula sobre el cuerpo CRUDO: reserializar el JSON rompería el HMAC.
+    let rawBody;
+    try {
+        rawBody = await readRawBody(req);
+    } catch (e) {
+        return res.status(400).json({ error: 'No se pudo leer el cuerpo' });
+    }
+
+    const signatureCheck = verifyCalcomSignature(
+        rawBody,
+        req.headers,
+        process.env.CALCOM_WEBHOOK_SECRET
+    );
+
+    if (!signatureCheck.ok) {
+        console.warn(`⛔ [Cal.com Webhook] Firma rechazada: ${signatureCheck.reason}`);
+        captureError(
+            new Error(`Webhook sin firma válida (${signatureCheck.reason})`),
+            {
+                endpoint: '/api/calcom-webhook',
+                method: 'POST',
+                level: 'warning',
+                tags: { reason: signatureCheck.reason }
+            }
+        );
+        return res.status(401).json({ error: 'Firma no válida' });
+    }
+
     const { SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY } = process.env;
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
+    let payload;
     try {
-        const payload = req.body;
+        try {
+            payload = JSON.parse(rawBody.toString('utf8'));
+        } catch (_) {
+            return res.status(400).json({ error: 'JSON mal formado' });
+        }
         console.log("------------------------------------------");
         console.log("[Cal.com Webhook] Petición recibida");
 
@@ -116,7 +151,21 @@ module.exports = async function handler(req, res) {
         }
 
     } catch (error) {
-        console.error("[Cal.com Webhook] ERROR CRÍTICO:", error);
-        return res.status(500).json({ error: error.message });
+        captureError(error, {
+            endpoint: '/api/calcom-webhook',
+            method: 'POST',
+            extra: { triggerEvent: payload?.triggerEvent }
+        });
+        // No filtramos error.message al cliente: revela estructura interna.
+        return res.status(500).json({ error: 'Error procesando el webhook' });
     }
 };
+
+handler.config = {
+    api: {
+        // Imprescindible: la firma se valida sobre el cuerpo crudo.
+        bodyParser: false
+    }
+};
+
+module.exports = withMonitoring('/api/calcom-webhook', handler);

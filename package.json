@@ -3,7 +3,11 @@
     "version": "1.0.6",
     "scripts": {
         "start": "node simple_server.js",
-        "dev": "node simple_server.js"
+        "dev": "node simple_server.js",
+        "test": "node scripts/test-all.js",
+        "test:security": "node api/_lib/__tests__/security.test.js && node api/_lib/__tests__/email-auth.test.js",
+        "test:chat": "node scripts/test-conversations.js && node scripts/test-markdown.js && node scripts/test-a11y.js && node scripts/test-message-actions.js",
+        "test:pwa": "node scripts/test-service-worker.js"
     },
     "dependencies": {
         "@google/generative-ai": "^0.1.0",
