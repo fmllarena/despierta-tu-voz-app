@@ -606,6 +606,7 @@ export const CONVERSATIONS = window.CONVERSATIONS = {
         const titulo = document.createElement('span');
         titulo.className = 'conv-title';
         titulo.textContent = conv.titulo || 'Sin título';
+        titulo.title = conv.titulo || 'Sin título';
 
         const meta = document.createElement('span');
         meta.className = 'conv-date';
