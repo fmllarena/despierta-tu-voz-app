@@ -4369,19 +4369,36 @@ html[data-theme="dark"] .settings-section {
     border-bottom-color: var(--chat-border);
 }
 
-html[data-theme="dark"] .profile-info {
+html[data-theme="dark"] .profile-info,
+html[data-theme="dark"] .slider-group,
+html[data-theme="dark"] .help-btn-tag,
+html[data-theme="dark"] .stat-card,
+html[data-theme="dark"] .chart-container,
+html[data-theme="dark"] .sesiones-bar-container,
+html[data-theme="dark"] .progreso-upgrade,
+html[data-theme="dark"] .audio-item-stacked,
+html[data-theme="dark"] .audio-loop-btn, .audio-play-btn {
     background: var(--card-bg);
     border-color: var(--card-border);
 }
+
+html[data-theme="dark"] .music-submenu,
+html[data-theme="dark"] .help-btn-tag.voice,
+html[data-theme="dark"] .help-btn-tag.files, .help-btn-tag.phonetics,
+html[data-theme="dark"] .support-messages,
+html[data-theme="dark"] .loader-premium,
+html[data-theme="dark"] .upgrade-modal-content,
+html[data-theme="dark"] .progreso-modal-content,
+html[data-theme="dark"] .auth-card {
+    background: var(--card-bg);
+}
+
 
 html[data-theme="dark"] #settingsUserTier {
     color: #b0a090;
 }
 
-html[data-theme="dark"] .slider-group {
-    background: var(--card-bg);
-    border-color: var(--card-border);
-}
+
 
 html[data-theme="dark"] .slider-header {
     color: var(--color-acento);
@@ -4548,9 +4565,7 @@ html[data-theme="dark"] .music-stop-option:hover {
     background: #5a4d3d;
 }
 
-html[data-theme="dark"] .music-submenu {
-    background: var(--card-bg);
-}
+
 
 html[data-theme="dark"] .music-info strong {
     color: var(--color-texto);
@@ -4586,23 +4601,15 @@ html[data-theme="dark"] .help-desc {
     color: var(--color-texto);
 }
 
-html[data-theme="dark"] .help-btn-tag {
-    background: var(--card-bg);
-    border-color: var(--card-border);
-}
 
-html[data-theme="dark"] .help-btn-tag.voice {
-    background: var(--card-bg);
-}
+
+
 
 html[data-theme="dark"] .help-btn-tag.sing {
     background: #5a4d3d;
 }
 
-html[data-theme="dark"] .help-btn-tag.files,
-html[data-theme="dark"] .help-btn-tag.phonetics {
-    background: var(--card-bg);
-}
+
 
 html[data-theme="dark"] .help-item {
     border-bottom-color: var(--chat-border);
@@ -4614,9 +4621,7 @@ html[data-theme="dark"] #voiceSelect {
     color: var(--color-texto);
 }
 
-html[data-theme="dark"] .support-messages {
-    background: var(--card-bg);
-}
+
 
 html[data-theme="dark"] .support-input-area {
     background: var(--card-bg);
@@ -4646,10 +4651,7 @@ html[data-theme="dark"] .progreso-greeting h2 {
     color: var(--color-texto);
 }
 
-html[data-theme="dark"] .stat-card {
-    background: var(--card-bg);
-    border-color: var(--card-border);
-}
+
 
 html[data-theme="dark"] .stat-value {
     color: var(--color-texto);
@@ -4663,10 +4665,7 @@ html[data-theme="dark"] .progreso-section h3 {
     color: var(--color-texto);
 }
 
-html[data-theme="dark"] .chart-container {
-    background: var(--card-bg);
-    border-color: var(--card-border);
-}
+
 
 html[data-theme="dark"] .modulo-row {
     background: var(--card-bg);
@@ -4685,19 +4684,13 @@ html[data-theme="dark"] .modulo-check {
     color: #6a5b4d;
 }
 
-html[data-theme="dark"] .sesiones-bar-container {
-    background: var(--card-bg);
-    border-color: var(--card-border);
-}
+
 
 html[data-theme="dark"] .sesiones-bar {
     background: #6a5b4d;
 }
 
-html[data-theme="dark"] .progreso-upgrade {
-    background: var(--card-bg);
-    border-color: var(--card-border);
-}
+
 
 html[data-theme="dark"] .legal-scroll-area {
     background: #1c1815;
@@ -4779,13 +4772,9 @@ html[data-theme="dark"] #payment-summary-amount {
     color: var(--color-texto) !important;
 }
 
-html[data-theme="dark"] .loader-premium {
-    background: var(--card-bg);
-}
 
-html[data-theme="dark"] .upgrade-modal-content {
-    background: var(--card-bg);
-}
+
+
 
 html[data-theme="dark"] .upgrade-card {
     background: var(--card-bg) !important;
@@ -4842,10 +4831,7 @@ html[data-theme="dark"] .botiquin-audios {
     border-top-color: var(--chat-border);
 }
 
-html[data-theme="dark"] .audio-item-stacked {
-    background: var(--card-bg);
-    border-color: var(--card-border);
-}
+
 
 html[data-theme="dark"] .audio-info strong {
     color: var(--color-texto);
@@ -4857,23 +4843,15 @@ html[data-theme="dark"] .audio-select {
     color: var(--color-texto);
 }
 
-html[data-theme="dark"] .audio-loop-btn,
-html[data-theme="dark"] .audio-play-btn {
-    background: var(--card-bg);
-    border-color: var(--card-border);
-}
 
-html[data-theme="dark"] .progreso-modal-content {
-    background: var(--card-bg);
-}
+
+
 
 html[data-theme="dark"] .overlay {
     background: rgba(26, 26, 26, 0.96);
 }
 
-html[data-theme="dark"] .auth-card {
-    background: var(--card-bg);
-}
+
 
 html[data-theme="dark"] .auth-card h2 {
     color: var(--color-texto);
