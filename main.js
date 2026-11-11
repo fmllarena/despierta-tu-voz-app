@@ -190,7 +190,7 @@ window.promptCustom = function (mensaje, valorInicial = '', titulo = 'Editar') {
         const aceptar = document.createElement('button');
         aceptar.type = 'button';
         aceptar.textContent = 'Guardar';
-        aceptar.className = 'premium-btn';
+        aceptar.className = 'save-btn';
 
         actions.appendChild(cancelar);
         actions.appendChild(aceptar);
