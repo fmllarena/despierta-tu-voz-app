@@ -4910,7 +4910,7 @@ html[data-theme="dark"] .support-header {
 html[data-theme="dark"] .help-modulo-btn {
     background: var(--card-bg);
     border-color: var(--card-border);
-    color: var(--color-acento);
+    color: var(--color-texto);
 }
 
 html[data-theme="dark"] .help-modulo-btn:hover {
