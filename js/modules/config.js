@@ -53,3 +53,5 @@ export let chatHistory = window.chatHistory = [];
 export let isRecoveringPassword = window.isRecoveringPassword = false;
 export let blogLibrary = window.blogLibrary = [];
 
+window.userHasSentMessage = false;
+

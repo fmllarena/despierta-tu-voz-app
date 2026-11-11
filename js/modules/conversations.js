@@ -175,6 +175,7 @@ export const CONVERSATIONS = window.CONVERSATIONS = {
 
     async setCurrent(id, { render = true, scroll = 'top' } = {}) {
         if (!id) return;
+        window.userHasSentMessage = false;
         this.currentId = id;
         localStorage.setItem(ACTIVE_KEY, id);
         this._markActiveInSidebar();
@@ -282,6 +283,7 @@ export const CONVERSATIONS = window.CONVERSATIONS = {
 
     /** Crea una conversación nueva, vacía, y la activa. */
     async newConversation() {
+        window.userHasSentMessage = false;
         if (!this.migrationReady) {
             // Sin migración no se pueden separar hilos: al menos limpiamos la vista.
             this._clearChat();

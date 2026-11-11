@@ -531,8 +531,8 @@ async function cargarPerfil(user) {
 
         // --- REPARACIÓN AUTOMÁTICA ---
         // Si el perfil está vacío pero tenemos mensajes cargados, disparamos el resumen 
-        // proactivamente para "reparar" la cuenta sin esperar a un nuevo mensaje.
-        if (chatHistory.length > 0 && (!perfil.ultimo_resumen || !perfil.creencias)) {
+        // proactivamente solo si el usuario ha interactuado en esta sesión.
+        if (window.userHasSentMessage && chatHistory.length > 0 && (!perfil.ultimo_resumen || !perfil.creencias)) {
             MODULOS.generarYGuardarResumen();
         }
 
@@ -741,6 +741,7 @@ async function sendMessage() {
     let text = ELEMENTS.chatInput.value.trim();
     const hasFile = window.FILES && window.FILES.selectedFile;
     if (!text && !hasFile) return;
+    window.userHasSentMessage = true;
 
     if (!text && hasFile) {
         const fileType = window.FILES.selectedFile.type || '';
@@ -2126,18 +2127,26 @@ if (ELEMENTS.chatInput) {
 let saveCounter = 0;
 if (ELEMENTS.navButtons.logout) {
     ELEMENTS.navButtons.logout.addEventListener('click', async () => {
-        ELEMENTS.navButtons.logout.innerText = "Guardando...";
+        const huboInteraccion = window.userHasSentMessage;
+        ELEMENTS.navButtons.logout.innerText = huboInteraccion ? "Guardando..." : "Cerrando...";
         saveCounter++;
 
-        if (chatHistory.length >= 2) {
+        if (huboInteraccion && chatHistory.length >= 2) {
             console.log("📝 Generando crónica final de la sesión antes de cerrar...");
             await MODULOS.generarCronicaSesion();
         }
 
-        await MODULOS.generarYGuardarResumen();
+        if (huboInteraccion) {
+            await MODULOS.generarYGuardarResumen();
+        }
 
         const msgId = 'msg-sesion-guardada-' + saveCounter;
-        appendMessage(`✨ Sesión guardada con éxito.\n\nPuedes seguir explorando Mi Viaje, tu Diario de Alquimia, revisar esta conversación o cerrar la app cuando quieras.`, 'ia', msgId);
+        appendMessage(
+            huboInteraccion
+                ? `✨ Sesión guardada con éxito.\n\nPuedes seguir explorando Mi Viaje, tu Diario de Alquimia, revisar esta conversación o cerrar la app cuando quieras.`
+                : `👋 Sesión cerrada sin guardar resumen.\n\nNo has escrito ningún mensaje nuevo en esta sesión, así que no se ha generado ningún informe para no mezclarlo con conversaciones anteriores.`,
+            'ia', msgId
+        );
 
         setTimeout(() => {
             const containerGuardada = document.getElementById(msgId);
