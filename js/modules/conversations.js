@@ -390,6 +390,14 @@ export const CONVERSATIONS = window.CONVERSATIONS = {
             window.exportarChatDoc?.(this.currentId);
         });
 
+        // Clic fuera de la barra: la cierra, sin obligar a ir a la "x".
+        document.addEventListener('click', e => {
+            if (!sidebar.classList.contains('open')) return;
+            if (sidebar.contains(e.target)) return;
+            if (e.target.closest?.('#sidebarToggleBtn')) return;
+            this.toggleSidebar(false);
+        });
+
         const searchInput = document.getElementById('conversationSearch');
         if (searchInput) {
             let timer = null;
