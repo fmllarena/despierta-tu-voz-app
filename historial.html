@@ -265,23 +265,28 @@
     }
 
     async function init() {
-        const configRes = await fetch('/api/config');
-        const config = await configRes.json();
+        try {
+            const configRes = await fetch('/api/config');
+            const config = await configRes.json();
 
-        sb = createClient(config.url, config.key, { auth: { persistSession: false } });
-        window.__supabase = sb;
-        sbService = createClient(config.url, config.key, { auth: { persistSession: false } });
+            sb = createClient(config.url, config.key, { auth: { persistSession: false } });
+            window.__supabase = sb;
+            sbService = createClient(config.url, config.key, { auth: { persistSession: false } });
 
-        const session = localStorage.getItem('sb-session');
-        if (session) {
-            await sb.auth.setSession(JSON.parse(session));
-            const { data: { user } } = await sb.auth.getUser();
-            if (user) {
-                $('loginSection').style.display = 'none';
-                $('dashboard').style.display = 'block';
-                await Promise.all([cargarAlumnos(), initFechas()]);
-                return;
+            const session = localStorage.getItem('sb-session');
+            if (session) {
+                await sb.auth.setSession(JSON.parse(session));
+                const { data: { user } } = await sb.auth.getUser();
+                if (user) {
+                    $('loginSection').style.display = 'none';
+                    $('dashboard').style.display = 'block';
+                    await Promise.all([cargarAlumnos(), initFechas()]);
+                    return;
+                }
             }
+        } catch (e) {
+            console.error('Error en init:', e);
+            $('loginError').textContent = 'Error al conectar con el servidor. Inténtalo de nuevo.';
         }
     }
 
@@ -290,12 +295,16 @@
         const password = $('loginPassword').value.trim();
         if (!email || !password) { $('loginError').textContent = 'Completa ambos campos'; return; }
         $('loginError').textContent = '';
-        const { data, error } = await sb.auth.signInWithPassword({ email, password });
-        if (error) { $('loginError').textContent = error.message; return; }
-        localStorage.setItem('sb-session', JSON.stringify(data.session));
-        $('loginSection').style.display = 'none';
-        $('dashboard').style.display = 'block';
-        await Promise.all([cargarAlumnos(), initFechas()]);
+        try {
+            const { data, error } = await sb.auth.signInWithPassword({ email, password });
+            if (error) { $('loginError').textContent = error.message; return; }
+            localStorage.setItem('sb-session', JSON.stringify(data.session));
+            $('loginSection').style.display = 'none';
+            $('dashboard').style.display = 'block';
+            await Promise.all([cargarAlumnos(), initFechas()]);
+        } catch (e) {
+            $('loginError').textContent = 'Error de conexión: ' + e.message;
+        }
     };
 
     $('logoutBtn').onclick = async () => {
