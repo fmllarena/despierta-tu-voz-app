@@ -51,7 +51,7 @@
         .resultado .analisis-texto strong { color: #8e7d6d; }
         body.dark-mode .resultado .analisis-texto th { background: #2a2a42; color: #a89b8a; }
         body.dark-mode .resultado .analisis-texto td { background: #1c1c30; border-color: #3a3a55; }
-        .loading-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.3); display: none; align-items: center; justify-content: center; z-index: 100; }
+        .loading-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.3); display: none; align-items: center; justify-content: center; z-index: 100; pointer-events: none; }
         .spinner { width: 48px; height: 48px; border: 4px solid #ddd; border-top-color: #8e7d6d; border-radius: 50%; animation: spin 0.8s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
         .sugerencias { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 15px; }
@@ -152,9 +152,9 @@
     let loadingTimer = null;
     const setLoading = (on, consultando = false) => {
         if (loadingTimer) { clearTimeout(loadingTimer); loadingTimer = null; }
-        $('loadingOverlay').style.display = on ? 'flex' : 'none';
-        $('cancelarBtn').style.display = (on && consultando) ? 'inline-block' : 'none';
         $('analizarBtn').disabled = on;
+        $('analizarBtn').textContent = on ? 'Consultando...' : '🔮 Analizar';
+        $('cancelarBtn').style.display = (on && consultando) ? 'inline-block' : 'none';
         $('cancelarBtn').disabled = !on;
         if (on) forzarFinCarga();
     };
