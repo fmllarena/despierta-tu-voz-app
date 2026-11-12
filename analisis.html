@@ -57,6 +57,9 @@
         .sugerencias { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 15px; }
         .sugerencias button { background: #f0ece6; border: 1px solid #ddd; padding: 8px 14px; border-radius: 10px; cursor: pointer; font-family: inherit; font-size: 0.85rem; color: #555; transition: all 0.2s; }
         .sugerencias button:hover { background: #8e7d6d; color: #fff; border-color: #8e7d6d; }
+        .btn-cancelar { background: #e74c3c; color: #fff; border: none; padding: 12px 28px; border-radius: 12px; font-size: 1rem; font-family: inherit; cursor: pointer; margin-left: 10px; }
+        .btn-cancelar:hover { background: #c0392b; }
+        .btn-cancelar:disabled { opacity: 0.6; cursor: not-allowed; }
 
         /* Dark mode */
         body.dark-mode { background: #12121e; color: #d4d4dc; }
@@ -126,6 +129,7 @@
             </div>
             <button id="analizarBtn" class="main-btn">🔮 Analizar</button>
             <button id="evolucionBtn" class="main-btn" style="margin-left:10px;">📈 Evolución del Alumno</button>
+            <button id="cancelarBtn" class="btn-cancelar" style="display:none;">⏹ Cancelar consulta</button>
         </div>
 
         <div id="resultadoPanel" class="panel resultado">
@@ -144,7 +148,14 @@
 
     let sb;
     const $ = id => document.getElementById(id);
-    const setLoading = on => { $('loadingOverlay').style.display = on ? 'flex' : 'none'; };
+    let abortCtrl = null;
+    const setLoading = (on, consultando = false) => {
+        $('loadingOverlay').style.display = on ? 'flex' : 'none';
+        $('cancelarBtn').style.display = (on && consultando) ? 'inline-block' : 'none';
+        $('analizarBtn').disabled = on;
+        $('evolucionBtn').disabled = on;
+        $('cancelarBtn').disabled = !on;
+    };
 
     async function init() {
         const configRes = await fetch('/api/config');
@@ -221,18 +232,31 @@
     // Enter en pregunta
     $('preguntaInput').onkeydown = e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); $('analizarBtn').click(); } };
 
+    // Cancelar consulta en curso
+    $('cancelarBtn').onclick = () => {
+        if (abortCtrl) {
+            abortCtrl.abort();
+            abortCtrl = null;
+            setLoading(false);
+        }
+    };
+
     // Análisis
     $('analizarBtn').onclick = async () => {
         const pregunta = $('preguntaInput').value.trim();
         if (!pregunta) { alert('Escribe una pregunta.'); return; }
 
-        setLoading(true);
+        if (abortCtrl) abortCtrl.abort();
+        abortCtrl = new AbortController();
+
+        setLoading(true, true);
         $('resultadoPanel').style.display = 'none';
         try {
             const res = await fetch('/api/chat', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ intent: 'analisis', pregunta, userId: alumnoSeleccionado(), includeTest: $('includeTest').checked })
+                body: JSON.stringify({ intent: 'analisis', pregunta, userId: alumnoSeleccionado(), includeTest: $('includeTest').checked }),
+                signal: abortCtrl.signal
             });
             const data = await res.json();
             if (data.error) throw new Error(data.details || data.error);
@@ -241,9 +265,11 @@
             $('resultadoPanel').style.display = 'block';
             $('resultadoPanel').scrollIntoView({ behavior: 'smooth' });
         } catch (e) {
+            if (e.name === 'AbortError') return;
             alert('Error: ' + e.message);
         } finally {
             setLoading(false);
+            abortCtrl = null;
         }
     };
 
@@ -253,13 +279,17 @@
         if (!userId) { alert('Selecciona un alumno del desplegable para ver su evolución.'); return; }
 
         $('preguntaInput').value = 'Genera el informe completo de evolución de este alumno, desde su primera conversación hasta la más reciente.';
-        setLoading(true);
+        if (abortCtrl) abortCtrl.abort();
+        abortCtrl = new AbortController();
+
+        setLoading(true, true);
         $('resultadoPanel').style.display = 'none';
         try {
             const res = await fetch('/api/chat', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ intent: 'analisis', pregunta: $('preguntaInput').value, userId, includeTest: $('includeTest').checked })
+                body: JSON.stringify({ intent: 'analisis', pregunta: $('preguntaInput').value, userId, includeTest: $('includeTest').checked }),
+                signal: abortCtrl.signal
             });
             const data = await res.json();
             if (data.error) throw new Error(data.details || data.error);
@@ -268,9 +298,11 @@
             $('resultadoPanel').style.display = 'block';
             $('resultadoPanel').scrollIntoView({ behavior: 'smooth' });
         } catch (e) {
+            if (e.name === 'AbortError') return;
             alert('Error: ' + e.message);
         } finally {
             setLoading(false);
+            abortCtrl = null;
         }
     };
 
