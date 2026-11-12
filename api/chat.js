@@ -1336,16 +1336,7 @@ async function historialChat(body) {
         return `[${fecha}] ${emisor} (${alumno}): ${texto}`;
     }).join('\n\n');
 
-    // Truncar si es excesivo (protección de tokens)
-    let contextoTexto = contexto;
-    if (contextoTexto.length > 10000) {
-        contextoTexto =
-            contexto.slice(0, 5000) +
-            '\n\n… [contenido intermedio omitido por longitud] …\n\n' +
-            contexto.slice(-5000);
-    }
-
-    const prompt = `MENSAJES ENCONTRADOS EN LA BÚSQUEDA:\n${contextoTexto}\n\nPREGUNTA: ${pregunta || ''}\n\nResponde basándote ÚNICAMENTE en los mensajes anteriores.`;
+    const prompt = `MENSAJES ENCONTRADOS EN LA BÚSQUEDA:\n${contexto}\n\nPREGUNTA: ${pregunta || ''}\n\nResponde basándote ÚNICAMENTE en los mensajes anteriores.`;
 
     const result = await callOpenRouterAPI({
         intent: 'historial_chat',
