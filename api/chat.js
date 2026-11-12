@@ -1276,12 +1276,11 @@ async function analizarEvolucionAlumno(body) {
     let historialTexto = lista.join('\n\n');
 
     // Protección contra historial excesivo: si es muy largo, mantenemos inicio y final
-    let historialTexto = lista;
     if (historialTexto.length > 12000) {
         historialTexto =
-            lista.slice(0, 6000) +
+            lista.slice(0, 6000).join('\n\n') +
             '\n\n… [historial intermedio omitido por longitud] …\n\n' +
-            lista.slice(-6000);
+            lista.slice(-6000).join('\n\n');
     }
 
     const perfilTexto = `
