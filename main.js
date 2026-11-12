@@ -495,6 +495,10 @@ async function cargarPerfil(user) {
         // Asegurar que accepted_terms esté presente en el objeto local
         userProfile.accepted_terms = !!perfil.accepted_terms;
 
+        if (window.CHAT_BACKGROUND?.aplicarPerfil) {
+            window.CHAT_BACKGROUND.aplicarPerfil(perfil);
+        }
+
         // Actualizar cuota de sesiones si el módulo está listo
         if (window.SESIONES?.actualizarInfoCuota) {
             window.SESIONES.actualizarInfoCuota();

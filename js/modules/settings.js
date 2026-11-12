@@ -3,6 +3,7 @@ import { userProfile, chatHistory } from './config.js';
 import { state } from './state.js';
 import { alertCustom } from './utils.js';
 import { MENSAJES_GUARDADOS } from './saved-messages.js?v=1.1';
+import { CHAT_BACKGROUND } from './chat-background.js?v=1.0';
 
 function aplicarModoOscuro(activo) {
     if (activo) {
@@ -43,6 +44,8 @@ export const AJUSTES = window.AJUSTES = {
         // Cargar foto de perfil desde Supabase
         this._actualizarPreviewFoto(profile.avatar_url || null);
 
+        CHAT_BACKGROUND.refrescarControles(profile);
+
         if (ELEMENTS.upgradeSettingsBtn) {
             ELEMENTS.upgradeSettingsBtn.style.display = tier === 'premium' ? 'none' : 'block';
         }
@@ -64,6 +67,7 @@ export const AJUSTES = window.AJUSTES = {
             const { data: { user } } = await db.auth.getUser();
             if (!user) throw new Error("Debes iniciar sesión.");
 
+            const fondoTipo = ELEMENTS.fondoTipoSelect?.value || 'ninguno';
             const updates = {
                 mentor_focus: parseInt(ELEMENTS.focusSlider.value),
                 mentor_personality: parseInt(ELEMENTS.personalitySlider.value),
@@ -87,8 +91,26 @@ export const AJUSTES = window.AJUSTES = {
                 window.userProfile = updatedProfile;
             }
 
-            console.log("✅ Ajustes guardados:", updates);
-            alertCustom("Ajustes guardados correctamente.");
+            const fondoUpdates = {
+                fondo_chat_tipo: fondoTipo,
+                fondo_chat_color: fondoTipo === 'color' ? (ELEMENTS.fondoColorInput?.value || null) : null,
+                fondo_chat_velo: parseInt(ELEMENTS.fondoVeloSlider?.value ?? '30', 10)
+            };
+            const { error: fondoError } = await db
+                .from('user_profiles')
+                .update(fondoUpdates)
+                .eq('user_id', user.id);
+
+            if (fondoError) {
+                console.warn('No se pudo guardar el fondo del chat:', fondoError.message);
+                alertCustom('Ajustes guardados, pero el fondo del chat no pudo guardarse. Revisa que la migración SQL esté aplicada.');
+            } else {
+                if (window.userProfile) Object.assign(window.userProfile, fondoUpdates);
+                alertCustom("Ajustes guardados correctamente.");
+            }
+
+            CHAT_BACKGROUND.aplicarPerfil(window.userProfile);
+            console.log("✅ Ajustes guardados:", { ...updates, ...fondoUpdates });
             AJUSTES.cerrarModal();
         } catch (e) {
             console.error("Error guardando ajustes:", e);
@@ -146,6 +168,7 @@ export const AJUSTES = window.AJUSTES = {
 
         ELEMENTS.darkModeToggle?.addEventListener('change', (e) => {
             aplicarModoOscuro(e.target.checked);
+            CHAT_BACKGROUND.previsualizar();
         });
 
         // Foto de perfil — Supabase Storage
@@ -357,10 +380,12 @@ if (document.readyState === 'loading') {
         AJUSTES.setup();
         PREFERENCIAS.setup();
         MENSAJES_GUARDADOS.setup();
+        CHAT_BACKGROUND.setup();
     });
 } else {
     initDarkMode();
     AJUSTES.setup();
     PREFERENCIAS.setup();
     MENSAJES_GUARDADOS.setup();
+    CHAT_BACKGROUND.setup();
 }

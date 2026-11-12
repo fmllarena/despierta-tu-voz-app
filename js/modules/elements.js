@@ -67,6 +67,16 @@ export const ELEMENTS = window.ELEMENTS = {
     get userPhotoInput() { return document.getElementById('userPhotoInput'); },
     get userPhotoPreview() { return document.getElementById('userPhotoPreview'); },
     get removePhotoBtn() { return document.getElementById('removePhotoBtn'); },
+    get fondoTipoSelect() { return document.getElementById('fondoTipoSelect'); },
+    get fondoColorGroup() { return document.getElementById('fondoColorGroup'); },
+    get fondoColorInput() { return document.getElementById('fondoColorInput'); },
+    get fondoColorValue() { return document.getElementById('fondoColorValue'); },
+    get fondoSwatches() { return document.getElementById('fondoSwatches'); },
+    get fondoFotoGroup() { return document.getElementById('fondoFotoGroup'); },
+    get fondoFotoInput() { return document.getElementById('fondoFotoInput'); },
+    get removeFondoFotoBtn() { return document.getElementById('removeFondoFotoBtn'); },
+    get fondoVeloSlider() { return document.getElementById('fondoVeloSlider'); },
+    get fondoPreview() { return document.getElementById('fondoPreview'); },
 
     // Legal Modal
     get legalModal() { return document.getElementById('legalModal'); },

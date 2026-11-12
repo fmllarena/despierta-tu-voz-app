@@ -70,7 +70,7 @@
     <!-- Stripe SDK -->
     <script src="https://js.stripe.com/v3/"></script>
 
-    <link rel="stylesheet" href="css/style.css?v=7.6">
+    <link rel="stylesheet" href="css/style.css?v=7.7">
     <link rel="stylesheet" href="css/modals.css?v=7.5">
     <link rel="stylesheet" href="css/chat-extras.css?v=1.6">
     <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96" />
@@ -530,6 +530,58 @@
                 </div>
             </div>
 
+            <div class="settings-section fondo-section">
+                <h3>Fondo del Chat</h3>
+                <p class="fondo-hint">Personaliza el fondo de la zona de lectura. Los mensajes se mantienen por encima del
+                    fondo.</p>
+                <div class="setting-item">
+                    <label for="fondoTipoSelect">Tipo de fondo:</label>
+                    <select id="fondoTipoSelect">
+                        <option value="ninguno">Sin personalizar</option>
+                        <option value="color">Color</option>
+                        <option value="foto">Foto</option>
+                    </select>
+                </div>
+                <div id="fondoColorGroup" class="fondo-group" hidden>
+                    <span class="fondo-label">Color del fondo:</span>
+                    <div class="fondo-swatches" id="fondoSwatches">
+                        <button type="button" class="fondo-swatch" data-color="#fdfaf5" style="background:#fdfaf5" aria-label="Crema"></button>
+                        <button type="button" class="fondo-swatch" data-color="#f4ece6" style="background:#f4ece6" aria-label="Arena"></button>
+                        <button type="button" class="fondo-swatch" data-color="#e8dcd0" style="background:#e8dcd0" aria-label="Lino"></button>
+                        <button type="button" class="fondo-swatch" data-color="#d9c3a5" style="background:#d9c3a5" aria-label="Trigo"></button>
+                        <button type="button" class="fondo-swatch" data-color="#b89b7e" style="background:#b89b7e" aria-label="Tostado"></button>
+                        <button type="button" class="fondo-swatch" data-color="#8c6f52" style="background:#8c6f52" aria-label="Tierra"></button>
+                        <button type="button" class="fondo-swatch" data-color="#5c4a3a" style="background:#5c4a3a" aria-label="Cacao"></button>
+                        <button type="button" class="fondo-swatch" data-color="#2f2a25" style="background:#2f2a25" aria-label="Carbón"></button>
+                    </div>
+                    <div class="fondo-color-row">
+                        <input type="color" id="fondoColorInput" class="fondo-color-input" value="#fdfaf5" aria-label="Color personalizado">
+                        <span id="fondoColorValue" class="fondo-color-value">#fdfaf5</span>
+                    </div>
+                </div>
+                <div id="fondoFotoGroup" class="fondo-group" hidden>
+                    <span class="fondo-label">Foto de fondo:</span>
+                    <div class="fondo-foto-acciones">
+                        <label for="fondoFotoInput" class="user-photo-upload-btn">Subir foto</label>
+                        <input type="file" id="fondoFotoInput" accept="image/jpeg,image/png,image/webp" style="display:none">
+                        <button id="removeFondoFotoBtn" class="user-photo-remove-btn" style="display:none">Quitar foto</button>
+                    </div>
+                    <p class="fondo-hint">Máximo 2 MB. La imagen se recorta y se optimiza antes de subirla.</p>
+                </div>
+                <div class="slider-group">
+                    <div class="slider-header">Intensidad del velo</div>
+                    <div class="slider-inline">
+                        <span class="slider-label-left">Suave</span>
+                        <input type="range" id="fondoVeloSlider" min="0" max="90" step="5" value="30"
+                            title="Intensidad del velo aplicado sobre el fondo">
+                        <span class="slider-label-right">Intenso</span>
+                    </div>
+                </div>
+                <div id="fondoPreview" class="fondo-preview">
+                    <div class="fondo-preview-bubble">Así se verá tu chat</div>
+                </div>
+            </div>
+
             <div class="settings-actions">
                 <button id="clearHistoryBtn" class="danger-btn">Borrar Historial</button>
                 <button id="openPreferencesBtn" class="preferences-btn">Gestionar preferencias de email y cuenta
@@ -958,12 +1010,13 @@
     <script src="https://cdn.jsdelivr.net/npm/tone@14.7.77/build/Tone.js"></script>
     <script src="js/stripe-checkout.js"></script>
     <script type="module" src="js/modules/config.js?v=7.2"></script>
-    <script type="module" src="js/modules/elements.js?v=7.2"></script>
+    <script type="module" src="js/modules/elements.js?v=7.3"></script>
     <script type="module" src="js/modules/music.js?v=7.1"></script>
     <script type="module" src="js/modules/voice.js?v=7.1"></script>
     <script type="module" src="js/modules/legal.js?v=7.1"></script>
     <script type="module" src="js/modules/support.js?v=7.2"></script>
-    <script type="module" src="js/modules/settings.js?v=7.3"></script>
+    <script type="module" src="js/modules/chat-background.js?v=1.0"></script>
+    <script type="module" src="js/modules/settings.js?v=7.4"></script>
     <script src="js/modules/sessions.js?v=7.3" defer></script>
     <script type="module" src="js/modules/payments.js?v=7.1"></script>
     <script type="module" src="js/modules/email.js?v=7.1"></script>
@@ -975,7 +1028,7 @@
     <script type="module" src="js/modules/data-export.js?v=1.1"></script>
     <script type="module" src="js/modules/a11y.js?v=1.0"></script>
     <script type="module" src="js/modules/pwa.js?v=1.1"></script>
-    <script src="main.js?v=7.14" defer></script>
+    <script src="main.js?v=7.15" defer></script>
 
     <!-- Script de Diagnóstico DTV (No-módulo para evitar fallos de carga) -->
     <script>

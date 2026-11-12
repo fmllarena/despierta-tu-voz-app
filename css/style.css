@@ -4,6 +4,9 @@
     --color-acento: #8e7d6d;
     /* Tono tierra suave/elegante */
     --fuente-principal: 'Georgia', serif;
+    --fondo-chat-color: transparent;
+    --fondo-chat-imagen: none;
+    --fondo-chat-velo: none;
 }
 
 .overlay {
@@ -283,6 +286,11 @@ header p {
     display: flex;
     flex-direction: column;
     gap: 15px;
+    background-color: var(--fondo-chat-color);
+    background-image: var(--fondo-chat-velo), var(--fondo-chat-imagen);
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
 }
 
 .message {
@@ -452,6 +460,131 @@ header p {
 .user-photo-remove-btn:hover {
     background: #c0392b;
     color: white;
+}
+
+/* Fondo del chat — controles de Ajustes */
+.fondo-hint {
+    font-size: 0.78em;
+    color: #888;
+    margin: 6px 0 0;
+    line-height: 1.4;
+}
+
+.fondo-group {
+    margin-bottom: 14px;
+}
+
+.fondo-group[hidden] {
+    display: none;
+}
+
+.fondo-label {
+    display: block;
+    font-size: 0.85em;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.fondo-foto-acciones {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.fondo-swatches {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.fondo-swatch {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: 2px solid #ddd;
+    cursor: pointer;
+    padding: 0;
+    transition: transform 0.15s, border-color 0.15s;
+}
+
+.fondo-swatch:hover {
+    transform: scale(1.08);
+}
+
+.fondo-swatch.activo {
+    border-color: var(--color-acento);
+    box-shadow: 0 0 0 2px rgba(142, 125, 109, 0.25);
+}
+
+.fondo-color-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.fondo-color-input {
+    width: 46px;
+    height: 32px;
+    padding: 0;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background: transparent;
+    cursor: pointer;
+}
+
+.fondo-color-value {
+    font-size: 0.82em;
+    color: #888;
+    font-family: monospace;
+}
+
+.fondo-preview {
+    margin-top: 12px;
+    height: 130px;
+    border-radius: 12px;
+    border: 1px solid #ddd;
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    align-items: flex-end;
+    padding: 10px;
+    background-color: transparent;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+.fondo-preview-bubble {
+    background: #fdfaf5;
+    border: 1px solid #f0f0f0;
+    border-radius: 16px;
+    padding: 8px 12px;
+    font-size: 0.8em;
+    color: #555;
+    max-width: 85%;
+}
+
+html[data-theme="dark"] input.fondo-color-input {
+    background: transparent;
+    border: 1px solid var(--input-border);
+    padding: 0;
+}
+
+html[data-theme="dark"] .fondo-preview {
+    border-color: var(--card-border);
+}
+
+html[data-theme="dark"] .fondo-preview-bubble {
+    background: var(--msg-ia-bg);
+    color: var(--msg-ia-color);
+    border-color: var(--msg-ia-border);
+}
+
+html[data-theme="dark"] .fondo-hint,
+html[data-theme="dark"] .fondo-color-value {
+    color: var(--color-texto);
 }
 
 .ia {
@@ -4222,6 +4355,8 @@ html[data-theme="dark"] {
     --header-bg: #d4af37;
     --hover-bg: #a09080;
     --shadow-color: rgba(0, 0, 0, 0.4);
+    /* Sin personalización el fondo de la zona de lectura es el propio del chat */
+    --fondo-chat-color: var(--chat-bg);
 }
 
 html[data-theme="dark"] body {
@@ -4259,7 +4394,11 @@ html[data-theme="dark"] .chat-header #mainHelpBtn:hover {
 }
 
 html[data-theme="dark"] .messages {
-    background: var(--chat-bg);
+    background-color: var(--fondo-chat-color);
+    background-image: var(--fondo-chat-velo-dark, var(--fondo-chat-velo)), var(--fondo-chat-imagen);
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
 }
 
 html[data-theme="dark"] .ia {

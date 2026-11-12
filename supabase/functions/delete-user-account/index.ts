@@ -37,6 +37,18 @@ serve(async (req) => {
 
         console.log(`Eliminando cuenta de: ${user.email} (${user.id})`);
 
+        // Eliminar los ficheros del usuario en Storage (avatar y fondo del chat)
+        for (const bucket of ['avatar', 'chat-backgrounds']) {
+            const { data: files } = await supabase.storage.from(bucket).list(user.id)
+            if (files?.length) {
+                const paths = files.map(f => `${user.id}/${f.name}`)
+                const { error: storageError } = await supabase.storage.from(bucket).remove(paths)
+                if (storageError) {
+                    console.error(`Error eliminando ficheros de ${bucket}:`, storageError.message)
+                }
+            }
+        }
+
         // Perform the deletion in auth.users
         // This will cascade to all tables that have ON DELETE CASCADE
         const { error: deleteError } = await supabase.auth.admin.deleteUser(user.id)
