@@ -168,7 +168,7 @@ async function processChat(req, res = null) {
     }
 
     if (intent === 'analisis') {
-        if (body.userId) {
+        if (userId) {
             return await analizarEvolucionAlumno(req.body);
         }
         return await analizarAlumnos(req.body);
