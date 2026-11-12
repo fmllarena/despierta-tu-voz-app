@@ -256,22 +256,22 @@
             <div class="panel" id="resultadosGlobal">
                 <div class="sin-resultados">Introduce un texto y haz clic en Buscar.</div>
             </div>
-
-            <!-- Panel IA sobre resultados -->
-            <div class="panel">
-                <h3>🤖 Preguntar a la IA sobre estos resultados</h3>
-                <p style="font-size:0.85rem;color:#666;margin-bottom:12px;">Escribe una pregunta sobre los mensajes mostrados arriba. La IA usará solo esos resultados como base.</p>
-                <textarea id="iaPregunta" class="pregunta-area" placeholder="Ej: ¿Qué temas trató el alumno en octubre? ¿Cuántas veces mencionó ansiedad?"></textarea>
-                <div style="display:flex;gap:10px;align-items:center;margin-top:10px;">
-                    <button id="iaPreguntarBtn" class="main-btn">Preguntar a la IA</button>
-                    <button id="iaCancelarBtn" class="btn-cancelar" style="display:none;">⏹ Cancelar</button>
-                </div>
-            </div>
-            <div id="iaResultado" class="panel resultado" style="display:none;">
-                <h3>📋 Respuesta de la IA</h3>
-                <div id="iaTexto" class="analisis-texto"></div>
-            </div>
         </div>
+    </div>
+
+    <!-- Panel IA sobre resultados (disponible desde ambas pestañas) -->
+    <div class="panel">
+        <h3>🤖 Preguntar a la IA sobre estos resultados</h3>
+        <p style="font-size:0.85rem;color:#666;margin-bottom:12px;">Escribe una pregunta sobre los mensajes mostrados arriba. La IA usará solo esos resultados como base.</p>
+        <textarea id="iaPregunta" class="pregunta-area" placeholder="Ej: ¿Qué temas trató el alumno en octubre? ¿Cuántas veces mencionó ansiedad?"></textarea>
+        <div style="display:flex;gap:10px;align-items:center;margin-top:10px;">
+            <button id="iaPreguntarBtn" class="main-btn">Preguntar a la IA</button>
+            <button id="iaCancelarBtn" class="btn-cancelar" style="display:none;">⏹ Cancelar</button>
+        </div>
+    </div>
+    <div id="iaResultado" class="panel resultado" style="display:none;">
+        <h3>📋 Respuesta de la IA</h3>
+        <div id="iaTexto" class="analisis-texto"></div>
     </div>
 
     <div id="loadingOverlay" class="loading-overlay">
