@@ -203,12 +203,12 @@
     async function cargarAlumnos() {
         const { data } = await sb
             .from('user_profiles')
-            .select('user_id, nombre')
+            .select('user_id, nombre, email')
             .not('email', 'ilike', '%@test.com')
             .order('nombre');
         const select = $('alumnoSelect');
         select.innerHTML = '<option value="">-- Todos los alumnos (análisis general) --</option>' +
-            ((data || []).map(a => `<option value="${a.user_id}">${a.nombre}</option>`).join(''));
+            ((data || []).map(a => `<option value="${a.user_id}">${a.nombre} (${a.email})</option>`).join(''));
     }
 
     function alumnoSeleccionado() {
