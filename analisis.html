@@ -119,6 +119,7 @@
                 <button data-q="¿Hay patrones o temas comunes entre los alumnos?">Patrones comunes</button>
                 <button data-q="¿Qué alumno tiene más constancia en sus sesiones?">Más constante</button>
                 <button data-q="Haz un resumen general del estado de todos los alumnos.">Resumen general</button>
+                <button data-q="Genera el informe completo de evolución de este alumno, desde su primera conversación hasta la más reciente.">Evolución del alumno</button>
             </div>
             <textarea id="preguntaInput" class="pregunta-area" placeholder="Ej: ¿Qué alumno ha practicado más la técnica de respiración diafragmática? ¿Quién muestra más inseguridad al hablar?"></textarea>
             <div class="test-checkbox" style="margin-bottom:12px;">
@@ -128,7 +129,6 @@
                 </label>
             </div>
             <button id="analizarBtn" class="main-btn">🔮 Analizar</button>
-            <button id="evolucionBtn" class="main-btn" style="margin-left:10px;">📈 Evolución del Alumno</button>
             <button id="cancelarBtn" class="btn-cancelar" style="display:none;">⏹ Cancelar consulta</button>
         </div>
 
@@ -241,7 +241,7 @@
         }
     };
 
-    // Análisis
+    // Análisis (único botón de envío)
     $('analizarBtn').onclick = async () => {
         const pregunta = $('preguntaInput').value.trim();
         if (!pregunta) { alert('Escribe una pregunta.'); return; }
@@ -256,39 +256,6 @@
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ intent: 'analisis', pregunta, userId: alumnoSeleccionado(), includeTest: $('includeTest').checked }),
-                signal: abortCtrl.signal
-            });
-            const data = await res.json();
-            if (data.error) throw new Error(data.details || data.error);
-
-            $('analisisTexto').innerHTML = window.renderSafeMarkdown(data.analisis);
-            $('resultadoPanel').style.display = 'block';
-            $('resultadoPanel').scrollIntoView({ behavior: 'smooth' });
-        } catch (e) {
-            if (e.name === 'AbortError') return;
-            alert('Error: ' + e.message);
-        } finally {
-            setLoading(false);
-            abortCtrl = null;
-        }
-    };
-
-    // Resumen de evolución del alumno seleccionado
-    $('evolucionBtn').onclick = async () => {
-        const userId = alumnoSeleccionado();
-        if (!userId) { alert('Selecciona un alumno del desplegable para ver su evolución.'); return; }
-
-        $('preguntaInput').value = 'Genera el informe completo de evolución de este alumno, desde su primera conversación hasta la más reciente.';
-        if (abortCtrl) abortCtrl.abort();
-        abortCtrl = new AbortController();
-
-        setLoading(true, true);
-        $('resultadoPanel').style.display = 'none';
-        try {
-            const res = await fetch('/api/chat', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ intent: 'analisis', pregunta: $('preguntaInput').value, userId, includeTest: $('includeTest').checked }),
                 signal: abortCtrl.signal
             });
             const data = await res.json();
