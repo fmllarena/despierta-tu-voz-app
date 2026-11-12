@@ -270,9 +270,13 @@
                 signal: abortCtrl.signal
             });
             const data = await res.json();
+            console.log('Respuesta /api/chat:', data);
             if (data.error) throw new Error(data.details || data.error);
-
-            $('analisisTexto').innerHTML = window.renderSafeMarkdown(data.analisis);
+            if (!data.analisis || String(data.analisis).trim() === '') {
+                $('analisisTexto').innerHTML = '<p style="color:#e74c3c;">La IA no devolvió respuesta. Vuelve a intentarlo.</p>';
+            } else {
+                $('analisisTexto').innerHTML = window.renderSafeMarkdown(data.analisis);
+            }
             $('resultadoPanel').style.display = 'block';
             $('resultadoPanel').scrollIntoView({ behavior: 'smooth' });
         } catch (e) {
