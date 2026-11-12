@@ -7,6 +7,7 @@
     --fondo-chat-color: transparent;
     --fondo-chat-imagen: none;
     --fondo-chat-velo: none;
+    --fondo-globo-opacidad: 1;
 }
 
 .overlay {
@@ -589,7 +590,7 @@ html[data-theme="dark"] .fondo-color-value {
 
 .ia {
     align-self: flex-start;
-    background: #fdfaf5;
+    background-color: rgba(253, 250, 245, var(--fondo-globo-opacidad));
     color: #555;
     border: 1px solid #f0f0f0;
 }
@@ -614,7 +615,7 @@ html[data-theme="dark"] .fondo-color-value {
 }
 
 #msg-bienvenida {
-    background: #3E3E3E;
+    background-color: rgba(62, 62, 62, var(--fondo-globo-opacidad));
     color: white;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
 }
@@ -633,7 +634,7 @@ html[data-theme="dark"] .fondo-color-value {
 }
 
 .ia-botiquin {
-    background: #fdf2f2 !important;
+    background-color: rgba(253, 242, 242, var(--fondo-globo-opacidad)) !important;
     border: 1px solid #f9dcdc !important;
     position: relative;
     padding-top: 35px !important;
@@ -650,7 +651,7 @@ html[data-theme="dark"] .fondo-color-value {
 
 .user {
     align-self: flex-end;
-    background: var(--color-acento);
+    background-color: rgba(142, 125, 109, var(--fondo-globo-opacidad));
     color: white;
 }
 
@@ -4357,6 +4358,7 @@ html[data-theme="dark"] {
     --shadow-color: rgba(0, 0, 0, 0.4);
     /* Sin personalización el fondo de la zona de lectura es el propio del chat */
     --fondo-chat-color: var(--chat-bg);
+    --fondo-globo-opacidad: 1;
 }
 
 html[data-theme="dark"] body {
@@ -4402,7 +4404,7 @@ html[data-theme="dark"] .messages {
 }
 
 html[data-theme="dark"] .ia {
-    background: var(--msg-ia-bg);
+    background-color: rgba(158, 141, 125, var(--fondo-globo-opacidad));
     color: var(--msg-ia-color);
     border: 1px solid var(--msg-ia-border);
 }
@@ -4414,8 +4416,12 @@ html[data-theme="dark"] .ia.thinking {
 }
 
 html[data-theme="dark"] .ia-botiquin {
-    background: #7a6b5d !important;
+    background-color: rgba(122, 107, 93, var(--fondo-globo-opacidad)) !important;
     border-color: #8a7b6d !important;
+}
+
+html[data-theme="dark"] .user {
+    background-color: rgba(212, 175, 55, var(--fondo-globo-opacidad));
 }
 
 html[data-theme="dark"] .user-avatar {
@@ -4627,7 +4633,7 @@ html[data-theme="dark"] .btn-extra {
 }
 
 html[data-theme="dark"] #msg-bienvenida {
-    background: #5a4d3d;
+    background-color: rgba(90, 77, 61, var(--fondo-globo-opacidad));
     color: var(--color-texto);
 }
 

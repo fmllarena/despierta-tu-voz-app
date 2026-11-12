@@ -70,7 +70,7 @@
     <!-- Stripe SDK -->
     <script src="https://js.stripe.com/v3/"></script>
 
-    <link rel="stylesheet" href="css/style.css?v=7.7">
+    <link rel="stylesheet" href="css/style.css?v=7.8">
     <link rel="stylesheet" href="css/modals.css?v=7.5">
     <link rel="stylesheet" href="css/chat-extras.css?v=1.6">
     <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96" />
@@ -577,6 +577,15 @@
                         <span class="slider-label-right">Intenso</span>
                     </div>
                 </div>
+                <div class="slider-group">
+                    <div class="slider-header">Transparencia de los globos</div>
+                    <div class="slider-inline">
+                        <span class="slider-label-left">Opaco</span>
+                        <input type="range" id="fondoGloboSlider" min="30" max="100" step="5" value="100"
+                            title="Opacidad de los globos de mensaje">
+                        <span class="slider-label-right">Transparente</span>
+                    </div>
+                </div>
                 <div id="fondoPreview" class="fondo-preview">
                     <div class="fondo-preview-bubble">Así se verá tu chat</div>
                 </div>
@@ -1015,8 +1024,8 @@
     <script type="module" src="js/modules/voice.js?v=7.1"></script>
     <script type="module" src="js/modules/legal.js?v=7.1"></script>
     <script type="module" src="js/modules/support.js?v=7.2"></script>
-    <script type="module" src="js/modules/chat-background.js?v=1.0"></script>
-    <script type="module" src="js/modules/settings.js?v=7.4"></script>
+    <script type="module" src="js/modules/chat-background.js?v=1.1"></script>
+    <script type="module" src="js/modules/settings.js?v=7.5"></script>
     <script src="js/modules/sessions.js?v=7.3" defer></script>
     <script type="module" src="js/modules/payments.js?v=7.1"></script>
     <script type="module" src="js/modules/email.js?v=7.1"></script>

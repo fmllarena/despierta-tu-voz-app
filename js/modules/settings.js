@@ -3,7 +3,7 @@ import { userProfile, chatHistory } from './config.js';
 import { state } from './state.js';
 import { alertCustom } from './utils.js';
 import { MENSAJES_GUARDADOS } from './saved-messages.js?v=1.1';
-import { CHAT_BACKGROUND } from './chat-background.js?v=1.0';
+import { CHAT_BACKGROUND } from './chat-background.js?v=1.1';
 
 function aplicarModoOscuro(activo) {
     if (activo) {
@@ -94,7 +94,8 @@ export const AJUSTES = window.AJUSTES = {
             const fondoUpdates = {
                 fondo_chat_tipo: fondoTipo,
                 fondo_chat_color: fondoTipo === 'color' ? (ELEMENTS.fondoColorInput?.value || null) : null,
-                fondo_chat_velo: parseInt(ELEMENTS.fondoVeloSlider?.value ?? '30', 10)
+                fondo_chat_velo: parseInt(ELEMENTS.fondoVeloSlider?.value ?? '30', 10),
+                fondo_globo_opacidad: parseInt(ELEMENTS.fondoGloboSlider?.value ?? '100', 10)
             };
             const { error: fondoError } = await db
                 .from('user_profiles')

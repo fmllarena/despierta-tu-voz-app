@@ -8,6 +8,7 @@ const MAX_LADO = 1600;
 const CALIDAD_JPEG = 0.85;
 const VELO_DEFAULT = 30;
 const VELO_EXTRA_OSCURO = 0.15;
+const GLOBO_OPACIDAD_DEFAULT = 100;
 const CACHE_KEY = 'dtv_fondo_chat';
 const COLOR_POR_DEFECTO = '#fdfaf5';
 
@@ -23,11 +24,14 @@ function normalizar(datos = {}) {
     const url = typeof datos.url === 'string' && datos.url ? datos.url : '';
     let velo = Number.parseInt(datos.velo, 10);
     if (Number.isNaN(velo)) velo = VELO_DEFAULT;
+    let globoOpacidad = Number.parseInt(datos.globo_opacidad ?? datos.globoOpacidad ?? GLOBO_OPACIDAD_DEFAULT, 10);
+    if (Number.isNaN(globoOpacidad)) globoOpacidad = GLOBO_OPACIDAD_DEFAULT;
     return {
         tipo,
         color,
         url,
-        velo: Math.min(90, Math.max(0, velo))
+        velo: Math.min(90, Math.max(0, velo)),
+        globo_opacidad: Math.min(100, Math.max(0, globoOpacidad))
     };
 }
 
@@ -41,6 +45,7 @@ function aplicarVariables(datos) {
     const veloOscuro = Math.min(0.9, veloClaro + VELO_EXTRA_OSCURO);
     const hayColor = datos.tipo === 'color' && datos.color;
     const hayFoto = datos.tipo === 'foto' && datos.url;
+    const opacidadGlobos = datos.globo_opacidad / 100;
 
     if (hayColor) root.style.setProperty('--fondo-chat-color', datos.color);
     else root.style.removeProperty('--fondo-chat-color');
@@ -52,6 +57,7 @@ function aplicarVariables(datos) {
     const veloDark = hayColor || hayFoto ? gradienteVelo(veloOscuro) : 'none';
     root.style.setProperty('--fondo-chat-velo', velo);
     root.style.setProperty('--fondo-chat-velo-dark', veloDark);
+    root.style.setProperty('--fondo-globo-opacidad', opacidadGlobos);
 }
 
 function guardarCache(datos) {
@@ -104,7 +110,8 @@ export const CHAT_BACKGROUND = window.CHAT_BACKGROUND = {
             tipo: perfil.fondo_chat_tipo,
             color: perfil.fondo_chat_color,
             url: perfil.fondo_chat_url,
-            velo: perfil.fondo_chat_velo
+            velo: perfil.fondo_chat_velo,
+            globo_opacidad: perfil.fondo_globo_opacidad
         });
         aplicarVariables(datos);
         guardarCache(datos);
@@ -117,7 +124,10 @@ export const CHAT_BACKGROUND = window.CHAT_BACKGROUND = {
         const velo = ELEMENTS.fondoVeloSlider
             ? parseInt(ELEMENTS.fondoVeloSlider.value, 10)
             : VELO_DEFAULT;
-        return normalizar({ tipo, color, url, velo });
+        const globoOpacidad = ELEMENTS.fondoGloboSlider
+            ? parseInt(ELEMENTS.fondoGloboSlider.value, 10)
+            : GLOBO_OPACIDAD_DEFAULT;
+        return normalizar({ tipo, color, url, velo, globo_opacidad: globoOpacidad });
     },
 
     previsualizar() {
@@ -130,6 +140,13 @@ export const CHAT_BACKGROUND = window.CHAT_BACKGROUND = {
         const imagen = datos.tipo === 'foto' && datos.url ? `url("${datos.url}")` : 'none';
         preview.style.backgroundColor = datos.tipo === 'color' && datos.color ? datos.color : 'transparent';
         preview.style.backgroundImage = velo === 'none' ? imagen : `${velo}, ${imagen}`;
+        const bubble = preview.querySelector('.fondo-preview-bubble');
+        if (bubble) {
+            const op = datos.globo_opacidad / 100;
+            bubble.style.backgroundColor = esOscuro()
+                ? `rgba(158, 141, 125, ${op})`
+                : `rgba(253, 250, 245, ${op})`;
+        }
     },
 
     refrescarControles(perfil) {
@@ -138,12 +155,14 @@ export const CHAT_BACKGROUND = window.CHAT_BACKGROUND = {
             tipo: fuente.fondo_chat_tipo,
             color: fuente.fondo_chat_color,
             url: fuente.fondo_chat_url,
-            velo: fuente.fondo_chat_velo
+            velo: fuente.fondo_chat_velo,
+            globo_opacidad: fuente.fondo_globo_opacidad
         });
         if (ELEMENTS.fondoTipoSelect) ELEMENTS.fondoTipoSelect.value = datos.tipo;
         if (ELEMENTS.fondoColorInput) ELEMENTS.fondoColorInput.value = datos.color || COLOR_POR_DEFECTO;
         if (ELEMENTS.fondoColorValue) ELEMENTS.fondoColorValue.textContent = datos.color || COLOR_POR_DEFECTO;
         if (ELEMENTS.fondoVeloSlider) ELEMENTS.fondoVeloSlider.value = datos.velo;
+        if (ELEMENTS.fondoGloboSlider) ELEMENTS.fondoGloboSlider.value = datos.globo_opacidad;
         if (ELEMENTS.removeFondoFotoBtn) {
             ELEMENTS.removeFondoFotoBtn.style.display = datos.url ? 'inline-block' : 'none';
         }
@@ -286,6 +305,8 @@ export const CHAT_BACKGROUND = window.CHAT_BACKGROUND = {
         });
 
         ELEMENTS.fondoVeloSlider?.addEventListener('input', () => this.previsualizar());
+
+        ELEMENTS.fondoGloboSlider?.addEventListener('input', () => this.previsualizar());
 
         ELEMENTS.fondoFotoInput?.addEventListener('change', async (e) => {
             const file = e.target.files[0];

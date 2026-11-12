@@ -76,6 +76,7 @@ export const ELEMENTS = window.ELEMENTS = {
     get fondoFotoInput() { return document.getElementById('fondoFotoInput'); },
     get removeFondoFotoBtn() { return document.getElementById('removeFondoFotoBtn'); },
     get fondoVeloSlider() { return document.getElementById('fondoVeloSlider'); },
+    get fondoGloboSlider() { return document.getElementById('fondoGloboSlider'); },
     get fondoPreview() { return document.getElementById('fondoPreview'); },
 
     // Legal Modal
