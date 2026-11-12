@@ -156,6 +156,12 @@
         body:not(.light-mode) .login-section h1 { color: #a89b8a; }
         body:not(.light-mode) .login-error { color: #ff6b6b; }
         body:not(.light-mode) .dash-header h2 { color: #d4d4dc; }
+        .btn-cancelar { background: #e74c3c; color: #fff; border: none; padding: 10px 22px; border-radius: 12px; font-size: 0.93rem; font-family: inherit; cursor: pointer; margin-left: 10px; }
+        .btn-cancelar:hover { background: #c0392b; }
+        .btn-cancelar:disabled { opacity: 0.6; cursor: not-allowed; }
+        .resultado { display: none; }
+        .resultado .analisis-texto { line-height: 1.7; font-size: 0.95rem; white-space: pre-wrap; }
+        body.dark-mode .resultado .analisis-texto { color: #d4d4dc; }
     }
     </style>
 </head>
@@ -250,6 +256,21 @@
             <div class="panel" id="resultadosGlobal">
                 <div class="sin-resultados">Introduce un texto y haz clic en Buscar.</div>
             </div>
+
+            <!-- Panel IA sobre resultados -->
+            <div class="panel">
+                <h3>🤖 Preguntar a la IA sobre estos resultados</h3>
+                <p style="font-size:0.85rem;color:#666;margin-bottom:12px;">Escribe una pregunta sobre los mensajes mostrados arriba. La IA usará solo esos resultados como base.</p>
+                <textarea id="iaPregunta" class="pregunta-area" placeholder="Ej: ¿Qué temas trató el alumno en octubre? ¿Cuántas veces mencionó ansiedad?"></textarea>
+                <div style="display:flex;gap:10px;align-items:center;margin-top:10px;">
+                    <button id="iaPreguntarBtn" class="main-btn">Preguntar a la IA</button>
+                    <button id="iaCancelarBtn" class="btn-cancelar" style="display:none;">⏹ Cancelar</button>
+                </div>
+            </div>
+            <div id="iaResultado" class="panel resultado" style="display:none;">
+                <h3>📋 Respuesta de la IA</h3>
+                <div id="iaTexto" class="analisis-texto"></div>
+            </div>
         </div>
     </div>
 
@@ -264,9 +285,10 @@
     let sb, sbService;
     let alumnosMap = {};
     let alumnosList = [];
-    let ascendenteAlumno = false;
-    let ascendenteGlobal = false;
-    let estrictoActual = false;
+let ascendenteAlumno = false;
+let ascendenteGlobal = false;
+let estrictoActual = false;
+let mensajesResultadoActual = [];
 
     const $ = id => document.getElementById(id);
     const setLoading = on => { $('loadingOverlay').style.display = on ? 'flex' : 'none'; };
@@ -420,6 +442,7 @@
     };
 
     function renderMensajesAlumnoGlobal(msgs, { keyword, userId }) {
+        mensajesResultadoActual = msgs || [];
         const cont = $('resultadosAlumno');
         if (!msgs.length) {
             cont.innerHTML = '<div class="sin-resultados">No se encontraron mensajes.</div>';
@@ -475,6 +498,7 @@
     };
 
     function renderMensajesGlobal(msgs, keyword) {
+        mensajesResultadoActual = msgs || [];
         const cont = $('resultadosGlobal');
         if (!msgs.length) {
             cont.innerHTML = '<div class="sin-resultados">No se encontraron mensajes.</div>';
@@ -623,6 +647,52 @@
             else if (action === 'expandir') btn.classList.toggle('expandido');
         });
     });
+
+    // ===== Chat IA sobre resultados =====
+    let abortCtrlIA = null;
+    const setLoadingIA = (on) => {
+        $('iaPreguntarBtn').disabled = on;
+        $('iaPreguntarBtn').textContent = on ? 'Consultando...' : 'Preguntar a la IA';
+        $('iaCancelarBtn').style.display = on ? 'inline-block' : 'none';
+        $('iaCancelarBtn').disabled = !on;
+    };
+    $('iaCancelarBtn').onclick = () => {
+        if (abortCtrlIA) {
+            abortCtrlIA.abort();
+            abortCtrlIA = null;
+            setLoadingIA(false);
+        }
+    };
+    $('iaPreguntarBtn').onclick = async () => {
+        const pregunta = $('iaPregunta').value.trim();
+        if (!pregunta) { alert('Escribe una pregunta.'); return; }
+        if (!mensajesResultadoActual || mensajesResultadoActual.length === 0) {
+            alert('Primero haz una búsqueda para tener resultados.'); return;
+        }
+        if (abortCtrlIA) abortCtrlIA.abort();
+        abortCtrlIA = new AbortController();
+        setLoadingIA(true);
+        $('iaResultado').style.display = 'none';
+        try {
+            const res = await fetch('/api/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ intent: 'historial_chat', pregunta, mensajes: mensajesResultadoActual }),
+                signal: abortCtrlIA.signal
+            });
+            const data = await res.json();
+            if (data.error) throw new Error(data.details || data.error);
+            $('iaTexto').innerHTML = renderMd(data.analisis || '', '');
+            $('iaResultado').style.display = 'block';
+            $('iaResultado').scrollIntoView({ behavior: 'smooth' });
+        } catch (e) {
+            if (e.name === 'AbortError') return;
+            alert('Error: ' + e.message);
+        } finally {
+            setLoadingIA(false);
+            abortCtrlIA = null;
+        }
+    };
 
     init();
 </script>

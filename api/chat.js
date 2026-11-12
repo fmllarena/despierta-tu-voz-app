@@ -97,7 +97,7 @@ module.exports = async function handler(req, res) {
 
     const SPECIAL_INTENTS = new Set([
         'warmup', 'compendio', 'analisis', 'teacher', 'persona_chat',
-        'add_teacher_tip', 'get_teacher_tips', 'evolucion_alumno'
+        'add_teacher_tip', 'get_teacher_tips', 'evolucion_alumno', 'historial_chat'
     ]);
     if (!intent || (!SYSTEM_PROMPTS[intent] && !SPECIAL_INTENTS.has(intent))) {
         return res.status(400).json({ error: "Intento no válido" });
@@ -172,6 +172,10 @@ async function processChat(req, res = null) {
             return await analizarEvolucionAlumno(req.body);
         }
         return await analizarAlumnos(req.body);
+    }
+
+    if (intent === 'historial_chat') {
+        return await historialChat(req.body);
     }
 
     if (intent === 'teacher' || intent === 'teacher_review') {
@@ -1308,6 +1312,47 @@ PREGUNTA DEL MENTOR: ${pregunta || 'Genera el informe de evolución de este alum
         history: []
     });
     return { success: true, analisis: result.text };
+}
+
+/**
+ * Responde preguntas sobre resultados de búsqueda de historial usando SOLO OpenRouter.
+ * Recibe los mensajes filtrados (array) y la pregunta del usuario.
+ */
+async function historialChat(body) {
+    const { mensajes, pregunta } = body;
+    if (!pregunta) throw new Error("Se requiere una pregunta");
+    if (!Array.isArray(mensajes) || mensajes.length === 0) {
+        return { analisis: "No hay mensajes seleccionados para analizar." };
+    }
+
+    // Construir contexto con los mensajes filtrados
+    const contexto = mensajes.map(m => {
+        const fecha = m.created_at ? new Date(m.created_at).toLocaleString('es-ES', {
+            day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'
+        }) : '';
+        const emisor = (m.emisor === 'usuario' || m.emisor === 'user') ? 'ALUMNO' : 'MENTOR IA';
+        const alumno = (m.alumnoNombre || m.nombreAlumno || m.alumno || 'Desconocido');
+        const texto = (m.texto || '').trim();
+        return `[${fecha}] ${emisor} (${alumno}): ${texto}`;
+    }).join('\n\n');
+
+    // Truncar si es excesivo (protección de tokens)
+    let contextoTexto = contexto;
+    if (contextoTexto.length > 10000) {
+        contextoTexto =
+            contexto.slice(0, 5000) +
+            '\n\n… [contenido intermedio omitido por longitud] …\n\n' +
+            contexto.slice(-5000);
+    }
+
+    const prompt = `MENSAJES ENCONTRADOS EN LA BÚSQUEDA:\n${contextoTexto}\n\nPREGUNTA: ${pregunta || ''}\n\nResponde basándote ÚNICAMENTE en los mensajes anteriores.`;
+
+    const result = await callOpenRouterAPI({
+        intent: 'historial_chat',
+        prompt: prompt,
+        history: []
+    });
+    return { analisis: result.text };
 }
 
 /**
