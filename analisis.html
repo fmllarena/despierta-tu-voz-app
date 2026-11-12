@@ -149,12 +149,23 @@
     let sb;
     const $ = id => document.getElementById(id);
     let abortCtrl = null;
+    let loadingTimer = null;
     const setLoading = (on, consultando = false) => {
+        if (loadingTimer) { clearTimeout(loadingTimer); loadingTimer = null; }
         $('loadingOverlay').style.display = on ? 'flex' : 'none';
         $('cancelarBtn').style.display = (on && consultando) ? 'inline-block' : 'none';
         $('analizarBtn').disabled = on;
-        $('evolucionBtn').disabled = on;
         $('cancelarBtn').disabled = !on;
+        if (on) forzarFinCarga();
+    };
+    // Timeout de seguridad: si el spinner se queda atascado >30s, se fuerza a ocultar
+    const forzarFinCarga = () => {
+        if (loadingTimer) return;
+        loadingTimer = setTimeout(() => {
+            console.warn('Forzando fin de carga por timeout');
+            setLoading(false);
+            abortCtrl = null;
+        }, 30000);
     };
 
     async function init() {
@@ -224,9 +235,9 @@
         aplicarModoOscuro(true);
     }
 
-    // Sugerencias
+    // Sugerencias: solo escriben texto en la caja, nunca envían
     document.querySelectorAll('.sugerencias button').forEach(btn => {
-        btn.onclick = () => { $('preguntaInput').value = btn.dataset.q; $('analizarBtn').click(); };
+        btn.onclick = () => { $('preguntaInput').value = btn.dataset.q; };
     });
 
     // Enter en pregunta
