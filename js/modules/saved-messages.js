@@ -217,13 +217,13 @@ export const MENSAJES_GUARDADOS = window.MENSAJES_GUARDADOS = {
 
             if (error) {
                 if (error.code === '23505') {
-                    mostrarToast('🔖 Ya tenías guardada esta respuesta');
+                    mostrarToast('Ya tenías guardada esta respuesta');
                     return 'duplicate';
                 }
                 throw error;
             }
 
-            mostrarToast('🔖 Respuesta guardada en tus mensajes');
+            mostrarToast('Respuesta guardada en tus mensajes');
 
             if (ELEMENTS.savedMessagesModal?.style.display === 'flex') {
                 this.cargarMensajesGuardados();

@@ -2,7 +2,7 @@ import { ELEMENTS } from './elements.js';
 import { userProfile, chatHistory } from './config.js';
 import { state } from './state.js';
 import { alertCustom } from './utils.js';
-import { MENSAJES_GUARDADOS } from './saved-messages.js';
+import { MENSAJES_GUARDADOS } from './saved-messages.js?v=1.1';
 
 function aplicarModoOscuro(activo) {
     if (activo) {
