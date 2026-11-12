@@ -186,11 +186,10 @@
         </div>
 
         <div class="tabs">
-            <div class="tab active" data-tab="alumno">Por Alumno</div>
-            <div class="tab" data-tab="global">Búsqueda Global</div>
+            <div class="tab active" data-tab="alumno">Buscar en el historial</div>
         </div>
 
-        <!-- Pestaña: Por Alumno -->
+        <!-- Pestaña: Por Alumno (única) -->
         <div id="tabAlumno">
             <div class="panel">
                 <h3>Filtros</h3>
@@ -222,39 +221,7 @@
                 </div>
             </div>
             <div class="panel" id="resultadosAlumno">
-                        <div class="sin-resultados">Selecciona un alumno o define un rango de fechas y haz clic en Buscar.</div>
-            </div>
-        </div>
-
-        <!-- Pestaña: Búsqueda Global -->
-        <div id="tabGlobal" style="display:none;">
-            <div class="panel">
-                <h3>Buscar en todas las conversaciones</h3>
-                <div class="fila">
-                    <div class="campo" style="flex:2;">
-                        <label for="keywordGlobal">Palabra o frase</label>
-                        <div style="display:flex;gap:8px;align-items:center;">
-                            <input type="text" id="keywordGlobal" placeholder="Texto a buscar en cualquier mensaje..." style="flex:1;">
-                            <span class="busqueda-estricta"><input type="checkbox" id="estrictoGlobal"> <span>Estricta</span></span>
-                        </div>
-                    </div>
-                    <div class="campo">
-                        <label for="fechaDesdeG">Desde</label>
-                        <input type="date" id="fechaDesdeG">
-                    </div>
-                    <div class="campo">
-                        <label for="fechaHastaG">Hasta</label>
-                        <input type="date" id="fechaHastaG">
-                    </div>
-                    <div class="campo" style="flex:0 0 auto;">
-                        <label>Orden</label>
-                        <button id="ordenGlobalBtn" class="orden-btn" style="display:flex;align-items:center;gap:6px;padding:10px 14px;border:2px solid #eee;border-radius:10px;background:#fff;cursor:pointer;font-family:inherit;font-size:0.93rem;color:#666;width:100%;">↓ Más reciente</button>
-                    </div>
-                    <button id="buscarGlobalBtn" class="main-btn" style="align-self:flex-end;">Buscar</button>
-                </div>
-            </div>
-            <div class="panel" id="resultadosGlobal">
-                <div class="sin-resultados">Introduce un texto y haz clic en Buscar.</div>
+                        <div class="sin-resultados">Selecciona un alumno, una palabra clave o define un rango de fechas y haz clic en Buscar.</div>
             </div>
         </div>
     </div>
@@ -285,10 +252,9 @@
     let sb, sbService;
     let alumnosMap = {};
     let alumnosList = [];
-let ascendenteAlumno = false;
-let ascendenteGlobal = false;
-let estrictoActual = false;
-let mensajesResultadoActual = [];
+    let ascendenteAlumno = false;
+    let estrictoActual = false;
+    let mensajesResultadoActual = [];
 
     const $ = id => document.getElementById(id);
     const setLoading = on => { $('loadingOverlay').style.display = on ? 'flex' : 'none'; };
@@ -340,21 +306,19 @@ let mensajesResultadoActual = [];
         $('loginPassword').value = '';
     };
 
-    // Tabs
+    // Tabs (única pestaña, eliminada la de búsqueda global por redundancia)
     document.querySelectorAll('.tab').forEach(tab => {
         tab.onclick = () => {
             document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
             tab.classList.add('active');
-            $('tabAlumno').style.display = tab.dataset.tab === 'alumno' ? 'block' : 'none';
-            $('tabGlobal').style.display = tab.dataset.tab === 'global' ? 'block' : 'none';
         };
     });
 
     function initFechas() {
         const hoy = new Date().toISOString().split('T')[0];
         const mesAntes = new Date(Date.now() - 30*24*60*60*1000).toISOString().split('T')[0];
-        ['fechaDesde', 'fechaDesdeG'].forEach(id => { if (!$(''+id).value) $(''+id).value = mesAntes; });
-        ['fechaHasta', 'fechaHastaG'].forEach(id => { if (!$(''+id).value) $(''+id).value = hoy; });
+        $('fechaDesde').value = $('fechaDesde').value || mesAntes;
+        $('fechaHasta').value = $('fechaHasta').value || hoy;
     }
 
     async function cargarAlumnos() {
@@ -378,19 +342,13 @@ let mensajesResultadoActual = [];
     }
 
     // ===== Toggle orden =====
-    function toggleOrden(tab) {
+    function toggleOrden() {
         return function() {
-            if (tab === 'alumno') {
-                ascendenteAlumno = !ascendenteAlumno;
-                $('ordenAlumnoBtn').innerHTML = ascendenteAlumno ? '↑ Más antiguo' : '↓ Más reciente';
-            } else {
-                ascendenteGlobal = !ascendenteGlobal;
-                $('ordenGlobalBtn').innerHTML = ascendenteGlobal ? '↑ Más antiguo' : '↓ Más reciente';
-            }
+            ascendenteAlumno = !ascendenteAlumno;
+            $('ordenAlumnoBtn').innerHTML = ascendenteAlumno ? '↑ Más antiguo' : '↓ Más reciente';
         };
     }
-    $('ordenAlumnoBtn').onclick = toggleOrden('alumno');
-    $('ordenGlobalBtn').onclick = toggleOrden('global');
+    $('ordenAlumnoBtn').onclick = toggleOrden();
 
     // ===== Pestaña Por Alumno =====
     $('buscarAlumnoBtn').onclick = async () => {
@@ -462,56 +420,7 @@ let mensajesResultadoActual = [];
         cont.innerHTML = html;
     }
 
-    // ===== Pestaña Búsqueda Global =====
-    $('buscarGlobalBtn').onclick = async () => {
-        const keyword = $('keywordGlobal').value.trim();
-        if (!keyword) { alert('Introduce un texto para buscar.'); return; }
-        const estricto = $('estrictoGlobal').checked;
-        const desde = $('fechaDesdeG').value;
-        const hasta = $('fechaHastaG').value;
-
-        setLoading(true);
-        try {
-            let query = sb.from('mensajes')
-                .select('id, texto, emisor, created_at, alumno')
-                .order('created_at', { ascending: ascendenteGlobal })
-                .limit(500);
-
-            if (!estricto) query = query.ilike('texto', `%${keyword}%`);
-            if (desde) query = query.gte('created_at', desde);
-            if (hasta) query = query.lte('created_at', `${hasta}T23:59:59`);
-
-            const { data, error } = await query;
-            if (error) throw error;
-
-            let mensajes = data || [];
-            if (estricto) {
-                mensajes = mensajes.filter(m => matchEstricto(m.texto || '', keyword));
-            }
-            estrictoActual = estricto;
-            renderMensajesGlobal(mensajes, keyword);
-        } catch (e) {
-            $('resultadosGlobal').innerHTML = `<div class="sin-resultados" style="color:#e74c3c;">Error: ${e.message}</div>`;
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    function renderMensajesGlobal(msgs, keyword) {
-        mensajesResultadoActual = msgs || [];
-        const cont = $('resultadosGlobal');
-        if (!msgs.length) {
-            cont.innerHTML = '<div class="sin-resultados">No se encontraron mensajes.</div>';
-            return;
-        }
-        cont.innerHTML = `<div class="result-count">${msgs.length} mensajes encontrados</div>`;
-        cont.innerHTML += msgs.map(m => {
-            const a = alumnosMap[m.alumno] || { nombre: 'Desconocido' };
-            return msgCard(m, a.nombre, keyword);
-        }).join('');
-    }
-
-    function renderMd(texto, keyword) {
+    // ===== Chat IA sobre resultados =====
         let t = texto.replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c]);
         t = t
             .replace(/^#### (.+)$/gm, '<h4>$1</h4>')
