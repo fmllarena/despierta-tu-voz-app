@@ -97,7 +97,7 @@ module.exports = async function handler(req, res) {
 
     const SPECIAL_INTENTS = new Set([
         'warmup', 'compendio', 'analisis', 'teacher', 'persona_chat',
-        'add_teacher_tip', 'get_teacher_tips'
+        'add_teacher_tip', 'get_teacher_tips', 'evolucion_alumno'
     ]);
     if (!intent || (!SYSTEM_PROMPTS[intent] && !SPECIAL_INTENTS.has(intent))) {
         return res.status(400).json({ error: "Intento no válido" });
@@ -168,6 +168,9 @@ async function processChat(req, res = null) {
     }
 
     if (intent === 'analisis') {
+        if (body.userId) {
+            return await analizarEvolucionAlumno(req.body);
+        }
         return await analizarAlumnos(req.body);
     }
 
@@ -1225,6 +1228,77 @@ Responde de forma clara, directa y útil. Si no hay suficientes datos para respo
         }
     }
     throw lastErr;
+}
+
+/**
+ * Analiza la evolución completa de un alumno concreto a partir de TODO su historial
+ * de conversaciones (principio a fin). Usa SOLO OpenRouter, según requisito de la
+ * página de análisis.
+ */
+async function analizarEvolucionAlumno(body) {
+    const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
+    const { userId, pregunta } = body;
+    if (!userId) throw new Error("Se requiere el ID del alumno.");
+
+    // 1. Perfil del alumno
+    const { data: perfil } = await supabase
+        .from('user_profiles')
+        .select('user_id, nombre, email, nivel_alquimia, historia_vocal, creencias_transmutadas, ultimo_resumen, mentor_notes, mentor_trato_preferido')
+        .eq('user_id', userId)
+        .maybeSingle();
+    if (!perfil) throw new Error("Alumno no encontrado.");
+
+    // 2. Todas las conversaciones ordenadas cronológicamente (primero a último)
+    const { data: mensajes } = await supabase
+        .from('mensajes')
+        .select('emisor, texto, created_at')
+        .eq('alumno', userId)
+        .order('created_at', { ascending: true });
+
+    const lista = (mensajes || [])
+        .filter(m => m.emisor === 'usuario' || m.emisor === 'user' || m.emisor === 'ia' || m.emisor === 'model' || m.emisor === 'assistant')
+        .map(m => {
+            const rol = (m.emisor === 'usuario' || m.emisor === 'user') ? 'ALUMNO' : 'MENTOR';
+            const fecha = m.created_at ? new Date(m.created_at).toLocaleDateString('es-ES') : '';
+            const texto = (m.texto || '').trim();
+            return `[${fecha}] ${rol}: ${texto}`;
+        })
+        .join('\n\n');
+
+    // Protección contra historial excesivo: si es muy largo, mantenemos inicio y final
+    let historialTexto = lista;
+    if (historialTexto.length > 12000) {
+        historialTexto =
+            lista.slice(0, 6000) +
+            '\n\n… [historial intermedio omitido por longitud] …\n\n' +
+            lista.slice(-6000);
+    }
+
+    const perfilTexto = `
+NOMBRE: ${perfil.nombre || 'Sin nombre'}
+EMAIL: ${perfil.email || '—'}
+NIVEL DE ALQUIMIA: ${perfil.nivel_alquimia || '—'}/10
+HISTORIA VOCAL: ${perfil.historia_vocal || 'No registrada'}
+CREENCIAS TRANSMUTADAS: ${perfil.creencias_transmutadas || 'No registradas'}
+RESUMEN ACTUAL: ${perfil.ultimo_resumen || 'No disponible'}
+NOTAS DEL MENTOR: ${perfil.mentor_notes || 'Sin notas'}
+TRATO PREFERIDO: ${perfil.mentor_trato_preferido || '—'}
+`.trim();
+
+    const prompt = `PERFIL DEL ALUMNO:
+${perfilTexto}
+
+HISTORIAL COMPLETO DE CONVERSACIONES (orden cronológico, primero a último):
+${historialTexto || 'Sin mensajes registrados.'}
+
+PREGUNTA DEL MENTOR: ${pregunta || 'Genera el informe de evolución de este alumno.'}`;
+
+    const result = await callOpenRouterAPI({
+        intent: 'evolucion_alumno',
+        prompt: prompt,
+        history: []
+    });
+    return { success: true, analisis: result.text };
 }
 
 /**

@@ -101,6 +101,14 @@
         </div>
 
         <div class="panel">
+            <h3>👤 Seleccionar Alumno</h3>
+            <select id="alumnoSelect" style="width:100%;max-width:420px;padding:12px 16px;border:2px solid #eee;border-radius:12px;font-size:1rem;font-family:inherit;margin-bottom:12px;">
+                <option value="">-- Todos los alumnos (análisis general) --</option>
+            </select>
+            <p style="font-size:0.85rem;color:#666;margin:0;">Selecciona un alumno para ver su evolución individual (desde su primera hasta su última conversación) o deja "Todos los alumnos" para un análisis general.</p>
+        </div>
+
+        <div class="panel">
             <h3>¿Qué quieres saber?</h3>
             <div class="sugerencias">
                 <button data-q="¿Qué alumno ha evolucionado más en su historia vocal?">Evolución destacada</button>
@@ -117,6 +125,7 @@
                 </label>
             </div>
             <button id="analizarBtn" class="main-btn">🔮 Analizar</button>
+            <button id="evolucionBtn" class="main-btn" style="margin-left:10px;">📈 Evolución del Alumno</button>
         </div>
 
         <div id="resultadoPanel" class="panel resultado">
@@ -150,6 +159,7 @@
             if (user) {
                 $('loginSection').style.display = 'none';
                 $('dashboard').style.display = 'block';
+                await cargarAlumnos();
                 return;
             }
         }
@@ -165,7 +175,24 @@
         localStorage.setItem('sb-session', JSON.stringify(data.session));
         $('loginSection').style.display = 'none';
         $('dashboard').style.display = 'block';
+        await cargarAlumnos();
     };
+
+    async function cargarAlumnos() {
+        const { data } = await sb
+            .from('user_profiles')
+            .select('user_id, nombre')
+            .not('email', 'ilike', '%@test.com')
+            .order('nombre');
+        const select = $('alumnoSelect');
+        select.innerHTML = '<option value="">-- Todos los alumnos (análisis general) --</option>' +
+            ((data || []).map(a => `<option value="${a.user_id}">${a.nombre}</option>`).join(''));
+    }
+
+    function alumnoSeleccionado() {
+        const v = $('alumnoSelect').value;
+        return v || null;
+    }
 
     $('logoutBtn').onclick = async () => {
         await sb.auth.signOut();
@@ -205,7 +232,34 @@
             const res = await fetch('/api/chat', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ intent: 'analisis', pregunta, includeTest: $('includeTest').checked })
+                body: JSON.stringify({ intent: 'analisis', pregunta, userId: alumnoSeleccionado(), includeTest: $('includeTest').checked })
+            });
+            const data = await res.json();
+            if (data.error) throw new Error(data.details || data.error);
+
+            $('analisisTexto').innerHTML = window.renderSafeMarkdown(data.analisis);
+            $('resultadoPanel').style.display = 'block';
+            $('resultadoPanel').scrollIntoView({ behavior: 'smooth' });
+        } catch (e) {
+            alert('Error: ' + e.message);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // Resumen de evolución del alumno seleccionado
+    $('evolucionBtn').onclick = async () => {
+        const userId = alumnoSeleccionado();
+        if (!userId) { alert('Selecciona un alumno del desplegable para ver su evolución.'); return; }
+
+        $('preguntaInput').value = 'Genera el informe completo de evolución de este alumno, desde su primera conversación hasta la más reciente.';
+        setLoading(true);
+        $('resultadoPanel').style.display = 'none';
+        try {
+            const res = await fetch('/api/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ intent: 'analisis', pregunta: $('preguntaInput').value, userId, includeTest: $('includeTest').checked })
             });
             const data = await res.json();
             if (data.error) throw new Error(data.details || data.error);
