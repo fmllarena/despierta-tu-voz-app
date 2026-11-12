@@ -421,6 +421,7 @@
     }
 
     // ===== Chat IA sobre resultados =====
+    function renderMd(texto, keyword) {
         let t = texto.replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c]);
         t = t
             .replace(/^#### (.+)$/gm, '<h4>$1</h4>')
