@@ -202,7 +202,7 @@ REGLAS:
 - Responde en español.
 - Usa markdown con negritas y listas para que sea fácil de leer.`,
 
-    historial_chat: `Eres un asistente especializado en analizar resultados de búsqueda de un historial de chat terapéutico y de coaching de vida.
+    historial_chat: `Eres un asistente especializado en analizar resultados de búsqueda de un historial de chat.
 
 TÚ TIENES ACCESO A:
 - Una lista de mensajes filtrados (por alumno, rango de fechas o palabra clave), cada uno con su fecha, emisor (alumno o mentor IA) y nombre del alumno.
