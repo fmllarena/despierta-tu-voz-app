@@ -1256,14 +1256,24 @@ async function analizarEvolucionAlumno(body) {
         .order('created_at', { ascending: true });
 
     const lista = (mensajes || [])
-        .filter(m => m.emisor === 'usuario' || m.emisor === 'user' || m.emisor === 'ia' || m.emisor === 'model' || m.emisor === 'assistant')
+        .filter(m => {
+            const e = (m.emisor || '').toLowerCase();
+            return e === 'usuario' || e === 'user' || e === 'alumno' || e === 'ia' || e === 'model' || e === 'assistant';
+        })
         .map(m => {
-            const rol = (m.emisor === 'usuario' || m.emisor === 'user') ? 'ALUMNO' : 'MENTOR';
-            const fecha = m.created_at ? new Date(m.created_at).toLocaleDateString('es-ES') : '';
+            const e = (m.emisor || '').toLowerCase();
+            const rol = (e === 'usuario' || e === 'user' || e === 'alumno') ? 'ALUMNO' : 'MENTOR';
+            const fecha = m.created_at ? new Date(m.created_at).toLocaleDateString('es-ES') : 'sin fecha';
             const texto = (m.texto || '').trim();
             return `[${fecha}] ${rol}: ${texto}`;
-        })
-        .join('\n\n');
+        });
+
+    console.log(`[analizarEvolucionAlumno] userId=${userId} mensajes_totales=${(mensajes || []).length} mensajes_validos=${lista.length}`);
+    if (lista.length > 0) {
+        console.log(`[analizarEvolucionAlumno] primera_fecha=${lista[0].split(']')[0].slice(1)} ultima_fecha=${lista[lista.length-1].split(']')[0].slice(1)}`);
+    }
+
+    let historialTexto = lista.join('\n\n');
 
     // Protección contra historial excesivo: si es muy largo, mantenemos inicio y final
     let historialTexto = lista;

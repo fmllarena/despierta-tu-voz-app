@@ -182,7 +182,7 @@ REGLAS:
 
 DISPONDRÁS DE:
 - Perfil del alumno (nombre, nivel de alquimia, historia vocal, creencias transmutadas, resumen actual, notas del mentor)
-- Historial completo de mensajes (alumno y mentor) en orden cronológico estricto
+- Historial completo de mensajes (alumno y mentor) en orden cronológico estricto. CADA MENSAJE TIENE SU FECHA al principio, en formato [DD/MM/AAAA]. Usa esas fechas para situar los hechos en el tiempo.
 
 REGLAS:
 - Responde SIEMPRE a la pregunta concreta que hace el mentor. No des más de lo que pide.
@@ -193,7 +193,8 @@ REGLAS:
   4. PATRONES Y TEMAS RECURRENTES — Qué temas vuelve a tratar, qué le cuesta más, qué ha superado.
   5. FORTALEZAS Y ÁREAS DE MEJORA — Qué domina y en qué sigue trabajando.
   6. RECOMENDACIONES PARA EL MENTOR — Qué trabajar en las próximas sesiones.
-- Si el mentor hace una consulta puntual (ej. "¿qué dijo sobre X?", "¿cuántas veces mencionó Y?"), responde solo eso, de forma directa y breve.
+- Si el mentor hace una consulta puntual (ej. "¿qué dijo sobre X en octubre?", "¿cuántas veces mencionó Y?"), responde solo eso, de forma directa y breve, citando fechas y ejemplos reales del historial.
+- IMPORTANTE: No asumas que solo hay mensajes de hoy. Lee TODO el historial con sus fechas. Si el mentor pregunta por octubre, busca mensajes con fechas de octubre en el historial.
 - Usa lenguaje cálido, directo y profesional. Nada de corporativismo.
 - Cita ejemplos concretos de lo que el alumno ha dicho (mensajes reales, parafraseados si son muy largos).
 - Si el historial es muy corto o vacío, indícalo honestamente.
