@@ -63,6 +63,7 @@ const requeridos = [
     'exportConversationBtn', 'headerExportBtn',
     // Chat
     'chatBox', 'chatMentoriaInput', 'sendBtn', 'stopBtn', 'micBtn', 'singBtn',
+    'scrollFabBtn',
     // Modales existentes
     'diarioModal', 'inspiracionModal', 'upgradeModal', 'authOverlay'
 ];
@@ -89,10 +90,12 @@ const idxConv = scripts.findIndex(s => s.includes('conversations.js'));
 const idxMain = scripts.findIndex(s => s.includes('main.js'));
 const idxA11y = scripts.findIndex(s => s.includes('a11y.js'));
 const idxPwa = scripts.findIndex(s => s.includes('pwa.js'));
+const idxFab = scripts.findIndex(s => s.includes('scroll-fab.js'));
 
 if (idxConv === -1) errors.push('No se carga conversations.js');
 if (idxA11y === -1) errors.push('No se carga a11y.js');
 if (idxPwa === -1) errors.push('No se carga pwa.js');
+if (idxFab === -1) errors.push('No se carga scroll-fab.js');
 if (idxMain === -1) errors.push('No se carga main.js');
 if (idxConv > idxMain && idxMain !== -1) errors.push('conversations.js debería cargarse antes de main.js');
 
@@ -132,6 +135,27 @@ if (!pwaSrc.includes('serviceWorker')) {
 const styleSrc = fs.readFileSync('css/style.css', 'utf8');
 if (!/\.whatsapp-float\s*\{[^}]*bottom:\s*25px/.test(styleSrc)) {
     warnings.push('La posición de .whatsapp-float cambió: revisa solapes con elementos fijos');
+}
+
+const iconosFab = [
+    { clase: 'scroll-fab-icon-abajo', recurso: 'abajo.png' },
+    { clase: 'scroll-fab-icon-arriba', recurso: 'arriba.png' }
+];
+iconosFab.forEach(({ clase, recurso }) => {
+    if (!html.includes(clase)) errors.push(`El globo flotante no usa la clase .${clase}`);
+    if (!html.includes(`data-dir="${clase.endsWith('arriba') ? 'arriba' : 'abajo'}"`)) {
+        errors.push(`El icono .${clase} no declara su dirección`);
+    }
+    if (!fs.existsSync(`assets/${recurso}`)) errors.push(`Falta el recurso assets/${recurso}`);
+    if (!styleSrc.includes(`url('../assets/${recurso}')`)) {
+        errors.push(`style.css no usa assets/${recurso} como máscara del globo flotante`);
+    }
+});
+if (!html.includes('data-scroll-fab')) errors.push('El globo flotante no tiene data-scroll-fab');
+
+const fabSrc = fs.readFileSync('js/modules/scroll-fab.js', 'utf8');
+if (!fabSrc.includes(".querySelectorAll('.scroll-fab-icon')") || !fabSrc.includes('fijarIcono')) {
+    errors.push('scroll-fab.js no alterna los iconos del globo flotante');
 }
 
 console.log('\n=== Validación de index-original.html ===\n');

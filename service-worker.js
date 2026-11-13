@@ -19,7 +19,9 @@ const PRECACHE = [
     '/offline.html',
     '/manifest.json',
     '/logo-appDTV2.png',
-    '/favicon.ico'
+    '/favicon.ico',
+    '/assets/arriba.png',
+    '/assets/abajo.png'
 ];
 
 // Nunca cachear: peticiones autenticadas, mutaciones y APIs externas.

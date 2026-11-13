@@ -10,7 +10,8 @@ const archivos = [
     'main.js',
     'js/modules/conversations.js',
     'js/modules/a11y.js',
-    'js/modules/pwa.js'
+    'js/modules/pwa.js',
+    'js/modules/scroll-fab.js'
 ];
 
 let errores = [];

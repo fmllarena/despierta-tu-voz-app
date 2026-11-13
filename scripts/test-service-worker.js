@@ -102,6 +102,8 @@ async function run(env, fetchImpl = async () => makeResponse('net')) {
         assert(!!shell, 'no crea la caché del shell');
         assert(shell.map.has('/offline.html'), 'no precachea offline.html');
         assert(shell.map.has('/manifest.json'), 'no precachea manifest.json');
+        assert(shell.map.has('/assets/arriba.png'), 'no precachea assets/arriba.png');
+        assert(shell.map.has('/assets/abajo.png'), 'no precachea assets/abajo.png');
     });
 
     await test('NO intercepta /api/* (datos privados)', async () => {
