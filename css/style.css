@@ -5283,3 +5283,65 @@ html[data-theme="dark"] .feedback-btn.save-msg-btn.saved {
     opacity: 1;
     transform: translate(-50%, 0);
 }
+
+/* Globo flotante para saltar al final o al inicio de conversaciones largas */
+.scroll-fab {
+    position: fixed;
+    right: 22px;
+    bottom: 22px;
+    width: 46px;
+    height: 46px;
+    padding: 0;
+    border-radius: 50%;
+    border: 2px solid rgba(255, 255, 255, 0.75);
+    background: #8e7d6d;
+    color: #fff;
+    font-family: inherit;
+    font-size: 1.25rem;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.22);
+    z-index: 30;
+    opacity: 0;
+    visibility: hidden;
+    transform: scale(0.8);
+    transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s ease, background 0.2s ease;
+}
+.scroll-fab.visible {
+    opacity: 1;
+    visibility: visible;
+    transform: scale(1);
+}
+.scroll-fab.visible:hover {
+    background: #7a6a5c;
+    transform: scale(1.08);
+}
+.scroll-fab.anclado {
+    position: absolute;
+    right: auto;
+    left: 14px;
+}
+html[data-theme="dark"] .scroll-fab {
+    background: var(--color-acento, #d4af37);
+    color: #1a1a1a;
+    border-color: rgba(255, 255, 255, 0.25);
+}
+html[data-theme="dark"] .scroll-fab.visible:hover {
+    background: #c49a2e;
+}
+body.dark-mode .scroll-fab {
+    background: #a89b8a;
+    color: #1a1a1a;
+    border-color: rgba(255, 255, 255, 0.25);
+}
+body.dark-mode .scroll-fab.visible:hover {
+    background: #bda895;
+}
+@media (prefers-reduced-motion: reduce) {
+    .scroll-fab {
+        transition: none;
+    }
+}

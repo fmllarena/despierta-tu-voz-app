@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Historial de Chat - Despierta tu Voz</title>
-    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/style.css?v=7.9">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -244,10 +244,14 @@
     <div id="loadingOverlay" class="loading-overlay">
         <div class="spinner"></div>
     </div>
+
+    <button id="scrollFabBtn" class="scroll-fab" type="button" aria-label="Ir al final de los mensajes"
+        title="Ir al final" aria-hidden="true">↓</button>
 </div>
 
 <script type="module">
     import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+    import { initScrollFab } from './js/modules/scroll-fab.js';
 
     let sb, sbService;
     let alumnosMap = {};
@@ -598,6 +602,15 @@
             abortCtrlIA = null;
         }
     };
+
+    initScrollFab({
+        boton: '#scrollFabBtn',
+        destinoAbajo: () => {
+            const lista = document.querySelectorAll('#resultadosAlumno .msg-card');
+            return lista.length ? lista[lista.length - 1] : null;
+        },
+        destinoArriba: () => document.querySelector('#resultadosAlumno .msg-card')
+    });
 
     init();
 </script>

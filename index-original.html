@@ -70,7 +70,7 @@
     <!-- Stripe SDK -->
     <script src="https://js.stripe.com/v3/"></script>
 
-    <link rel="stylesheet" href="css/style.css?v=7.8">
+    <link rel="stylesheet" href="css/style.css?v=7.9">
     <link rel="stylesheet" href="css/modals.css?v=7.5">
     <link rel="stylesheet" href="css/chat-extras.css?v=1.6">
     <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96" />
@@ -340,6 +340,9 @@
                 </div>
             </div>
         </div>
+        <button id="scrollFabBtn" class="scroll-fab" type="button" data-scroll-fab data-scroller="#chatBox"
+            data-ancla=".chat-container" aria-label="Ir al final de la conversación" title="Ir al final"
+            aria-hidden="true">↓</button>
     </div>
     <div id="diarioModal" class="modal">
         <div class="modal-content">
@@ -1036,6 +1039,7 @@
     <script type="module" src="js/modules/conversations.js?v=1.4"></script>
     <script type="module" src="js/modules/data-export.js?v=1.1"></script>
     <script type="module" src="js/modules/a11y.js?v=1.0"></script>
+    <script type="module" src="js/modules/scroll-fab.js?v=1.0"></script>
     <script type="module" src="js/modules/pwa.js?v=1.1"></script>
     <script src="main.js?v=7.15" defer></script>
 
