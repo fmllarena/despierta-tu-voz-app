@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Historial de Chat - Despierta tu Voz</title>
-    <link rel="stylesheet" href="css/style.css?v=7.10">
+    <link rel="stylesheet" href="css/style.css?v=7.11">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -246,7 +246,10 @@
     </div>
 
     <button id="scrollFabBtn" class="scroll-fab" type="button" aria-label="Ir al final de los mensajes"
-        title="Ir al final" aria-hidden="true">↓</button>
+        title="Ir al final" aria-hidden="true">
+        <span class="scroll-fab-icon scroll-fab-icon-abajo" data-dir="abajo" aria-hidden="true"></span>
+        <span class="scroll-fab-icon scroll-fab-icon-arriba" data-dir="arriba" aria-hidden="true" hidden></span>
+    </button>
 </div>
 
 <script type="module">

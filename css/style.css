@@ -5324,6 +5324,33 @@ html[data-theme="dark"] .feedback-btn.save-msg-btn.saved {
     right: auto;
     left: 14px;
 }
+.scroll-fab-icon {
+    display: block;
+    width: 20px;
+    height: 20px;
+    background-color: currentColor;
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+    mask-position: center;
+}
+.scroll-fab-icon[hidden] {
+    display: none;
+}
+.scroll-fab-icon-abajo {
+    -webkit-mask-image: url('../assets/abajo.png');
+    mask-image: url('../assets/abajo.png');
+    -webkit-mask-size: contain;
+    mask-size: contain;
+}
+.scroll-fab-icon-arriba {
+    -webkit-mask-image: url('../assets/arriba.png');
+    mask-image: url('../assets/arriba.png');
+    /* El PNG de la flecha arriba trae un aro: se amplía la imagen y se
+       muestra solo la zona central para recortar el aro. */
+    -webkit-mask-size: 215% 215%;
+    mask-size: 215% 215%;
+}
 html[data-theme="dark"] .scroll-fab {
     background: var(--color-acento, #d4af37);
     color: #1a1a1a;

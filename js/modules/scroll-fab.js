@@ -20,12 +20,21 @@ export function initScrollFab(opciones = {}) {
     const fab = resolver(boton);
     if (!fab) return null;
 
+    const iconos = Array.from(fab.querySelectorAll('.scroll-fab-icon'));
     const scrollerEl = resolver(scroller);
     const anclaEl = resolver(ancla);
     const usaVentana = !scrollerEl;
 
     let pendiente = false;
     let temporizador = null;
+
+    function fijarIcono(direccion) {
+        if (iconos.length) {
+            iconos.forEach(ic => { ic.hidden = ic.dataset.dir !== direccion; });
+            return;
+        }
+        fab.textContent = direccion === 'arriba' ? '↑' : '↓';
+    }
 
     function hayDesborde() {
         if (usaVentana) {
@@ -70,12 +79,12 @@ export function initScrollFab(opciones = {}) {
         fab.removeAttribute('aria-hidden');
         if (enElFinal()) {
             fab.dataset.direccion = 'arriba';
-            fab.textContent = '↑';
+            fijarIcono('arriba');
             fab.title = 'Ir al inicio de la conversación';
             fab.setAttribute('aria-label', 'Ir al inicio de la conversación');
         } else {
             fab.dataset.direccion = 'abajo';
-            fab.textContent = '↓';
+            fijarIcono('abajo');
             fab.title = 'Ir al final de la conversación';
             fab.setAttribute('aria-label', 'Ir al final de la conversación');
         }
