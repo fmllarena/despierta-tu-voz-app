@@ -4387,7 +4387,7 @@ html[data-theme="dark"] .chat-header .logout-btn:hover {
 }
 
 html[data-theme="dark"] .chat-header #mainHelpBtn {
-    color: #1a1a1a;
+    color: var(--color-texto);
 }
 
 html[data-theme="dark"] .chat-header #mainHelpBtn:hover {
