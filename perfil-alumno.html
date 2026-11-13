@@ -138,6 +138,8 @@
             <h3 id="perfilNombre">—</h3>
 
             <div class="field-group"><label>Email</label><div class="val" id="fEmail">—</div></div>
+            <div class="field-group"><label>Fecha primer mensaje</label><div class="val" id="fFechaPrimerMensaje">—</div></div>
+            <div class="field-group"><label>Fecha último mensaje</label><div class="val" id="fFechaUltimoMensaje">—</div></div>
             <div class="field-group"><label>Nivel de Alquimia</label><div class="val" id="fNivel">—</div></div>
             <div class="field-group"><label>Historia Vocal</label><div class="val" id="fHistoria">—</div></div>
             <div class="field-group"><label>Creencias Transmutadas</label><div class="val" id="fCreencias">—</div></div>
@@ -220,16 +222,66 @@
         list.innerHTML = (data || []).map(a => `<option value="${a.email}">${a.nombre}</option>`).join('');
     }
 
-    async function cargarPerfil(email) {
-        const { data } = await sb.from('user_profiles').select('*').eq('email', email).maybeSingle();
-        if (!data) throw new Error('Alumno no encontrado');
-        perfilActual = data;
-        renderPerfil(data);
+    function formatearFechaMensaje(fechaIso) {
+        if (!fechaIso) return '—';
+
+        const fecha = new Date(fechaIso);
+        if (Number.isNaN(fecha.getTime())) return '—';
+
+        return fecha.toLocaleDateString('es-ES', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric'
+        });
     }
 
-    function renderPerfil(p) {
+    async function cargarFechasMensajes(alumnoId) {
+        if (!alumnoId) {
+            return {
+                fechaPrimerMensaje: null,
+                fechaUltimoMensaje: null
+            };
+        }
+
+        const consultarExtremo = (ascending) => sb
+            .from('mensajes')
+            .select('created_at')
+            .eq('alumno', alumnoId)
+            .not('created_at', 'is', null)
+            .neq('emisor', 'resumen_diario')
+            .neq('emisor', 'sistema')
+            .order('created_at', { ascending })
+            .limit(1);
+
+        const [primerResultado, ultimoResultado] = await Promise.all([
+            consultarExtremo(true),
+            consultarExtremo(false)
+        ]);
+
+        if (primerResultado.error) throw primerResultado.error;
+        if (ultimoResultado.error) throw ultimoResultado.error;
+
+        return {
+            fechaPrimerMensaje: primerResultado.data?.[0]?.created_at || null,
+            fechaUltimoMensaje: ultimoResultado.data?.[0]?.created_at || null
+        };
+    }
+
+    async function cargarPerfil(email) {
+        const { data, error } = await sb.from('user_profiles').select('*').eq('email', email).maybeSingle();
+        if (error) throw error;
+        if (!data) throw new Error('Alumno no encontrado');
+
+        perfilActual = data;
+        const fechasMensajes = await cargarFechasMensajes(data.user_id);
+        renderPerfil(data, fechasMensajes);
+    }
+
+    function renderPerfil(p, fechasMensajes) {
         $('perfilNombre').textContent = `🧑‍🎓 ${p.nombre}`;
         $('fEmail').textContent = p.email || '—';
+        $('fFechaPrimerMensaje').textContent = formatearFechaMensaje(fechasMensajes?.fechaPrimerMensaje);
+        $('fFechaUltimoMensaje').textContent = formatearFechaMensaje(fechasMensajes?.fechaUltimoMensaje);
         $('fNivel').textContent = p.nivel_alquimia ? `${p.nivel_alquimia}/10` : '—';
         $('fHistoria').textContent = p.historia_vocal || '—';
         $('fCreencias').textContent = p.creencias_transmutadas || '—';
@@ -250,6 +302,7 @@
         try {
             $('seleccionarBtn').disabled = true;
             $('seleccionarBtn').textContent = 'Cargando...';
+            $('perfilPanel').style.display = 'none';
             $('guardarNotasBtn').disabled = true;
             $('guardarResumenBtn').disabled = true;
             await cargarPerfil(email);
