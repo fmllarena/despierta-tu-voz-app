@@ -33,6 +33,16 @@ function dtv_theme_setup()
     ));
 }
 add_action('after_setup_theme', 'dtv_theme_setup');
+
+// Título fijo para la plantilla de inicio
+function dtv_home_page_title($title_parts) {
+    if (is_page_template('page-home.php') || is_front_page()) {
+        $title_parts['title'] = 'Despierta tu Voz';
+    }
+    return $title_parts;
+}
+add_filter('document_title_parts', 'dtv_home_page_title');
+
 /**
  * Filtro Quirúrgico: Limpiar posts antiguos de Elementor
  * Extrae solo la columna de contenido principal y descose el resto (menús, footers, sidebars).
