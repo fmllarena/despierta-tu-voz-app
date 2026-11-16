@@ -2682,6 +2682,10 @@ html[data-theme="dark"] .stop-btn {
     transition: all 0.3s;
     font-size: 0.85em;
     display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+}
 
 .profile-info {
     display: flex;
