@@ -181,14 +181,10 @@ export const AJUSTES = window.AJUSTES = {
                 if (!content) return;
                 const isHidden = content.style.display === 'none';
                 // Ocultar solo las secciones colapsables (las que están dentro de un .settings-header[data-section])
-                document.querySelectorAll('.settings-section-item').forEach(item => {
-                    const itemHeader = item.querySelector('.settings-header[data-section]');
-                    if (itemHeader) {
-                        const itemContent = item.querySelector('.settings-content');
-                        if (itemContent) itemContent.style.display = 'none';
-                        // Quitar clase open de los headers que se cierran
-                        itemHeader.classList.remove('open');
-                    }
+                document.querySelectorAll('.settings-header[data-section]').forEach(h => {
+                    const itemContent = h.parentElement.querySelector('.settings-content');
+                    if (itemContent) itemContent.style.display = 'none';
+                    h.classList.remove('open');
                 });
                 // Mostrar solo la seleccionada si estaba oculta
                 content.style.display = isHidden ? 'block' : 'none';

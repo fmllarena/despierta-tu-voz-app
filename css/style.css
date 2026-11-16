@@ -2522,7 +2522,7 @@ html[data-theme="dark"] .stop-btn {
     display: none;
 }
 
-/* Triángulo de los encabezados colapsables (patrón Música Ambiental) */
+/* Triángulo de los encabezados colapsables */
 .accordion-arrow {
     font-size: 0.65em;
     line-height: 1;
@@ -2534,7 +2534,7 @@ html[data-theme="dark"] .stop-btn {
     transform: rotate(90deg);
 }
 
-/* Modo oscuro para secciones del modal de Ajustes (patrón Música Ambiental) */
+/* Modo oscuro para secciones del modal de Ajustes */
 html[data-theme="dark"] .settings-section-item {
     border-color: var(--card-border);
 }
