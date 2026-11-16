@@ -173,7 +173,8 @@ export const AJUSTES = window.AJUSTES = {
         });
 
         // Secciones colapsables del modal de Ajustes (patrón Música Ambiental)
-        document.querySelectorAll('.settings-header').forEach(header => {
+        // Solo aplica a headers con data-section (excluye los fijos)
+        document.querySelectorAll('.settings-header[data-section]').forEach(header => {
             header.addEventListener('click', () => {
                 const section = header.dataset.section;
                 const content = document.getElementById(`content-${section}`);

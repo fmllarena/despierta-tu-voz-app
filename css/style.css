@@ -2522,6 +2522,30 @@ html[data-theme="dark"] .stop-btn {
     display: none;
 }
 
+/* Modo oscuro para secciones del modal de Ajustes (patrón Música Ambiental) */
+html[data-theme="dark"] .settings-section-item {
+    border-color: var(--card-border);
+}
+
+html[data-theme="dark"] .settings-header {
+    background: var(--card-bg);
+    color: var(--color-texto);
+}
+
+html[data-theme="dark"] .settings-header-fixed {
+    background: var(--card-bg);
+    color: var(--color-texto);
+}
+
+html[data-theme="dark"] .settings-content {
+    background: var(--card-bg);
+    color: var(--color-texto);
+}
+
+html[data-theme="dark"] .settings-header:hover {
+    background: rgba(255,255,255,0.05);
+}
+
 .profile-info {
     display: flex;
     justify-content: space-between;
