@@ -25,13 +25,13 @@ SELECT
     p.last_hito_completed,
     (SELECT min(m.created_at)
        FROM public.mensajes m
-      WHERE m.alumno = p.user_id AND m.emisor = 'usuario')        AS primer_mensaje,
+      WHERE m.alumno = p.user_id AND m.emisor IN ('user', 'usuario', 'Usuario', 'alumno')) AS primer_mensaje,
     (SELECT count(*)
        FROM public.mensajes m
-      WHERE m.alumno = p.user_id AND m.emisor = 'usuario')        AS mensajes_usuario,
+      WHERE m.alumno = p.user_id AND m.emisor IN ('user', 'usuario', 'Usuario', 'alumno')) AS mensajes_usuario,
     (SELECT count(*)
        FROM public.mensajes m
-      WHERE m.alumno = p.user_id AND m.emisor = 'ia')             AS mensajes_ia,
+      WHERE m.alumno = p.user_id AND m.emisor IN ('ia', 'IA'))    AS mensajes_ia,
     (SELECT count(*)
        FROM public.conversaciones c
       WHERE c.alumno = p.user_id)                                 AS conversaciones,
