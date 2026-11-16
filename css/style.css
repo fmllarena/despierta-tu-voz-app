@@ -2471,84 +2471,55 @@ html[data-theme="dark"] .stop-btn {
     max-width: 560px;
 }
 
-.settings-accordion {
+/* --- Secciones colapsables del modal de Ajustes (patrón Música Ambiental) --- */
+.settings-sections {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 6px;
 }
 
-.accordion-item {
+.settings-section-item {
     border: 1px solid #e2d9cd;
     border-radius: 10px;
     overflow: hidden;
     margin-bottom: 0;
 }
 
-.accordion-item summary {
+.settings-header {
     list-style: none;
     padding: 12px 16px;
     cursor: pointer;
+    background: #fdfaf7;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-weight: 700;
+    font-size: 0.9em;
+    color: var(--color-acento);
+    transition: background 0.2s;
+}
+
+.settings-header:hover {
+    background: #f1ebe3;
+}
+
+.settings-header-fixed {
+    list-style: none;
+    padding: 12px 16px;
+    cursor: default;
     background: #faf8f4;
     display: flex;
     align-items: center;
     justify-content: space-between;
     font-weight: 700;
     font-size: 0.9em;
-    color: #555;
-    transition: background 0.2s;
+    color: var(--color-acento);
 }
 
-.accordion-item summary:hover {
-    background: #f1ebe3;
-}
-
-.accordion-item summary::-webkit-details-marker {
-    display: none;
-}
-
-.accordion-title {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.accordion-arrow {
-    font-size: 0.7em;
-    transition: transform 0.2s;
-}
-
-.accordion-item[open] .accordion-arrow {
-    transform: rotate(90deg);
-}
-
-.accordion-content {
+.settings-content {
     padding: 16px;
     background: #fff;
-    animation: accordionSlide 0.25s ease;
-}
-
-@keyframes accordionSlide {
-    from { opacity: 0; transform: translateY(-8px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-/* Secciones internas del acordeón (antes .settings-section) */
-.settings-accordion .settings-section {
-    margin-bottom: 20px;
-    padding-bottom: 16px;
-    border-bottom: 1px solid #eee;
-}
-
-.settings-accordion .settings-section:last-of-type {
-    border-bottom: none;
-}
-
-.settings-accordion .settings-section h3 {
-    color: var(--color-acento);
-    font-size: 1em;
-    margin-bottom: 16px;
-    text-transform: uppercase;
-    letter-spacing: 1px;
+    display: none;
 }
 
 .profile-info {

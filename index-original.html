@@ -455,14 +455,14 @@
             <span class="close-modal close-settings">&times;</span>
             <h2>Ajustes</h2>
 
-            <div class="settings-accordion">
+            <div class="settings-sections">
                 <!-- Perfil -->
-                <details class="accordion-item" open>
-                    <summary class="accordion-header">
-                        <span class="accordion-title">👤 Perfil de Usuario</span>
-                        <span class="accordion-arrow">▼</span>
-                    </summary>
-                    <div class="accordion-content">
+                <!-- Perfil (siempre visible) -->
+                <div class="settings-section-item">
+                    <div class="settings-header-fixed">
+                        <span>👤 Perfil de Usuario</span>
+                    </div>
+                    <div class="settings-content" id="content-perfil" style="display:block;">
                         <div class="profile-info">
                             <div id="settingsUserName" class="info-value">...</div>
                             <div class="tier-container">
@@ -471,15 +471,14 @@
                             </div>
                         </div>
                     </div>
-                </details>
+                </div>
 
-                <!-- Foto de Perfil -->
-                <details class="accordion-item">
-                    <summary class="accordion-header">
-                        <span class="accordion-title">🖼️ Foto de Perfil</span>
-                        <span class="accordion-arrow">▶</span>
-                    </summary>
-                    <div class="accordion-content">
+                <!-- Foto de Perfil (siempre visible) -->
+                <div class="settings-section-item">
+                    <div class="settings-header-fixed">
+                        <span>🖼️ Foto de Perfil</span>
+                    </div>
+                    <div class="settings-content" id="content-foto" style="display:block;">
                         <div class="user-photo-row">
                             <div id="userPhotoPreview" class="user-photo-preview">
                                 <svg class="user-photo-placeholder" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/></svg>
@@ -491,15 +490,14 @@
                             </div>
                         </div>
                     </div>
-                </details>
+                </div>
 
-                <!-- Modo Oscuro -->
-                <details class="accordion-item">
-                    <summary class="accordion-header">
-                        <span class="accordion-title">🌙 Apariencia</span>
-                        <span class="accordion-arrow">▶</span>
-                    </summary>
-                    <div class="accordion-content">
+                <!-- Modo Oscuro (siempre visible) -->
+                <div class="settings-section-item">
+                    <div class="settings-header-fixed">
+                        <span>🌙 Apariencia</span>
+                    </div>
+                    <div class="settings-content" id="content-apariencia" style="display:block;">
                         <div class="setting-item switch-row">
                             <label for="darkModeToggle" style="font-weight:600;font-size:0.9em;">Modo Oscuro</label>
                             <label class="switch">
@@ -508,15 +506,14 @@
                             </label>
                         </div>
                     </div>
-                </details>
+                </div>
 
                 <!-- Respuesta del Mentor -->
-                <details class="accordion-item">
-                    <summary class="accordion-header">
-                        <span class="accordion-title">🧠 Respuesta del Mentor</span>
-                        <span class="accordion-arrow">▶</span>
-                    </summary>
-                    <div class="accordion-content">
+                <div class="settings-section-item">
+                    <div class="settings-header" data-section="mentor">
+                        <span>🧠 Respuesta del Mentor</span>
+                    </div>
+                    <div class="settings-content" id="content-mentor" style="display:none;">
                         <div class="slider-group">
                             <div class="slider-header">Enfoque</div>
                             <div class="slider-inline">
@@ -545,15 +542,14 @@
                             </div>
                         </div>
                     </div>
-                </details>
+                </div>
 
                 <!-- Preferencias -->
-                <details class="accordion-item">
-                    <summary class="accordion-header">
-                        <span class="accordion-title">🗣️ Preferencias</span>
-                        <span class="accordion-arrow">▶</span>
-                    </summary>
-                    <div class="accordion-content">
+                <div class="settings-section-item">
+                    <div class="settings-header" data-section="preferencias">
+                        <span>🗣️ Preferencias</span>
+                    </div>
+                    <div class="settings-content" id="content-preferencias" style="display:none;">
                         <div class="setting-item">
                             <label for="languageSelect">Idioma del Mentor:</label>
                             <select id="languageSelect">
@@ -571,15 +567,14 @@
                                 placeholder="Dime cómo prefieres que sea nuestro trato (ej: Tutéame, sé directo, usa un lenguaje poético...)"></textarea>
                         </div>
                     </div>
-                </details>
+                </div>
 
                 <!-- Fondo del Chat -->
-                <details class="accordion-item">
-                    <summary class="accordion-header">
-                        <span class="accordion-title">🖼️ Fondo del Chat</span>
-                        <span class="accordion-arrow">▶</span>
-                    </summary>
-                    <div class="accordion-content">
+                <div class="settings-section-item">
+                    <div class="settings-header" data-section="fondo">
+                        <span>🖼️ Fondo del Chat</span>
+                    </div>
+                    <div class="settings-content" id="content-fondo" style="display:none;">
                         <p class="fondo-hint">Personaliza el fondo de la zona de lectura. Los mensajes se mantienen por
                             encima del fondo.</p>
                         <div class="setting-item">
@@ -638,7 +633,7 @@
                             <div class="fondo-preview-bubble">Así se verá tu chat</div>
                         </div>
                     </div>
-                </details>
+                </div>
             </div>
 
             <div class="settings-actions">

@@ -172,6 +172,20 @@ export const AJUSTES = window.AJUSTES = {
             CHAT_BACKGROUND.previsualizar();
         });
 
+        // Secciones colapsables del modal de Ajustes (patrón Música Ambiental)
+        document.querySelectorAll('.settings-header').forEach(header => {
+            header.addEventListener('click', () => {
+                const section = header.dataset.section;
+                const content = document.getElementById(`content-${section}`);
+                if (!content) return;
+                const isHidden = content.style.display === 'none';
+                // Ocultar todas las secciones colapsables
+                document.querySelectorAll('.settings-content').forEach(c => c.style.display = 'none');
+                // Mostrar solo la seleccionada si estaba oculta
+                content.style.display = isHidden ? 'block' : 'none';
+            });
+        });
+
         // Foto de perfil — Supabase Storage
         ELEMENTS.userPhotoInput?.addEventListener('change', async (e) => {
             const file = e.target.files[0];
