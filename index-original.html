@@ -455,146 +455,190 @@
             <span class="close-modal close-settings">&times;</span>
             <h2>Ajustes</h2>
 
-            <div class="settings-section profile-info">
-                <div id="settingsUserName" class="info-value">...</div>
-                <div class="tier-container">
-                    <div id="settingsUserTier" class="info-value">...</div>
-                    <button id="upgradeSettingsBtn" class="upgrade-btn-small">Mejorar Plan</button>
-                </div>
-            </div>
+            <div class="settings-accordion">
+                <!-- Perfil -->
+                <details class="accordion-item" open>
+                    <summary class="accordion-header">
+                        <span class="accordion-title">👤 Perfil de Usuario</span>
+                        <span class="accordion-arrow">▼</span>
+                    </summary>
+                    <div class="accordion-content">
+                        <div class="profile-info">
+                            <div id="settingsUserName" class="info-value">...</div>
+                            <div class="tier-container">
+                                <div id="settingsUserTier" class="info-value">...</div>
+                                <button id="upgradeSettingsBtn" class="upgrade-btn-small">Mejorar Plan</button>
+                            </div>
+                        </div>
+                    </div>
+                </details>
 
-            <div class="settings-section user-photo-section">
-                <h3>Foto de Perfil</h3>
-                <div class="user-photo-row">
-                    <div id="userPhotoPreview" class="user-photo-preview">
-                        <svg class="user-photo-placeholder" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/></svg>
+                <!-- Foto de Perfil -->
+                <details class="accordion-item">
+                    <summary class="accordion-header">
+                        <span class="accordion-title">🖼️ Foto de Perfil</span>
+                        <span class="accordion-arrow">▶</span>
+                    </summary>
+                    <div class="accordion-content">
+                        <div class="user-photo-row">
+                            <div id="userPhotoPreview" class="user-photo-preview">
+                                <svg class="user-photo-placeholder" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/></svg>
+                            </div>
+                            <div class="user-photo-actions">
+                                <label for="userPhotoInput" class="user-photo-upload-btn">Subir foto</label>
+                                <input type="file" id="userPhotoInput" accept="image/*" style="display:none">
+                                <button id="removePhotoBtn" class="user-photo-remove-btn" style="display:none">Quitar foto</button>
+                            </div>
+                        </div>
                     </div>
-                    <div class="user-photo-actions">
-                        <label for="userPhotoInput" class="user-photo-upload-btn">Subir foto</label>
-                        <input type="file" id="userPhotoInput" accept="image/*" style="display:none">
-                        <button id="removePhotoBtn" class="user-photo-remove-btn" style="display:none">Quitar foto</button>
-                    </div>
-                </div>
-            </div>
+                </details>
 
-            <div class="setting-item switch-row" style="justify-content:space-between;display:flex;padding:10px 5px;margin-bottom:5px;">
-                <label for="darkModeToggle" style="font-weight:600;font-size:0.9em;">Modo Oscuro 🌙</label>
-                <label class="switch">
-                    <input type="checkbox" id="darkModeToggle">
-                    <span class="slider"></span>
-                </label>
-            </div>
+                <!-- Modo Oscuro -->
+                <details class="accordion-item">
+                    <summary class="accordion-header">
+                        <span class="accordion-title">🌙 Apariencia</span>
+                        <span class="accordion-arrow">▶</span>
+                    </summary>
+                    <div class="accordion-content">
+                        <div class="setting-item switch-row">
+                            <label for="darkModeToggle" style="font-weight:600;font-size:0.9em;">Modo Oscuro</label>
+                            <label class="switch">
+                                <input type="checkbox" id="darkModeToggle">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                </details>
 
-            <div class="settings-section">
-                <h3>Respuesta del Mentor</h3>
-                <div class="slider-group">
-                    <div class="slider-header">Enfoque</div>
-                    <div class="slider-inline">
-                        <span class="slider-label-left">🧪 Técnico</span>
-                        <input type="range" id="focusSlider" min="1" max="10" step="4.5" value="5"
-                            title="Enfoque del Mentor">
-                        <span class="slider-label-right">🧘‍♂️ Emocional</span>
+                <!-- Respuesta del Mentor -->
+                <details class="accordion-item">
+                    <summary class="accordion-header">
+                        <span class="accordion-title">🧠 Respuesta del Mentor</span>
+                        <span class="accordion-arrow">▶</span>
+                    </summary>
+                    <div class="accordion-content">
+                        <div class="slider-group">
+                            <div class="slider-header">Enfoque</div>
+                            <div class="slider-inline">
+                                <span class="slider-label-left">🧪 Técnico</span>
+                                <input type="range" id="focusSlider" min="1" max="10" step="4.5" value="5"
+                                    title="Enfoque del Mentor">
+                                <span class="slider-label-right">🧘‍♂️ Emocional</span>
+                            </div>
+                        </div>
+                        <div class="slider-group">
+                            <div class="slider-header">Personalidad</div>
+                            <div class="slider-inline">
+                                <span class="slider-label-left">🧘 Neutro</span>
+                                <input type="range" id="personalitySlider" min="1" max="10" step="4.5" value="5"
+                                    title="Personalidad del Mentor">
+                                <span class="slider-label-right">🔥 Motivador</span>
+                            </div>
+                        </div>
+                        <div class="slider-group">
+                            <div class="slider-header">Extensión</div>
+                            <div class="slider-inline">
+                                <span class="slider-label-left">⚡ Breve</span>
+                                <input type="range" id="lengthSlider" min="1" max="10" step="4.5" value="5"
+                                    title="Extensión de las respuestas">
+                                <span class="slider-label-right">📜 Detallado</span>
+                            </div>
+                        </div>
                     </div>
-                </div>
-                <div class="slider-group">
-                    <div class="slider-header">Personalidad</div>
-                    <div class="slider-inline">
-                        <span class="slider-label-left">🧘 Neutro</span>
-                        <input type="range" id="personalitySlider" min="1" max="10" step="4.5" value="5"
-                            title="Personalidad del Mentor">
-                        <span class="slider-label-right">🔥 Motivador</span>
-                    </div>
-                </div>
-                <div class="slider-group">
-                    <div class="slider-header">Extensión</div>
-                    <div class="slider-inline">
-                        <span class="slider-label-left">⚡ Breve</span>
-                        <input type="range" id="lengthSlider" min="1" max="10" step="4.5" value="5"
-                            title="Extensión de las respuestas">
-                        <span class="slider-label-right">📜 Detallado</span>
-                    </div>
-                </div>
-            </div>
+                </details>
 
-            <div class="settings-section">
-                <h3>Preferencias</h3>
-                <div class="setting-item">
-                    <label for="languageSelect">Idioma del Mentor:</label>
-                    <select id="languageSelect">
-                        <option value="es">Español</option>
-                        <option value="en">English</option>
-                        <option value="fr">Français</option>
-                        <option value="it">Italiano</option>
-                        <option value="de">Deutsch</option>
-                        <option value="ca">Català</option>
-                    </select>
-                </div>
-                <div class="setting-item">
-                    <label for="tratoPreferidoInput">Trato Preferido (Opcional):</label>
-                    <textarea id="tratoPreferidoInput"
-                        placeholder="Dime cómo prefieres que sea nuestro trato (ej: Tutéame, sé directo, usa un lenguaje poético...)"></textarea>
-                </div>
-            </div>
+                <!-- Preferencias -->
+                <details class="accordion-item">
+                    <summary class="accordion-header">
+                        <span class="accordion-title">🗣️ Preferencias</span>
+                        <span class="accordion-arrow">▶</span>
+                    </summary>
+                    <div class="accordion-content">
+                        <div class="setting-item">
+                            <label for="languageSelect">Idioma del Mentor:</label>
+                            <select id="languageSelect">
+                                <option value="es">Español</option>
+                                <option value="en">English</option>
+                                <option value="fr">Français</option>
+                                <option value="it">Italiano</option>
+                                <option value="de">Deutsch</option>
+                                <option value="ca">Català</option>
+                            </select>
+                        </div>
+                        <div class="setting-item">
+                            <label for="tratoPreferidoInput">Trato Preferido (Opcional):</label>
+                            <textarea id="tratoPreferidoInput"
+                                placeholder="Dime cómo prefieres que sea nuestro trato (ej: Tutéame, sé directo, usa un lenguaje poético...)"></textarea>
+                        </div>
+                    </div>
+                </details>
 
-            <div class="settings-section fondo-section">
-                <h3>Fondo del Chat</h3>
-                <p class="fondo-hint">Personaliza el fondo de la zona de lectura. Los mensajes se mantienen por encima del
-                    fondo.</p>
-                <div class="setting-item">
-                    <label for="fondoTipoSelect">Tipo de fondo:</label>
-                    <select id="fondoTipoSelect">
-                        <option value="ninguno">Sin personalizar</option>
-                        <option value="color">Color</option>
-                        <option value="foto">Foto</option>
-                    </select>
-                </div>
-                <div id="fondoColorGroup" class="fondo-group" hidden>
-                    <span class="fondo-label">Color del fondo:</span>
-                    <div class="fondo-swatches" id="fondoSwatches">
-                        <button type="button" class="fondo-swatch" data-color="#fdfaf5" style="background:#fdfaf5" aria-label="Crema"></button>
-                        <button type="button" class="fondo-swatch" data-color="#f4ece6" style="background:#f4ece6" aria-label="Arena"></button>
-                        <button type="button" class="fondo-swatch" data-color="#e8dcd0" style="background:#e8dcd0" aria-label="Lino"></button>
-                        <button type="button" class="fondo-swatch" data-color="#d9c3a5" style="background:#d9c3a5" aria-label="Trigo"></button>
-                        <button type="button" class="fondo-swatch" data-color="#b89b7e" style="background:#b89b7e" aria-label="Tostado"></button>
-                        <button type="button" class="fondo-swatch" data-color="#8c6f52" style="background:#8c6f52" aria-label="Tierra"></button>
-                        <button type="button" class="fondo-swatch" data-color="#5c4a3a" style="background:#5c4a3a" aria-label="Cacao"></button>
-                        <button type="button" class="fondo-swatch" data-color="#2f2a25" style="background:#2f2a25" aria-label="Carbón"></button>
+                <!-- Fondo del Chat -->
+                <details class="accordion-item">
+                    <summary class="accordion-header">
+                        <span class="accordion-title">🖼️ Fondo del Chat</span>
+                        <span class="accordion-arrow">▶</span>
+                    </summary>
+                    <div class="accordion-content">
+                        <p class="fondo-hint">Personaliza el fondo de la zona de lectura. Los mensajes se mantienen por
+                            encima del fondo.</p>
+                        <div class="setting-item">
+                            <label for="fondoTipoSelect">Tipo de fondo:</label>
+                            <select id="fondoTipoSelect">
+                                <option value="ninguno">Sin personalizar</option>
+                                <option value="color">Color</option>
+                                <option value="foto">Foto</option>
+                            </select>
+                        </div>
+                        <div id="fondoColorGroup" class="fondo-group" hidden>
+                            <span class="fondo-label">Color del fondo:</span>
+                            <div class="fondo-swatches" id="fondoSwatches">
+                                <button type="button" class="fondo-swatch" data-color="#fdfaf5" style="background:#fdfaf5" aria-label="Crema"></button>
+                                <button type="button" class="fondo-swatch" data-color="#f4ece6" style="background:#f4ece6" aria-label="Arena"></button>
+                                <button type="button" class="fondo-swatch" data-color="#e8dcd0" style="background:#e8dcd0" aria-label="Lino"></button>
+                                <button type="button" class="fondo-swatch" data-color="#d9c3a5" style="background:#d9c3a5" aria-label="Trigo"></button>
+                                <button type="button" class="fondo-swatch" data-color="#b89b7e" style="background:#b89b7e" aria-label="Tostado"></button>
+                                <button type="button" class="fondo-swatch" data-color="#8c6f52" style="background:#8c6f52" aria-label="Tierra"></button>
+                                <button type="button" class="fondo-swatch" data-color="#5c4a3a" style="background:#5c4a3a" aria-label="Cacao"></button>
+                                <button type="button" class="fondo-swatch" data-color="#2f2a25" style="background:#2f2a25" aria-label="Carbón"></button>
+                            </div>
+                            <div class="fondo-color-row">
+                                <input type="color" id="fondoColorInput" class="fondo-color-input" value="#fdfaf5" aria-label="Color personalizado">
+                                <span id="fondoColorValue" class="fondo-color-value">#fdfaf5</span>
+                            </div>
+                        </div>
+                        <div id="fondoFotoGroup" class="fondo-group" hidden>
+                            <span class="fondo-label">Foto de fondo:</span>
+                            <div class="fondo-foto-acciones">
+                                <label for="fondoFotoInput" class="user-photo-upload-btn">Subir foto</label>
+                                <input type="file" id="fondoFotoInput" accept="image/jpeg,image/png,image/webp" style="display:none">
+                                <button id="removeFondoFotoBtn" class="user-photo-remove-btn" style="display:none">Quitar foto</button>
+                            </div>
+                            <p class="fondo-hint">Máximo 2 MB. La imagen se recorta y se optimiza antes de subirla.</p>
+                        </div>
+                        <div class="slider-group">
+                            <div class="slider-header">Intensidad del velo</div>
+                            <div class="slider-inline">
+                                <span class="slider-label-left">Suave</span>
+                                <input type="range" id="fondoVeloSlider" min="0" max="90" step="5" value="30"
+                                    title="Intensidad del velo aplicado sobre el fondo">
+                                <span class="slider-label-right">Intenso</span>
+                            </div>
+                        </div>
+                        <div class="slider-group">
+                            <div class="slider-header">Transparencia de los globos</div>
+                            <div class="slider-inline">
+                                <span class="slider-label-left">Opaco</span>
+                                <input type="range" id="fondoGloboSlider" min="30" max="100" step="5" value="100"
+                                    title="Opacidad de los globos de mensaje">
+                                <span class="slider-label-right">Transparente</span>
+                            </div>
+                        </div>
+                        <div id="fondoPreview" class="fondo-preview">
+                            <div class="fondo-preview-bubble">Así se verá tu chat</div>
+                        </div>
                     </div>
-                    <div class="fondo-color-row">
-                        <input type="color" id="fondoColorInput" class="fondo-color-input" value="#fdfaf5" aria-label="Color personalizado">
-                        <span id="fondoColorValue" class="fondo-color-value">#fdfaf5</span>
-                    </div>
-                </div>
-                <div id="fondoFotoGroup" class="fondo-group" hidden>
-                    <span class="fondo-label">Foto de fondo:</span>
-                    <div class="fondo-foto-acciones">
-                        <label for="fondoFotoInput" class="user-photo-upload-btn">Subir foto</label>
-                        <input type="file" id="fondoFotoInput" accept="image/jpeg,image/png,image/webp" style="display:none">
-                        <button id="removeFondoFotoBtn" class="user-photo-remove-btn" style="display:none">Quitar foto</button>
-                    </div>
-                    <p class="fondo-hint">Máximo 2 MB. La imagen se recorta y se optimiza antes de subirla.</p>
-                </div>
-                <div class="slider-group">
-                    <div class="slider-header">Intensidad del velo</div>
-                    <div class="slider-inline">
-                        <span class="slider-label-left">Suave</span>
-                        <input type="range" id="fondoVeloSlider" min="0" max="90" step="5" value="30"
-                            title="Intensidad del velo aplicado sobre el fondo">
-                        <span class="slider-label-right">Intenso</span>
-                    </div>
-                </div>
-                <div class="slider-group">
-                    <div class="slider-header">Transparencia de los globos</div>
-                    <div class="slider-inline">
-                        <span class="slider-label-left">Opaco</span>
-                        <input type="range" id="fondoGloboSlider" min="30" max="100" step="5" value="100"
-                            title="Opacidad de los globos de mensaje">
-                        <span class="slider-label-right">Transparente</span>
-                    </div>
-                </div>
-                <div id="fondoPreview" class="fondo-preview">
-                    <div class="fondo-preview-bubble">Así se verá tu chat</div>
-                </div>
+                </details>
             </div>
 
             <div class="settings-actions">
