@@ -1,2 +1,5 @@
 [functions.enviar-reto-diario]
 verify_jwt = false
+
+[functions.metricas-mentor]
+verify_jwt = false

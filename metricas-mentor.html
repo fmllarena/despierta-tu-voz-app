@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <script src="js/services/api-auth.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Métricas del Mentor - Despierta tu Voz</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Outfit', sans-serif; background: #f5f2ed; color: #333; min-height: 100vh; margin: 0; }
+        .container { max-width: 1100px; margin: 0 auto; padding: 24px; }
+        .login-section { max-width: 380px; margin: 60px auto; padding: 30px; background: rgba(255,255,255,0.95); border-radius: 24px; box-shadow: 0 20px 50px rgba(0,0,0,0.1); text-align: center; }
+        .login-section h1 { color: #8e7d6d; margin-bottom: 10px; font-size: 1.6rem; }
+        .login-section p { color: #666; font-size: 0.9rem; margin-bottom: 18px; }
+        .login-section input { width: 100%; padding: 14px; border: 2px solid #eee; border-radius: 12px; font-size: 1rem; outline: none; font-family: inherit; margin-bottom: 10px; }
+        .login-section input:focus { border-color: #8e7d6d; }
+        .login-error { color: #e74c3c; font-size: 0.85rem; min-height: 1.5em; margin-top: 8px; }
+        .dashboard { display: none; }
+        .dash-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 10px; }
+        .dash-header h2 { color: #8e7d6d; }
+        .logout-btn { background: transparent; border: 1px solid #e74c3c; color: #e74c3c; padding: 6px 16px; border-radius: 8px; cursor: pointer; font-family: inherit; font-size: 0.85rem; }
+        .logout-btn:hover { background: #e74c3c; color: #fff; }
+        .metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 24px; }
+        .metric-card { background: #fff; border: 1px solid #ddd; border-radius: 12px; padding: 18px 16px; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.04); }
+        .metric-card .value { font-size: 2rem; font-weight: 700; color: #8e7d6d; margin-bottom: 4px; }
+        .metric-card .label { font-size: 0.85rem; color: #666; }
+        .metric-card .pct { font-size: 0.8rem; color: #27ae60; font-weight: 600; margin-top: 6px; }
+        .table-section { background: #fff; border: 1px solid #ddd; border-radius: 12px; padding: 20px; margin-bottom: 24px; overflow-x: auto; }
+        .table-section h3 { color: #8e7d6d; margin-bottom: 16px; font-size: 1.1rem; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+        th, td { padding: 10px 12px; border-bottom: 1px solid #eee; text-align: left; }
+        th { background: #f5f2ed; color: #666; font-weight: 600; font-size: 0.8rem; text-transform: uppercase; }
+        tr:nth-child(even) td { background: #fafaf6; }
+        .no-data { text-align: center; color: #888; padding: 24px; }
+        .btn-refresh { background: #8e7d6d; color: #fff; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-family: inherit; font-size: 0.85rem; margin-left: 10px; }
+        .btn-refresh:hover { background: #7a6a5c; }
+        body.dark-mode { background: #12121e; color: #d4d4dc; }
+        body.dark-mode .login-section { background: rgba(28,28,48,0.95); box-shadow: 0 20px 50px rgba(0,0,0,0.4); }
+        body.dark-mode .login-section input { background: #26263d; border-color: #2e2e48; color: #d4d4dc; }
+        body.dark-mode .panel, body.dark-mode .metric-card, body.dark-mode .table-section { background: rgba(28,28,48,0.95); border-color: rgba(255,255,255,0.08); }
+        body.dark-mode .metric-card .value { color: #d4af37; }
+        body.dark-mode .metric-card .label { color: #aaa; }
+        body.dark-mode .metric-card .pct { color: #4caf50; }
+        body.dark-mode th { background: #2a2a42; color: #b0a090; }
+        body.dark-mode tr:nth-child(even) td { background: #232338; }
+        body.dark-mode td { border-bottom-color: #2e2e48; color: #d4d4dc; }
+        body.dark-mode .login-section h1 { color: #a89b8a; }
+        body.dark-mode .login-error { color: #ff6b6b; }
+        body.dark-mode .dash-header h2 { color: #d4d4dc; }
+        body.dark-mode .logout-btn { border-color: #ff6b6b; color: #ff6b6b; }
+        body.dark-mode .logout-btn:hover { background: #ff6b6b; color: #fff; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="loginSection" class="login-section">
+            <h1>Métricas del Mentor</h1>
+            <p>Acceso restringido al mentor. Inicia sesión para ver las métricas de la app.</p>
+            <input type="email" id="loginEmail" placeholder="Email" value="fernando@despiertatuvoz.com">
+            <input type="password" id="loginPassword" placeholder="Contraseña">
+            <div class="login-error" id="loginError"></div>
+            <button id="loginBtn" class="main-btn" style="width:100%;margin-top:5px;">Entrar</button>
+        </div>
+
+        <div id="dashboard" class="dashboard">
+            <div class="dash-header">
+                <h2>📊 Métricas de Producto</h2>
+                <div style="display:flex;gap:8px;">
+                    <button id="darkToggle" style="background:transparent;border:1px solid #8e7d6d;color:#8e7d6d;padding:6px 12px;border-radius:8px;cursor:pointer;font-size:1rem;font-family:inherit;" title="Modo oscuro">🌙</button>
+                    <button id="refreshBtn" class="btn-refresh">🔄 Actualizar</button>
+                    <button id="logoutBtn" class="logout-btn">Cerrar Sesión</button>
+                </div>
+            </div>
+
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="value" id="mTotalUsuarios">—</div>
+                    <div class="label">Usuarios totales</div>
+                </div>
+                <div class="metric-card">
+                    <div class="value" id="mEscribieron">—</div>
+                    <div class="label">Escribieron (1+ mensaje)</div>
+                    <div class="pct" id="mPctActivacion">—</div>
+                </div>
+                <div class="metric-card">
+                    <div class="value" id="mCincoMensajes">—</div>
+                    <div class="label">5+ mensajes</div>
+                </div>
+                <div class="metric-card">
+                    <div class="value" id="mDosHilos">—</div>
+                    <div class="label">2+ conversaciones</div>
+                </div>
+                <div class="metric-card">
+                    <div class="value" id="mGuardaron">—</div>
+                    <div class="label">Guardaron algo</div>
+                </div>
+                <div class="metric-card">
+                    <div class="value" id="mDePago">—</div>
+                    <div class="label">Plan de pago</div>
+                    <div class="pct" id="mPctConversion">—</div>
+                </div>
+            </div>
+
+            <div class="table-section">
+                <h3>Usuarios recientes (embudo)</h3>
+                <table id="tablaEmbudo">
+                    <thead>
+                        <tr>
+                            <th>Email</th>
+                            <th>Plan</th>
+                            <th>Alta</th>
+                            <th>Última actividad</th>
+                            <th>Mensajes (usuario)</th>
+                            <th>Mensajes (IA)</th>
+                            <th>Conversaciones</th>
+                            <th>Guardados</th>
+                            <th>Primer mensaje</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbodyEmbudo"></tbody>
+                </table>
+            </div>
+
+            <div class="table-section">
+                <h3>Métricas diarias</h3>
+                <table id="tablaDiarias">
+                    <thead>
+                        <tr>
+                            <th>Día</th>
+                            <th>Altas</th>
+                            <th>Usuarios activos</th>
+                            <th>Mensajes (usuario)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbodyDiarias"></tbody>
+                </table>
+            </div>
+
+            <p style="font-size:0.8rem;color:#888;margin-top:12px;">Datos obtenidos desde las vistas de Supabase <code>v_usuario_embudo</code> y <code>v_metricas_diarias</code>.</p>
+        </div>
+    </div>
+
+    <script type="module">
+        import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+
+        let sb;
+        const $ = id => document.getElementById(id);
+        const EDGE_FUNCTION_URL = '/functions/v1/metricas-mentor';
+
+        async function init() {
+            const configRes = await fetch('/api/config');
+            const config = await configRes.json();
+            sb = createClient(config.url, config.key, { auth: { persistSession: false } });
+            window.__supabase = sb;
+
+            const session = localStorage.getItem('sb-session');
+            if (session) {
+                await sb.auth.setSession(JSON.parse(session));
+                const { data: { user } } = await sb.auth.getUser();
+                if (user) {
+                    $('loginSection').style.display = 'none';
+                    $('dashboard').style.display = 'block';
+                    await cargarMetricas();
+                    return;
+                }
+            }
+        }
+
+        $('loginBtn').onclick = async () => {
+            const email = $('loginEmail').value.trim();
+            const password = $('loginPassword').value.trim();
+            if (!email || !password) { $('loginError').textContent = 'Completa ambos campos'; return; }
+            $('loginError').textContent = '';
+            const { data, error } = await sb.auth.signInWithPassword({ email, password });
+            if (error) { $('loginError').textContent = error.message; return; }
+            localStorage.setItem('sb-session', JSON.stringify(data.session));
+            $('loginSection').style.display = 'none';
+            $('dashboard').style.display = 'block';
+            await cargarMetricas();
+        };
+
+        $('logoutBtn').onclick = async () => {
+            await sb.auth.signOut();
+            localStorage.removeItem('sb-session');
+            $('dashboard').style.display = 'none';
+            $('loginSection').style.display = 'block';
+            $('loginPassword').value = '';
+        };
+
+        async function cargarMetricas() {
+            const { data: { user } } = await sb.auth.getUser();
+            if (!user) return;
+
+            $('refreshBtn').disabled = true;
+            $('refreshBtn').textContent = 'Cargando...';
+
+            try {
+                const res = await fetch(EDGE_FUNCTION_URL, {
+                    headers: {
+                        Authorization: `Bearer ${user.access_token || (await sb.auth.getSession()).data.session.access_token}`
+                    }
+                });
+
+                if (!res.ok) {
+                    const err = await res.json().catch(() => ({}));
+                    throw new Error(err.error || `Error ${res.status}`);
+                }
+
+                const data = await res.json();
+
+                $('mTotalUsuarios').textContent = data.totalUsuarios ?? 0;
+                $('mEscribieron').textContent = data.escribieron ?? 0;
+                $('mCincoMensajes').textContent = data.cincoMensajes ?? 0;
+                $('mDosHilos').textContent = data.dosHilos ?? 0;
+                $('mGuardaron').textContent = data.guardaron ?? 0;
+                $('mDePago').textContent = data.dePago ?? 0;
+                $('mPctActivacion').textContent = (data.pctActivacion ?? 0) + '%';
+                $('mPctConversion').textContent = (data.pctConversion ?? 0) + '%';
+
+                renderTablaEmbudo(data.embudo ?? []);
+                renderTablaDiarias(data.metricasDiarias ?? []);
+
+            } catch (e) {
+                console.error('Error cargando métricas:', e);
+                alert('No se pudieron cargar las métricas: ' + e.message);
+            } finally {
+                $('refreshBtn').disabled = false;
+                $('refreshBtn').textContent = '🔄 Actualizar';
+            }
+        }
+
+        $('refreshBtn').onclick = cargarMetricas;
+
+        function renderTablaEmbudo(rows) {
+            const tbody = $('tbodyEmbudo');
+            tbody.innerHTML = '';
+            if (!rows || rows.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="9" class="no-data">No hay datos de usuarios.</td></tr>';
+                return;
+            }
+            rows.slice(0, 50).forEach(r => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${r.email || '—'}</td>
+                    <td>${r.plan || '—'}</td>
+                    <td>${r.alta ? new Date(r.alta).toLocaleDateString('es-ES') : '—'}</td>
+                    <td>${r.last_active_at ? new Date(r.last_active_at).toLocaleDateString('es-ES') : '—'}</td>
+                    <td>${r.mensajes_usuario ?? 0}</td>
+                    <td>${r.mensajes_ia ?? 0}</td>
+                    <td>${r.conversaciones ?? 0}</td>
+                    <td>${r.guardados ?? 0}</td>
+                    <td>${r.primer_mensaje ? new Date(r.primer_mensaje).toLocaleDateString('es-ES') : '—'}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function renderTablaDiarias(rows) {
+            const tbody = $('tbodyDiarias');
+            tbody.innerHTML = '';
+            if (!rows || rows.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" class="no-data">No hay datos diarios.</td></tr>';
+                return;
+            }
+            rows.slice(-30).forEach(r => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${r.dia || '—'}</td>
+                    <td>${r.altas ?? 0}</td>
+                    <td>${r.usuarios_activos ?? 0}</td>
+                    <td>${r.mensajes_usuario ?? 0}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // Dark mode
+        function aplicarModoOscuro(oscuro) {
+            document.body.classList.toggle('dark-mode', oscuro);
+            $('darkToggle').textContent = oscuro ? '☀️' : '🌙';
+            localStorage.setItem('dark-mode', oscuro ? '1' : '0');
+        }
+        $('darkToggle').onclick = () => aplicarModoOscuro(!document.body.classList.contains('dark-mode'));
+        if (localStorage.getItem('dark-mode') === '1' || (localStorage.getItem('dark-mode') === null && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            aplicarModoOscuro(true);
+        }
+
+        init();
+    </script>
+</body>
+</html>

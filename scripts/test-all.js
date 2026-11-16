@@ -19,7 +19,10 @@ const suites = [
     { nombre: 'Like/dislike, guardar y layout del modal', archivo: 'scripts/test-message-actions.js' },
     { nombre: 'Service worker (PWA)', archivo: 'scripts/test-service-worker.js' },
     { nombre: 'Estructura del HTML', archivo: 'scripts/validate-chat-ui.js' },
-    { nombre: 'Referencias JS ↔ HTML', archivo: 'scripts/validate-chat-refs.js' }
+    { nombre: 'Referencias JS ↔ HTML', archivo: 'scripts/validate-chat-refs.js' },
+    { nombre: 'Cerrar sesión (logout)', archivo: 'scripts/test-logout.js' },
+    { nombre: 'Fechas de mensajes (perfil-alumno)', archivo: 'scripts/test-perfil-fechas.js' },
+    { nombre: 'Globo flotante (scroll-fab)', archivo: 'scripts/test-scroll-fab.js' }
 ];
 
 const resultados = [];

@@ -81,6 +81,12 @@ module.exports = async function handler(req, res) {
     applyCors(req, res);
     if (handlePreflight(req, res)) return;
 
+    // AbortController global de la petición: se dispara si el cliente cierra la pestaña
+    // o finaliza la conexión HTTP, permitiendo cancelar la llamada al proveedor de IA.
+    const abortController = new AbortController();
+    req.on('close', () => abortController.abort());
+    res.on('close', () => abortController.abort());
+
     if (req.method === "PATCH") {
         const user = await requireUser(req, res);
         if (!user) return;
@@ -136,14 +142,14 @@ module.exports = async function handler(req, res) {
             }, 52000);
 
             try {
-                await processChat(req, res);
+                await processChat(req, res, abortController.signal);
             } finally {
                 clearTimeout(streamDeadline);
             }
         } else {
             // 52 s: margen de 8 s antes del corte de Vercel (60 s).
             const result = await withTimeout(
-                processChat(req),
+                processChat(req, null, abortController.signal),
                 52000,
                 "El servidor ha tardado demasiado. Prueba de nuevo."
             );
@@ -157,7 +163,7 @@ module.exports = async function handler(req, res) {
 /**
  * Procesa la lógica de negocio del chat con fallback secuencial
  */
-async function processChat(req, res = null) {
+async function processChat(req, res = null, signal = null) {
     const { intent, message, history = [], userId, userId2 = null, stream = false, vocal_scan = null, originPost = null, originCat = null, fileData = null, preferredProvider = null } = req.body;
 
     if (intent === 'warmup') return { text: "OK" };
@@ -452,7 +458,7 @@ async function buildUserContext(userId, intent, originPost = null, originCat = n
 /**
  * Ejecuta la llamada REST a Gemini (mantenido como fallback opcional)
  */
-async function callGeminiAPI({ intent, prompt, history, stream, res, fileData }) {
+async function callGeminiAPI({ intent, prompt, history, stream, res, fileData, signal }) {
     if (!process.env.GEMINI_API_KEY && !process.env.GEMINI_API_KEY_2) throw new Error("Falta API Key de Gemini");
 
     const endpoint = stream ? 'streamGenerateContent' : 'generateContent';
@@ -482,12 +488,15 @@ async function callGeminiAPI({ intent, prompt, history, stream, res, fileData })
         systemInstruction: { parts: [{ text: SYSTEM_PROMPTS[intent] }] }
     };
 
-    // geminiFetchWithKeys ya rota key1 -> key2 ante 429/5xx; si lanza, processChat pasa a OpenRouter.
-    // 45 s de margen: si Gemini se queda colgado, se aborta y el stream puede pasar al siguiente proveedor.
-    const controller = new AbortController();
-    const geminiTimer = setTimeout(() => controller.abort(), 45000);
+    // Combinar signal del cliente (desconexión) con el timeout interno de Gemini.
+    const combinedController = new AbortController();
+    const combinedSignal = combinedController.signal;
+    if (signal) {
+        signal.addEventListener('abort', () => combinedController.abort(), { once: true });
+    }
+    const geminiTimer = setTimeout(() => combinedController.abort(), 45000);
     try {
-        const response = await geminiFetchWithKeys(url, requestBody, controller.signal);
+        const response = await geminiFetchWithKeys(url, requestBody, combinedSignal);
 
         if (stream && res) {
             return await handleStreamResponse(response, res);
@@ -504,7 +513,7 @@ async function callGeminiAPI({ intent, prompt, history, stream, res, fileData })
 /**
  * Ejecuta la llamada a OpenRouter (fallback 2 — compatible OpenAI)
  */
-async function callOpenRouterAPI({ intent, prompt, history, stream, res }) {
+async function callOpenRouterAPI({ intent, prompt, history, stream, res, signal }) {
     if (!process.env.OPENROUTER_API_KEY) throw new Error("Falta API Key de OpenRouter");
 
     const messages = [
@@ -515,6 +524,13 @@ async function callOpenRouterAPI({ intent, prompt, history, stream, res }) {
         })),
         { role: "user", content: prompt }
     ];
+
+    // Combinar signal del cliente (desconexión) si se proporciona.
+    const combinedController = new AbortController();
+    const combinedSignal = combinedController.signal;
+    if (signal) {
+        signal.addEventListener('abort', () => combinedController.abort(), { once: true });
+    }
 
     const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
         method: 'POST',
@@ -529,7 +545,8 @@ async function callOpenRouterAPI({ intent, prompt, history, stream, res }) {
             messages,
             stream: !!stream,
             max_tokens: 4096
-        })
+        }),
+        signal: combinedSignal
     });
 
     if (!response.ok) {
@@ -840,14 +857,14 @@ async function handleStreamResponse(response, res) {
 /**
  * Ejecuta la llamada a Mistral AI (primario — servidores UE)
  */
-async function callMistralAPI({ intent, prompt, history, stream, res, fileData, resumenBoundary }) {
+async function callMistralAPI({ intent, prompt, history, stream, res, fileData, resumenBoundary, signal }) {
     const keys = [process.env.MISTRAL_API_KEY, process.env.MISTRAL_API_KEY_2, process.env.MISTRAL_API_KEY_3].filter(Boolean);
     if (!keys.length) throw new Error("Falta API Key de Mistral");
 
     let lastErr;
     for (const key of keys) {
         try {
-            return await _mistralCall({ intent, prompt, history, stream, res, fileData, resumenBoundary, apiKey: key });
+            return await _mistralCall({ intent, prompt, history, stream, res, fileData, resumenBoundary, apiKey: key, signal });
         } catch (e) {
             lastErr = e;
             const isRetryable = e.message.includes('429') || e.message.includes('503') || e.message.includes('Too Many Requests') || e.message.includes('401');
@@ -857,7 +874,7 @@ async function callMistralAPI({ intent, prompt, history, stream, res, fileData, 
     throw lastErr;
 }
 
-async function _mistralCall({ intent, prompt, history, stream, res, fileData, resumenBoundary, apiKey }) {
+async function _mistralCall({ intent, prompt, history, stream, res, fileData, resumenBoundary, apiKey, signal }) {
     if (!apiKey) throw new Error("Falta API Key de Mistral");
 
     function buildUserContent(msg, file) {
@@ -871,6 +888,13 @@ async function _mistralCall({ intent, prompt, history, stream, res, fileData, re
             parts.push({ type: 'image_url', image_url: `data:${file.mimeType};base64,${file.data}` });
         }
         return parts;
+    }
+
+    // Combinar signal del cliente (desconexión) con el timeout interno de Mistral (60s).
+    const combinedController = new AbortController();
+    const combinedSignal = combinedController.signal;
+    if (signal) {
+        signal.addEventListener('abort', () => combinedController.abort(), { once: true });
     }
 
     const boundaryDate = resumenBoundary ? new Date(resumenBoundary) : null;
@@ -954,8 +978,7 @@ async function _mistralCall({ intent, prompt, history, stream, res, fileData, re
     let lastErr;
     for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
         try {
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 60000);
+            const timeoutId = setTimeout(() => combinedController.abort(), 60000);
             response = await fetchWithBackoff(`${MISTRAL_BASE_URL}/chat/completions`, {
                 method: 'POST',
                 headers: {
@@ -963,7 +986,7 @@ async function _mistralCall({ intent, prompt, history, stream, res, fileData, re
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify(requestBody),
-                signal: controller.signal
+                signal: combinedSignal
             });
             clearTimeout(timeoutId);
             if (response.ok) break;

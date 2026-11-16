@@ -24,6 +24,93 @@ function canAIRecommend() {
     return minutesElapsed >= 30 || totalSessions >= 3;
 }
 
+// --- GUARDADO OFFLINE (IndexedDB) ---
+let dbOffline = null;
+const DB_NAME = 'dtv_offline_db';
+const DB_VERSION = 1;
+const STORE_NAME = 'mensajes_pendientes';
+
+function abrirDBOffline() {
+    return new Promise((resolve, reject) => {
+        if (dbOffline) return resolve(dbOffline);
+        const req = indexedDB.open(DB_NAME, DB_VERSION);
+        req.onupgradeneeded = () => {
+            const db = req.result;
+            if (!db.objectStoreNames.contains(STORE_NAME)) {
+                db.createObjectStore(STORE_NAME, { keyPath: 'id', autoIncrement: true });
+            }
+        };
+        req.onsuccess = () => { dbOffline = req.result; resolve(dbOffline); };
+        req.onerror = () => reject(req.error);
+    });
+}
+
+function guardarMensajeOffline(texto, emisor, alumnoId, conversacionId = null, createdAt = null) {
+    return abrirDBOffline().then(db => {
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction(STORE_NAME, 'readwrite');
+            const store = tx.objectStore(STORE_NAME);
+            const item = {
+                texto,
+                emisor,
+                alumnoId,
+                conversacionId,
+                createdAt: createdAt || new Date().toISOString(),
+                intentos: 0,
+                creadoEn: new Date().toISOString()
+            };
+            const peticion = store.add(item);
+            peticion.onsuccess = () => resolve(peticion.result);
+            peticion.onerror = () => reject(peticion.error);
+        });
+    });
+}
+
+function obtenerMensajesPendientes() {
+    return abrirDBOffline().then(db => {
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction(STORE_NAME, 'readonly');
+            const store = tx.objectStore(STORE_NAME);
+            const peticion = store.getAll();
+            peticion.onsuccess = () => resolve(peticion.result || []);
+            peticion.onerror = () => reject(peticion.error);
+        });
+    });
+}
+
+function eliminarMensajePendiente(id) {
+    return abrirDBOffline().then(db => {
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction(STORE_NAME, 'readwrite');
+            const store = tx.objectStore(STORE_NAME);
+            const peticion = store.delete(id);
+            peticion.onsuccess = () => resolve();
+            peticion.onerror = () => reject(peticion.error);
+        });
+    });
+}
+
+async function reenviarMensajesPendientes() {
+    if (!navigator.onLine) return;
+    const pendientes = await obtenerMensajesPendientes();
+    for (const m of pendientes) {
+        m.intentos = (m.intentos || 0) + 1;
+        try {
+            await guardarMensajeDB(m.texto, m.emisor, m.alumnoId, m.conversacionId, m.createdAt);
+            await eliminarMensajePendiente(m.id);
+        } catch (e) {
+            // Si falla de nuevo (sin red), se queda en IndexedDB para el siguiente intento
+            console.warn('[Offline] Reenvío fallido, se mantiene en IndexedDB:', e.message);
+            break;
+        }
+    }
+}
+
+// Listener de recuperación de conexión
+window.addEventListener('online', () => {
+    reenviarMensajesPendientes().catch(() => { });
+});
+
 // Cargar biblioteca de artículos
 // blogLibrary movido a config.js
 
@@ -971,7 +1058,14 @@ async function guardarMensajeDB(texto, emisor, customDate = null) {
             .maybeSingle();
 
         if (error) {
-            console.error("Error Supabase (insert):", error);
+            // Si es error de red (sin respuesta HTTP de Supabase), guardar en IndexedDB para reintento posterior
+            const esErrorRed = !error || error.status === undefined || error.status === null;
+            if (esErrorRed) {
+                console.warn("[Offline] Sin red, guardando mensaje en IndexedDB...");
+                await guardarMensajeOffline(texto, emisor, user.id, conversacionId, customDate);
+            } else {
+                console.error("Error Supabase (insert):", error);
+            }
             return null;
         } else {
             console.log("Mensaje guardado correctamente.");
@@ -1002,7 +1096,13 @@ async function guardarMensajeDB(texto, emisor, customDate = null) {
             return nuevo?.id || null;
         }
     } catch (e) {
-        console.error("Error crítico guardando mensaje:", e);
+        const esErrorRed = !e || e.status === undefined || e.status === null || /failed to fetch|network/i.test(e.message || '');
+        if (esErrorRed) {
+            console.warn("[Offline] Sin red (catch), guardando mensaje en IndexedDB...");
+            await guardarMensajeOffline(texto, emisor, user && user.id ? user.id : null, conversacionId, customDate);
+        } else {
+            console.error("Error crítico guardando mensaje:", e);
+        }
         return null;
     }
 }
