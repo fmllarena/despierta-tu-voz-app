@@ -2522,6 +2522,18 @@ html[data-theme="dark"] .stop-btn {
     display: none;
 }
 
+/* Triángulo de los encabezados colapsables (patrón Música Ambiental) */
+.accordion-arrow {
+    font-size: 0.65em;
+    line-height: 1;
+    transition: transform 0.2s ease;
+    color: var(--color-acento);
+}
+
+.settings-header[data-section].open .accordion-arrow {
+    transform: rotate(90deg);
+}
+
 /* Modo oscuro para secciones del modal de Ajustes (patrón Música Ambiental) */
 html[data-theme="dark"] .settings-section-item {
     border-color: var(--card-border);
@@ -2544,6 +2556,10 @@ html[data-theme="dark"] .settings-content {
 
 html[data-theme="dark"] .settings-header:hover {
     background: rgba(255,255,255,0.05);
+}
+
+html[data-theme="dark"] .accordion-arrow {
+    color: var(--color-acento);
 }
 
 .profile-info {

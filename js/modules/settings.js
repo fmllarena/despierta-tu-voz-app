@@ -173,17 +173,27 @@ export const AJUSTES = window.AJUSTES = {
         });
 
         // Secciones colapsables del modal de Ajustes (patrón Música Ambiental)
-        // Solo aplica a headers con data-section (excluye los fijos)
+        // Solo aplica a headers con data-section (excluye los fijos: Perfil, Foto, Apariencia)
         document.querySelectorAll('.settings-header[data-section]').forEach(header => {
             header.addEventListener('click', () => {
                 const section = header.dataset.section;
                 const content = document.getElementById(`content-${section}`);
                 if (!content) return;
                 const isHidden = content.style.display === 'none';
-                // Ocultar todas las secciones colapsables
-                document.querySelectorAll('.settings-content').forEach(c => c.style.display = 'none');
+                // Ocultar solo las secciones colapsables (las que están dentro de un .settings-header[data-section])
+                document.querySelectorAll('.settings-section-item').forEach(item => {
+                    const itemHeader = item.querySelector('.settings-header[data-section]');
+                    if (itemHeader) {
+                        const itemContent = item.querySelector('.settings-content');
+                        if (itemContent) itemContent.style.display = 'none';
+                        // Quitar clase open de los headers que se cierran
+                        itemHeader.classList.remove('open');
+                    }
+                });
                 // Mostrar solo la seleccionada si estaba oculta
                 content.style.display = isHidden ? 'block' : 'none';
+                // Toggle clase open en el header para rotar el triángulo
+                header.classList.toggle('open', isHidden);
             });
         });
 
