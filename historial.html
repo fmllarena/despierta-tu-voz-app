@@ -223,34 +223,31 @@
             <div class="panel" id="resultadosAlumno">
                         <div class="sin-resultados">Selecciona un alumno, una palabra clave o define un rango de fechas y haz clic en Buscar.</div>
             </div>
+        <!-- Panel IA sobre resultados -->
+        <div class="panel">
+            <h3>🤖 Preguntar a la IA sobre estos resultados</h3>
+            <p style="font-size:0.85rem;color:#666;margin-bottom:12px;">Escribe una pregunta sobre los mensajes mostrados arriba. La IA usará solo esos resultados como base.</p>
+            <textarea id="iaPregunta" class="pregunta-area" placeholder="Ej: ¿Qué temas trató el alumno en octubre? ¿Cuántas veces mencionó ansiedad?"></textarea>
+            <div style="display:flex;gap:10px;align-items:center;margin-top:10px;">
+                <button id="iaPreguntarBtn" class="main-btn">Preguntar a la IA</button>
+                <button id="iaCancelarBtn" class="btn-cancelar" style="display:none;">⏹ Cancelar</button>
+            </div>
         </div>
-    </div>
-
-    <!-- Panel IA sobre resultados (disponible desde ambas pestañas) -->
-    <div class="panel">
-        <h3>🤖 Preguntar a la IA sobre estos resultados</h3>
-        <p style="font-size:0.85rem;color:#666;margin-bottom:12px;">Escribe una pregunta sobre los mensajes mostrados arriba. La IA usará solo esos resultados como base.</p>
-        <textarea id="iaPregunta" class="pregunta-area" placeholder="Ej: ¿Qué temas trató el alumno en octubre? ¿Cuántas veces mencionó ansiedad?"></textarea>
-        <div style="display:flex;gap:10px;align-items:center;margin-top:10px;">
-            <button id="iaPreguntarBtn" class="main-btn">Preguntar a la IA</button>
-            <button id="iaCancelarBtn" class="btn-cancelar" style="display:none;">⏹ Cancelar</button>
+        <div id="iaResultado" class="panel resultado" style="display:none;">
+            <h3>📋 Respuesta de la IA</h3>
+            <div id="iaTexto" class="analisis-texto"></div>
         </div>
-    </div>
-    <div id="iaResultado" class="panel resultado" style="display:none;">
-        <h3>📋 Respuesta de la IA</h3>
-        <div id="iaTexto" class="analisis-texto"></div>
-    </div>
 
-    <div id="loadingOverlay" class="loading-overlay">
-        <div class="spinner"></div>
-    </div>
+        <div id="loadingOverlay" class="loading-overlay">
+            <div class="spinner"></div>
+        </div>
 
-    <button id="scrollFabBtn" class="scroll-fab" type="button" aria-label="Ir al final de los mensajes"
-        title="Ir al final" aria-hidden="true">
-        <span class="scroll-fab-icon scroll-fab-icon-abajo" data-dir="abajo" aria-hidden="true"></span>
-        <span class="scroll-fab-icon scroll-fab-icon-arriba" data-dir="arriba" aria-hidden="true" hidden></span>
-    </button>
-</div>
+        <button id="scrollFabBtn" class="scroll-fab" type="button" aria-label="Ir al final de los mensajes"
+            title="Ir al final" aria-hidden="true">
+            <span class="scroll-fab-icon scroll-fab-icon-abajo" data-dir="abajo" aria-hidden="true"></span>
+            <span class="scroll-fab-icon scroll-fab-icon-arriba" data-dir="arriba" aria-hidden="true" hidden></span>
+        </button>
+    </div>
 
 <script type="module">
     import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
