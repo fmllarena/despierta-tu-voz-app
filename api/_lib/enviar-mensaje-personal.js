@@ -1,8 +1,8 @@
 const { createClient } = require('@supabase/supabase-js');
-const { applyCors, handlePreflight, rateLimit } = require('./_lib/http');
-const { requireMentor } = require('./_lib/auth');
+const { applyCors, handlePreflight, rateLimit } = require('./http');
+const { requireMentor } = require('./auth');
 
-module.exports = async function handler(req, res) {
+async function handler(req, res) {
     applyCors(req, res);
     if (handlePreflight(req, res)) return;
 
@@ -25,7 +25,6 @@ module.exports = async function handler(req, res) {
     try {
         const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-        // Verificar que el destinatario existe
         const { data: destUser, error: destError } = await supabase.auth.admin.getUserById(destinatario_id);
         if (destError || !destUser?.user) {
             return res.status(404).json({ error: 'Destinatario no encontrado' });
@@ -52,7 +51,9 @@ module.exports = async function handler(req, res) {
             data
         });
     } catch (err) {
-        console.error('Error en api/enviar-mensaje-personal:', err);
+        console.error('Error en enviar-mensaje-personal:', err);
         return res.status(500).json({ error: 'Error del servidor', details: err.message });
     }
-};
+}
+
+module.exports = { handler };

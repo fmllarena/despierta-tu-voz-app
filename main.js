@@ -838,7 +838,7 @@ async function cargarMensajes() {
         const session = await state.supabase?.auth.getSession();
         const token = session?.data?.session?.access_token;
         if (token) {
-            const res = await fetch('/api/mensajes-personales', {
+            const res = await fetch('/api/mensajes', {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             if (res.ok) {

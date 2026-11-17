@@ -1,8 +1,8 @@
 const { createClient } = require('@supabase/supabase-js');
-const { applyCors, handlePreflight, rateLimit } = require('./_lib/http');
-const { requireUser } = require('./_lib/auth');
+const { applyCors, handlePreflight, rateLimit } = require('./http');
+const { requireUser } = require('./auth');
 
-module.exports = async function handler(req, res) {
+async function handler(req, res) {
     applyCors(req, res);
     if (handlePreflight(req, res)) return;
 
@@ -28,7 +28,6 @@ module.exports = async function handler(req, res) {
 
         if (error) throw error;
 
-        // Obtener nombres de los remitentes para mostrar
         const remitentes = {};
         if (data && data.length) {
             const remitenteIds = [...new Set(data.map(m => m.remitente_id))];
@@ -55,7 +54,9 @@ module.exports = async function handler(req, res) {
 
         return res.status(200).json({ ok: true, mensajes });
     } catch (err) {
-        console.error('Error en api/mensajes-personales:', err);
+        console.error('Error en mensajes-personales:', err);
         return res.status(500).json({ error: 'Error del servidor', details: err.message });
     }
-};
+}
+
+module.exports = { handler };
