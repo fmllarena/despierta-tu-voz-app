@@ -1215,6 +1215,9 @@ async function finishModuleWithAI(supabase, user, skipInputCheck = false) {
         }
 
         console.log(`🎯 Perfil actualizado: Módulo ${module.id} completado.`);
+
+        // --- GUARDAR MENSAJE EN LOCALSTORAGE PARA LA CAMPANA DE LA APP ---
+        guardarMensajeModuloCompletado(module.id);
     }
 
     const container = document.getElementById('questionContainer');
@@ -1308,5 +1311,40 @@ async function finishModuleWithAI(supabase, user, skipInputCheck = false) {
         document.getElementById('moduloModal').style.display = 'none';
         document.getElementById('viajeModal').style.display = 'flex';
         renderRoadmap();
+    }
+}
+
+/**
+ * Guarda un mensaje de notificación en localStorage para que aparezca
+ * en la campana de mensajes de la app principal.
+ */
+function guardarMensajeModuloCompletado(hitoId) {
+    const MODULE_NAMES = {
+        1: 'El Espejo del Pasado',
+        2: 'Raíces',
+        3: 'Personaje',
+        4: 'Altar',
+        5: 'Propósito'
+    };
+    const nombreModulo = MODULE_NAMES[hitoId] || `Módulo ${hitoId}`;
+    const mensaje = {
+        id: `hito_${hitoId}_${Date.now()}`,
+        titulo: `✨ Módulo completado: ${nombreModulo}`,
+        texto: `Has finalizado el módulo "${nombreModulo}" de Mi Viaje. ¡Sigue avanzando en tu camino de alquimia vocal!`,
+        fecha: new Date().toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' }),
+        tipo: 'modulo_completado'
+    };
+
+    try {
+        const guardados = JSON.parse(localStorage.getItem('dtv_mensajes') || '[]');
+        // Evitar duplicados por mismo hito
+        const yaExiste = guardados.some(m => m.titulo === mensaje.titulo);
+        if (!yaExiste) {
+            guardados.push(mensaje);
+            localStorage.setItem('dtv_mensajes', JSON.stringify(guardados));
+            console.log(`📩 Mensaje guardado para campana: ${mensaje.titulo}`);
+        }
+    } catch (e) {
+        console.warn('No se pudo guardar el mensaje de módulo completado:', e);
     }
 }
