@@ -909,6 +909,27 @@ async function cargarMensajes() {
     actualizarIconoCampana();
 }
 
+// Polling de mensajes en tiempo real mientras el modal está abierto
+let pollingMensajesTimer = null;
+
+function iniciarPollingMensajes() {
+    if (pollingMensajesTimer) return;
+    pollingMensajesTimer = setInterval(async () => {
+        if (!ELEMENTS.mensajesModal || ELEMENTS.mensajesModal.style.display !== 'flex') {
+            detenerPollingMensajes();
+            return;
+        }
+        await cargarMensajes();
+    }, 30000);
+}
+
+function detenerPollingMensajes() {
+    if (pollingMensajesTimer) {
+        clearInterval(pollingMensajesTimer);
+        pollingMensajesTimer = null;
+    }
+}
+
 function marcarMensajesLeidos() {
     mensajesPendientes = false;
     actualizarIconoCampana();
@@ -921,17 +942,22 @@ window.addEventListener('dtv-nuevo-mensaje', () => {
 
 ELEMENTS.mensajesBtn?.addEventListener('click', () => {
     cargarMensajes();
-    if (ELEMENTS.mensajesModal) ELEMENTS.mensajesModal.style.display = 'flex';
+    if (ELEMENTS.mensajesModal) {
+        ELEMENTS.mensajesModal.style.display = 'flex';
+        iniciarPollingMensajes();
+    }
 });
 
 ELEMENTS.closeMensajes?.addEventListener('click', () => {
     marcarMensajesLeidos();
+    detenerPollingMensajes();
     if (ELEMENTS.mensajesModal) ELEMENTS.mensajesModal.style.display = 'none';
 });
 
 window.addEventListener('click', (e) => {
     if (e.target === ELEMENTS.mensajesModal) {
         marcarMensajesLeidos();
+        detenerPollingMensajes();
         if (ELEMENTS.mensajesModal) ELEMENTS.mensajesModal.style.display = 'none';
     }
 });
