@@ -1343,6 +1343,11 @@ function guardarMensajeModuloCompletado(hitoId) {
             guardados.push(mensaje);
             localStorage.setItem('dtv_mensajes', JSON.stringify(guardados));
             console.log(`📩 Mensaje guardado para campana: ${mensaje.titulo}`);
+
+            // Notificar a la app principal para actualizar el icono de la campana
+            try {
+                window.dispatchEvent(new CustomEvent('dtv-nuevo-mensaje'));
+            } catch (_) {}
         }
     } catch (e) {
         console.warn('No se pudo guardar el mensaje de módulo completado:', e);

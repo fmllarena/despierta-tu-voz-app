@@ -859,6 +859,11 @@ function marcarMensajesLeidos() {
     actualizarIconoCampana();
 }
 
+// Recibir aviso de nuevo mensaje desde mi_viaje (modulo completado)
+window.addEventListener('dtv-nuevo-mensaje', () => {
+    cargarMensajes();
+});
+
 ELEMENTS.mensajesBtn?.addEventListener('click', () => {
     cargarMensajes();
     if (ELEMENTS.mensajesModal) ELEMENTS.mensajesModal.style.display = 'flex';
