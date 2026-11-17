@@ -834,19 +834,25 @@ async function cargarMensajes() {
 
     // Cargar mensajes personales del mentor desde Supabase
     let mensajesPersonales = [];
+    let supabaseError = null;
     try {
         const session = await state.supabase?.auth.getSession();
         const token = session?.data?.session?.access_token;
-        if (token) {
+        if (!token) {
+            supabaseError = 'No hay sesión de Supabase activa';
+        } else {
             const res = await fetch('/api/chat?action=listar-mensajes', {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             if (res.ok) {
                 const data = await res.json();
                 mensajesPersonales = data.mensajes || [];
+            } else {
+                supabaseError = `Error ${res.status} al cargar mensajes personales`;
             }
         }
     } catch (e) {
+        supabaseError = e.message;
         console.warn('No se pudieron cargar mensajes personales de Supabase:', e.message);
     }
 
@@ -855,7 +861,9 @@ async function cargarMensajes() {
 
     ELEMENTS.mensajesLista.innerHTML = '';
     if (todos.length === 0) {
-        ELEMENTS.mensajesLista.innerHTML = '<div class="mensaje-vacio" style="text-align:center;color:#888;padding:30px;">No tienes mensajes nuevos.</div>';
+        let vacioMsg = 'No tienes mensajes nuevos.';
+        if (supabaseError) vacioMsg = `No se pudieron cargar los mensajes: ${supabaseError}`;
+        ELEMENTS.mensajesLista.innerHTML = `<div class="mensaje-vacio" style="text-align:center;color:#888;padding:30px;">${vacioMsg}</div>`;
         mensajesPendientes = false;
     } else {
         todos.forEach(m => {
