@@ -3,6 +3,8 @@ const { SYSTEM_PROMPTS } = require('./_lib/prompts');
 const { sanitizeGeminiHistory } = require('./_lib/utils');
 const { applyCors, handlePreflight, rateLimit } = require('./_lib/http');
 const { requireUser, isMentor, canAccessUser } = require('./_lib/auth');
+const { handler: handlerEnviarMensaje } = require('./_lib/enviar-mensaje-personal');
+const { handler: handlerListarMensajes } = require('./_lib/mensajes-personales');
 
 // --- CONFIGURACIÓN MISTRAL (primario — servidores UE, Francia) ---
 const MISTRAL_MODEL = "mistral-small-latest";
@@ -80,6 +82,16 @@ async function geminiFetchWithKeys(url, body, signal = null) {
 module.exports = async function handler(req, res) {
     applyCors(req, res);
     if (handlePreflight(req, res)) return;
+
+    // Rutas de mensajes personales (consolidado para respetar límite de 12 funciones serverless)
+    const url = new URL(req.url, 'http://localhost');
+    const action = url.searchParams.get('action');
+    if (action === 'listar-mensajes' && req.method === 'GET') {
+        return handlerListarMensajes(req, res);
+    }
+    if (action === 'enviar-mensaje' && req.method === 'POST') {
+        return handlerEnviarMensaje(req, res);
+    }
 
     // AbortController global de la petición: se dispara si el cliente cierra la pestaña
     // o finaliza la conexión HTTP, permitiendo cancelar la llamada al proveedor de IA.

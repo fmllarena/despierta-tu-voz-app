@@ -149,7 +149,7 @@
                 const session = await sb.auth.getSession();
                 const token = session?.session?.access_token;
 
-                const res = await fetch('/api/mensajes', {
+                const res = await fetch('/api/chat?action=enviar-mensaje', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
