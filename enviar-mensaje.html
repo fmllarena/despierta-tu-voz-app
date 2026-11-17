@@ -24,6 +24,11 @@
         .back-link:hover { text-decoration: underline; }
         .mentor-badge { display: inline-block; background: #d4af37; color: #1f1a16; padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 700; margin-left: 10px; }
         .destinatario-hint { font-size: 0.85rem; color: #888; margin-top: 4px; }
+        .destinatarios-container { display: flex; flex-direction: column; gap: 10px; margin-bottom: 10px; }
+        .destinatario-row { display: flex; gap: 8px; align-items: center; }
+        .destinatario-row select { flex: 1; }
+        button.btn-add { background: transparent; border: 2px dashed #8e7d6d; color: #8e7d6d; padding: 10px 16px; border-radius: 10px; font-size: 0.9rem; font-weight: 600; cursor: pointer; width: 100%; margin-top: 6px; }
+        button.btn-add:hover { background: #f0eae2; }
     </style>
 </head>
 <body>
@@ -36,13 +41,16 @@
         <div id="alertSuccess" class="alert success"></div>
 
         <form id="formMensaje">
-            <div class="form-group">
-                <label for="destinatarioEmail">Email del destinatario (alumno)</label>
-                <select id="destinatarioEmail" required>
-                    <option value="">Selecciona un alumno...</option>
-                </select>
-                <div class="destinatario-hint">Lista de alumnos registrados en la app.</div>
+            <div class="destinatarios-container" id="destinatariosContainer">
+                <div class="destinatario-row">
+                    <select class="select-destinatario" required>
+                        <option value="">Selecciona un alumno...</option>
+                    </select>
+                    <button type="button" class="btn-remove-destinatario" style="display:none;">×</button>
+                </div>
             </div>
+            <div class="destinatario-hint">Lista de alumnos registrados en la app. Puedes añadir varios destinatarios.</div>
+            <button type="button" id="btnAddDestinatario" class="btn-add">+ Añadir otro usuario</button>
 
             <div class="form-group">
                 <label for="asunto">Asunto</label>
@@ -69,6 +77,8 @@
         const $ = id => document.getElementById(id);
         const form = $('formMensaje');
         const btnEnviar = $('btnEnviar');
+        const btnAdd = $('btnAddDestinatario');
+        const contenedor = $('destinatariosContainer');
         const alertError = $('alertError');
         const alertSuccess = $('alertSuccess');
 
@@ -119,24 +129,30 @@
         }
 
         async function cargarAlumnos() {
-            const select = $('destinatarioEmail');
-            if (!select) return;
+            const selects = document.querySelectorAll('.select-destinatario');
+            if (!selects.length) return;
 
             try {
                 const { data: profiles, error } = await sb
                     .from('user_profiles')
-                    .select('user_id, email, subscription_tier')
+                    .select('user_id, email, nombre')
                     .order('email', { ascending: true });
 
                 if (error) throw error;
 
-                select.innerHTML = '<option value="">Selecciona un alumno...</option>';
-
-                (profiles || []).forEach(p => {
+                const opciones = (profiles || []).map(p => {
                     const option = document.createElement('option');
                     option.value = p.user_id;
-                    option.textContent = `${p.email} (${p.subscription_tier || 'free'})`;
-                    select.appendChild(option);
+                    const nombre = p.nombre || p.email.split('@')[0];
+                    option.textContent = `${p.email} — ${nombre}`;
+                    return option;
+                });
+
+                selects.forEach(select => {
+                    const valorActual = select.value;
+                    select.innerHTML = '<option value="">Selecciona un alumno...</option>';
+                    opciones.forEach(opt => select.appendChild(opt.cloneNode(true)));
+                    if (valorActual) select.value = valorActual;
                 });
             } catch (e) {
                 console.error('Error cargando alumnos:', e);
@@ -144,17 +160,57 @@
             }
         }
 
+        function crearNuevoDestinatario() {
+            const fila = document.createElement('div');
+            fila.className = 'destinatario-row';
+            fila.innerHTML = `
+                <select class="select-destinatario" required>
+                    <option value="">Selecciona un alumno...</option>
+                </select>
+                <button type="button" class="btn-remove-destinatario">×</button>
+            `;
+
+            const select = fila.querySelector('.select-destinatario');
+            const btnRemove = fila.querySelector('.btn-remove-destinatario');
+
+            const primero = document.querySelector('.select-destinatario');
+            if (primero) {
+                Array.from(primero.options).forEach(opt => {
+                    if (opt.value) select.appendChild(opt.cloneNode(true));
+                });
+            }
+
+            btnRemove.onclick = () => {
+                fila.remove();
+                if (document.querySelectorAll('.select-destinatario').length === 1) {
+                    const solo = document.querySelector('.btn-remove-destinatario');
+                    if (solo) solo.style.display = 'none';
+                }
+            };
+
+            contenedor.appendChild(fila);
+            if (document.querySelectorAll('.select-destinatario').length > 1) {
+                document.querySelectorAll('.btn-remove-destinatario').forEach(b => b.style.display = 'inline-block');
+            }
+        }
+
+        btnAdd.onclick = crearNuevoDestinatario;
+
         form.onsubmit = async (e) => {
             e.preventDefault();
             alertError.style.display = 'none';
             alertSuccess.style.display = 'none';
 
-            const destinatarioId = $('destinatarioEmail').value;
+            const selects = document.querySelectorAll('.select-destinatario');
+            const destinatariosIds = Array.from(selects)
+                .map(s => s.value)
+                .filter(Boolean);
+
             const asunto = $('asunto').value.trim();
             const contenido = $('contenido').value.trim();
 
-            if (!destinatarioId || !asunto || !contenido) {
-                showAlert(alertError, 'Selecciona un alumno y completa todos los campos.');
+            if (!destinatariosIds.length || !asunto || !contenido) {
+                showAlert(alertError, 'Selecciona al menos un alumno y completa todos los campos.');
                 return;
             }
 
@@ -166,30 +222,40 @@
                 const session = await sb.auth.getSession();
                 const token = session?.session?.access_token;
 
-                const res = await fetch('/api/chat?action=enviar-mensaje', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    },
-                    body: JSON.stringify({
-                        destinatario_id: destinatarioId,
-                        asunto,
-                        contenido
+                // Enviar un mensaje por cada destinatario seleccionado
+                const resultados = await Promise.all(destinatariosIds.map(id =>
+                    fetch('/api/chat?action=enviar-mensaje', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify({
+                            destinatario_id: id,
+                            asunto,
+                            contenido
+                        })
                     })
-                });
+                ));
 
-                const result = await res.json();
+                const fallos = resultados.filter(r => !r.ok);
 
-                if (!res.ok) {
-                    showAlert(alertError, result.error || 'Error al enviar el mensaje.');
+                if (fallos.length) {
+                    const errJson = await fallos[0].json().catch(() => ({}));
+                    showAlert(alertError, errJson.error || 'Error al enviar algunos mensajes.');
                     btnEnviar.disabled = false;
                     btnEnviar.textContent = 'Enviar Mensaje';
                     return;
                 }
 
-                showAlert(alertSuccess, '✅ Mensaje enviado correctamente. El alumno lo verá en su campana de Mensajes.');
+                showAlert(alertSuccess, `✅ Mensaje enviado a ${destinatariosIds.length} usuario${destinatariosIds.length > 1 ? 's' : ''}. Lo verán en su campana de Mensajes.`);
                 form.reset();
+                // Mantener solo el primer select y limpiarlo
+                const selectsTodos = document.querySelectorAll('.select-destinatario');
+                selectsTodos.forEach((s, i) => {
+                    if (i > 0) s.closest('.destinatario-row').remove();
+                });
+                selectsTodos[0].value = '';
             } catch (err) {
                 console.error(err);
                 showAlert(alertError, 'Error de conexión al enviar el mensaje.');
