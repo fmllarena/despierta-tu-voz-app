@@ -38,8 +38,10 @@
         <form id="formMensaje">
             <div class="form-group">
                 <label for="destinatarioEmail">Email del destinatario (alumno)</label>
-                <input type="email" id="destinatarioEmail" placeholder="alumno@ejemplo.com" required>
-                <div class="destinatario-hint">Escribe el email del alumno al que quieres enviar el mensaje.</div>
+                <select id="destinatarioEmail" required>
+                    <option value="">Selecciona un alumno...</option>
+                </select>
+                <div class="destinatario-hint">Lista de alumnos registrados en la app.</div>
             </div>
 
             <div class="form-group">
@@ -107,9 +109,38 @@
                 }
 
                 console.log('✅ Mentor autenticado:', user.email);
+
+                // Cargar lista de alumnos para el select
+                await cargarAlumnos();
             } catch (e) {
                 console.error('Error init:', e);
                 showAlert(alertError, 'Error inicializando la sesión. Recarga la página.');
+            }
+        }
+
+        async function cargarAlumnos() {
+            const select = $('destinatarioEmail');
+            if (!select) return;
+
+            try {
+                const { data: profiles, error } = await sb
+                    .from('user_profiles')
+                    .select('user_id, email, subscription_tier')
+                    .order('email', { ascending: true });
+
+                if (error) throw error;
+
+                select.innerHTML = '<option value="">Selecciona un alumno...</option>';
+
+                (profiles || []).forEach(p => {
+                    const option = document.createElement('option');
+                    option.value = p.user_id;
+                    option.textContent = `${p.email} (${p.subscription_tier || 'free'})`;
+                    select.appendChild(option);
+                });
+            } catch (e) {
+                console.error('Error cargando alumnos:', e);
+                showAlert(alertError, 'No se pudo cargar la lista de alumnos.');
             }
         }
 
@@ -118,12 +149,12 @@
             alertError.style.display = 'none';
             alertSuccess.style.display = 'none';
 
-            const destinatarioEmail = $('destinatarioEmail').value.trim();
+            const destinatarioId = $('destinatarioEmail').value;
             const asunto = $('asunto').value.trim();
             const contenido = $('contenido').value.trim();
 
-            if (!destinatarioEmail || !asunto || !contenido) {
-                showAlert(alertError, 'Completa todos los campos.');
+            if (!destinatarioId || !asunto || !contenido) {
+                showAlert(alertError, 'Selecciona un alumno y completa todos los campos.');
                 return;
             }
 
@@ -131,20 +162,6 @@
             btnEnviar.textContent = 'Enviando...';
 
             try {
-                // Buscar el user_id del destinatario por email
-                const { data: profiles, error: profError } = await sb
-                    .from('user_profiles')
-                    .select('user_id, email')
-                    .ilike('email', destinatarioEmail)
-                    .maybeSingle();
-
-                if (profError || !profiles) {
-                    showAlert(alertError, 'No se encontró ningún usuario con ese email.');
-                    btnEnviar.disabled = false;
-                    btnEnviar.textContent = 'Enviar Mensaje';
-                    return;
-                }
-
                 const { data: { user } } = await sb.auth.getUser();
                 const session = await sb.auth.getSession();
                 const token = session?.session?.access_token;
@@ -156,7 +173,7 @@
                         'Authorization': `Bearer ${token}`
                     },
                     body: JSON.stringify({
-                        destinatario_id: profiles.user_id,
+                        destinatario_id: destinatarioId,
                         asunto,
                         contenido
                     })
