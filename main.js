@@ -828,6 +828,30 @@ function actualizarIconoCampana() {
     ELEMENTS.mensajesIcon.alt = mensajesPendientes ? 'Mensajes (pendientes)' : 'Mensajes';
 }
 
+async function obtenerTokenSesion() {
+    // Intento 1: state.supabase si está disponible
+    try {
+        if (state?.supabase) {
+            const session = await state.supabase.auth.getSession();
+            if (session?.data?.session?.access_token) {
+                return session.data.session.access_token;
+            }
+        }
+    } catch (_) {}
+
+    // Intento 2: leer directamente de localStorage sb-session
+    try {
+        const raw = localStorage.getItem('sb-session');
+        if (raw) {
+            const parsed = JSON.parse(raw);
+            if (parsed?.access_token) return parsed.access_token;
+            if (parsed?.session?.access_token) return parsed.session.access_token;
+        }
+    } catch (_) {}
+
+    return null;
+}
+
 async function cargarMensajes() {
     if (!ELEMENTS.mensajesLista) return;
     const guardados = JSON.parse(localStorage.getItem('dtv_mensajes') || '[]');
@@ -836,8 +860,7 @@ async function cargarMensajes() {
     let mensajesPersonales = [];
     let supabaseError = null;
     try {
-        const session = await state.supabase?.auth.getSession();
-        const token = session?.data?.session?.access_token;
+        const token = await obtenerTokenSesion();
         if (!token) {
             supabaseError = 'No hay sesión de Supabase activa';
         } else {
