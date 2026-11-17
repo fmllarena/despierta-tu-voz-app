@@ -2539,15 +2539,16 @@ html[data-theme="dark"] .stop-btn {
     background: #fff;
 }
 .metrica-valor {
-    font-size: 1.35rem;
+    font-size: 1rem;
     font-weight: 700;
     color: var(--color-acento, #8e7d6d);
     margin-bottom: 4px;
     word-break: break-all;
 }
 .metrica-label {
-    font-size: 0.8rem;
+    font-size: 0.75rem;
     color: #666;
+    margin-bottom: 2px;
 }
 html[data-theme="dark"] .metrica-item {
     background: var(--card-bg);
