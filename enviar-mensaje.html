@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enviar Mensaje Personal - Despierta tu Voz</title>
+    <link rel="stylesheet" href="css/style.css?v=7.12">
+    <style>
+        body { font-family: system-ui, -apple-system, sans-serif; background: #f5f2ed; color: #333; margin: 0; padding: 24px; }
+        .container { max-width: 700px; margin: 0 auto; background: #fff; border-radius: 16px; padding: 32px; box-shadow: 0 20px 50px rgba(0,0,0,0.08); }
+        h1 { color: #8e7d6d; margin-top: 0; font-size: 1.8rem; }
+        .form-group { margin-bottom: 18px; }
+        label { display: block; font-weight: 600; margin-bottom: 6px; color: #555; font-size: 0.95rem; }
+        input, textarea, select { width: 100%; padding: 10px 14px; border: 2px solid #e2d9cd; border-radius: 10px; font-size: 1rem; font-family: inherit; box-sizing: border-box; }
+        input:focus, textarea:focus, select:focus { outline: none; border-color: #8e7d6d; }
+        textarea { min-height: 180px; resize: vertical; }
+        button.btn-send { background: #8e7d6d; color: #fff; border: none; padding: 12px 28px; border-radius: 10px; font-size: 1rem; font-weight: 600; cursor: pointer; width: 100%; margin-top: 10px; }
+        button.btn-send:hover { background: #7a6a5c; }
+        button.btn-send:disabled { opacity: 0.6; cursor: not-allowed; }
+        .alert { padding: 12px 16px; border-radius: 10px; margin-bottom: 18px; font-size: 0.9rem; display: none; }
+        .alert.error { background: #fdecea; color: #c0392b; border: 1px solid #f5c6c6; }
+        .alert.success { background: #e9f7ef; color: #27ae60; border: 1px solid #c3e6cb; }
+        .back-link { display: inline-block; margin-bottom: 20px; color: #8e7d6d; text-decoration: none; font-weight: 500; }
+        .back-link:hover { text-decoration: underline; }
+        .mentor-badge { display: inline-block; background: #d4af37; color: #1f1a16; padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 700; margin-left: 10px; }
+        .destinatario-hint { font-size: 0.85rem; color: #888; margin-top: 4px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="index.html" class="back-link">← Volver a la App</a>
+
+        <h1>Enviar Mensaje Personal <span class="mentor-badge">Mentor</span></h1>
+
+        <div id="alertError" class="alert error"></div>
+        <div id="alertSuccess" class="alert success"></div>
+
+        <form id="formMensaje">
+            <div class="form-group">
+                <label for="destinatarioEmail">Email del destinatario (alumno)</label>
+                <input type="email" id="destinatarioEmail" placeholder="alumno@ejemplo.com" required>
+                <div class="destinatario-hint">Escribe el email del alumno al que quieres enviar el mensaje.</div>
+            </div>
+
+            <div class="form-group">
+                <label for="asunto">Asunto</label>
+                <input type="text" id="asunto" placeholder="Título del mensaje" required>
+            </div>
+
+            <div class="form-group">
+                <label for="contenido">Mensaje</label>
+                <textarea id="contenido" placeholder="Escribe tu mensaje personal para el alumno..." required></textarea>
+            </div>
+
+            <button type="submit" id="btnEnviar" class="btn-send">Enviar Mensaje</button>
+        </form>
+
+        <p style="font-size: 0.85rem; color: #888; margin-top: 24px;">
+            El mensaje aparecerá en el modal de <strong>Mensajes (campana)</strong> de la app del usuario, junto con los avisos de módulos completados.
+        </p>
+    </div>
+
+    <script type="module">
+        import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+
+        let sb;
+        const $ = id => document.getElementById(id);
+        const form = $('formMensaje');
+        const btnEnviar = $('btnEnviar');
+        const alertError = $('alertError');
+        const alertSuccess = $('alertSuccess');
+
+        function showAlert(el, text) {
+            el.textContent = text;
+            el.style.display = 'block';
+            setTimeout(() => el.style.display = 'none', 5000);
+        }
+
+        async function init() {
+            try {
+                const configRes = await fetch('/api/config');
+                const config = await configRes.json();
+                sb = createClient(config.url, config.key, { auth: { persistSession: false } });
+
+                const session = localStorage.getItem('sb-session');
+                if (session) {
+                    await sb.auth.setSession(JSON.parse(session));
+                }
+
+                const { data: { user }, error } = await sb.auth.getUser();
+                if (error || !user) {
+                    $('formMensaje').style.display = 'none';
+                    showAlert(alertError, 'Debes iniciar sesión como mentor para usar esta página.');
+                    return;
+                }
+
+                // Verificar que es mentor (por email o rol)
+                const email = String(user.email || '').toLowerCase();
+                const mentorEmails = ['fernando@despiertatuvoz.com'];
+                const role = user.app_metadata?.role || user.user_metadata?.role;
+                const esMentor = mentorEmails.includes(email) || role === 'mentor' || role === 'admin';
+
+                if (!esMentor) {
+                    $('formMensaje').style.display = 'none';
+                    showAlert(alertError, 'Solo el mentor puede enviar mensajes personales.');
+                    return;
+                }
+
+                console.log('✅ Mentor autenticado:', user.email);
+            } catch (e) {
+                console.error('Error init:', e);
+                showAlert(alertError, 'Error inicializando la sesión. Recarga la página.');
+            }
+        }
+
+        form.onsubmit = async (e) => {
+            e.preventDefault();
+            alertError.style.display = 'none';
+            alertSuccess.style.display = 'none';
+
+            const destinatarioEmail = $('destinatarioEmail').value.trim();
+            const asunto = $('asunto').value.trim();
+            const contenido = $('contenido').value.trim();
+
+            if (!destinatarioEmail || !asunto || !contenido) {
+                showAlert(alertError, 'Completa todos los campos.');
+                return;
+            }
+
+            btnEnviar.disabled = true;
+            btnEnviar.textContent = 'Enviando...';
+
+            try {
+                // Buscar el user_id del destinatario por email
+                const { data: profiles, error: profError } = await sb
+                    .from('user_profiles')
+                    .select('user_id, email')
+                    .ilike('email', destinatarioEmail)
+                    .maybeSingle();
+
+                if (profError || !profiles) {
+                    showAlert(alertError, 'No se encontró ningún usuario con ese email.');
+                    btnEnviar.disabled = false;
+                    btnEnviar.textContent = 'Enviar Mensaje';
+                    return;
+                }
+
+                const { data: { user } } = await sb.auth.getUser();
+                const session = await sb.auth.getSession();
+                const token = session?.session?.access_token;
+
+                const res = await fetch('/api/enviar-mensaje-personal', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        destinatario_id: profiles.user_id,
+                        asunto,
+                        contenido
+                    })
+                });
+
+                const result = await res.json();
+
+                if (!res.ok) {
+                    showAlert(alertError, result.error || 'Error al enviar el mensaje.');
+                    btnEnviar.disabled = false;
+                    btnEnviar.textContent = 'Enviar Mensaje';
+                    return;
+                }
+
+                showAlert(alertSuccess, '✅ Mensaje enviado correctamente. El alumno lo verá en su campana de Mensajes.');
+                form.reset();
+            } catch (err) {
+                console.error(err);
+                showAlert(alertError, 'Error de conexión al enviar el mensaje.');
+            } finally {
+                btnEnviar.disabled = false;
+                btnEnviar.textContent = 'Enviar Mensaje';
+            }
+        };
+
+        init();
+    </script>
+</body>
+</html>

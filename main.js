@@ -828,23 +828,47 @@ function actualizarIconoCampana() {
     ELEMENTS.mensajesIcon.alt = mensajesPendientes ? 'Mensajes (pendientes)' : 'Mensajes';
 }
 
-function cargarMensajes() {
+async function cargarMensajes() {
     if (!ELEMENTS.mensajesLista) return;
     const guardados = JSON.parse(localStorage.getItem('dtv_mensajes') || '[]');
+
+    // Cargar mensajes personales del mentor desde Supabase
+    let mensajesPersonales = [];
+    try {
+        const session = await state.supabase?.auth.getSession();
+        const token = session?.data?.session?.access_token;
+        if (token) {
+            const res = await fetch('/api/mensajes-personales', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (res.ok) {
+                const data = await res.json();
+                mensajesPersonales = data.mensajes || [];
+            }
+        }
+    } catch (e) {
+        console.warn('No se pudieron cargar mensajes personales de Supabase:', e.message);
+    }
+
+    // Mezclar: mensajes personales primero (más recientes), luego los de localStorage
+    const todos = [...mensajesPersonales, ...guardados];
+
     ELEMENTS.mensajesLista.innerHTML = '';
-    if (guardados.length === 0) {
+    if (todos.length === 0) {
         ELEMENTS.mensajesLista.innerHTML = '<div class="mensaje-vacio" style="text-align:center;color:#888;padding:30px;">No tienes mensajes nuevos.</div>';
         mensajesPendientes = false;
     } else {
-        guardados.forEach(m => {
+        todos.forEach(m => {
             const div = document.createElement('div');
             div.className = 'mensaje-item';
             div.style.cssText = 'border-bottom:1px solid #eee;padding:12px;display:flex;justify-content:space-between;align-items:flex-start;';
+            const fecha = m.fecha ? new Date(m.fecha).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '';
+            const remitente = m.remitente ? ` — ${m.remitente}` : '';
             div.innerHTML = `
                 <div style="flex:1;">
-                    <div style="font-weight:600;font-size:0.95em;color:#333;">${m.titulo || 'Mensaje'}</div>
+                    <div style="font-weight:600;font-size:0.95em;color:#333;">${m.titulo || 'Mensaje'}${remitente}</div>
                     <div style="font-size:0.85em;color:#666;margin-top:4px;">${m.texto || ''}</div>
-                    <div style="font-size:0.75em;color:#999;margin-top:6px;">${m.fecha || ''}</div>
+                    <div style="font-size:0.75em;color:#999;margin-top:6px;">${fecha}</div>
                 </div>
             `;
             ELEMENTS.mensajesLista.appendChild(div);
