@@ -309,8 +309,11 @@
             <button id="sesionBtn" class="premium-btn icon-nav-btn" title="Sesiones 1/1" style="display: none;">
                 <img src="assets/icon_sesiones.png" alt="Sesiones">
             </button>
-            <button id="upgradeBtn" class="upgrade-btn icon-nav-btn" title="Mejorar Plan" style="display: none;">
+            <!-- <button id="upgradeBtn" class="upgrade-btn icon-nav-btn" title="Mejorar Plan" style="display: none;">
                 <img src="assets/icon_upgrade.png" alt="Mejorar Plan">
+            </button> -->
+            <button id="mensajesBtn" class="icon-nav-btn" title="Mensajes">
+                <img id="mensajesIcon" src="assets/campana.png" alt="Mensajes">
             </button>
             <button id="ajustesBtn" class="icon-nav-btn" title="Ajustes" style="display: none;">
                 <img src="assets/icon_ajustes.png" alt="Ajustes">
@@ -1146,6 +1149,23 @@
             }
         }
     </script>
+
+    <!-- Modal de Mensajes de la App -->
+    <div id="mensajesModal" class="modal mensajes-modal">
+        <div class="modal-content mensajes-modal-content">
+            <span class="close-modal close-mensajes">&times;</span>
+            <div class="mensajes-header">
+                <h2>📩 Mensajes</h2>
+                <p style="font-size:0.9em;color:#666;margin-top:6px;">Notificaciones del Mentor y de la app</p>
+            </div>
+            <div id="mensajesLista" class="mensajes-lista">
+                <div class="mensaje-vacio" style="text-align:center;color:#888;padding:30px;">
+                    No tienes mensajes nuevos.
+                </div>
+            </div>
+        </div>
+    </div>
+
 </body>
 
 

@@ -1009,6 +1009,51 @@ html[data-theme="dark"] .stop-btn {
     color: #999;
 }
 
+/* Modal de Mensajes (campana) */
+.mensajes-header {
+    margin-bottom: 20px;
+}
+.mensajes-header h2 {
+    margin: 0 0 6px 0;
+    font-size: 1.4em;
+    color: var(--color-acento, #8e7d6d);
+}
+.mensajes-lista {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-height: 40vh;
+    overflow-y: auto;
+}
+.mensaje-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 12px;
+    border-bottom: 1px solid #eee;
+    background: #fafaf6;
+    border-radius: 10px;
+}
+.mensaje-vacio {
+    text-align: center;
+    color: #888;
+    padding: 30px;
+}
+html[data-theme="dark"] .mensaje-item {
+    background: var(--card-bg);
+    border-bottom-color: var(--card-border);
+    color: var(--color-texto);
+}
+html[data-theme="dark"] .mensaje-item div:first-child div:first-child {
+    color: var(--color-texto);
+}
+html[data-theme="dark"] .mensaje-item div:first-child div:nth-child(2) {
+    color: #bbb;
+}
+html[data-theme="dark"] .mensaje-item div:first-child div:nth-child(3) {
+    color: #888;
+}
+
 .diario-seccion {
     margin-bottom: 25px;
     border-bottom: 1px dotted #ccc;

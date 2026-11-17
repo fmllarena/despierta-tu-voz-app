@@ -819,6 +819,63 @@ window.addEventListener('click', (e) => {
     }
 });
 
+// --- LÓGICA DE MENSAJES (CAMPANA) ---
+let mensajesPendientes = false;
+
+function actualizarIconoCampana() {
+    if (!ELEMENTS.mensajesIcon) return;
+    ELEMENTS.mensajesIcon.src = mensajesPendientes ? 'assets/campana_on.png' : 'assets/campana.png';
+    ELEMENTS.mensajesIcon.alt = mensajesPendientes ? 'Mensajes (pendientes)' : 'Mensajes';
+}
+
+function cargarMensajes() {
+    if (!ELEMENTS.mensajesLista) return;
+    const guardados = JSON.parse(localStorage.getItem('dtv_mensajes') || '[]');
+    ELEMENTS.mensajesLista.innerHTML = '';
+    if (guardados.length === 0) {
+        ELEMENTS.mensajesLista.innerHTML = '<div class="mensaje-vacio" style="text-align:center;color:#888;padding:30px;">No tienes mensajes nuevos.</div>';
+        mensajesPendientes = false;
+    } else {
+        guardados.forEach(m => {
+            const div = document.createElement('div');
+            div.className = 'mensaje-item';
+            div.style.cssText = 'border-bottom:1px solid #eee;padding:12px;display:flex;justify-content:space-between;align-items:flex-start;';
+            div.innerHTML = `
+                <div style="flex:1;">
+                    <div style="font-weight:600;font-size:0.95em;color:#333;">${m.titulo || 'Mensaje'}</div>
+                    <div style="font-size:0.85em;color:#666;margin-top:4px;">${m.texto || ''}</div>
+                    <div style="font-size:0.75em;color:#999;margin-top:6px;">${m.fecha || ''}</div>
+                </div>
+            `;
+            ELEMENTS.mensajesLista.appendChild(div);
+        });
+        mensajesPendientes = true;
+    }
+    actualizarIconoCampana();
+}
+
+function marcarMensajesLeidos() {
+    mensajesPendientes = false;
+    actualizarIconoCampana();
+}
+
+ELEMENTS.mensajesBtn?.addEventListener('click', () => {
+    cargarMensajes();
+    if (ELEMENTS.mensajesModal) ELEMENTS.mensajesModal.style.display = 'flex';
+});
+
+ELEMENTS.closeMensajes?.addEventListener('click', () => {
+    marcarMensajesLeidos();
+    if (ELEMENTS.mensajesModal) ELEMENTS.mensajesModal.style.display = 'none';
+});
+
+window.addEventListener('click', (e) => {
+    if (e.target === ELEMENTS.mensajesModal) {
+        marcarMensajesLeidos();
+        if (ELEMENTS.mensajesModal) ELEMENTS.mensajesModal.style.display = 'none';
+    }
+});
+
 document.querySelectorAll('#authEmail, #authPassword').forEach(el => {
     el?.addEventListener('keydown', e => e.key === 'Enter' && authActions.login());
 });

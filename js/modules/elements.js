@@ -134,6 +134,13 @@ export const ELEMENTS = window.ELEMENTS = {
     get alertCancelBtn() { return document.getElementById('alertCancelBtn'); },
     get promoTermsBox() { return document.getElementById('promoTermsBox'); },
 
+    // Mensajes (campana)
+    get mensajesBtn() { return document.getElementById('mensajesBtn'); },
+    get mensajesIcon() { return document.getElementById('mensajesIcon'); },
+    get mensajesModal() { return document.getElementById('mensajesModal'); },
+    get closeMensajes() { return document.querySelector('.close-mensajes'); },
+    get mensajesLista() { return document.getElementById('mensajesLista'); },
+
     // Top Bar Music Player
     get musicToggleBtn() { return document.getElementById('musicToggleBtn'); },
     get musicMenu() { return document.getElementById('musicMenu'); },
