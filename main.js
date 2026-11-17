@@ -734,6 +734,7 @@ window.addEventListener('load', () => {
     window.inicializarSupabase().then(() => {
         setupAuthListener();
         revisarRedireccion();
+        iniciarPollingMensajes();
     }).catch((err) => {
         console.error("❌ Error inicializando Supabase en load:", err);
         revisarRedireccion();
@@ -909,17 +910,13 @@ async function cargarMensajes() {
     actualizarIconoCampana();
 }
 
-// Polling de mensajes en tiempo real mientras el modal está abierto
+// Polling de mensajes en tiempo real (siempre activo para actualizar el icono de la campana)
 let pollingMensajesTimer = null;
 
 function iniciarPollingMensajes() {
     if (pollingMensajesTimer) return;
     pollingMensajesTimer = setInterval(async () => {
-        if (!ELEMENTS.mensajesModal || ELEMENTS.mensajesModal.style.display !== 'flex') {
-            detenerPollingMensajes();
-            return;
-        }
-        await cargarMensajes();
+        await verificarMensajesPendientes();
     }, 30000);
 }
 
@@ -928,6 +925,34 @@ function detenerPollingMensajes() {
         clearInterval(pollingMensajesTimer);
         pollingMensajesTimer = null;
     }
+}
+
+// Verifica si hay mensajes nuevos y actualiza el icono de la campana (sin renderizar la lista)
+async function verificarMensajesPendientes() {
+    const token = await obtenerTokenSesion();
+    if (!token) {
+        mensajesPendientes = false;
+        actualizarIconoCampana();
+        return;
+    }
+
+    try {
+        const res = await fetch('/api/chat?action=listar-mensajes', {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (!res.ok) {
+            mensajesPendientes = false;
+            actualizarIconoCampana();
+            return;
+        }
+        const data = await res.json();
+        const mensajesPersonales = data.mensajes || [];
+        const guardados = JSON.parse(localStorage.getItem('dtv_mensajes') || '[]');
+        mensajesPendientes = (mensajesPersonales.length + guardados.length) > 0;
+    } catch (e) {
+        mensajesPendientes = false;
+    }
+    actualizarIconoCampana();
 }
 
 function marcarMensajesLeidos() {
