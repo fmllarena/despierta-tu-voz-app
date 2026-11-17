@@ -50,6 +50,8 @@ export const AJUSTES = window.AJUSTES = {
             ELEMENTS.upgradeSettingsBtn.style.display = tier === 'premium' ? 'none' : 'block';
         }
 
+        this.cargarMetricas();
+
         ELEMENTS.settingsModal.style.display = 'flex';
     },
 
@@ -153,6 +155,52 @@ export const AJUSTES = window.AJUSTES = {
         } finally {
             btn.disabled = false;
             btn.innerText = "Borrar Historial de Chat";
+        }
+    },
+
+    cargarMetricas: async () => {
+        const db = state.supabase;
+        const perfil = window.userProfile;
+        if (!db || !perfil) return;
+
+        const userId = perfil.user_id;
+
+        if (ELEMENTS.metricaEmail) ELEMENTS.metricaEmail.textContent = perfil.email || '—';
+        if (ELEMENTS.metricaAlta && perfil.created_at) {
+            ELEMENTS.metricaAlta.textContent = new Date(perfil.created_at).toLocaleDateString('es-ES');
+        }
+        if (ELEMENTS.metricaUltimaActividad && perfil.last_active_at) {
+            ELEMENTS.metricaUltimaActividad.textContent = new Date(perfil.last_active_at).toLocaleDateString('es-ES');
+        }
+
+        try {
+            const { count: totalMensajes } = await db
+                .from('mensajes')
+                .select('*', { count: 'exact', head: true })
+                .eq('alumno', userId);
+            if (ELEMENTS.metricaTotalMensajes) {
+                ELEMENTS.metricaTotalMensajes.textContent = totalMensajes ?? 0;
+            }
+
+            const { data: primerMsg } = await db
+                .from('mensajes')
+                .select('created_at')
+                .eq('alumno', userId)
+                .order('created_at', { ascending: true })
+                .limit(1);
+            if (ELEMENTS.metricaPrimerMensaje && primerMsg?.[0]?.created_at) {
+                ELEMENTS.metricaPrimerMensaje.textContent = new Date(primerMsg[0].created_at).toLocaleDateString('es-ES');
+            }
+
+            const { count: guardados } = await db
+                .from('mensajes_guardados')
+                .select('*', { count: 'exact', head: true })
+                .eq('alumno_id', userId);
+            if (ELEMENTS.metricaGuardados) {
+                ELEMENTS.metricaGuardados.textContent = guardados ?? 0;
+            }
+        } catch (e) {
+            console.warn('No se pudieron cargar las métricas del usuario:', e.message);
         }
     },
 

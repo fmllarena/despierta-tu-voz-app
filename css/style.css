@@ -2522,6 +2522,42 @@ html[data-theme="dark"] .stop-btn {
     display: none;
 }
 
+/* Métricas en fila horizontal (Ajustes → Métricas) */
+.metricas-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    justify-content: space-between;
+    margin-top: 12px;
+}
+.metrica-item {
+    flex: 1 1 150px;
+    border: 1px solid #e2d9cd;
+    border-radius: 10px;
+    padding: 14px 10px;
+    text-align: center;
+    background: #fff;
+}
+.metrica-valor {
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: var(--color-acento, #8e7d6d);
+    margin-bottom: 4px;
+    word-break: break-all;
+}
+.metrica-label {
+    font-size: 0.8rem;
+    color: #666;
+}
+html[data-theme="dark"] .metrica-item {
+    background: var(--card-bg);
+    border-color: var(--card-border);
+    color: var(--color-texto);
+}
+html[data-theme="dark"] .metrica-label {
+    color: #aaa;
+}
+
 /* Triángulo de los encabezados colapsables */
 .accordion-arrow {
     font-size: 0.65em;

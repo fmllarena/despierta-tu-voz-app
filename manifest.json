@@ -2,7 +2,7 @@
   "name": "Despierta tu Voz",
   "short_name": "DTV App",
   "description": "Tu Mentor Vocal de conexión emocional y técnica 24/7",
-  "start_url": "./index.html",
+  "start_url": "./index-original.html",
   "display": "standalone",
   "background_color": "#fcfaf7",
   "theme_color": "#8e7d6d",

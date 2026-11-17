@@ -118,6 +118,14 @@ export const ELEMENTS = window.ELEMENTS = {
     get deleteAccountBtn() { return document.getElementById('deleteAccountBtn'); },
     get darkModeToggle() { return document.getElementById('darkModeToggle'); },
 
+    // Métricas
+    get metricaEmail() { return document.getElementById('metricaEmail'); },
+    get metricaAlta() { return document.getElementById('metricaAlta'); },
+    get metricaPrimerMensaje() { return document.getElementById('metricaPrimerMensaje'); },
+    get metricaUltimaActividad() { return document.getElementById('metricaUltimaActividad'); },
+    get metricaTotalMensajes() { return document.getElementById('metricaTotalMensajes'); },
+    get metricaGuardados() { return document.getElementById('metricaGuardados'); },
+
     // Alert Custom
     get customAlert() { return document.getElementById('customAlert'); },
     get alertMessage() { return document.getElementById('alertMessage'); },
