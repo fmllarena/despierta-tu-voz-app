@@ -194,6 +194,28 @@
             }
         }
 
+        async function obtenerToken() {
+            // Intento 1: sesión de Supabase restaurada
+            try {
+                const session = await sb.auth.getSession();
+                if (session?.data?.session?.access_token) {
+                    return session.data.session.access_token;
+                }
+            } catch (_) {}
+
+            // Intento 2: leer directamente de localStorage sb-session
+            try {
+                const raw = localStorage.getItem('sb-session');
+                if (raw) {
+                    const parsed = JSON.parse(raw);
+                    if (parsed?.access_token) return parsed.access_token;
+                    if (parsed?.session?.access_token) return parsed.session.access_token;
+                }
+            } catch (_) {}
+
+            return null;
+        }
+
         btnAdd.onclick = crearNuevoDestinatario;
 
         form.onsubmit = async (e) => {
@@ -218,9 +240,14 @@
             btnEnviar.textContent = 'Enviando...';
 
             try {
-                const { data: { user } } = await sb.auth.getUser();
-                const session = await sb.auth.getSession();
-                const token = session?.session?.access_token;
+                const token = await obtenerToken();
+
+                if (!token) {
+                    showAlert(alertError, 'No se pudo obtener el token de sesión. Vuelve a iniciar sesión.');
+                    btnEnviar.disabled = false;
+                    btnEnviar.textContent = 'Enviar Mensaje';
+                    return;
+                }
 
                 // Enviar un mensaje por cada destinatario seleccionado
                 const resultados = await Promise.all(destinatariosIds.map(id =>
