@@ -383,6 +383,112 @@ header p {
     stroke: #999;
 }
 
+/* ── Globo con imagen ampliada al pulsar los avatares (user / IA) ──────── */
+.avatar-zoom-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 2147483647;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(31, 26, 22, 0.55);
+    backdrop-filter: blur(4px);
+    padding: 20px;
+    box-sizing: border-box;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity 0.22s ease, visibility 0.22s ease;
+}
+.avatar-zoom-overlay.visible {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+}
+
+.avatar-zoom-content {
+    position: relative;
+    width: min(88vw, 88vh, 600px);
+    max-width: 92vw;
+    max-height: 82vh;
+    background: #fff;
+    border-radius: 22px;
+    padding: 14px;
+    box-shadow: 0 14px 44px rgba(0, 0, 0, 0.35);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    animation: avatarZoomScale 0.18s ease;
+}
+
+html[data-theme="dark"] .avatar-zoom-content {
+    background: #1f1a16;
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.avatar-zoom-content img {
+    display: block;
+    width: auto;
+    height: auto;
+    max-width: 100%;
+    max-height: 64vh;
+    object-fit: contain;
+    border-radius: 14px;
+    background: #f4ece6;
+}
+
+html[data-theme="dark"] .avatar-zoom-content img {
+    background: #2a2420;
+}
+
+.avatar-zoom-close {
+    position: absolute;
+    top: 8px;
+    right: 12px;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.25);
+    border: 0;
+    color: #fff;
+    font-size: 26px;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 2;
+}
+
+html[data-theme="dark"] .avatar-zoom-close {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.avatar-zoom-close:hover {
+    background: rgba(0, 0, 0, 0.4);
+}
+
+html[data-theme="dark"] .avatar-zoom-close:hover {
+    background: rgba(255, 255, 255, 0.25);
+}
+
+.avatar-zoom-hint {
+    margin-top: 10px;
+    font-size: 0.85rem;
+    color: #666;
+    text-align: center;
+}
+
+html[data-theme="dark"] .avatar-zoom-hint {
+    color: #aaa;
+}
+
+@keyframes avatarZoomScale {
+    from { opacity: 0; transform: scale(0.92); }
+    to { opacity: 1; transform: scale(1); }
+}
+
 .user-container .message.user {
     order: 1;
 }

@@ -1562,7 +1562,7 @@ async function appendErrorMessage(texto, retry = null) {
 
     const avatar = document.createElement('div');
     avatar.className = 'ia-avatar';
-    avatar.innerHTML = `<img src="assets/foto-avatar.PNG" alt="Mentor">`;
+    avatar.innerHTML = `<img src="assets/foto-avatar.PNG" alt="Mentor" onclick="abrirGloboAvatar(this.src)" style="cursor:pointer">`;
 
     const col = document.createElement('div');
     col.className = 'ia-col';
@@ -2029,7 +2029,7 @@ function appendMessage(text, type, id = null, meta = null) {
 
         const avatar = document.createElement('div');
         avatar.className = 'ia-avatar';
-        avatar.innerHTML = `<img src="assets/foto-avatar.PNG" alt="Mentor">`;
+        avatar.innerHTML = `<img src="assets/foto-avatar.PNG" alt="Mentor" onclick="abrirGloboAvatar(this.src)" style="cursor:pointer">`;
 
         // Columna: burbuja + fila de acciones debajo (fuera de la caja)
         const col = document.createElement('div');
@@ -2098,7 +2098,7 @@ function appendMessage(text, type, id = null, meta = null) {
         avatar.className = 'user-avatar';
         const photo = window.userProfile?.avatar_url;
         if (photo) {
-            avatar.innerHTML = `<img src="${photo}" alt="Tú">`;
+            avatar.innerHTML = `<img src="${photo}" alt="Tú" onclick="abrirGloboAvatar(this.src)" style="cursor:pointer">`;
         } else {
             avatar.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/></svg>`;
         }
@@ -2171,6 +2171,71 @@ function appendMessage(text, type, id = null, meta = null) {
         // Cualquier otro tipo (resumen_diario, sistema, etc.) no lo imprimimos en el chat
         console.log(`[Chat] Mensaje de tipo "${type}" ignorado en la interfaz.`);
     }
+}
+
+// ── Globo con la foto ampliada al pulsar un avatar (user o IA) ────────────
+function abrirGloboAvatar(src) {
+    if (!src) return;
+
+    // Evitar globos duplicados si se pulsa rápido
+    const existente = document.getElementById('avatarZoomOverlay');
+    if (existente) existente.remove();
+
+    const overlay = document.createElement('div');
+    overlay.id = 'avatarZoomOverlay';
+    overlay.className = 'avatar-zoom-overlay';
+    overlay.setAttribute('role', 'dialog');
+    overlay.setAttribute('aria-modal', 'true');
+    overlay.setAttribute('aria-label', 'Foto ampliada');
+
+    const img = document.createElement('img');
+    img.src = src;
+    img.alt = 'Avatar ampliado';
+    img.style.display = 'block';
+
+    const closeBtn = document.createElement('button');
+    closeBtn.type = 'button';
+    closeBtn.className = 'avatar-zoom-close';
+    closeBtn.innerHTML = '&times;';
+    closeBtn.title = 'Cerrar';
+    closeBtn.onclick = (e) => { e.stopPropagation(); cerrarGloboAvatar(); };
+
+    const hint = document.createElement('p');
+    hint.className = 'avatar-zoom-hint';
+    hint.textContent = 'Toca fuera o pulsa × para cerrar';
+
+    const content = document.createElement('div');
+    content.className = 'avatar-zoom-content';
+    content.appendChild(closeBtn);
+    content.appendChild(img);
+    content.appendChild(hint);
+
+    overlay.appendChild(content);
+
+    // Cerrar al hacer clic fuera del contenido
+    overlay.onclick = (e) => {
+        if (e.target === overlay) cerrarGloboAvatar();
+    };
+
+    // Cerrar con la tecla ESC
+    const onKey = (e) => {
+        if (e.key === 'Escape') {
+            cerrarGloboAvatar();
+            document.removeEventListener('keydown', onKey);
+        }
+    };
+    document.addEventListener('keydown', onKey);
+
+    document.body.appendChild(overlay);
+    // Forzar reflow y activar la animación de entrada
+    requestAnimationFrame(() => overlay.classList.add('visible'));
+}
+
+function cerrarGloboAvatar() {
+    const overlay = document.getElementById('avatarZoomOverlay');
+    if (!overlay) return;
+    overlay.classList.remove('visible');
+    setTimeout(() => overlay.remove(), 220);
 }
 
 // --- BOTONES DE VALORACIÓN DE RESPUESTAS (👍/👎) ---
