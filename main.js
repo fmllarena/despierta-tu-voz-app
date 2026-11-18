@@ -855,7 +855,9 @@ async function obtenerTokenSesion() {
 
 async function cargarMensajes() {
     if (!ELEMENTS.mensajesLista) return;
-    const guardados = JSON.parse(localStorage.getItem('dtv_mensajes') || '[]');
+    const currentUserId = userProfile?.user_id || window.userProfile?.user_id;
+    const guardados = JSON.parse(localStorage.getItem('dtv_mensajes') || '[]')
+        .filter(m => !m.userId || m.userId === currentUserId);
 
     // Cargar mensajes personales del mentor desde Supabase
     let mensajesPersonales = [];

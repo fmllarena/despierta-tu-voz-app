@@ -1217,7 +1217,7 @@ async function finishModuleWithAI(supabase, user, skipInputCheck = false) {
         console.log(`🎯 Perfil actualizado: Módulo ${module.id} completado.`);
 
         // --- GUARDAR MENSAJE EN LOCALSTORAGE PARA LA CAMPANA DE LA APP ---
-        guardarMensajeModuloCompletado(module.id);
+        guardarMensajeModuloCompletado(module.id, user.id);
     }
 
     const container = document.getElementById('questionContainer');
@@ -1317,8 +1317,10 @@ async function finishModuleWithAI(supabase, user, skipInputCheck = false) {
 /**
  * Guarda un mensaje de notificación en localStorage para que aparezca
  * en la campana de mensajes de la app principal.
+ * @param {number} hitoId - ID del hito/módulo completado
+ * @param {string} userId - ID del usuario que completó el módulo
  */
-function guardarMensajeModuloCompletado(hitoId) {
+function guardarMensajeModuloCompletado(hitoId, userId) {
     const MODULE_NAMES = {
         1: 'El Espejo del Pasado',
         2: 'Raíces',
@@ -1329,6 +1331,7 @@ function guardarMensajeModuloCompletado(hitoId) {
     const nombreModulo = MODULE_NAMES[hitoId] || `Módulo ${hitoId}`;
     const mensaje = {
         id: `hito_${hitoId}_${Date.now()}`,
+        userId: userId,
         titulo: `✨ Módulo completado: ${nombreModulo}`,
         texto: `Has finalizado el módulo "${nombreModulo}" de Mi Viaje. ¡Sigue avanzando en tu camino de alquimia vocal!`,
         fecha: new Date().toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' }),
@@ -1337,12 +1340,12 @@ function guardarMensajeModuloCompletado(hitoId) {
 
     try {
         const guardados = JSON.parse(localStorage.getItem('dtv_mensajes') || '[]');
-        // Evitar duplicados por mismo hito
-        const yaExiste = guardados.some(m => m.titulo === mensaje.titulo);
+        // Evitar duplicados por mismo hito y usuario
+        const yaExiste = guardados.some(m => m.titulo === mensaje.titulo && m.userId === userId);
         if (!yaExiste) {
             guardados.push(mensaje);
             localStorage.setItem('dtv_mensajes', JSON.stringify(guardados));
-            console.log(`📩 Mensaje guardado para campana: ${mensaje.titulo}`);
+            console.log(`📩 Mensaje guardado para campana (usuario ${userId}): ${mensaje.titulo}`);
 
             // Notificar a la app principal para actualizar el icono de la campana
             try {
