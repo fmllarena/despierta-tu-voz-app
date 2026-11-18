@@ -72,8 +72,11 @@ async function handler(req, res) {
 
         // --- PATCH: marcar mensaje como borrado ---
         if (req.method === 'PATCH') {
+            const url = new URL(req.url, 'http://localhost');
+            const queryId = url.searchParams.get('id');
             const { id, borrado } = req.body || {};
-            if (!id) {
+            const msgId = id || queryId;
+            if (!msgId) {
                 return res.status(400).json({ error: 'Falta el id del mensaje' });
             }
 

@@ -92,6 +92,9 @@ module.exports = async function handler(req, res) {
     if (action === 'enviar-mensaje' && req.method === 'POST') {
         return handlerEnviarMensaje(req, res);
     }
+    if (action === 'borrar-mensaje' && req.method === 'PATCH') {
+        return handlerListarMensajes(req, res);
+    }
 
     // AbortController global de la petición: se dispara si el cliente cierra la pestaña
     // o finaliza la conexión HTTP, permitiendo cancelar la llamada al proveedor de IA.
