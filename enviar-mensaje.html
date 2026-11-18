@@ -136,11 +136,17 @@
                 const { data: profiles, error } = await sb
                     .from('user_profiles')
                     .select('user_id, email, nombre')
+                    .not('email', 'ilike', '%@test.com%')
                     .order('email', { ascending: true });
 
                 if (error) throw error;
 
-                const opciones = (profiles || []).map(p => {
+                // Filtro adicional por si el operador no funciona en la DB
+                const perfilesFiltrados = (profiles || []).filter(
+                    p => !p.email.toLowerCase().includes('@test.com')
+                );
+
+                const opciones = perfilesFiltrados.map(p => {
                     const option = document.createElement('option');
                     option.value = p.user_id;
                     const nombre = p.nombre || p.email.split('@')[0];
