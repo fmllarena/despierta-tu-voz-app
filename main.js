@@ -892,6 +892,7 @@ async function cargarMensajes() {
     } else {
         todos.forEach(m => {
             const div = document.createElement('div');
+            div.id = `msg-${m.id}`;
             div.className = 'mensaje-item';
             div.style.cssText = 'border-bottom:1px solid #eee;padding:12px;display:flex;justify-content:space-between;align-items:flex-start;';
             const fecha = m.fecha ? new Date(m.fecha).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '';
@@ -902,12 +903,50 @@ async function cargarMensajes() {
                     <div style="font-size:0.85em;color:#666;margin-top:4px;">${m.texto || ''}</div>
                     <div style="font-size:0.75em;color:#999;margin-top:6px;">${fecha}</div>
                 </div>
+                <button type="button" class="btn-borrar-msg" data-id="${m.id}" title="Eliminar mensaje" style="background:none;border:none;cursor:pointer;font-size:1.2rem;color:#999;padding:0 8px;">🗑</button>
             `;
             ELEMENTS.mensajesLista.appendChild(div);
         });
         mensajesPendientes = true;
     }
     actualizarIconoCampana();
+}
+
+async function borrarMensaje(id) {
+    const token = await obtenerTokenSesion();
+    if (!token) {
+        alert('No hay sesión de Supabase activa.');
+        return;
+    }
+
+    try {
+        const res = await fetch('/api/chat?action=borrar-mensaje', {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ id, borrado: true })
+        });
+
+        if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            alert(err.error || 'Error al eliminar el mensaje.');
+            return;
+        }
+
+        const el = document.getElementById(`msg-${id}`);
+        if (el) el.remove();
+
+        if (!ELEMENTS.mensajesLista || ELEMENTS.mensajesLista.children.length === 0) {
+            ELEMENTS.mensajesLista.innerHTML = '<div class="mensaje-vacio" style="text-align:center;color:#888;padding:30px;">No tienes mensajes nuevos.</div>';
+            mensajesPendientes = false;
+            actualizarIconoCampana();
+        }
+    } catch (e) {
+        console.error('Error borrando mensaje:', e);
+        alert('Error al eliminar el mensaje.');
+    }
 }
 
 // Polling de mensajes en tiempo real (siempre activo para actualizar el icono de la campana)
@@ -970,6 +1009,15 @@ ELEMENTS.mensajesBtn?.addEventListener('click', () => {
     if (ELEMENTS.mensajesModal) {
         ELEMENTS.mensajesModal.style.display = 'flex';
         iniciarPollingMensajes();
+    }
+});
+
+// Delegación de clics para botones de borrar mensaje (contenido dinámico)
+document.addEventListener('click', (e) => {
+    const btn = e.target.closest('.btn-borrar-msg');
+    if (btn) {
+        const id = btn.dataset.id;
+        if (id) borrarMensaje(id);
     }
 });
 
