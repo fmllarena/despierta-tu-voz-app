@@ -9,14 +9,27 @@ n8n
 sql
 supabase
 temp
+temp_extract
 .env
 .env.*
 
+# Carpetas de respaldo, pruebas y versiones antiguas (no forman parte del despliegue principal)
+nuevo-index/
+app_backup/
+scripts/
+tests/
+
 # Copias y backups antiguos
 *.bak
+**/*.bak
 *_backup*
+**/*_backup*
 main_pre_phase1_backup.js
 main_backup.js
 index_backup.html
 main.js.v5.4.txt
 modified_files_*.txt
+
+# Nota: si usas los MP3 de assets/audios/ en producción (música del chat/botiquín),
+# NO los ignores. Si no los usas, descomenta la siguiente línea:
+# assets/audios/*.mp3
