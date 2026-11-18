@@ -5692,6 +5692,28 @@ body.dark-mode .scroll-fab {
 body.dark-mode .scroll-fab.visible:hover {
     background: #bda895;
 }
+@media (max-width: 768px) {
+    body {
+        height: 100vh;
+        align-items: stretch;
+    }
+
+    .chat-container {
+        width: 100% !important;
+        max-width: none !important;
+        height: auto !important;
+        min-height: 100% !important;
+        margin: 0 !important;
+        border-radius: 0 !important;
+        box-shadow: none !important;
+        flex: 1 !important;
+    }
+
+    header {
+        padding: 12px 16px !important;
+    }
+}
+
 @media (prefers-reduced-motion: reduce) {
     .scroll-fab {
         transition: none;

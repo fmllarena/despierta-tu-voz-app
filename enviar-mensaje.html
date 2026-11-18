@@ -33,7 +33,7 @@
 </head>
 <body>
     <div class="container">
-        <a href="index.html" class="back-link">← Volver a la App</a>
+        <a href="paginas.html" class="back-link">← Volver atrás</a>
 
         <h1>Enviar Mensaje Personal <span class="mentor-badge">Mentor</span></h1>
 
@@ -70,6 +70,58 @@
         </p>
     </div>
 
+    <div id="authOverlay">
+        <div class="auth-card">
+            <h2>Iniciar sesión</h2>
+            <div class="error-msg" id="authErrorMsg"></div>
+            <div class="auth-group">
+                <label for="authEmail">Correo electrónico</label>
+                <input type="email" id="authEmail" placeholder="correo@ejemplo.com">
+            </div>
+            <div class="auth-group">
+                <label for="authPassword">Contraseña</label>
+                <input type="password" id="authPassword" placeholder="••••••••">
+            </div>
+            <button type="button" id="loginBtn" class="login-btn">Entrar</button>
+            <div class="auth-extra">
+                ¿No tienes cuenta? <a href="index.html">Ve a la app</a>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        #authOverlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(31, 26, 22, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        #authOverlay.visible { display: flex; }
+        .auth-card {
+            background: #fff;
+            border-radius: 16px;
+            padding: 32px 24px;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.2);
+        }
+        .auth-card h2 { margin-top: 0; color: #8e7d6d; font-size: 1.5rem; text-align: center; }
+        .auth-card .error-msg { color: #c0392b; font-size: 0.85rem; margin-bottom: 12px; min-height: 1.2em; }
+        .auth-card .auth-group { margin-bottom: 14px; }
+        .auth-card label { display: block; margin-bottom: 6px; font-weight: 600; color: #555; font-size: 0.9rem; }
+        .auth-card input { width: 100%; padding: 10px 14px; border: 2px solid #e2d9cd; border-radius: 10px; font-size: 1rem; box-sizing: border-box; }
+        .auth-card input:focus { outline: none; border-color: #8e7d6d; }
+        .auth-card button.login-btn { background: #8e7d6d; color: #fff; border: none; padding: 12px; border-radius: 10px; font-size: 1rem; font-weight: 600; cursor: pointer; width: 100%; }
+        .auth-card button.login-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+        .auth-card .auth-extra { margin-top: 16px; text-align: center; font-size: 0.85rem; color: #666; }
+        .auth-card .auth-extra a { color: #8e7d6d; text-decoration: none; }
+        .auth-card .auth-extra a:hover { text-decoration: underline; }
+    </style>
+
     <script type="module">
         import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
 
@@ -81,11 +133,35 @@
         const contenedor = $('destinatariosContainer');
         const alertError = $('alertError');
         const alertSuccess = $('alertSuccess');
+        const authOverlay = $('authOverlay');
+        const authError = $('authErrorMsg');
+        const loginBtn = $('loginBtn');
+        const authEmail = $('authEmail');
+        const authPassword = $('authPassword');
 
         function showAlert(el, text) {
             el.textContent = text;
             el.style.display = 'block';
             setTimeout(() => el.style.display = 'none', 5000);
+        }
+
+        async function doLogin() {
+            const email = authEmail.value.trim();
+            const password = authPassword.value.trim();
+            if (!email || !password) return authError.textContent = 'Completa email y contraseña.';
+            loginBtn.disabled = true;
+            loginBtn.textContent = 'Entrando...';
+            authError.textContent = '';
+            try {
+                const { error } = await sb.auth.signInWithPassword({ email, password });
+                if (error) throw error;
+                location.reload();
+            } catch (e) {
+                authError.textContent = e.message || 'Credenciales incorrectas.';
+            } finally {
+                loginBtn.disabled = false;
+                loginBtn.textContent = 'Entrar';
+            }
         }
 
         async function init() {
@@ -102,7 +178,7 @@
                 const { data: { user }, error } = await sb.auth.getUser();
                 if (error || !user) {
                     $('formMensaje').style.display = 'none';
-                    showAlert(alertError, 'Debes iniciar sesión como mentor para usar esta página.');
+                    authOverlay.classList.add('visible');
                     return;
                 }
 
@@ -299,6 +375,15 @@
         };
 
         init();
+
+        loginBtn.onclick = doLogin;
+
+        authEmail.onkeypress = (e) => { if (e.key === 'Enter') authPassword.focus(); };
+        authPassword.onkeypress = (e) => { if (e.key === 'Enter') doLogin(); };
+
+        authOverlay.onclick = (e) => {
+            if (e.target === authOverlay) authOverlay.classList.remove('visible');
+        };
     </script>
 </body>
 </html>

@@ -419,6 +419,7 @@ export const PREFERENCIAS = window.PREFERENCIAS = {
 
             this.showStatus("Cuenta eliminada. Te deseamos lo mejor. ✨", "success");
             setTimeout(async () => {
+                localStorage.removeItem('dtv_mensajes');
                 await state.supabase.auth.signOut();
                 location.reload();
             }, 3000);
