@@ -423,7 +423,16 @@ async function llamarGemini(message, history, intent, extraData = {}, onChunk = 
         };
         if (signal) fetchOptions.signal = signal;
 
-        const response = await fetch(endpoint, fetchOptions);
+        let response;
+        try {
+            response = await fetch(endpoint, fetchOptions);
+        } catch (e) {
+            if (e.name === 'AbortError' || /abort/i.test(e.message || '') || e instanceof DOMException) {
+                console.log('⏹ Fetch detenido por el usuario');
+                return '';
+            }
+            throw e;
+        }
 
         if (stream) {
             if (!response.ok) {
@@ -509,7 +518,7 @@ async function llamarGemini(message, history, intent, extraData = {}, onChunk = 
             return data.text;
         }
     } catch (e) {
-        if (e.name === 'AbortError') {
+        if (e.name === 'AbortError' || /abort/i.test(e.message || '') || e instanceof DOMException) {
             console.log('⏹ Respuesta detenida por el usuario');
             return '';
         }
@@ -1203,7 +1212,7 @@ async function sendMessage() {
         }
     } catch (e) {
         document.getElementById(thinkingId)?.remove();
-        if (e.name === 'AbortError') {
+        if (e.name === 'AbortError' || /abort/i.test(e.message || '') || e instanceof DOMException) {
             console.log('⏹ Respuesta detenida por el usuario');
             // También eliminar mensaje de pensando si aún existe
             document.getElementById(thinkingId)?.remove();
