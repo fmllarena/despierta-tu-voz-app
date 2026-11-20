@@ -1633,6 +1633,22 @@ async function appendErrorMessage(texto, retry = null) {
         btn.addEventListener('click', async e => {
             e.stopPropagation();
             btn.disabled = true;
+
+            // Preguntar al usuario si quiere borrar la respuesta parcial o mantenerla
+            const borrar = confirm(
+                'La respuesta de la IA se quedó a medias.\n\n' +
+                '¿Quieres borrarla y volver a enviar el mensaje?\n' +
+                'Pulsa "Aceptar" para borrar y reintentar.\n' +
+                'Pulsa "Cancelar" para conservar la respuesta parcial tal cual.'
+            );
+
+            if (!borrar) {
+                // El usuario prefiere mantener la respuesta parcial: solo quitar el aviso de error
+                btn.textContent = 'Manteniendo…';
+                container.remove();
+                return;
+            }
+
             btn.textContent = 'Reintentando…';
             try {
                 const msgId = retry.contenedor?.dataset?.msgId;
