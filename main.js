@@ -1634,46 +1634,54 @@ async function appendErrorMessage(texto, retry = null) {
             e.stopPropagation();
             btn.disabled = true;
 
-            // Preguntar al usuario si quiere borrar la respuesta parcial o mantenerla
-            const borrar = confirm(
+            // Tres opciones: Borrar / Mantener / Cancelar
+            const opcion = prompt(
                 'La respuesta de la IA se quedó a medias.\n\n' +
-                '¿Quieres borrarla y volver a enviar el mensaje?\n' +
-                'Pulsa "Aceptar" para borrar y reintentar.\n' +
-                'Pulsa "Cancelar" para conservar la respuesta parcial tal cual.'
+                '¿Quieres borrarla y volver a enviar el mensaje? Escribe: Borrar\n' +
+                '¿Quieres mantener el mensaje y reenviar la consulta (se añadirá debajo)? Escribe: Mantener\n' +
+                '¿Quieres salir sin hacer nada? Escribe: Cancelar'
             );
 
-            if (!borrar) {
-                // El usuario prefiere mantener la respuesta parcial: solo quitar el aviso de error
-                btn.textContent = 'Manteniendo…';
-                container.remove();
+            if (!opcion || opcion.trim().toLowerCase() === 'cancelar') {
+                btn.textContent = 'Cancelado';
                 return;
             }
 
-            btn.textContent = 'Reintentando…';
-            try {
-                const msgId = retry.contenedor?.dataset?.msgId;
-                if (msgId) {
-                    await state.supabase.from('mensajes').delete().eq('id', msgId);
-                }
-                retry.contenedor?.remove();
-                container.remove();
+            const mantener = opcion.trim().toLowerCase() === 'mantener';
 
-                // También limpiar cualquier burbuja de IA parcial huérfana
-                // que haya quedado entre el mensaje de usuario y el error.
-                let prev = container.previousElementSibling;
-                while (prev && !prev.classList.contains('user-container')) {
-                    if (prev.classList.contains('ia-container')) {
-                        const iaEl = prev;
-                        prev = prev.previousElementSibling;
-                        iaEl.remove();
-                    } else {
-                        prev = prev.previousElementSibling;
+            if (!mantener) {
+                // BORRAR: eliminar mensaje de usuario de BD y DOM, limpiar huérfanas, reenviar
+                btn.textContent = 'Borrando…';
+                try {
+                    const msgId = retry.contenedor?.dataset?.msgId;
+                    if (msgId) {
+                        await state.supabase.from('mensajes').delete().eq('id', msgId);
                     }
+                    retry.contenedor?.remove();
+                    container.remove();
+
+                    // También limpiar cualquier burbuja de IA parcial huérfana
+                    let prev = container.previousElementSibling;
+                    while (prev && !prev.classList.contains('user-container')) {
+                        if (prev.classList.contains('ia-container')) {
+                            const iaEl = prev;
+                            prev = prev.previousElementSibling;
+                            iaEl.remove();
+                        } else {
+                            prev = prev.previousElementSibling;
+                        }
+                    }
+                } catch (err) {
+                    console.warn('[Reintentar] No se pudo limpiar el mensaje previo:', err?.message || err);
                 }
-            } catch (err) {
-                console.warn('[Reintentar] No se pudo limpiar el mensaje previo:', err?.message || err);
+                btn.textContent = 'Reintentando…';
+                await enviarMensajeTexto(retry.texto);
+            } else {
+                // MANTENER: conservar respuesta parcial, quitar solo el aviso de error y reenviar debajo
+                btn.textContent = 'Manteniendo…';
+                container.remove();
+                await enviarMensajeTexto(retry.texto);
             }
-            await enviarMensajeTexto(retry.texto);
         });
         box.appendChild(btn);
     }
