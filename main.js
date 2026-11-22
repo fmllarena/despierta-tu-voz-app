@@ -747,7 +747,11 @@ window.addEventListener('load', () => {
     }).catch((err) => {
         console.error("❌ Error inicializando Supabase en load:", err);
         revisarRedireccion();
+        // Iniciar polling aunque Supabase falle, por si la sesión ya existe en localStorage
+        iniciarPollingMensajes();
     });
+    // Verificación extra tras 3 s por si la sesión aún no estaba lista al cargar
+    setTimeout(() => iniciarPollingMensajes(), 3000);
 });
 
 async function saludarUsuario(user, perfil) {
@@ -1033,8 +1037,10 @@ function detenerPollingMensajes() {
 
 // Verifica si hay mensajes nuevos y actualiza el icono de la campana (sin renderizar la lista)
 async function verificarMensajesPendientes() {
+    console.log('🔍 verificarMensajesPendientes: iniciando...');
     const token = await obtenerTokenSesion();
     if (!token) {
+        console.log('⚠️ verificarMensajesPendientes: sin token de sesión');
         mensajesPendientes = false;
         actualizarIconoCampana();
         return;
@@ -1044,16 +1050,20 @@ async function verificarMensajesPendientes() {
         const res = await fetch('/api/chat?action=listar-mensajes', {
             headers: { 'Authorization': `Bearer ${token}` }
         });
+        console.log('📡 verificarMensajesPendientes: status', res.status);
         if (!res.ok) {
             mensajesPendientes = false;
             actualizarIconoCampana();
             return;
         }
         const data = await res.json();
+        console.log('📩 verificarMensajesPendientes: datos recibidos', data?.mensajes?.length || 0, 'mensajes');
         const mensajesPersonales = data.mensajes || [];
         const guardados = JSON.parse(localStorage.getItem('dtv_mensajes') || '[]');
         mensajesPendientes = (mensajesPersonales.length + guardados.length) > 0;
+        console.log('🔔 verificarMensajesPendientes: mensajesPendientes =', mensajesPendientes);
     } catch (e) {
+        console.error('❌ verificarMensajesPendientes error:', e);
         mensajesPendientes = false;
     }
     actualizarIconoCampana();
