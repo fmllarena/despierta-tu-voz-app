@@ -396,6 +396,7 @@
         $('logoutBtn').onclick = async () => {
             await sb.auth.signOut();
             localStorage.removeItem('sb-session');
+            localStorage.removeItem('dtv_mensajes');
             $('dashboard').style.display = 'none';
             $('loginSection').style.display = 'block';
             $('loginPassword').value = '';
