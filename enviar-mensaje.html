@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="es">
+<script>if (localStorage.getItem('dtv_dark_mode') === 'true') document.documentElement.setAttribute('data-theme', 'dark')</script>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -36,6 +37,14 @@
         <a href="paginas.html" class="back-link">← Volver atrás</a>
 
         <h1>Enviar Mensaje Personal <span class="mentor-badge">Mentor</span></h1>
+
+        <div class="dark-toggle" style="margin-bottom: 20px; display: flex; justify-content: flex-end; gap: 8px; align-items: center;">
+            <label style="font-size: 0.85rem; color: #666; margin: 0; cursor: pointer;">Modo oscuro</label>
+            <label class="switch" style="margin: 0; cursor: pointer;">
+                <input type="checkbox" id="darkModeToggle">
+                <span class="slider"></span>
+            </label>
+        </div>
 
         <form id="formMensaje">
             <div class="destinatarios-container" id="destinatariosContainer">
@@ -86,7 +95,15 @@
             </div>
             <div class="auth-group">
                 <label for="authPassword">Contraseña</label>
-                <input type="password" id="authPassword" placeholder="••••••••">
+                <div class="password-wrapper" style="display:flex;align-items:center;">
+                    <input type="password" id="authPassword" placeholder="••••••••" style="flex:1;">
+                    <button type="button" class="toggle-password" data-target="authPassword" style="background:none;border:none;cursor:pointer;padding:0 8px;display:flex;align-items:center;">
+                        <svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:20px;height:20px;">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                            <circle cx="12" cy="12" r="3"></circle>
+                        </svg>
+                    </button>
+                </div>
             </div>
             <button type="button" id="loginBtn" class="login-btn">Entrar</button>
             <div class="auth-extra">
@@ -126,6 +143,64 @@
         .auth-card .auth-extra { margin-top: 16px; text-align: center; font-size: 0.85rem; color: #666; }
         .auth-card .auth-extra a { color: #8e7d6d; text-decoration: none; }
         .auth-card .auth-extra a:hover { text-decoration: underline; }
+
+        /* Switch toggle modo oscuro */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 44px;
+            height: 24px;
+        }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: #ccc;
+            transition: 0.3s;
+            border-radius: 24px;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px; width: 18px;
+            left: 3px; bottom: 3px;
+            background: #fff;
+            transition: 0.3s;
+            border-radius: 50%;
+        }
+        input:checked + .slider { background: #8e7d6d; }
+        input:checked + .slider:before { transform: translateX(20px); }
+
+        /* Dark mode styles para esta página */
+        html[data-theme="dark"] body { background: #1f1a16; color: #e8e0d6; }
+        html[data-theme="dark"] .container { background: #2a2420; box-shadow: 0 20px 50px rgba(0,0,0,0.4); }
+        html[data-theme="dark"] h1 { color: #d4af37; }
+        html[data-theme="dark"] label { color: #bbb; }
+        html[data-theme="dark"] input, html[data-theme="dark"] textarea, html[data-theme="dark"] select {
+            background: #1a1511; border-color: #443a32; color: #e8e0d6;
+        }
+        html[data-theme="dark"] input:focus, html[data-theme="dark"] textarea:focus, html[data-theme="dark"] select:focus {
+            border-color: #d4af37;
+        }
+        html[data-theme="dark"] .alert.error { background: #3a2424; color: #f5a6a6; border-color: #5c3333; }
+        html[data-theme="dark"] .alert.success { background: #243a2a; color: #a6f5a6; border-color: #335c33; }
+        html[data-theme="dark"] .back-link { color: #d4af37; }
+        html[data-theme="dark"] .mentor-badge { background: #d4af37; color: #1f1a16; }
+        html[data-theme="dark"] .destinatario-hint { color: #999; }
+        html[data-theme="dark"] button.btn-add { color: #d4af37; border-color: #d4af37; }
+        html[data-theme="dark"] button.btn-add:hover { background: #2a2420; }
+        html[data-theme="dark"] .auth-card { background: #2a2420; color: #e8e0d6; }
+        html[data-theme="dark"] .auth-card h2 { color: #d4af37; }
+        html[data-theme="dark"] .auth-card .error-msg { color: #f5a6a6; }
+        html[data-theme="dark"] .auth-card label { color: #bbb; }
+        html[data-theme="dark"] .auth-card input { background: #1a1511; border-color: #443a32; color: #e8e0d6; }
+        html[data-theme="dark"] .auth-card input:focus { border-color: #d4af37; }
+        html[data-theme="dark"] .auth-card button.login-btn { background: #8e7d6d; }
+        html[data-theme="dark"] .auth-card .auth-extra { color: #999; }
+        html[data-theme="dark"] .auth-card .auth-extra a { color: #d4af37; }
+        html[data-theme="dark"] .switch .slider { background: #443a32; }
+        html[data-theme="dark"] .switch input:checked + .slider { background: #d4af37; }
     </style>
 
     <script type="module">
@@ -421,6 +496,39 @@
         authOverlay.onclick = (e) => {
             if (e.target === authOverlay) authOverlay.classList.remove('visible');
         };
+
+        // ── Modo oscuro ───────────────────────────────────────────────────
+        const darkToggle = $('darkModeToggle');
+        if (localStorage.getItem('dtv_dark_mode') === 'true') {
+            darkToggle.checked = true;
+        }
+        darkToggle.onchange = () => {
+            if (darkToggle.checked) {
+                document.documentElement.setAttribute('data-theme', 'dark');
+                localStorage.setItem('dtv_dark_mode', 'true');
+            } else {
+                document.documentElement.removeAttribute('data-theme');
+                localStorage.setItem('dtv_dark_mode', 'false');
+            }
+        };
+
+        // ── Ojo para mostrar/ocultar contraseña ───────────────────────────
+        document.querySelectorAll('.toggle-password').forEach(btn => {
+            btn.onclick = () => {
+                const input = document.getElementById(btn.dataset.target);
+                const icon = btn.querySelector('.eye-icon path:first-child');
+                if (input.type === 'password') {
+                    input.type = 'text';
+                    icon.setAttribute('d', 'M1 7.984A12.044 12.044 0 0 1 3.614 7.492c.09-.138.208-.265.34-.377C5.08 6.393 7.544 6 12 6c4.456 0 6.92.393 8.046 1.117.132.112.25.239.34.377C20.386 7.492 22.984 7.984 23 12c0 4.016-2.614 4.508-3.614 4.508-.09.138-.208.265-.34.377C18.92 17.607 16.456 18 12 18c-4.456 0-6.92-.393-8.046-1.117-.132-.112-.25-.239-.34-.377C2.614 16.508 0 16.016 0 12z');
+                    icon.setAttribute('stroke', 'currentColor');
+                } else {
+                    input.type = 'password';
+                    icon.setAttribute('d', 'M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z');
+                    icon.setAttribute('stroke', 'currentColor');
+                }
+                input.focus();
+            };
+        });
     </script>
 </body>
 </html>
