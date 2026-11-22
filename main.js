@@ -932,8 +932,10 @@ async function cargarMensajes() {
             }
 
             // --- Texto desplegable ---
-            const textoCorto = (m.texto || '').length > 80 ? (m.texto || '').slice(0, 80) + '…' : (m.texto || '');
-            const textoLargo = m.texto || '';
+            const nl2br = (t) => String(t || '').replace(/\n/g, '<br>');
+            const textoCortoRaw = (m.texto || '').length > 80 ? (m.texto || '').slice(0, 80) + '…' : (m.texto || '');
+            const textoCorto = nl2br(textoCortoRaw);
+            const textoLargo = nl2br(m.texto || '');
             const textoHtml = textoLargo.length > 80
                 ? `<div class="mensaje-texto" id="texto-${m.id}" style="font-size:0.85em;color:#666;margin-top:4px;max-height:3em;overflow:hidden;position:relative;">${textoCorto}</div>
                    <button type="button" class="btn-ver-mas" data-id="${m.id}" style="font-size:0.75em;color:#8e7d6d;background:none;border:none;cursor:pointer;margin-top:2px;">Ver más</button>`
