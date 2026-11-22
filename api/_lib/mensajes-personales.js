@@ -23,7 +23,7 @@ async function handler(req, res) {
         if (req.method === 'GET') {
             const { data, error } = await supabase
                 .from('mensajes_personales')
-                .select('id, asunto, contenido, leido, borrado, creado_en, remitente_id')
+                .select('id, asunto, contenido, leido, borrado, creado_en, remitente_id, archivo_nombre, archivo_tipo, archivo_datos')
                 .eq('destinatario_id', user.id)
                 .eq('borrado', false)
                 .order('creado_en', { ascending: false });
@@ -64,7 +64,10 @@ async function handler(req, res) {
                 fecha: m.creado_en,
                 leido: true,
                 tipo: 'personal',
-                remitente: remitentes[m.remitente_id] || 'Mentor'
+                remitente: remitentes[m.remitente_id] || 'Mentor',
+                archivo_nombre: m.archivo_nombre || null,
+                archivo_tipo: m.archivo_tipo || null,
+                archivo_datos: m.archivo_datos || null
             }));
 
             return res.status(200).json({ ok: true, mensajes });

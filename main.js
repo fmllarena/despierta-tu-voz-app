@@ -905,17 +905,66 @@ async function cargarMensajes() {
             const div = document.createElement('div');
             div.id = `msg-${m.id}`;
             div.className = 'mensaje-item';
-            div.style.cssText = 'border-bottom:1px solid #eee;padding:12px;display:flex;justify-content:space-between;align-items:flex-start;';
+            div.style.cssText = 'border-bottom:1px solid #eee;padding:12px;display:flex;flex-direction:column;gap:8px;background:#fafaf6;border-radius:10px;';
             const fecha = m.fecha ? new Date(m.fecha).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '';
             const remitente = m.remitente ? ` — ${m.remitente}` : '';
+
+            // --- Archivo adjunto (imagen o PDF) ---
+            let archivoHtml = '';
+            if (m.archivo_datos) {
+                const esImagen = m.archivo_tipo && m.archivo_tipo.startsWith('image/');
+                const esPdf = m.archivo_tipo === 'application/pdf';
+                const dataUrl = `data:${m.archivo_tipo};base64,${m.archivo_datos}`;
+                if (esImagen) {
+                    archivoHtml = `
+                        <div style="margin-top:6px;">
+                            <img src="${dataUrl}" alt="${m.archivo_nombre}" style="width:100px;height:50px;object-fit:cover;border-radius:6px;border:1px solid #ddd;" title="${m.archivo_nombre}">
+                            <div style="font-size:0.75em;color:#666;margin-top:2px;">${m.archivo_nombre}</div>
+                        </div>`;
+                } else if (esPdf) {
+                    archivoHtml = `
+                        <div style="margin-top:6px;display:flex;align-items:center;gap:8px;">
+                            <span style="font-size:1.2rem;">📄</span>
+                            <a href="${dataUrl}" download="${m.archivo_nombre}" style="font-size:0.85em;color:#8e7d6d;text-decoration:none;">Descargar PDF: ${m.archivo_nombre}</a>
+                        </div>`;
+                }
+            }
+
+            // --- Texto desplegable ---
+            const textoCorto = (m.texto || '').length > 80 ? (m.texto || '').slice(0, 80) + '…' : (m.texto || '');
+            const textoLargo = m.texto || '';
+            const textoHtml = textoLargo.length > 80
+                ? `<div class="mensaje-texto" id="texto-${m.id}" style="font-size:0.85em;color:#666;margin-top:4px;max-height:3em;overflow:hidden;position:relative;">${textoCorto}</div>
+                   <button type="button" class="btn-ver-mas" data-id="${m.id}" style="font-size:0.75em;color:#8e7d6d;background:none;border:none;cursor:pointer;margin-top:2px;">Ver más</button>`
+                : `<div class="mensaje-texto" id="texto-${m.id}" style="font-size:0.85em;color:#666;margin-top:4px;">${textoLargo}</div>`;
+
             div.innerHTML = `
                 <div style="flex:1;">
                     <div style="font-weight:600;font-size:0.95em;color:#333;">${m.titulo || 'Mensaje'}${remitente}</div>
-                    <div style="font-size:0.85em;color:#666;margin-top:4px;">${m.texto || ''}</div>
+                    ${textoHtml}
                     <div style="font-size:0.75em;color:#999;margin-top:6px;">${fecha}</div>
+                    ${archivoHtml}
                 </div>
                 <button type="button" class="btn-borrar-msg" data-id="${m.id}" title="Eliminar mensaje" style="background:none;border:none;cursor:pointer;font-size:1.2rem;color:#999;padding:0 8px;">🗑</button>
             `;
+
+            // Evento "Ver más" / "Ver menos"
+            const btnVerMas = div.querySelector('.btn-ver-mas');
+            if (btnVerMas) {
+                btnVerMas.onclick = () => {
+                    const textoEl = document.getElementById(`texto-${m.id}`);
+                    if (btnVerMas.textContent === 'Ver más') {
+                        textoEl.style.maxHeight = 'none';
+                        textoEl.innerHTML = textoLargo;
+                        btnVerMas.textContent = 'Ver menos';
+                    } else {
+                        textoEl.style.maxHeight = '3em';
+                        textoEl.innerHTML = textoCorto;
+                        btnVerMas.textContent = 'Ver más';
+                    }
+                };
+            }
+
             ELEMENTS.mensajesLista.appendChild(div);
         });
         mensajesPendientes = true;

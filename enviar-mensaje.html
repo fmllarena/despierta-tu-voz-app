@@ -62,6 +62,12 @@
                 <textarea id="contenido" placeholder="Escribe tu mensaje personal para el alumno..." required></textarea>
             </div>
 
+            <div class="form-group">
+                <label for="archivoAdjunto">Adjuntar archivo (imagen o PDF)</label>
+                <input type="file" id="archivoAdjunto" accept="image/jpeg,image/png,image/webp,application/pdf">
+                <div id="archivoSeleccionado" style="font-size:0.85rem;color:#888;margin-top:4px;"></div>
+            </div>
+
             <button type="submit" id="btnEnviar" class="btn-send">Enviar Mensaje</button>
         </form>
 
@@ -138,6 +144,29 @@
         const loginBtn = $('loginBtn');
         const authEmail = $('authEmail');
         const authPassword = $('authPassword');
+        const archivoInput = $('archivoAdjunto');
+        const archivoSeleccionado = $('archivoSeleccionado');
+        let archivoBase64 = null;
+        let archivoNombre = null;
+        let archivoTipo = null;
+
+        archivoInput.onchange = async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            archivoNombre = file.name;
+            archivoTipo = file.type;
+            archivoSeleccionado.textContent = `📎 ${archivoNombre} (${Math.round(file.size / 1024)} KB)`;
+            archivoBase64 = await leerArchivoComoBase64(file);
+        };
+
+        function leerArchivoComoBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = () => resolve(reader.result.split(',')[1]); // solo los datos base64 sin el prefijo data:...
+                reader.onerror = reject;
+            });
+        }
 
         function showAlert(el, text) {
             el.textContent = text;
@@ -342,7 +371,10 @@
                         body: JSON.stringify({
                             destinatario_id: id,
                             asunto,
-                            contenido
+                            contenido,
+                            archivo_nombre: archivoNombre || null,
+                            archivo_tipo: archivoTipo || null,
+                            archivo_datos: archivoBase64 || null
                         })
                     })
                 ));
@@ -359,6 +391,11 @@
 
                 showAlert(alertSuccess, `✅ Mensaje enviado a ${destinatariosIds.length} usuario${destinatariosIds.length > 1 ? 's' : ''}. Lo verán en su campana de Mensajes.`);
                 form.reset();
+                archivoInput.value = '';
+                archivoSeleccionado.textContent = '';
+                archivoBase64 = null;
+                archivoNombre = null;
+                archivoTipo = null;
                 // Mantener solo el primer select y limpiarlo
                 const selectsTodos = document.querySelectorAll('.select-destinatario');
                 selectsTodos.forEach((s, i) => {
