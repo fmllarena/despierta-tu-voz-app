@@ -917,9 +917,10 @@ async function cargarMensajes() {
                 const dataUrl = `data:${m.archivo_tipo};base64,${m.archivo_datos}`;
                 if (esImagen) {
                     archivoHtml = `
-                        <div style="margin-top:6px;">
-                            <img src="${dataUrl}" alt="${m.archivo_nombre}" style="width:100px;height:50px;object-fit:cover;border-radius:6px;border:1px solid #ddd;" title="${m.archivo_nombre}">
-                            <div style="font-size:0.75em;color:#666;margin-top:2px;">${m.archivo_nombre}</div>
+                        <div style="margin-top:6px;display:flex;flex-direction:column;align-items:center;gap:4px;">
+                            <img src="${dataUrl}" alt="${m.archivo_nombre}" style="width:100px;height:150px;object-fit:cover;border-radius:6px;border:1px solid #ddd;cursor:pointer;" title="${m.archivo_nombre}" onclick="abrirZoomImagen('${dataUrl}', '${m.archivo_nombre}')">
+                            <div style="font-size:0.75em;color:#666;">${m.archivo_nombre}</div>
+                            <a href="${dataUrl}" download="${m.archivo_nombre}" style="font-size:0.75em;color:#8e7d6d;text-decoration:none;">⬇ Descargar imagen</a>
                         </div>`;
                 } else if (esPdf) {
                     archivoHtml = `
@@ -2361,6 +2362,82 @@ function abrirGloboAvatar(src) {
 
 function cerrarGloboAvatar() {
     const overlay = document.getElementById('avatarZoomOverlay');
+    if (!overlay) return;
+    overlay.classList.remove('visible');
+    setTimeout(() => overlay.remove(), 220);
+}
+
+/* ── Zoom de imagen adjunta en mensajes de la campana ────────────────── */
+function abrirZoomImagen(dataUrl, nombre) {
+    if (!dataUrl) return;
+
+    const existente = document.getElementById('imagenZoomOverlay');
+    if (existente) existente.remove();
+
+    const overlay = document.createElement('div');
+    overlay.id = 'imagenZoomOverlay';
+    overlay.className = 'imagen-zoom-overlay';
+    overlay.setAttribute('role', 'dialog');
+    overlay.setAttribute('aria-modal', 'true');
+    overlay.setAttribute('aria-label', 'Imagen ampliada');
+
+    const img = document.createElement('img');
+    img.src = dataUrl;
+    img.alt = nombre || 'Imagen';
+    img.style.display = 'block';
+    img.style.maxWidth = '90vw';
+    img.style.maxHeight = '80vh';
+    img.style.objectFit = 'contain';
+
+    const closeBtn = document.createElement('button');
+    closeBtn.type = 'button';
+    closeBtn.className = 'imagen-zoom-close';
+    closeBtn.innerHTML = '&times;';
+    closeBtn.title = 'Cerrar';
+    closeBtn.onclick = (e) => { e.stopPropagation(); cerrarZoomImagen(); };
+
+    const hint = document.createElement('p');
+    hint.className = 'imagen-zoom-hint';
+    hint.textContent = nombre ? nombre : 'Imagen';
+
+    const descargar = document.createElement('a');
+    descargar.href = dataUrl;
+    descargar.download = nombre || 'imagen';
+    descargar.className = 'imagen-zoom-descargar';
+    descargar.textContent = '⬇ Descargar imagen';
+    descargar.style.display = 'inline-block';
+    descargar.style.marginTop = '10px';
+    descargar.style.color = '#8e7d6d';
+    descargar.style.textDecoration = 'none';
+    descargar.style.fontWeight = '600';
+
+    const content = document.createElement('div');
+    content.className = 'imagen-zoom-content';
+    content.appendChild(closeBtn);
+    content.appendChild(img);
+    content.appendChild(hint);
+    content.appendChild(descargar);
+
+    overlay.appendChild(content);
+
+    overlay.onclick = (e) => {
+        if (e.target === overlay) cerrarZoomImagen();
+    };
+
+    const onKey = (e) => {
+        if (e.key === 'Escape') {
+            cerrarZoomImagen();
+            document.removeEventListener('keydown', onKey);
+        }
+    };
+    document.addEventListener('keydown', onKey);
+
+    document.body.appendChild(overlay);
+    requestAnimationFrame(() => overlay.classList.add('visible'));
+}
+
+function cerrarZoomImagen() {
+    const overlay = document.getElementById('imagenZoomOverlay');
     if (!overlay) return;
     overlay.classList.remove('visible');
     setTimeout(() => overlay.remove(), 220);
