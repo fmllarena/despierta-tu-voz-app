@@ -133,6 +133,19 @@ export const authActions = {
             return;
         }
 
+        // Verificar si el email existe en la base de datos antes de enviar el email de recuperación
+        const { data: profile, error: profileError } = await state.supabase
+            .from('user_profiles')
+            .select('user_id')
+            .eq('email', email)
+            .maybeSingle();
+
+        if (profileError || !profile) {
+            ELEMENTS.authError.style.color = "red";
+            ELEMENTS.authError.innerText = "No existe una cuenta con ese correo electrónico.";
+            return;
+        }
+
         const { error } = await state.supabase.auth.resetPasswordForEmail(email, {
             redirectTo: window.location.origin + '/reset-password.html'
         });
