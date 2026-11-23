@@ -5951,3 +5951,33 @@ html[data-theme="dark"] .mensaje-item div:first-child div:nth-child(3) {
 .btn-borrar-msg:hover {
     color: #c0392b;
 }
+
+/* ── Ojo mostrar/ocultar contraseña ────────────────────────────────────── */
+.password-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.password-wrapper input {
+    flex: 1;
+    padding-right: 36px;
+}
+
+.password-wrapper .toggle-password {
+    position: absolute;
+    right: 8px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.password-wrapper .toggle-password .eye-icon {
+    width: 20px;
+    height: 20px;
+    display: block;
+}
