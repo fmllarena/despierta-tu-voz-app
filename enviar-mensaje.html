@@ -24,12 +24,60 @@
         .back-link { display: inline-block; margin-bottom: 20px; color: #8e7d6d; text-decoration: none; font-weight: 500; }
         .back-link:hover { text-decoration: underline; }
         .mentor-badge { display: inline-block; background: #d4af37; color: #1f1a16; padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 700; margin-left: 10px; }
-        .destinatario-hint { font-size: 0.85rem; color: #888; margin-top: 4px; }
-        .destinatarios-container { display: flex; flex-direction: column; gap: 10px; margin-bottom: 10px; }
-        .destinatario-row { display: flex; gap: 8px; align-items: center; }
-        .destinatario-row select { flex: 1; }
-        button.btn-add { background: transparent; border: 2px dashed #8e7d6d; color: #8e7d6d; padding: 10px 16px; border-radius: 10px; font-size: 0.9rem; font-weight: 600; cursor: pointer; width: 100%; margin-top: 6px; }
-        button.btn-add:hover { background: #f0eae2; }
+        .alumnos-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid #e2d9cd;
+            border-radius: 10px;
+            padding: 12px;
+            background: #fff;
+        }
+        .alumno-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.85rem;
+            padding: 6px 8px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+        .alumno-item:hover {
+            background: #f9f6f0;
+        }
+        .alumno-item input[type="checkbox"] {
+            margin: 0;
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+        .alumno-nombre {
+            font-weight: 600;
+            color: #333;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .alumno-mail {
+            color: #888;
+            font-size: 0.8rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        html[data-theme="dark"] .alumnos-grid {
+            background: #2a2420;
+            border-color: #443a32;
+        }
+        html[data-theme="dark"] .alumno-item:hover {
+            background: #332d29;
+        }
+        html[data-theme="dark"] .alumno-nombre { color: #e8e0d6; }
+        html[data-theme="dark"] .alumno-mail { color: #bbb; }
+        html[data-theme="dark"] .select-all-container label { color: #bbb; }
     </style>
 </head>
 <body>
@@ -47,16 +95,16 @@
         </div>
 
         <form id="formMensaje">
-            <div class="destinatarios-container" id="destinatariosContainer">
-                <div class="destinatario-row">
-                    <select class="select-destinatario" required>
-                        <option value="">Selecciona un alumno...</option>
-                    </select>
-                    <button type="button" class="btn-remove-destinatario" style="display:none;">×</button>
+            <div class="destinatarios-section" id="destinatariosSection">
+                <div class="select-all-container" style="margin-bottom: 12px;">
+                    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:600;color:#555;">
+                        <input type="checkbox" id="selectAllAlumnos"> Enviar a todos los alumnos
+                    </label>
+                </div>
+                <div class="alumnos-grid" id="alumnosGrid">
+                    <!-- Se poblará dinámicamente con los alumnos -->
                 </div>
             </div>
-            <div class="destinatario-hint">Lista de alumnos registrados en la app. Puedes añadir varios destinatarios.</div>
-            <button type="button" id="btnAddDestinatario" class="btn-add">+ Añadir otro usuario</button>
 
             <div class="form-group">
                 <label for="asunto">Asunto</label>
@@ -210,8 +258,6 @@
         const $ = id => document.getElementById(id);
         const form = $('formMensaje');
         const btnEnviar = $('btnEnviar');
-        const btnAdd = $('btnAddDestinatario');
-        const contenedor = $('destinatariosContainer');
         const alertError = $('alertError');
         const alertSuccess = $('alertSuccess');
         const authOverlay = $('authOverlay');
@@ -309,8 +355,8 @@
         }
 
         async function cargarAlumnos() {
-            const selects = document.querySelectorAll('.select-destinatario');
-            if (!selects.length) return;
+            const grid = $('alumnosGrid');
+            if (!grid) return;
 
             try {
                 const { data: profiles, error } = await sb
@@ -326,57 +372,22 @@
                     p => !p.email.toLowerCase().includes('@test.com')
                 );
 
-                const opciones = perfilesFiltrados.map(p => {
-                    const option = document.createElement('option');
-                    option.value = p.user_id;
+                grid.innerHTML = '';
+                perfilesFiltrados.forEach(p => {
+                    const userId = p.user_id;
                     const nombre = p.nombre || p.email.split('@')[0];
-                    option.textContent = `${p.email} — ${nombre}`;
-                    return option;
-                });
-
-                selects.forEach(select => {
-                    const valorActual = select.value;
-                    select.innerHTML = '<option value="">Selecciona un alumno...</option>';
-                    opciones.forEach(opt => select.appendChild(opt.cloneNode(true)));
-                    if (valorActual) select.value = valorActual;
+                    const item = document.createElement('label');
+                    item.className = 'alumno-item';
+                    item.innerHTML = `
+                        <input type="checkbox" class="alumno-checkbox" value="${userId}">
+                        <span class="alumno-nombre">${nombre}</span><br>
+                        <span class="alumno-mail">${p.email}</span>
+                    `;
+                    grid.appendChild(item);
                 });
             } catch (e) {
                 console.error('Error cargando alumnos:', e);
                 showAlert(alertError, 'No se pudo cargar la lista de alumnos.');
-            }
-        }
-
-        function crearNuevoDestinatario() {
-            const fila = document.createElement('div');
-            fila.className = 'destinatario-row';
-            fila.innerHTML = `
-                <select class="select-destinatario" required>
-                    <option value="">Selecciona un alumno...</option>
-                </select>
-                <button type="button" class="btn-remove-destinatario">×</button>
-            `;
-
-            const select = fila.querySelector('.select-destinatario');
-            const btnRemove = fila.querySelector('.btn-remove-destinatario');
-
-            const primero = document.querySelector('.select-destinatario');
-            if (primero) {
-                Array.from(primero.options).forEach(opt => {
-                    if (opt.value) select.appendChild(opt.cloneNode(true));
-                });
-            }
-
-            btnRemove.onclick = () => {
-                fila.remove();
-                if (document.querySelectorAll('.select-destinatario').length === 1) {
-                    const solo = document.querySelector('.btn-remove-destinatario');
-                    if (solo) solo.style.display = 'none';
-                }
-            };
-
-            contenedor.appendChild(fila);
-            if (document.querySelectorAll('.select-destinatario').length > 1) {
-                document.querySelectorAll('.btn-remove-destinatario').forEach(b => b.style.display = 'inline-block');
             }
         }
 
@@ -402,17 +413,36 @@
             return null;
         }
 
-        btnAdd.onclick = crearNuevoDestinatario;
+        // Checkbox "Enviar a todos"
+        const selectAllBtn = $('selectAllAlumnos');
+        selectAllBtn.onchange = () => {
+            const checkboxes = document.querySelectorAll('.alumno-checkbox');
+            checkboxes.forEach(cb => cb.checked = selectAllBtn.checked);
+        };
+
+        // Si se desmarca algún alumno individual, desmarcar "Enviar a todos"
+        document.addEventListener('change', (e) => {
+            if (e.target.classList.contains('alumno-checkbox')) {
+                const all = document.querySelectorAll('.alumno-checkbox');
+                const checked = document.querySelectorAll('.alumno-checkbox:checked');
+                selectAllBtn.checked = all.length === checked.length;
+            }
+        });
 
         form.onsubmit = async (e) => {
             e.preventDefault();
             alertError.style.display = 'none';
             alertSuccess.style.display = 'none';
 
-            const selects = document.querySelectorAll('.select-destinatario');
-            const destinatariosIds = Array.from(selects)
-                .map(s => s.value)
+            const checkboxes = document.querySelectorAll('.alumno-checkbox:checked');
+            const destinatariosIds = Array.from(checkboxes)
+                .map(cb => cb.value)
                 .filter(Boolean);
+
+            if (!destinatariosIds.length) {
+                showAlert(alertError, 'Selecciona al menos un alumno.');
+                return;
+            }
 
             const asunto = $('asunto').value.trim();
             const contenido = $('contenido').value.trim();
@@ -471,12 +501,9 @@
                 archivoBase64 = null;
                 archivoNombre = null;
                 archivoTipo = null;
-                // Mantener solo el primer select y limpiarlo
-                const selectsTodos = document.querySelectorAll('.select-destinatario');
-                selectsTodos.forEach((s, i) => {
-                    if (i > 0) s.closest('.destinatario-row').remove();
-                });
-                selectsTodos[0].value = '';
+                // Desmarcar todos los checkboxes de alumnos
+                document.querySelectorAll('.alumno-checkbox').forEach(cb => cb.checked = false);
+                selectAllBtn.checked = false;
             } catch (err) {
                 console.error(err);
                 showAlert(alertError, 'Error de conexión al enviar el mensaje.');
