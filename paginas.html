@@ -12,34 +12,38 @@
             background: #f5f2ed;
             color: #333;
             margin: 0;
-            padding: 24px;
-            line-height: 1.5;
+            padding: 40px;
+            line-height: 1.6;
         }
         .container {
-            max-width: 900px;
+            max-width: 1000px;
             margin: 0 auto;
+            padding: 0 20px;
         }
         h1 {
             color: #8e7d6d;
-            margin-bottom: 24px;
+            margin-bottom: 32px;
         }
         .group {
-            margin-bottom: 32px;
+            margin-bottom: 56px;
         }
         h2 {
             color: #6f5f52;
-            font-size: 1.1rem;
-            margin-bottom: 14px;
+            font-size: 1.15rem;
+            margin: 32px 0 18px 0;
             border-bottom: 1px solid #e2d9cc;
-            padding-bottom: 6px;
+            padding-bottom: 10px;
+        }
+        h2:first-child {
+            margin-top: 0;
         }
         ul {
             list-style: none;
             margin: 0;
             padding: 0;
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-            gap: 14px;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 22px;
         }
         li {
             display: contents;
@@ -47,8 +51,8 @@
         .card {
             background: #fff;
             border: 1px solid #ddd;
-            border-radius: 10px;
-            padding: 14px 16px;
+            border-radius: 12px;
+            padding: 20px 22px;
             text-decoration: none;
             color: #333;
             display: block;
@@ -57,26 +61,29 @@
         .card:hover {
             border-color: #8e7d6d;
             background: #f9f6f0;
-            transform: translateY(-2px);
+            transform: translateY(-3px);
         }
         .card .title {
             font-weight: 700;
-            font-size: 0.95rem;
-            margin-bottom: 6px;
+            font-size: 1rem;
+            margin-bottom: 10px;
             display: block;
         }
         .card .desc {
-            font-size: 0.82rem;
-            color: #555;
+            font-size: 0.85rem;
+            color: #666;
             margin: 0;
+            line-height: 1.5;
         }
         .app .title {
             color: #8e7d6d;
         }
         .note {
-            margin-top: 28px;
+            margin-top: 40px;
             font-size: 0.85rem;
             color: #666;
+            padding-top: 20px;
+            border-top: 1px solid #e2d9cc;
         }
 
         .login-section {
