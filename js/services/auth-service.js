@@ -134,7 +134,7 @@ export const authActions = {
         }
 
         const { error } = await state.supabase.auth.resetPasswordForEmail(email, {
-            redirectTo: window.location.origin + window.location.pathname
+            redirectTo: window.location.origin + '/reset-password.html'
         });
         if (error) {
             ELEMENTS.authError.style.color = "red";
