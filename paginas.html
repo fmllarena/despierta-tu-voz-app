@@ -153,6 +153,24 @@
             color: #fff;
         }
 
+        /* Botón Entrar del login (igual que index-original.html) */
+        button#loginBtn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            background: #2c3e50;
+            color: white;
+            width: 100%;
+            margin-top: 10px;
+            font-size: 1rem;
+        }
+        button#loginBtn:hover {
+            background: #34495e;
+        }
+
         /* Switch toggle modo oscuro */
         .switch {
             position: relative;
@@ -232,7 +250,7 @@
             </button>
         </div>
         <div class="login-error" id="loginError"></div>
-        <button id="loginBtn" class="main-btn" style="width:100%;margin-top:5px;">Entrar</button>
+        <button id="loginBtn" class="main-btn">Entrar</button>
     </div>
 
     <div id="dashboard" class="dashboard">
