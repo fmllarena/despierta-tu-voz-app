@@ -151,7 +151,6 @@ async function mostrarDashboard(email) {
 }
 
 async function logout() {
-    localStorage.removeItem('dtv_mensajes');
     await supabase.auth.signOut();
     currentStudentId = null;
     ELEMENTS.dashboardSection.style.display = 'none';

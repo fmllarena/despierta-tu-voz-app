@@ -2775,7 +2775,6 @@ if (ELEMENTS.navButtons.logout) {
                     logoutRealBtn.innerHTML = '⌛ Cerrando...';
                     logoutRealBtn.disabled = true;
                     await state.supabase.auth.signOut();
-                    localStorage.removeItem('dtv_mensajes');
                     location.reload();
                 };
                 msgInner.appendChild(logoutRealBtn);

@@ -186,7 +186,6 @@ export const authActions = {
     },
 
     async logout() {
-        localStorage.removeItem('dtv_mensajes');
         await state.supabase.auth.signOut();
         location.reload();
     }

@@ -128,7 +128,6 @@ async function requestAccountDeletion() {
 
             // Cerrar sesión localmente y redirigir
             setTimeout(async () => {
-                localStorage.removeItem('dtv_mensajes');
                 await supabase.auth.signOut();
                 window.location.href = 'landing.html';
             }, 3000);
