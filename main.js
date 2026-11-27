@@ -1282,15 +1282,15 @@ async function sendMessage() {
             document.getElementById(thinkingId)?.remove();
             // La respuesta parcial (si la hay) se conserva y el usuario puede
             // pedir "Regenerar" desde su propia burbuja.
-        } else if (responseText && responseText.trim() !== "") {
+        } else if ((responseText || "") && (responseText || "").trim() !== "") {
             // El stream se cortó (red, timeout, etc.) pero ya recibimos parte
             // de la respuesta. La tratamos como éxito parcial: la guardamos
             // y no mostramos el error de "Reintentar".
-            console.warn('⚠️ Stream interrumpido, guardando respuesta parcial:', responseText.length, 'caracteres');
+            console.warn('⚠️ Stream interrumpido, guardando respuesta parcial:', (responseText || "").length, 'caracteres');
 
             const finalContainer = document.getElementById(responseId);
             const finalEl = finalContainer?.querySelector('.message.ia');
-            const cleanFinalText = responseText.replace(/\[\s*SESION\\?_?FINAL\s*\]/gi, "").trim();
+            const cleanFinalText = (responseText || "").replace(/\[\s*SESION\\?_?FINAL\s*\]/gi, "").trim();
             if (finalEl) {
                 let parsedText = window.renderSafeMarkdown(cleanFinalText);
                 if (window.PRONUNCIATION) {
@@ -1302,8 +1302,8 @@ async function sendMessage() {
             sessionStorage.removeItem('dtv_origin_post');
             sessionStorage.removeItem('dtv_origin_cat');
 
-            if (responseText && responseText.trim() !== "") {
-                const msgId = await guardarMensajeDB(responseText, 'ia');
+            if ((responseText || "") && (responseText || "").trim() !== "") {
+                const msgId = await guardarMensajeDB(responseText || "", 'ia');
                 if (msgId) {
                     activarFeedback(responseId, msgId);
                 } else {
@@ -1312,7 +1312,7 @@ async function sendMessage() {
                 const now = new Date().toISOString();
                 chatHistory.push(
                     { role: "user", parts: [{ text }], created_at: now, msgId: contenedorUsuario?.dataset?.msgId || undefined },
-                    { role: "model", parts: [{ text: responseText }], created_at: now, msgId: msgId || undefined }
+                    { role: "model", parts: [{ text: responseText || "" }], created_at: now, msgId: msgId || undefined }
                 );
             }
         } else {
