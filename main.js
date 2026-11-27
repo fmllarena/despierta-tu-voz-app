@@ -1189,6 +1189,10 @@ async function sendMessage() {
     }
     appendMessage(thinkingMsg, 'ia thinking', thinkingId);
 
+    // Contenedor para la respuesta progresiva (declarado fuera del try
+    // para que el catch pueda acceder a él si falla el stream).
+    let responseText = "";
+
     try {
         ['msg-botiquin', 'msg-bienvenida'].forEach(id => document.getElementById(id)?.remove());
 
@@ -1201,10 +1205,6 @@ async function sendMessage() {
             blogLibrary: blogLibrary,
             fileData: fileData // <--- CRITICAL FIX: Include the file data
         };
-
-        // Contenedor para la respuesta progresiva (declarado fuera del try
-        // para poder limpiarlo también en el catch).
-        let responseText = "";
 
         await llamarGemini(text, chatHistory, "mentor_chat", extraData, (chunk, fullText) => {
             if (responseText === "") {
