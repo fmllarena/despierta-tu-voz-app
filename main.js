@@ -1021,11 +1021,11 @@ let pollingMensajesTimer = null;
 
 function iniciarPollingMensajes() {
     if (pollingMensajesTimer) return;
-    // Verificación inmediata al iniciar (no esperar los 30 s del primer intervalo)
+    // Verificación inmediata al iniciar (no esperar los 5 min del primer intervalo)
     verificarMensajesPendientes();
     pollingMensajesTimer = setInterval(async () => {
         await verificarMensajesPendientes();
-    }, 30000);
+    }, 300000);
 }
 
 function detenerPollingMensajes() {
